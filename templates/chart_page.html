@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI鑑定用データ</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card buyer-card">
+      <p class="eyebrow">AI鑑定用データ</p>
+      <h1>{{ chart.buyer_name or "鑑定データ" }}</h1>
+      <p class="lead">
+        このページは購入者専用のAI鑑定用データページです。<br>
+        このURLを知っている方はどなたでもアクセスできます。大切に保存してください。
+      </p>
+
+      <section class="notice-box">
+        <h2>使い方</h2>
+        <ol class="steps">
+          <li>お好きなAIを開きます（ChatGPT / Claude / Gemini など）。</li>
+          <li>いちばん簡単なのは「AIに貼る全文コピー」を押して、AIにそのまま貼り付けて送信する方法です。</li>
+          <li>分けて使う場合は「プロンプト全文コピー」→「YAML全文コピー」の順に、同じメッセージへ貼り付けて送信してください。</li>
+          <li>AIが鑑定文を生成します。</li>
+        </ol>
+        <p class="hint">
+          別の方法として「YAML直リンク」をコピーし、AIにURLとして渡すこともできます。AIの種類やプランによってURL読み込み可否が異なるため、うまく読めない場合は全文コピーをご利用ください。
+        </p>
+      </section>
+
+      <section>
+        <h2>まずはこれをコピー</h2>
+        <p class="hint">プロンプトとYAMLをまとめた全文です。AIにそのまま貼り付けてください。</p>
+        <button class="primary-action" onclick="copyCombined()">AIに貼る全文コピー</button>
+        <span id="copy-status" class="copy-status" aria-live="polite"></span>
+      </section>
+
+      <section>
+        <h2>出生情報</h2>
+        <p style="margin:0">
+          生年月日：{{ chart.birth_date }}
+          {% if chart.birth_time %}（{{ chart.birth_time }}）{% endif %}
+          ／ {{ chart.birth_place or "不明" }}
+        </p>
+      </section>
+
+      <section>
+        <h2>各種URL</h2>
+        <p style="margin:0 0 8px;font-weight:700;font-size:.9rem">このページのURL</p>
+        <div class="copyline">
+          <input id="chart-url" value="{{ chart_url }}" readonly>
+          <button onclick="copyFrom('chart-url')">コピー</button>
+        </div>
+        <p class="hint" style="margin:8px 0 16px">このページをあとから開くためのURLです。</p>
+
+        <p style="margin:0 0 8px;font-weight:700;font-size:.9rem">YAML直リンク</p>
+        <div class="copyline">
+          <input id="yaml-url" value="{{ yaml_url }}" readonly>
+          <button onclick="copyFrom('yaml-url')">コピー</button>
+        </div>
+        <p class="hint" style="margin:8px 0 16px">AIにURLとして渡す場合に使います。読み込めない場合は下の「YAML全文コピー」を使ってください。</p>
+
+        <p style="margin:0 0 8px;font-weight:700;font-size:.9rem">プロンプト直リンク</p>
+        <div class="copyline">
+          <input id="prompt-url" value="{{ prompt_url }}" readonly>
+          <button onclick="copyFrom('prompt-url')">コピー</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>プロンプト全文</h2>
+        <p class="hint">AIに「どう鑑定してほしいか」を伝える文章です。</p>
+        <textarea id="prompt" readonly>{{ chart.prompt_text }}</textarea>
+        <button onclick="copyFrom('prompt')" style="margin-top:10px">プロンプト全文コピー</button>
+      </section>
+
+      <section>
+        <h2>YAML全文</h2>
+        <p class="hint">天体計算済みの出生図データです。AIにはこの計算結果を変更せず、解釈だけさせてください。</p>
+        <textarea id="yaml" readonly>{{ chart.yaml_text }}</textarea>
+        <button onclick="copyFrom('yaml')" style="margin-top:10px">YAML全文コピー</button>
+      </section>
+
+      <section class="notice-box soft">
+        <h2>注意事項</h2>
+        <ul class="plain-list">
+          <li>入力後のデータ変更はできません。再発行が必要な場合は、販売者へお問い合わせください。</li>
+          <li>AIの種類や設定によって、文章表現や鑑定の深さは変わります。</li>
+          <li>YAMLは計算済みデータです。AIには「計算をやり直さず、このYAMLを根拠に解釈する」よう指示してください。</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    async function writeClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const tmp = document.createElement('textarea');
+        tmp.value = text;
+        tmp.style.position = 'fixed';
+        tmp.style.left = '-9999px';
+        document.body.appendChild(tmp);
+        tmp.focus();
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+      }
+      const status = document.getElementById('copy-status');
+      if (status) {
+        status.textContent = 'コピーしました';
+        setTimeout(() => status.textContent = '', 1800);
+      } else {
+        alert('コピーしました');
+      }
+    }
+
+    async function copyFrom(id) {
+      const el = document.getElementById(id);
+      await writeClipboard(el.value);
+    }
+
+    async function copyCombined() {
+      const prompt = document.getElementById('prompt').value;
+      const yaml = document.getElementById('yaml').value;
+      const text = prompt + '\n\n---\n\n以下がYAMLデータです。\n\n```yaml\n' + yaml + '\n```\n';
+      await writeClipboard(text);
+    }
+  </script>
+</body>
+</html>

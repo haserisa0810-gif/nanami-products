@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ホロスコープFULL版 入力 | nanami-products</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <div class="card buyer-card product-western_full">
+      <p class="eyebrow">nanami-products</p>
+
+      <div class="hero-grid">
+        <div>
+          <div class="product-pill">ホロスコープFULL版</div>
+          <h1>ホロスコープFULL版<br>鑑定データ入力</h1>
+          <p class="lead">小惑星とトランジット（1ヶ月）をセットで含めて生成します。<br>オプション商品ではないため、選択欄は表示しません。</p>
+        </div>
+        <div class="mini-panel">
+          <p class="mini-label">入力前チェック</p>
+          <strong>送信後は同じ注文番号で再生成できません。</strong>
+          <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
+        </div>
+      </div>
+
+      <section class="notice-box soft">
+        <h2>FULL版の生成内容</h2>
+        <ul class="plain-list">
+          <li>小惑星を含める：ON</li>
+          <li>トランジット（1ヶ月）を含める：ON</li>
+          <li>四柱推命を含める：OFF</li>
+        </ul>
+      </section>
+
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+      <form method="post" action="/redeem?type=western_full" class="form" onsubmit="return confirmSubmit()">
+        <input type="hidden" name="product_type" value="western_full">
+
+        <div class="form-section">
+          <h2>注文情報</h2>
+          <label>注文番号（STORES注文番号）<span class="required">必須</span>
+            <input type="text" name="order_code" required
+                   value="{{ form.order_code if form else '' }}"
+                   placeholder="例：ORDER-XXXXXXXX"
+                   autocomplete="off">
+            <small>STORESの購入確認メールに記載されています。</small>
+          </label>
+
+          <label>お名前<span class="optional">任意</span>
+            <input type="text" name="buyer_name"
+                   value="{{ form.buyer_name if form else '' }}"
+                   placeholder="例：山田 花子">
+          </label>
+
+          <label>メールアドレス<span class="optional">任意</span>
+            <input type="email" name="email"
+                   value="{{ form.email if form else '' }}"
+                   placeholder="例：example@email.com">
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h2>出生情報</h2>
+          <label>生年月日<span class="required">必須</span>
+            <input type="date" name="birth_date" required
+                   value="{{ form.birth_date if form else '' }}">
+          </label>
+
+          <label>出生時刻<span class="optional">任意</span>
+            <input type="time" name="birth_time"
+                   value="{{ form.birth_time if form else '' }}">
+            <small>不明な場合は空欄のままで構いません（正午で計算します）。</small>
+          </label>
+
+          <label>出生都道府県<span class="required">必須</span>
+            <select name="prefecture" required>
+              <option value="">選択してください</option>
+              {% for pref in prefectures %}
+                <option value="{{ pref }}"
+                  {% if form and form.prefecture == pref %}selected{% endif %}>{{ pref }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>性別<span class="optional">任意</span>
+            <select name="gender" >
+              <option value="unknown"
+                {% if not form or form.gender == 'unknown' %}selected{% endif %}>指定なし</option>
+              <option value="female"
+                {% if form and form.gender == 'female' %}selected{% endif %}>女性</option>
+              <option value="male"
+                {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>
+            </select>
+            <small>通常は指定なしで構いません。</small>
+          </label>
+        </div>
+
+        <div class="notice-box soft auto-box">
+          <p style="margin:0;font-weight:800">FULL版は小惑星＋トランジット（1ヶ月）を自動で含めます。購入者側の選択は不要です。</p>
+        </div>
+
+        <div class="notice-box soft final-check">
+          <p style="margin:0 0 10px;font-weight:800">最終確認</p>
+          <p class="hint" style="margin:0 0 12px">
+            送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。
+          </p>
+          <label class="checkbox-line">
+            <input type="checkbox" name="agree_final" value="1" required
+                   {% if form and form.agree_final %}checked{% endif %}>
+            <span>入力内容を確認しました。送信後に変更できないことに同意します。</span>
+          </label>
+        </div>
+
+        <button type="submit" class="submit-button">AI鑑定データを生成する</button>
+      </form>
+    </div>
+  </main>
+  <script>
+    function confirmSubmit() {
+      return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
+    }
+  </script>
+</body>
+</html>

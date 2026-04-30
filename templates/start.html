@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ product.label }} | AI鑑定データ作成</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <div class="card buyer-card product-{{ product_type }}">
+      <p class="eyebrow">nanami-products</p>
+
+      <div class="hero-grid">
+        <div>
+          <div class="product-pill">{{ product.label }}</div>
+          {% if product_type == 'western_basic' %}
+          <h1>ホロスコープ基本版<br>鑑定データ作成</h1>
+          <p class="lead">
+            西洋占星術の基本鑑定用データを作成します。<br>
+            小惑星・四柱推命・日替わり境界の選択はありません。
+          </p>
+          {% elif product_type == 'western_full' %}
+          <h1>ホロスコープFULL版<br>鑑定データ作成</h1>
+          <p class="lead">
+            小惑星とトランジット（1ヶ月）を含めた、FULL版の鑑定用データを作成します。<br>
+            追加オプションではなくセット商品なので、購入者側で選択する必要はありません。
+          </p>
+          {% elif product_type == 'shichu' %}
+          <h1>四柱推命鑑定<br>データ作成</h1>
+          <p class="lead">
+            四柱推命の鑑定用データを作成します。<br>
+            日替わり境界は、標準の1時（丑の刻）または23時切替から選べます。
+          </p>
+          {% else %}
+          <h1>AI鑑定データ作成</h1>
+          <p class="lead">
+            STORESで購入した方専用の入力ページです。<br>
+            注文番号を1回限りの利用コードとして使い、AI鑑定用データを生成します。
+          </p>
+          {% endif %}
+        </div>
+        <div class="mini-panel">
+          <p class="mini-label">このページで行うこと</p>
+          <strong>購入商品の内容に合わせて、必要な入力だけ表示します。</strong>
+          <span>迷う項目を減らし、入力ミスを防ぐフォームです。</span>
+        </div>
+      </div>
+
+      <section class="notice-box soft product-summary">
+        <h2>購入商品</h2>
+        <p class="product-title">{{ product.label }}</p>
+        <p class="hint" style="margin:8px 0 0">{{ product.description }}</p>
+        {% if product.features %}
+        <ul class="feature-list">
+          {% for feature in product.features %}
+            <li>{{ feature }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </section>
+
+      {% if product_type == 'western_basic' %}
+      <section class="notice-box">
+        <h2>基本版で入力する内容</h2>
+        <ul class="plain-list">
+          <li>注文番号</li>
+          <li>お名前・メールアドレス（任意）</li>
+          <li>生年月日・出生時刻・出生都道府県</li>
+          <li>性別（任意）</li>
+        </ul>
+        <p class="hint" style="margin:12px 0 0">
+          小惑星オプション、四柱推命、四柱推命：23時日替わりの選択欄は表示しません。
+        </p>
+      </section>
+      {% elif product_type == 'western_full' %}
+      <section class="notice-box">
+        <h2>FULL版で入力する内容</h2>
+        <ul class="plain-list">
+          <li>注文番号</li>
+          <li>お名前・メールアドレス（任意）</li>
+          <li>生年月日・出生時刻・出生都道府県</li>
+          <li>性別（任意）</li>
+        </ul>
+        <p class="hint" style="margin:12px 0 0">
+          小惑星とトランジット（1ヶ月）は自動で含まれます。オプション選択は表示しません。
+        </p>
+      </section>
+      {% elif product_type == 'shichu' %}
+      <section class="notice-box">
+        <h2>四柱推命で入力する内容</h2>
+        <ul class="plain-list">
+          <li>注文番号</li>
+          <li>お名前・メールアドレス（任意）</li>
+          <li>生年月日・出生時刻・出生都道府県</li>
+          <li>性別（大運計算用）</li>
+          <li>四柱推命の日替わり境界</li>
+        </ul>
+        <p class="hint" style="margin:12px 0 0">
+          標準は1時（丑の刻）です。23時切替の流派で見る場合だけ23時を選択してください。
+        </p>
+      </section>
+      {% endif %}
+
+      <section class="notice-box important-box">
+        <h2>登録前に必ず確認してください</h2>
+        <ul class="plain-list">
+          <li><strong>注文番号は1回だけ使用できます。</strong>一度生成すると同じ注文番号では再生成できません。</li>
+          <li><strong>送信後の入力変更はできません。</strong>生年月日・出生時刻・出生地をよく確認してください。</li>
+          <li>出生時刻が不明な場合は空欄で生成できます。その場合は正午で計算します。</li>
+          <li>生成後に表示されるURLは、あとから開くために必ず保存してください。</li>
+          <li>ページURLを知っている人はデータを閲覧できます。第三者への共有にはご注意ください。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>作成の流れ</h2>
+        <ol class="steps timeline">
+          <li><span>1</span>STORESの注文番号を入力します。</li>
+          <li><span>2</span>出生情報を入力します。</li>
+          {% if product_type == 'shichu' %}
+          <li><span>3</span>四柱推命の日替わり境界を選択します。</li>
+          {% else %}
+          <li><span>3</span>商品内容に合わせて、追加要素は自動で制御されます。</li>
+          {% endif %}
+          <li><span>4</span>確認チェックを入れて送信します。</li>
+          <li><span>5</span>AI鑑定用のYAMLデータとプロンプトが表示されます。</li>
+        </ol>
+      </section>
+
+      <div class="action-area">
+        <a href="/redeem?type={{ product_type }}" class="primary-link">入力フォームへ進む</a>
+        <p class="hint">商品タイプ：{{ product_type }}</p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

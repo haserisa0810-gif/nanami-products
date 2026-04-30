@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>YAML発行完了</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products 管理画面</p>
+      <h1>YAML発行完了</h1>
+      <p class="lead">購入者には「購入者に送るURL」だけを送ってください。管理画面URLは共有しないでください。</p>
+
+      <section>
+        <h2>購入者に送るURL</h2>
+        <div class="copyline"><input value="{{ chart_url }}" readonly><button onclick="copyText('{{ chart_url }}')">コピー</button></div>
+        <p class="hint">購入者専用ページに飛びます。管理者用の新規作成ボタンは表示されません。</p>
+      </section>
+
+      <section>
+        <h2>確認用リンク</h2>
+        <div class="links">
+          <a href="{{ chart_url }}" target="_blank" rel="noopener">購入者ページを開く</a>
+          <a href="{{ yaml_url }}" target="_blank" rel="noopener">YAML直リンク</a>
+          <a href="{{ prompt_url }}" target="_blank" rel="noopener">プロンプト直リンク</a>
+          <a href="/admin/yaml/new">新規作成</a>
+        </div>
+      </section>
+
+      <section>
+        <h2>AI用YAML URL</h2>
+        <div class="copyline"><input value="{{ yaml_url }}" readonly><button onclick="copyText('{{ yaml_url }}')">コピー</button></div>
+      </section>
+
+      <section>
+        <h2>コピペ用プロンプト</h2>
+        <textarea id="prompt" readonly>{{ chart.prompt_text }}</textarea>
+        <button onclick="copyFrom('prompt')">プロンプト全文コピー</button>
+      </section>
+    </div>
+  </main>
+  <script>
+    async function copyText(t){ await navigator.clipboard.writeText(t); alert('コピーしました'); }
+    async function copyFrom(id){ await navigator.clipboard.writeText(document.getElementById(id).value); alert('コピーしました'); }
+  </script>
+</body>
+</html>

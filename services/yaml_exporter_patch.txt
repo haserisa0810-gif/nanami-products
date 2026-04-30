@@ -1,0 +1,11 @@
+# 追加
+from services.transit_builder import build_transit_block
+
+# 修正箇所
+if include_transit:
+    transit_data = calc_transit(...)
+    transit_block = build_transit_block(transit_data)
+else:
+    transit_block = None
+
+yaml_dict["transit"] = transit_block

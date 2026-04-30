@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>外販YAML生成</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <p class="eyebrow">nanami-products</p>
+      <h1>AI鑑定用YAML生成</h1>
+      <p class="lead">購入者へ渡す「YAML URL」と「プロンプトURL」を発行します。最初は管理者が手動発行する前提です。</p>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      <form method="post" action="/admin/yaml/generate" class="form">
+        <label>管理用タイトル（任意）
+          <input type="text" name="title" value="{{ form.title if form else '' }}" placeholder="例：山田様 基本版">
+        </label>
+        <label>生年月日
+          <input type="date" name="birth_date" required value="{{ form.birth_date if form else '' }}">
+        </label>
+        <label>出生時刻
+          <input type="time" name="birth_time" value="{{ form.birth_time if form else '' }}">
+          <small>不明なら空欄。正午で計算します。</small>
+        </label>
+        <label>出生都道府県
+          <select name="prefecture" required>
+            {% for pref in prefectures %}
+              <option value="{{ pref }}" {% if form and form.prefecture == pref %}selected{% endif %}>{{ pref }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>性別（四柱推命の大運用）
+          <select name="gender">
+            <option value="unknown">不明/指定なし</option>
+            <option value="female">女性</option>
+            <option value="male">男性</option>
+          </select>
+        </label>
+        <div class="checks">
+          <label><input type="checkbox" name="include_asteroids" value="1"> 小惑星オプションを含める</label>
+          <label><input type="checkbox" name="include_transit" value="1"> トランジット（1ヶ月）を含める</label>
+          <label><input type="checkbox" name="include_shichusuimei" value="1"> 四柱推命を含める</label>
+          <label><input type="checkbox" name="day_change_at_23" value="1"> 四柱推命：23時日替わり</label>
+        </div>
+        <button type="submit">YAML URLを発行</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
