@@ -12,80 +12,27 @@
     <div class="card buyer-card product-{{ product_type }}">
       <p class="eyebrow">nanami-products</p>
 
-      <div class="hero-grid">
-        <div>
-          <div class="product-pill">{{ product.label }}</div>
-          {% if product_type == 'western_basic' %}
-          <h1>ホロスコープ基本版<br>鑑定データ入力</h1>
-          <p class="lead">
-            基本版に必要な情報だけ入力してください。<br>
-            小惑星・四柱推命・日替わり境界の選択欄は表示されません。
-          </p>
-          {% elif product_type == 'western_full' %}
-          <h1>ホロスコープFULL版<br>鑑定データ入力</h1>
-          <p class="lead">
-            小惑星とトランジット（1ヶ月）をセットで含めて生成します。<br>
-            オプション選択は不要です。
-          </p>
-          {% elif product_type == 'shichu' %}
-          <h1>四柱推命鑑定<br>データ入力</h1>
-          <p class="lead">
-            四柱推命に必要な情報を入力してください。<br>
-            日替わり境界は、1時（丑の刻）または23時から選択できます。
-          </p>
-          {% else %}
-          <h1>鑑定データ入力</h1>
-          <p class="lead">
-            STORESの注文番号と出生情報を入力してください。<br>
-            送信は1回限りです。送信後の変更はできません。
-          </p>
-          {% endif %}
-        </div>
-        <div class="mini-panel">
-          <p class="mini-label">入力前チェック</p>
-          <strong>送信後は同じ注文番号で再生成できません。</strong>
-          <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
-        </div>
-      </div>
+      <div class="product-pill">{{ product.label }}</div>
 
-      <section class="notice-box soft product-summary">
-        <h2>購入商品</h2>
-        <p class="product-title">{{ product.label }}</p>
-        <p class="hint" style="margin:8px 0 0">{{ product.description }}</p>
-        {% if product.features %}
-        <ul class="feature-list">
-          {% for feature in product.features %}
-            <li>{{ feature }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </section>
-
-      {% if product_type == "western_basic" %}
-      <section class="notice-box">
-        <h2>基本版の生成内容</h2>
-        <p class="hint" style="margin:0">
-          西洋占星術の出生図データのみを生成します。<br>
-          小惑星オプション、四柱推命、四柱推命：23時日替わりの入力項目は削除しています。
-        </p>
-      </section>
-      {% elif product_type == "western_full" %}
-      <section class="notice-box">
-        <h2>FULL版の生成内容</h2>
-        <p class="hint" style="margin:0">
-          小惑星とトランジット（1ヶ月）をセットで含めて生成します。<br>
-          オプション商品ではないため、購入者側で選択する項目はありません。
-        </p>
-      </section>
-      {% elif product_type == "shichu" %}
-      <section class="notice-box">
-        <h2>四柱推命の生成内容</h2>
-        <p class="hint" style="margin:0">
-          四柱推命データを生成します。<br>
-          日替わり境界は、標準の1時（丑の刻）または23時切替から選択できます。
-        </p>
-      </section>
+      {% if product_type == 'western_basic' %}
+      <h1>ホロスコープ基本版<br>鑑定データ入力</h1>
+      <p class="lead">基本版に必要な情報だけ入力してください。</p>
+      {% elif product_type == 'western_full' %}
+      <h1>ホロスコープFULL版<br>鑑定データ入力</h1>
+      <p class="lead">小惑星とトランジット（1ヶ月）をセットで含めて生成します。</p>
+      {% elif product_type == 'shichu' %}
+      <h1>四柱推命鑑定<br>データ入力</h1>
+      <p class="lead">四柱推命に必要な情報を入力してください。</p>
+      {% else %}
+      <h1>鑑定データ入力</h1>
+      <p class="lead">STORESの注文番号と出生情報を入力してください。</p>
       {% endif %}
+
+      <div class="mini-panel">
+        <p class="mini-label">入力前チェック</p>
+        <strong>送信後は同じ注文番号で再生成できません。</strong>
+        <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
+      </div>
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
@@ -94,6 +41,7 @@
 
         <div class="form-section">
           <h2>注文情報</h2>
+
           <label>注文番号（STORES注文番号）<span class="required">必須</span>
             <input type="text" name="order_code" required
                    value="{{ form.order_code if form else '' }}"
@@ -117,6 +65,7 @@
 
         <div class="form-section">
           <h2>出生情報</h2>
+
           <label>生年月日<span class="required">必須</span>
             <input type="date" name="birth_date" required
                    value="{{ form.birth_date if form else '' }}">
@@ -138,8 +87,10 @@
             </select>
           </label>
 
-          <label>性別{% if product_type == 'shichu' %}<span class="required">必須</span>{% else %}<span class="optional">任意</span>{% endif %}
-            <select name="gender" {% if product_type == 'shichu' %}required{% endif %}>
+          {# 性別：四柱推命のみ表示（大運計算に必要） #}
+          {% if product_type == 'shichu' %}
+          <label>性別<span class="required">必須</span>
+            <select name="gender" required>
               <option value="unknown"
                 {% if not form or form.gender == 'unknown' %}selected{% endif %}>指定なし</option>
               <option value="female"
@@ -147,12 +98,12 @@
               <option value="male"
                 {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>
             </select>
-            {% if product_type == 'shichu' %}
-            <small>四柱推命の大運計算に使用します。不明・指定しない場合は「指定なし」のまま送信できます。</small>
-            {% else %}
-            <small>通常は指定なしで構いません。</small>
-            {% endif %}
+            <small>四柱推命の大運計算に使用します。不明な場合は「指定なし」のまま送信できます。</small>
           </label>
+          {% else %}
+          {# ホロスコープは性別不要。hidden で unknown を送信 #}
+          <input type="hidden" name="gender" value="unknown">
+          {% endif %}
         </div>
 
         {% if product_type == 'shichu' %}
@@ -160,18 +111,18 @@
           <h2>四柱推命設定</h2>
           <label>日替わり境界<span class="required">必須</span>
             <select name="day_change_at_23" required>
-              <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>1時（丑の刻）</option>
-              <option value="true" {% if form and form.day_change_at_23 %}selected{% endif %}>23時</option>
+              <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>1時（丑の刻）— 標準</option>
+              <option value="true"  {% if form and form.day_change_at_23 %}selected{% endif %}>23時</option>
             </select>
-            <small>標準は1時（丑の刻）です。23時切替の流派で見る場合のみ「23時」を選択してください。</small>
+            <small>23時切替の流派で見る場合のみ「23時」を選択してください。</small>
           </label>
         </div>
         {% endif %}
 
         {% if product_type == 'western_full' %}
         <div class="notice-box soft auto-box">
-          <p style="margin:0 0 8px;font-weight:800">FULL版の自動セット内容</p>
-          <ul class="plain-list" style="margin:0">
+          <p>FULL版の自動セット内容</p>
+          <ul class="plain-list">
             <li>小惑星を含める：ON</li>
             <li>トランジット（1ヶ月）を含める：ON</li>
             <li>四柱推命：OFF</li>
@@ -179,8 +130,8 @@
         </div>
         {% elif product_type == 'western_basic' %}
         <div class="notice-box soft auto-box">
-          <p style="margin:0 0 8px;font-weight:800">基本版の自動セット内容</p>
-          <ul class="plain-list" style="margin:0">
+          <p>基本版の自動セット内容</p>
+          <ul class="plain-list">
             <li>小惑星を含める：OFF</li>
             <li>トランジット（1ヶ月）を含める：OFF</li>
             <li>四柱推命：OFF</li>
@@ -188,9 +139,9 @@
         </div>
         {% endif %}
 
-        <div class="notice-box soft final-check">
-          <p style="margin:0 0 10px;font-weight:800">最終確認</p>
-          <p class="hint" style="margin:0 0 12px">
+        <div class="notice-box warn final-check">
+          <p>最終確認</p>
+          <p class="hint">
             送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。
           </p>
           <label class="checkbox-line">

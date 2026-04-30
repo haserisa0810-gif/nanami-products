@@ -130,7 +130,7 @@ section { margin-top: 28px; }
   margin-top: 20px;
 }
 .notice-box.soft { background: rgba(201,168,108,.04); border-color: rgba(201,168,108,.15); }
-.notice-box.warn { background: rgba(201,100,80,.05);  border-color: rgba(201,100,80,.2);  }
+.notice-box.warn  { background: rgba(201,100,80,.05);  border-color: rgba(201,100,80,.2);  }
 
 .product-summary .product-title {
   margin: 6px 0 0;
@@ -238,6 +238,7 @@ section { margin-top: 28px; }
   color: #fff;
 }
 
+/* ── Form ─────────────────────────────── */
 .form { display: grid; gap: 20px; margin-top: 28px; }
 
 .form-section {
@@ -263,8 +264,8 @@ label {
   vertical-align: middle;
   margin-left: 6px;
   border-radius: 4px;
-  padding: 0px 5px;
-  font-size: .62rem;
+  padding: 1px 6px;
+  font-size: .68rem;
   font-weight: 500;
   letter-spacing: .04em;
 }

@@ -11,18 +11,14 @@
   <main class="wrap">
     <div class="card buyer-card product-shichu">
       <p class="eyebrow">nanami-products</p>
+      <div class="product-pill">四柱推命鑑定</div>
+      <h1>四柱推命鑑定<br>データ入力</h1>
+      <p class="lead">四柱推命に必要な情報を入力してください。<br>日替わり境界は、標準の1時（丑の刻）または23時から選択できます。</p>
 
-      <div class="hero-grid">
-        <div>
-          <div class="product-pill">四柱推命鑑定</div>
-          <h1>四柱推命鑑定<br>データ入力</h1>
-          <p class="lead">四柱推命に必要な情報を入力してください。<br>日替わり境界は、標準の1時（丑の刻）または23時から選択できます。</p>
-        </div>
-        <div class="mini-panel">
-          <p class="mini-label">入力前チェック</p>
-          <strong>送信後は同じ注文番号で再生成できません。</strong>
-          <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
-        </div>
+      <div class="mini-panel">
+        <p class="mini-label">入力前チェック</p>
+        <strong>送信後は同じ注文番号で再生成できません。</strong>
+        <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
       </div>
 
       <section class="notice-box soft">
@@ -49,13 +45,11 @@
                    autocomplete="off">
             <small>STORESの購入確認メールに記載されています。</small>
           </label>
-
           <label>お名前<span class="optional">任意</span>
             <input type="text" name="buyer_name"
                    value="{{ form.buyer_name if form else '' }}"
                    placeholder="例：山田 花子">
           </label>
-
           <label>メールアドレス<span class="optional">任意</span>
             <input type="email" name="email"
                    value="{{ form.email if form else '' }}"
@@ -69,13 +63,11 @@
             <input type="date" name="birth_date" required
                    value="{{ form.birth_date if form else '' }}">
           </label>
-
           <label>出生時刻<span class="optional">任意</span>
             <input type="time" name="birth_time"
                    value="{{ form.birth_time if form else '' }}">
             <small>不明な場合は空欄のままで構いません（正午で計算します）。</small>
           </label>
-
           <label>出生都道府県<span class="required">必須</span>
             <select name="prefecture" required>
               <option value="">選択してください</option>
@@ -85,7 +77,6 @@
               {% endfor %}
             </select>
           </label>
-
           <label>性別<span class="required">必須</span>
             <select name="gender" required>
               <option value="unknown"
@@ -95,7 +86,7 @@
               <option value="male"
                 {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>
             </select>
-            <small>四柱推命の大運計算に使用します。不明・指定しない場合は「指定なし」のまま送信できます。</small>
+            <small>四柱推命の大運計算に使用します。不明な場合は「指定なし」のまま送信できます。</small>
           </label>
         </div>
 
@@ -103,18 +94,16 @@
           <h2>四柱推命設定</h2>
           <label>日替わり境界<span class="required">必須</span>
             <select name="day_change_at_23" required>
-              <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>1時（丑の刻）</option>
-              <option value="true" {% if form and form.day_change_at_23 %}selected{% endif %}>23時</option>
+              <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>1時（丑の刻）— 標準</option>
+              <option value="true"  {% if form and form.day_change_at_23 %}selected{% endif %}>23時</option>
             </select>
-            <small>標準は1時（丑の刻）です。23時切替の流派で見る場合のみ「23時」を選択してください。</small>
+            <small>23時切替の流派で見る場合のみ「23時」を選択してください。</small>
           </label>
         </div>
 
-        <div class="notice-box soft final-check">
-          <p style="margin:0 0 10px;font-weight:800">最終確認</p>
-          <p class="hint" style="margin:0 0 12px">
-            送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。
-          </p>
+        <div class="notice-box warn final-check">
+          <p>最終確認</p>
+          <p class="hint">送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。</p>
           <label class="checkbox-line">
             <input type="checkbox" name="agree_final" value="1" required
                    {% if form and form.agree_final %}checked{% endif %}>
