@@ -82,6 +82,79 @@ BRANCH_ELEMENT = {
     "申": "金", "酉": "金", "戌": "土", "亥": "水",
 }
 
+STEM_COMBINATIONS = {
+    frozenset(("甲", "己")): "土",
+    frozenset(("乙", "庚")): "金",
+    frozenset(("丙", "辛")): "水",
+    frozenset(("丁", "壬")): "木",
+    frozenset(("戊", "癸")): "火",
+}
+
+BRANCH_CLASHES = {
+    frozenset(("子", "午")),
+    frozenset(("丑", "未")),
+    frozenset(("寅", "申")),
+    frozenset(("卯", "酉")),
+    frozenset(("辰", "戌")),
+    frozenset(("巳", "亥")),
+}
+
+BRANCH_SIX_HARMONIES = {
+    frozenset(("子", "丑")): "土",
+    frozenset(("寅", "亥")): "木",
+    frozenset(("卯", "戌")): "火",
+    frozenset(("辰", "酉")): "金",
+    frozenset(("巳", "申")): "水",
+    frozenset(("午", "未")): "火",
+}
+
+BRANCH_HARMS = {
+    frozenset(("子", "未")),
+    frozenset(("丑", "午")),
+    frozenset(("寅", "巳")),
+    frozenset(("卯", "辰")),
+    frozenset(("申", "亥")),
+    frozenset(("酉", "戌")),
+}
+
+BRANCH_PUNISHMENTS = {
+    frozenset(("子", "卯")): "無礼の刑",
+}
+
+BRANCH_SELF_PUNISHMENTS = {"辰", "午", "酉", "亥"}
+
+BRANCH_THREE_PUNISHMENTS = {
+    frozenset(("寅", "巳", "申")): "無恩の刑",
+    frozenset(("丑", "戌", "未")): "持勢の刑",
+}
+
+BRANCH_TRIADS = {
+    frozenset(("申", "子", "辰")): "水局",
+    frozenset(("亥", "卯", "未")): "木局",
+    frozenset(("寅", "午", "戌")): "火局",
+    frozenset(("巳", "酉", "丑")): "金局",
+}
+
+# 神殺（代表的な表）。日干基準を基本に、天徳は月支基準。
+TENOTSU_KIJIN_BY_DAY_STEM = {
+    "甲": ["丑", "未"], "戊": ["丑", "未"], "庚": ["丑", "未"],
+    "乙": ["子", "申"], "己": ["子", "申"],
+    "丙": ["亥", "酉"], "丁": ["亥", "酉"],
+    "壬": ["卯", "巳"], "癸": ["卯", "巳"],
+    "辛": ["寅", "午"],
+}
+
+BUNSHO_BY_DAY_STEM = {
+    "甲": ["巳"], "乙": ["午"], "丙": ["申"], "丁": ["酉"], "戊": ["申"],
+    "己": ["酉"], "庚": ["亥"], "辛": ["子"], "壬": ["寅"], "癸": ["卯"],
+}
+
+TENTOKU_BY_MONTH_BRANCH = {
+    "寅": "丁", "卯": "申", "辰": "壬", "巳": "辛",
+    "午": "亥", "未": "甲", "申": "癸", "酉": "寅",
+    "戌": "丙", "亥": "乙", "子": "巳", "丑": "庚",
+}
+
 # 蔵干（代表的な表）
 HIDDEN_STEMS = {
     "子": ["癸"],
@@ -921,6 +994,317 @@ def _pillar_dict(kanshi: str) -> dict[str, Any]:
     }
 
 
+def _pillar_items(p4: Pillars4, *, include_day_master: bool = True) -> list[dict[str, str]]:
+    items = [
+        {"name": "year", "kanshi": p4.year, "stem": p4.year[0], "branch": p4.year[1]},
+        {"name": "month", "kanshi": p4.month, "stem": p4.month[0], "branch": p4.month[1]},
+        {"name": "day", "kanshi": p4.day, "stem": p4.day[0], "branch": p4.day[1]},
+        {"name": "hour", "kanshi": p4.hour, "stem": p4.hour[0], "branch": p4.hour[1]},
+    ]
+    if include_day_master:
+        return items
+    return [item for item in items if item["name"] != "day"]
+
+
+def _branch_pair_relations(left: dict[str, str], right: dict[str, str]) -> list[dict[str, Any]]:
+    b1 = left["branch"]
+    b2 = right["branch"]
+    pair = frozenset((b1, b2))
+    relations: list[dict[str, Any]] = []
+
+    if b1 == b2 and b1 in BRANCH_SELF_PUNISHMENTS:
+        relations.append({
+            "type": "self_punishment",
+            "type_ja": "自刑",
+            "detail": f"{b1}{b2}",
+        })
+    if pair in BRANCH_PUNISHMENTS:
+        relations.append({
+            "type": "punishment",
+            "type_ja": "刑",
+            "detail": BRANCH_PUNISHMENTS[pair],
+        })
+    if pair in BRANCH_CLASHES:
+        relations.append({
+            "type": "clash",
+            "type_ja": "冲",
+            "detail": f"{b1}{b2}冲",
+        })
+    if pair in BRANCH_SIX_HARMONIES:
+        relations.append({
+            "type": "six_harmony",
+            "type_ja": "六合",
+            "element": BRANCH_SIX_HARMONIES[pair],
+            "detail": f"{b1}{b2}合",
+        })
+    if pair in BRANCH_HARMS:
+        relations.append({
+            "type": "harm",
+            "type_ja": "害",
+            "detail": f"{b1}{b2}害",
+        })
+    return relations
+
+
+def _stem_pair_relations(left: dict[str, str], right: dict[str, str]) -> list[dict[str, Any]]:
+    s1 = left["stem"]
+    s2 = right["stem"]
+    pair = frozenset((s1, s2))
+    if pair not in STEM_COMBINATIONS:
+        return []
+    return [{
+        "type": "stem_combination",
+        "type_ja": "干合",
+        "element": STEM_COMBINATIONS[pair],
+        "detail": f"{s1}{s2}合",
+    }]
+
+
+def _format_relation(left: dict[str, str], right: dict[str, str], relation: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "left": left,
+        "right": right,
+        **relation,
+    }
+
+
+def _branch_triads(items: list[dict[str, str]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    branches = {item["branch"] for item in items}
+    for triad, label in BRANCH_TRIADS.items():
+        hit = branches.intersection(triad)
+        if len(hit) == 3:
+            level = "full"
+            type_ja = "三合"
+        elif len(hit) == 2:
+            level = "partial"
+            type_ja = "半会"
+        else:
+            continue
+        out.append({
+            "type": "triad",
+            "type_ja": type_ja,
+            "level": level,
+            "group": label,
+            "branches": sorted(hit, key=lambda x: BRANCHES.index(x)),
+            "pillars": [item for item in items if item["branch"] in hit],
+        })
+    return out
+
+
+def _branch_three_punishments(items: list[dict[str, str]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    branches = {item["branch"] for item in items}
+    for group, label in BRANCH_THREE_PUNISHMENTS.items():
+        hit = branches.intersection(group)
+        if len(hit) == 3:
+            level = "full"
+        elif len(hit) == 2:
+            level = "partial"
+        else:
+            continue
+        out.append({
+            "type": "three_punishment",
+            "type_ja": "三刑",
+            "level": level,
+            "detail": label,
+            "branches": sorted(hit, key=lambda x: BRANCHES.index(x)),
+            "pillars": [item for item in items if item["branch"] in hit],
+        })
+    return out
+
+
+def _interactions_for_items(items: list[dict[str, str]]) -> dict[str, Any]:
+    branch_relations: list[dict[str, Any]] = []
+    stem_relations: list[dict[str, Any]] = []
+    for i, left in enumerate(items):
+        for right in items[i + 1:]:
+            for rel in _branch_pair_relations(left, right):
+                branch_relations.append(_format_relation(left, right, rel))
+            for rel in _stem_pair_relations(left, right):
+                stem_relations.append(_format_relation(left, right, rel))
+    return {
+        "branch_relations": branch_relations,
+        "stem_relations": stem_relations,
+        "triads": _branch_triads(items),
+        "three_punishments": _branch_three_punishments(items),
+    }
+
+
+def _current_daiun_item(daiun: dict[str, Any], *, birth_year: int, current_year: int) -> dict[str, Any] | None:
+    age = current_year - birth_year
+    for item in daiun.get("items", []) or []:
+        if item.get("age_from") is None or item.get("age_to") is None:
+            continue
+        if float(item["age_from"]) <= age < float(item["age_to"]):
+            return {**item, "current_age_approx": age}
+    return None
+
+
+def _annual_fortune(
+    p4: Pillars4,
+    daiun: dict[str, Any],
+    *,
+    birth_year: int,
+    current_dt: datetime,
+    tz_name: str,
+) -> dict[str, Any]:
+    tz = ZoneInfo(tz_name)
+    local_dt = current_dt.astimezone(tz)
+    current_year = local_dt.year
+    lichun_local = _lichun_utc_for_year(current_year, tz_name).astimezone(tz)
+    effective_year = current_year if local_dt >= lichun_local else current_year - 1
+    kanshi = _year_kanshi_from_effective_year(effective_year)
+    annual_item = {
+        "name": "annual",
+        "kanshi": kanshi,
+        "stem": kanshi[0],
+        "branch": kanshi[1],
+    }
+    natal_items = _pillar_items(p4)
+    daiun_item = _current_daiun_item(daiun, birth_year=birth_year, current_year=current_year)
+
+    relation_targets = natal_items[:]
+    if daiun_item and daiun_item.get("kanshi"):
+        dk = str(daiun_item["kanshi"])
+        relation_targets.append({"name": "current_daiun", "kanshi": dk, "stem": dk[0], "branch": dk[1]})
+
+    branch_relations: list[dict[str, Any]] = []
+    stem_relations: list[dict[str, Any]] = []
+    for target in relation_targets:
+        for rel in _branch_pair_relations(annual_item, target):
+            branch_relations.append(_format_relation(annual_item, target, rel))
+        for rel in _stem_pair_relations(annual_item, target):
+            stem_relations.append(_format_relation(annual_item, target, rel))
+
+    return {
+        "year": current_year,
+        "effective_year": effective_year,
+        "kanshi": kanshi,
+        "stem": kanshi[0],
+        "branch": kanshi[1],
+        "ten_god_to_day_master": ten_god(p4.day[0], kanshi[0]),
+        "twelve_fortune_to_day_master": twelve_fortune(p4.day[0], kanshi[1]),
+        "current_daiun": daiun_item,
+        "relations": {
+            "branch_relations": branch_relations,
+            "stem_relations": stem_relations,
+            "triads_with_natal": _branch_triads([annual_item, *natal_items]),
+            "triads_with_natal_and_daiun": _branch_triads([annual_item, *relation_targets]),
+            "three_punishments_with_natal": _branch_three_punishments([annual_item, *natal_items]),
+            "three_punishments_with_natal_and_daiun": _branch_three_punishments([annual_item, *relation_targets]),
+        },
+        "debug": {
+            "calculated_at": local_dt.isoformat(),
+            "lichun_local": lichun_local.isoformat(),
+            "year_boundary_rule": "lichun(315deg)",
+        },
+    }
+
+
+def _shinsatsu_hits_by_branch(
+    *,
+    name: str,
+    name_ja: str,
+    basis: dict[str, Any],
+    target_branches: list[str],
+    pillar_items: list[dict[str, str]],
+) -> dict[str, Any]:
+    hits = [
+        {
+            "pillar": item["name"],
+            "kanshi": item["kanshi"],
+            "branch": item["branch"],
+        }
+        for item in pillar_items
+        if item["branch"] in target_branches
+    ]
+    return {
+        "name": name,
+        "name_ja": name_ja,
+        "basis": basis,
+        "targets": [{"type": "branch", "value": br} for br in target_branches],
+        "hits": hits,
+        "hit": bool(hits),
+    }
+
+
+def _shinsatsu_hits_by_stem_or_branch(
+    *,
+    name: str,
+    name_ja: str,
+    basis: dict[str, Any],
+    target: str | None,
+    pillar_items: list[dict[str, str]],
+) -> dict[str, Any]:
+    if not target:
+        return {
+            "name": name,
+            "name_ja": name_ja,
+            "basis": basis,
+            "targets": [],
+            "hits": [],
+            "hit": False,
+        }
+    target_type = "stem" if target in STEMS else "branch"
+    hits = []
+    for item in pillar_items:
+        if target_type == "stem" and item["stem"] == target:
+            hits.append({"pillar": item["name"], "kanshi": item["kanshi"], "stem": item["stem"]})
+        elif target_type == "branch" and item["branch"] == target:
+            hits.append({"pillar": item["name"], "kanshi": item["kanshi"], "branch": item["branch"]})
+    return {
+        "name": name,
+        "name_ja": name_ja,
+        "basis": basis,
+        "targets": [{"type": target_type, "value": target}],
+        "hits": hits,
+        "hit": bool(hits),
+    }
+
+
+def _shinsatsu_for_pillars(p4: Pillars4) -> dict[str, Any]:
+    pillar_items = _pillar_items(p4)
+    day_stem = p4.day[0]
+    month_branch = p4.month[1]
+    tenotsu_targets = TENOTSU_KIJIN_BY_DAY_STEM.get(day_stem, [])
+    bunsho_targets = BUNSHO_BY_DAY_STEM.get(day_stem, [])
+    tentoku_target = TENTOKU_BY_MONTH_BRANCH.get(month_branch)
+    stars = [
+        _shinsatsu_hits_by_branch(
+            name="tenotsu_kijin",
+            name_ja="天乙貴人",
+            basis={"type": "day_stem", "value": day_stem},
+            target_branches=tenotsu_targets,
+            pillar_items=pillar_items,
+        ),
+        _shinsatsu_hits_by_branch(
+            name="bunsho",
+            name_ja="文昌",
+            basis={"type": "day_stem", "value": day_stem},
+            target_branches=bunsho_targets,
+            pillar_items=pillar_items,
+        ),
+        _shinsatsu_hits_by_stem_or_branch(
+            name="tentoku",
+            name_ja="天徳",
+            basis={"type": "month_branch", "value": month_branch},
+            target=tentoku_target,
+            pillar_items=pillar_items,
+        ),
+    ]
+    return {
+        "calc_policy": {
+            "tenotsu_kijin": "day_stem_to_branch",
+            "bunsho": "day_stem_to_branch",
+            "tentoku": "month_branch_to_stem_or_branch",
+            "note": "神殺は流派差があるため、代表的な表に基づく補助情報として扱う",
+        },
+        "stars": stars,
+        "hit_stars": [star for star in stars if star.get("hit")],
+    }
+
+
 def _build_unknowns(payload: dict[str, Any], *, day_change_at_23: bool) -> list[str]:
     unknowns: list[str] = []
     if payload.get("hour") in (None, "", "不明"):
@@ -1051,6 +1435,15 @@ def calc_shichusuimei_from_payload(
     strength = _calc_strength_score(p4)
     daiun = _calc_daiun(dt, p4, tz_name=tz_name, gender=payload.get("gender"))
     kubo = kubo_for_pillars(p4)
+    interactions = _interactions_for_items(_pillar_items(p4))
+    shinsatsu = _shinsatsu_for_pillars(p4)
+    annual_fortune = _annual_fortune(
+        p4,
+        daiun,
+        birth_year=int(payload["year"]),
+        current_dt=datetime.now(ZoneInfo(tz_name)),
+        tz_name=tz_name,
+    )
 
     hidden_all = {
         "year": HIDDEN_STEMS.get(p4.year[1], []),
@@ -1082,6 +1475,9 @@ def calc_shichusuimei_from_payload(
             **daiun,
             "calc_mode": "approx",
         },
+        "interactions": interactions,
+        "annual_fortune": annual_fortune,
+        "shinsatsu": shinsatsu,
     }
 
     structure_report = _build_structure_report(
@@ -1097,7 +1493,7 @@ def calc_shichusuimei_from_payload(
         "module": "shichusuimei",
         "system": "shichusuimei",
         "ephemeris": ephemeris_debug_info(),
-        "engine_version": "0.2.7",
+        "engine_version": "0.3.0",
         "generated_at": datetime.now(ZoneInfo(tz_name)).isoformat(),
         "input": {
             "raw": {
@@ -1147,6 +1543,9 @@ def calc_shichusuimei_from_payload(
             "twelve_fortune": tf,
             "strength": strength,
             "daiun": normalized_data["daiun"],
+            "annual_fortune": annual_fortune,
+            "interactions": interactions,
+            "shinsatsu": shinsatsu,
             "hidden_stems": hidden_all,
             "main_hidden_stems": hidden_main,
             "kubo": kubo,

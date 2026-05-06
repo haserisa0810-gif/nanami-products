@@ -5,7 +5,7 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ホロスコープ基本版 入力 | nanami-products</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
 </head>
 <body>
   <main class="wrap">
@@ -29,22 +29,19 @@
 
         <div class="form-section">
           <h2>注文情報</h2>
-          <label>注文番号（STORES注文番号）<span class="required">必須</span>
+          <label>STORESオーダー番号<span class="required">必須</span>
             <input type="text" name="order_code" required
                    value="{{ form.order_code if form else '' }}"
-                   placeholder="例：ORDER-XXXXXXXX"
+                   placeholder="例：9824333454"
+                   inputmode="numeric"
+                   pattern="[0-9]{10}"
                    autocomplete="off">
-            <small>STORESの購入確認メールに記載されています。</small>
+            <small>STORES購入完了メールの件名にある10桁の番号です。</small>
           </label>
           <label>お名前<span class="optional">任意</span>
             <input type="text" name="buyer_name"
                    value="{{ form.buyer_name if form else '' }}"
                    placeholder="例：山田 花子">
-          </label>
-          <label>メールアドレス<span class="optional">任意</span>
-            <input type="email" name="email"
-                   value="{{ form.email if form else '' }}"
-                   placeholder="例：example@email.com">
           </label>
         </div>
 
@@ -70,6 +67,41 @@
           </label>
         </div>
 
+        <div class="form-section">
+          <h2>海外出生の場合</h2>
+          <label>出生地区分
+            <select name="birth_place_kind" id="birth_place_kind" data-initial-kind="{{ form.birth_place_kind if form and form.birth_place_kind == 'overseas' else 'domestic' }}" autocomplete="off">
+              <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>国内</option>
+              <option value="overseas" {% if form and form.birth_place_kind == 'overseas' %}selected{% endif %}>海外</option>
+            </select>
+          </label>
+          <div class="overseas-fields" id="overseas-fields">
+            <div class="location-grid">
+              <label class="full-span">出生地名（国・都市）
+                <input type="text" name="birth_place_overseas"
+                       value="{{ form.birth_place_overseas if form else '' }}"
+                       placeholder="例：New York, USA">
+              </label>
+              <label>緯度
+                <input type="number" name="birth_lat" step="any"
+                       value="{{ form.birth_lat if form else '' }}"
+                       placeholder="例：40.7128">
+              </label>
+              <label>経度
+                <input type="number" name="birth_lng" step="any"
+                       value="{{ form.birth_lng if form else '' }}"
+                       placeholder="例：-74.0060">
+              </label>
+              <label class="full-span">タイムゾーン（IANA名）
+                <input type="text" name="birth_timezone"
+                       value="{{ form.birth_timezone if form else '' }}"
+                       placeholder="例：America/New_York">
+                <small>海外出生の場合に入力してください。西洋占星術の計算にも使います。</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div class="notice-box warn final-check">
           <p>最終確認</p>
           <p class="hint">送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。</p>
@@ -85,9 +117,28 @@
     </div>
   </main>
   <script>
+    function syncBirthPlaceFields() {
+      const mode = document.getElementById('birth_place_kind');
+      const box = document.getElementById('overseas-fields');
+      if (!mode || !box) return;
+      const initialKind = mode.dataset.initialKind || 'domestic';
+      if (mode.value !== initialKind) mode.value = initialKind;
+      const active = mode.value === 'overseas';
+      const prefecture = document.querySelector('[name="prefecture"]');
+      if (prefecture) prefecture.required = !active;
+      box.classList.toggle('is-active', active);
+      box.querySelectorAll('input').forEach((el) => {
+        el.required = active;
+      });
+    }
+
     function confirmSubmit() {
       return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
     }
+    document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
+    });
   </script>
 </body>
 </html>

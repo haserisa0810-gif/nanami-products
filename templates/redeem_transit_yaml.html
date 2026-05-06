@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>トランジットYAML 入力 | nanami-products</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+</head>
+<body>
+  <main class="wrap">
+    <div class="card buyer-card product-transit_yaml">
+      <p class="eyebrow">nanami-products</p>
+      <div class="product-pill">トランジットYAML</div>
+      <h1>トランジットYAML<br>データ入力</h1>
+      <p class="lead">特定の日時・場所における天体配置だけをYAML化します。<br>出生情報は不要です。</p>
+
+      <div class="mini-panel">
+        <p class="mini-label">入力前チェック</p>
+        <strong>送信後は同じ注文番号で再生成できません。</strong>
+        <span>日付・時刻・場所・暦種別を確認してから送信してください。</span>
+      </div>
+
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+      <form method="post" action="/redeem?type=transit_yaml" class="form" onsubmit="return confirmSubmit()">
+        <input type="hidden" name="product_type" value="transit_yaml">
+
+        <div class="form-section">
+          <h2>注文情報</h2>
+          <label>STORESオーダー番号<span class="required">必須</span>
+            <input type="text" name="order_code" required
+                   value="{{ form.order_code if form else '' }}"
+                   placeholder="例：9824333454"
+                   inputmode="numeric"
+                   pattern="[0-9]{10}"
+                   autocomplete="off">
+            <small>STORES購入完了メールの件名にある10桁の番号です。</small>
+          </label>
+          <label>メールアドレス<span class="optional">任意</span>
+            <input type="email" name="email"
+                   value="{{ form.email if form else '' }}"
+                   placeholder="例：you@example.com">
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h2>イベント情報</h2>
+          <label>イベント名<span class="required">必須</span>
+            <input type="text" name="event_name" required
+                   value="{{ form.event_name if form else '本能寺の変' }}"
+                   placeholder="例：本能寺の変">
+          </label>
+          <label>日付<span class="required">必須</span>
+            <input type="date" name="event_date" required
+                   value="{{ form.event_date if form else '1582-06-21' }}">
+            <small>選択した暦種別における日付として扱います。</small>
+          </label>
+          <label>時刻<span class="required">必須</span>
+            <input type="time" name="event_time" required
+                   value="{{ form.event_time if form else '04:00' }}">
+          </label>
+          <label>タイムゾーン<span class="required">必須</span>
+            <input type="text" name="event_timezone" required
+                   value="{{ form.event_timezone if form else 'Asia/Tokyo' }}"
+                   placeholder="例：Asia/Tokyo">
+            <small>IANA名、UTC、+09:00 の形式に対応します。</small>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h2>場所</h2>
+          <label>場所名<span class="required">必須</span>
+            <input type="text" name="location_name" required
+                   value="{{ form.location_name if form else '京都・本能寺' }}"
+                   placeholder="例：京都・本能寺">
+          </label>
+          <label>緯度<span class="required">必須</span>
+            <input type="number" name="event_lat" step="any" required
+                   value="{{ form.event_lat if form else '35.0100' }}"
+                   placeholder="例：35.0100">
+          </label>
+          <label>経度<span class="required">必須</span>
+            <input type="number" name="event_lng" step="any" required
+                   value="{{ form.event_lng if form else '135.7681' }}"
+                   placeholder="例：135.7681">
+          </label>
+        </div>
+
+        <div class="form-section highlight-section">
+          <h2>暦設定</h2>
+          <label>暦種別<span class="required">必須</span>
+            <select name="input_calendar" required>
+              <option value="gregorian" {% if form and form.input_calendar == 'gregorian' %}selected{% endif %}>Gregorian</option>
+              <option value="julian" {% if not form or form.input_calendar == 'julian' %}selected{% endif %}>Julian</option>
+            </select>
+            <small>歴史日付をユリウス暦で入力する場合は Julian を選択してください。</small>
+          </label>
+          <label>暦メモ<span class="optional">任意</span>
+            <textarea name="calendar_note" rows="3">{{ form.calendar_note if form else '歴史日付は諸説あり。必要に応じて検証してください。' }}</textarea>
+          </label>
+        </div>
+
+        <div class="notice-box warn final-check">
+          <p>最終確認</p>
+          <p class="hint">送信後は、この注文番号で再生成できません。日時・場所・暦種別に間違いがある場合も、購入者側では変更できません。</p>
+          <label class="checkbox-line">
+            <input type="checkbox" name="agree_final" value="1" required
+                   {% if form and form.agree_final %}checked{% endif %}>
+            <span>入力内容を確認しました。送信後に変更できないことに同意します。</span>
+          </label>
+        </div>
+
+        <button type="submit" class="submit-button">AI分析用YAMLを生成する</button>
+      </form>
+    </div>
+  </main>
+  <script>
+    function confirmSubmit() {
+      return confirm('この内容でトランジットYAMLを生成します。送信後は変更・再生成できません。よろしいですか？');
+    }
+  </script>
+</body>
+</html>

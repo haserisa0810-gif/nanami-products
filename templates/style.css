@@ -264,10 +264,14 @@ label {
   vertical-align: middle;
   margin-left: 6px;
   border-radius: 4px;
-  padding: 1px 6px;
+  padding: 1px 0;
   font-size: .68rem;
   font-weight: 500;
   letter-spacing: .04em;
+  width: 3.4em;
+  min-width: 3.4em;
+  text-align: center;
+  box-sizing: border-box;
 }
 .required { background: rgba(201,112,112,.18); color: #c97070; border: 1px solid rgba(201,112,112,.3); }
 .optional { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }

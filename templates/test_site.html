@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APIテスト | nanami products</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260503-api-test">
+</head>
+<body class="api-test-page">
+  <header class="api-test-header">
+    <div>
+      <p class="api-test-kicker">nanami products</p>
+      <h1>APIリクエスト / レスポンス確認</h1>
+    </div>
+    <a href="/">トップへ</a>
+  </header>
+
+  <main class="api-test-shell">
+    <section class="api-key-issuer">
+      <div class="api-test-panel-head">
+        <div>
+          <p class="api-test-kicker">API Key</p>
+          <h2>テスト用APIキー発行</h2>
+        </div>
+        <button type="button" id="issueApiKeyButton">発行</button>
+      </div>
+      <div class="api-key-issuer-grid">
+        <label>
+          管理トークン
+          <input id="adminTokenInput" type="password" placeholder="API_KEY_ADMIN_TOKEN または STORES_MAIL_SYNC_TOKEN">
+        </label>
+        <label>
+          ラベル
+          <input id="apiKeyLabelInput" type="text" value="test-site">
+        </label>
+        <label>
+          クレジット
+          <input id="apiKeyCreditsInput" type="number" min="0" step="1" value="20">
+        </label>
+        <label>
+          ステータス
+          <select id="apiKeyStatusInput">
+            <option value="active" selected>active</option>
+            <option value="inactive">inactive</option>
+          </select>
+        </label>
+      </div>
+      <div class="api-key-result">
+        <div class="api-test-status" id="apiKeyIssueStatus">未発行</div>
+        <div class="copyline">
+          <input id="issuedApiKeyOutput" readonly placeholder="発行されたAPIキーがここに表示されます">
+          <button type="button" id="useIssuedApiKeyButton">テスト欄に入れる</button>
+        </div>
+        <p class="hint">APIキーはDBに平文保存されません。この画面で表示されたキーを失うと再表示できません。</p>
+      </div>
+    </section>
+
+    <section class="api-key-issuer">
+      <div class="api-test-panel-head">
+        <div>
+          <p class="api-test-kicker">API Key</p>
+          <h2>保存忘れ再発行</h2>
+        </div>
+        <div class="api-test-actions">
+          <button type="button" id="lookupReissueButton">検索</button>
+          <button type="button" id="reissueApiKeyButton" class="api-test-primary">再発行</button>
+        </div>
+      </div>
+      <div class="api-key-issuer-grid">
+        <label>
+          STORESオーダー番号
+          <input id="reissueOrderCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="例: 1234567890">
+        </label>
+        <label>
+          再発行クレジット
+          <input id="reissueCreditsInput" type="number" min="0" step="1" placeholder="空欄で現在値">
+        </label>
+        <label>
+          メールアドレス
+          <input id="reissueEmailInput" type="email" placeholder="sample@example.com">
+        </label>
+        <label>
+          ラベル
+          <input id="reissueLabelInput" type="text" placeholder="reissue">
+        </label>
+      </div>
+      <div class="api-key-result">
+        <div class="api-test-status" id="reissueStatus">未検索</div>
+        <div class="copyline">
+          <input id="reissuedApiKeyOutput" readonly placeholder="再発行されたAPIキーがここに表示されます">
+          <button type="button" id="useReissuedApiKeyButton">テスト欄に入れる</button>
+        </div>
+        <pre id="reissueRecordBody">{}</pre>
+      </div>
+    </section>
+
+    <section class="api-test-toolbar" aria-label="APIテスト設定">
+      <label>
+        Endpoint
+        <select id="endpointSelect">
+          <option value="/api/calc/western">POST /api/calc/western</option>
+          <option value="/api/calc/shichu">POST /api/calc/shichu</option>
+          <option value="/api/calc/transit">POST /api/calc/transit</option>
+          <option value="/api/calc/combined" selected>POST /api/calc/combined</option>
+        </select>
+      </label>
+      <label>
+        X-API-Key
+        <input id="apiKeyInput" type="password" placeholder="発行したAPIキーを入力">
+      </label>
+      <div class="api-test-actions">
+        <button type="button" id="loadSampleButton">サンプル読込</button>
+        <button type="button" id="formatRequestButton">整形</button>
+        <button type="button" id="sendButton" class="api-test-primary">送信</button>
+      </div>
+    </section>
+
+    <section class="api-test-grid">
+      <article class="api-test-panel">
+        <div class="api-test-panel-head">
+          <div>
+            <p class="api-test-kicker">Request</p>
+            <h2>送信JSON</h2>
+          </div>
+          <button type="button" id="copyRequestButton">コピー</button>
+        </div>
+        <textarea id="requestBody" spellcheck="false"></textarea>
+      </article>
+
+      <article class="api-test-panel">
+        <div class="api-test-panel-head">
+          <div>
+            <p class="api-test-kicker">Response</p>
+            <h2>レスポンスJSON</h2>
+          </div>
+          <button type="button" id="copyResponseButton">コピー</button>
+        </div>
+        <div class="api-test-status" id="statusLine">未送信</div>
+        <pre id="responseBody">{}</pre>
+      </article>
+    </section>
+
+    <section class="api-test-chart" id="natalChartPanel">
+      <div class="api-test-panel-head">
+        <div>
+          <p class="api-test-kicker">Natal Chart</p>
+          <h2>出生図展開</h2>
+        </div>
+        <span id="natalChartStatus">未取得</span>
+      </div>
+      <div id="natalChartContent" class="api-test-chart-empty">
+        西洋占星術を含むAPIレスポンスを送信すると、ここに天体・ハウス・主要アスペクトを展開します。
+      </div>
+    </section>
+
+    <section class="api-test-notes">
+      <h2>確認できること</h2>
+      <ul>
+        <li>ブラウザから実際に <code>/api/calc/*</code> へPOSTします。</li>
+        <li><code>X-API-Key</code> ヘッダーを付けて送信します。</li>
+        <li>左のJSONを変更して、入力値ごとのレスポンス差分を確認できます。</li>
+        <li>JSONが不正な場合は、API送信前に画面上でエラーを表示します。</li>
+        <li>西洋占星術を含むレスポンスでは <code>raw_data.western.natal</code> を表形式で展開します。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const samples = {
+      "/api/calc/western": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        lat: 35.6812,
+        lon: 139.7671,
+        gender: "unknown",
+        writing: {
+          tone: { sharpness: 40, warmth: 80, mystical: 30 },
+          focus_areas: ["career", "love"]
+        }
+      },
+      "/api/calc/shichu": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        gender: "female",
+        day_boundary: "23:00",
+        writing: {
+          tone: { sharpness: 40, warmth: 80, mystical: 20 },
+          focus_areas: ["career", "money"]
+        }
+      },
+      "/api/calc/transit": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        lat: 35.6812,
+        lon: 139.7671,
+        target_date: "2026-05-01",
+        period: "day",
+        writing: {
+          tone: { sharpness: 30, warmth: 80, mystical: 30 },
+          focus_areas: ["career", "love"]
+        }
+      },
+      "/api/calc/combined": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        lat: 35.6812,
+        lon: 139.7671,
+        gender: "female",
+        day_boundary: "23:00",
+        target_date: "2026-05-01",
+        period: "day",
+        writing: {
+          tone: { sharpness: 40, warmth: 80, mystical: 30 },
+          focus_areas: ["career", "love", "money"]
+        }
+      }
+    };
+
+    const endpointSelect = document.getElementById("endpointSelect");
+    const requestBody = document.getElementById("requestBody");
+    const responseBody = document.getElementById("responseBody");
+    const statusLine = document.getElementById("statusLine");
+    const sendButton = document.getElementById("sendButton");
+    const apiKeyInput = document.getElementById("apiKeyInput");
+    const natalChartStatus = document.getElementById("natalChartStatus");
+    const natalChartContent = document.getElementById("natalChartContent");
+    const adminTokenInput = document.getElementById("adminTokenInput");
+    const apiKeyLabelInput = document.getElementById("apiKeyLabelInput");
+    const apiKeyCreditsInput = document.getElementById("apiKeyCreditsInput");
+    const apiKeyStatusInput = document.getElementById("apiKeyStatusInput");
+    const apiKeyIssueStatus = document.getElementById("apiKeyIssueStatus");
+    const issuedApiKeyOutput = document.getElementById("issuedApiKeyOutput");
+    const reissueOrderCodeInput = document.getElementById("reissueOrderCodeInput");
+    const reissueCreditsInput = document.getElementById("reissueCreditsInput");
+    const reissueEmailInput = document.getElementById("reissueEmailInput");
+    const reissueLabelInput = document.getElementById("reissueLabelInput");
+    const reissueStatus = document.getElementById("reissueStatus");
+    const reissuedApiKeyOutput = document.getElementById("reissuedApiKeyOutput");
+    const reissueRecordBody = document.getElementById("reissueRecordBody");
+
+    function stringify(value) {
+      return JSON.stringify(value, null, 2);
+    }
+
+    function loadSample() {
+      requestBody.value = stringify(samples[endpointSelect.value]);
+      responseBody.textContent = "{}";
+      statusLine.textContent = "サンプルを読み込みました";
+      statusLine.className = "api-test-status";
+      renderNatalChart(null);
+    }
+
+    function parseRequest() {
+      try {
+        return JSON.parse(requestBody.value);
+      } catch (error) {
+        statusLine.textContent = `JSONエラー: ${error.message}`;
+        statusLine.className = "api-test-status is-error";
+        return null;
+      }
+    }
+
+    function formatRequest() {
+      const parsed = parseRequest();
+      if (!parsed) return;
+      requestBody.value = stringify(parsed);
+      statusLine.textContent = "リクエストJSONを整形しました";
+      statusLine.className = "api-test-status";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function degreeText(item) {
+      const sign = item?.sign_ja || item?.sign || "";
+      const degree = item?.degree ?? "";
+      const house = item?.house ? ` / ${item.house}H` : "";
+      return `${sign} ${degree}${house}`;
+    }
+
+    function renderTable(headers, rows) {
+      if (!rows.length) {
+        return '<p class="api-test-chart-empty">データなし</p>';
+      }
+      return `
+        <div class="api-test-table-wrap">
+          <table class="api-test-table">
+            <thead>
+              <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+              ${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderNatalChart(body) {
+      const natal = body?.raw_data?.western?.natal;
+      if (!natal) {
+        natalChartStatus.textContent = "出生図なし";
+        natalChartContent.className = "api-test-chart-empty";
+        natalChartContent.textContent = "このレスポンスには raw_data.western.natal がありません。western / transit / combined を送信すると表示されます。";
+        return;
+      }
+
+      const bodies = Object.entries(natal.bodies || {}).map(([name, item]) => [
+        name,
+        degreeText(item),
+        item?.absolute_longitude ?? "",
+        item?.retrograde ? "R" : ""
+      ]);
+      const houses = Object.entries(natal.houses || {}).map(([house, item]) => [
+        `${house}H`,
+        item?.sign_ja || item?.sign || "",
+        item?.degree ?? "",
+        item?.absolute_longitude ?? ""
+      ]);
+      const aspects = (natal.aspects || []).slice(0, 24).map((item) => [
+        item?.body1 || "",
+        item?.aspect || "",
+        item?.body2 || "",
+        item?.orb ?? ""
+      ]);
+      const summary = natal.summary || {};
+      const summaryRows = [
+        ["dominant_signs", (summary.dominant_signs || []).map((item) => `${item.sign_ja || item.sign}:${item.count}`).join(", ")],
+        ["elements", Object.entries(summary.elements || {}).map(([key, value]) => `${key}:${value}`).join(", ")],
+        ["modes", Object.entries(summary.modes || {}).map(([key, value]) => `${key}:${value}`).join(", ")]
+      ];
+
+      natalChartStatus.textContent = `${bodies.length}天体 / ${houses.length}ハウス / ${natal.aspects?.length || 0}アスペクト`;
+      natalChartContent.className = "api-test-chart-content";
+      natalChartContent.innerHTML = `
+        <div class="api-test-chart-section">
+          <h3>天体</h3>
+          ${renderTable(["天体", "サイン/度数/ハウス", "絶対黄経", "逆行"], bodies)}
+        </div>
+        <div class="api-test-chart-section">
+          <h3>ハウス</h3>
+          ${renderTable(["ハウス", "サイン", "度数", "絶対黄経"], houses)}
+        </div>
+        <div class="api-test-chart-section">
+          <h3>主要アスペクト</h3>
+          ${renderTable(["天体1", "角度", "天体2", "オーブ"], aspects)}
+        </div>
+        <div class="api-test-chart-section">
+          <h3>サマリー</h3>
+          ${renderTable(["項目", "値"], summaryRows)}
+        </div>
+      `;
+    }
+
+    async function sendRequest() {
+      const payload = parseRequest();
+      if (!payload) return;
+
+      const endpoint = endpointSelect.value;
+      sendButton.disabled = true;
+      statusLine.textContent = `送信中: POST ${endpoint}`;
+      statusLine.className = "api-test-status is-loading";
+      responseBody.textContent = "";
+
+      const startedAt = performance.now();
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKeyInput.value.trim()
+          },
+          body: JSON.stringify(payload)
+        });
+        const text = await response.text();
+        const elapsed = Math.round(performance.now() - startedAt);
+        let body;
+        try {
+          body = JSON.parse(text);
+          responseBody.textContent = stringify(body);
+          renderNatalChart(body);
+        } catch {
+          responseBody.textContent = text || "(empty response)";
+          renderNatalChart(null);
+        }
+        statusLine.textContent = `${response.status} ${response.statusText} / ${elapsed}ms`;
+        statusLine.className = response.ok ? "api-test-status is-ok" : "api-test-status is-error";
+      } catch (error) {
+        statusLine.textContent = `通信エラー: ${error.message}`;
+        statusLine.className = "api-test-status is-error";
+        responseBody.textContent = "{}";
+        renderNatalChart(null);
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+
+    async function copyText(source, button) {
+      await navigator.clipboard.writeText(source.textContent || source.value);
+      const original = button.textContent;
+      button.textContent = "コピー済み";
+      setTimeout(() => { button.textContent = original; }, 1100);
+    }
+
+    async function issueApiKey() {
+      apiKeyIssueStatus.textContent = "発行中";
+      apiKeyIssueStatus.className = "api-test-status is-loading";
+      issuedApiKeyOutput.value = "";
+      try {
+        const response = await fetch("/internal/api-keys", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            label: apiKeyLabelInput.value.trim() || "test-site",
+            credits: Number(apiKeyCreditsInput.value || 0),
+            status: apiKeyStatusInput.value
+          })
+        });
+        const body = await response.json();
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          apiKeyIssueStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "発行に失敗しました"}`;
+          apiKeyIssueStatus.className = "api-test-status is-error";
+          return;
+        }
+        issuedApiKeyOutput.value = body.api_key;
+        apiKeyIssueStatus.textContent = `発行済み: id=${body.api_key_record.id} / credits=${body.api_key_record.credits_remaining}`;
+        apiKeyIssueStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        apiKeyIssueStatus.textContent = `通信エラー: ${error.message}`;
+        apiKeyIssueStatus.className = "api-test-status is-error";
+      }
+    }
+
+    async function lookupReissueKey() {
+      reissueStatus.textContent = "検索中";
+      reissueStatus.className = "api-test-status is-loading";
+      reissuedApiKeyOutput.value = "";
+      reissueRecordBody.textContent = "{}";
+      try {
+        const response = await fetch("/internal/api-keys/lookup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            order_code: reissueOrderCodeInput.value.trim()
+          })
+        });
+        const body = await response.json();
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          reissueStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "検索に失敗しました"}`;
+          reissueStatus.className = "api-test-status is-error";
+          return;
+        }
+        reissueRecordBody.textContent = stringify(body.api_key_record || {});
+        if (body.api_key_record?.credits_remaining !== undefined) {
+          reissueCreditsInput.value = body.api_key_record.credits_remaining;
+        }
+        reissueStatus.textContent = `検索済み: id=${body.api_key_record.id} / status=${body.api_key_record.status} / credits=${body.api_key_record.credits_remaining}`;
+        reissueStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        reissueStatus.textContent = `通信エラー: ${error.message}`;
+        reissueStatus.className = "api-test-status is-error";
+      }
+    }
+
+    async function reissueApiKey() {
+      reissueStatus.textContent = "再発行中";
+      reissueStatus.className = "api-test-status is-loading";
+      reissuedApiKeyOutput.value = "";
+      try {
+        const creditsValue = reissueCreditsInput.value.trim();
+        const response = await fetch("/internal/api-keys/reissue", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            order_code: reissueOrderCodeInput.value.trim(),
+            credits: creditsValue === "" ? null : Number(creditsValue),
+            email: reissueEmailInput.value.trim(),
+            label: reissueLabelInput.value.trim()
+          })
+        });
+        const body = await response.json();
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          reissueStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "再発行に失敗しました"}`;
+          reissueStatus.className = "api-test-status is-error";
+          return;
+        }
+        reissueRecordBody.textContent = stringify({
+          reissued: body.reissued,
+          api_key_record: body.api_key_record,
+          old_api_key_record: body.old_api_key_record || null
+        });
+        reissuedApiKeyOutput.value = body.api_key;
+        reissueStatus.textContent = `再発行済み: id=${body.api_key_record.id} / credits=${body.api_key_record.credits_remaining}`;
+        reissueStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        reissueStatus.textContent = `通信エラー: ${error.message}`;
+        reissueStatus.className = "api-test-status is-error";
+      }
+    }
+
+    endpointSelect.addEventListener("change", loadSample);
+    document.getElementById("loadSampleButton").addEventListener("click", loadSample);
+    document.getElementById("formatRequestButton").addEventListener("click", formatRequest);
+    document.getElementById("sendButton").addEventListener("click", sendRequest);
+    document.getElementById("issueApiKeyButton").addEventListener("click", issueApiKey);
+    document.getElementById("lookupReissueButton").addEventListener("click", lookupReissueKey);
+    document.getElementById("reissueApiKeyButton").addEventListener("click", reissueApiKey);
+    document.getElementById("useIssuedApiKeyButton").addEventListener("click", () => {
+      apiKeyInput.value = issuedApiKeyOutput.value;
+    });
+    document.getElementById("useReissuedApiKeyButton").addEventListener("click", () => {
+      apiKeyInput.value = reissuedApiKeyOutput.value;
+    });
+    document.getElementById("copyRequestButton").addEventListener("click", (event) => copyText(requestBody, event.currentTarget));
+    document.getElementById("copyResponseButton").addEventListener("click", (event) => copyText(responseBody, event.currentTarget));
+
+    loadSample();
+  </script>
+</body>
+</html>

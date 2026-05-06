@@ -71,7 +71,7 @@ def _ephe_candidates() -> list[Path]:
         candidates.append(Path(env_path))
 
     candidates.extend([
-        Path(__file__).resolve().parents[2] / "ephe",
+        Path(__file__).resolve().parents[1] / "ephe",
         Path("/app/ephe"),
     ])
 

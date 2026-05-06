@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APIリクエスト確認 | nanami products</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260504-api-sandbox">
+</head>
+<body class="api-test-page">
+  <header class="api-test-header">
+    <div>
+      <p class="api-test-kicker">nanami products API</p>
+      <h1>APIリクエスト確認</h1>
+    </div>
+    <a href="/">トップへ</a>
+  </header>
+
+  <main class="api-test-shell">
+    <section class="api-test-toolbar" aria-label="APIリクエスト確認設定">
+      <label>
+        Endpoint
+        <select id="endpointSelect">
+          <option value="/api/demo/western">POST /api/demo/western</option>
+          <option value="/api/demo/shichu">POST /api/demo/shichu</option>
+          <option value="/api/demo/transit">POST /api/demo/transit</option>
+          <option value="/api/demo/combined" selected>POST /api/demo/combined</option>
+        </select>
+      </label>
+      <div class="api-test-actions">
+        <button type="button" id="loadSampleButton">サンプル読込</button>
+        <button type="button" id="formatRequestButton">整形</button>
+        <button type="button" id="checkButton" class="api-test-primary">デモAPIに送信</button>
+      </div>
+    </section>
+
+    <section class="api-test-grid">
+      <article class="api-test-panel">
+        <div class="api-test-panel-head">
+          <div>
+            <p class="api-test-kicker">Request</p>
+            <h2>送信JSON</h2>
+          </div>
+          <button type="button" id="copyRequestButton">コピー</button>
+        </div>
+        <textarea id="requestBody" spellcheck="false"></textarea>
+      </article>
+
+      <article class="api-test-panel">
+        <div class="api-test-panel-head">
+          <div>
+            <p class="api-test-kicker">Mock Response</p>
+            <h2>固定レスポンス</h2>
+          </div>
+          <button type="button" id="copyResponseButton">コピー</button>
+        </div>
+        <div class="api-test-status" id="statusLine">未チェック</div>
+        <pre id="responseBody">{}</pre>
+      </article>
+    </section>
+
+    <section class="api-test-notes">
+      <h2>この画面について</h2>
+      <ul>
+        <li>公開デモAPIへ実際にPOSTします。APIキーもクレジットも使いません。</li>
+        <li>本番計算は行わず、必須項目チェック後に固定レスポンスを返します。</li>
+        <li>購入前にHTTP接続・JSON送信・レスポンス処理を確認できます。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const samples = {
+      "/api/demo/western": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        lat: 35.6812,
+        lon: 139.7671,
+        writing: {
+          tone: { sharpness: 40, warmth: 80, mystical: 30 },
+          focus_areas: ["career", "love"]
+        }
+      },
+      "/api/demo/shichu": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        gender: "female",
+        day_boundary: "23:00",
+        writing: {
+          tone: { sharpness: 40, warmth: 80, mystical: 20 },
+          focus_areas: ["career", "money"]
+        }
+      },
+      "/api/demo/transit": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        lat: 35.6812,
+        lon: 139.7671,
+        target_date: "2026-05-01",
+        period: "day",
+        writing: {
+          tone: { sharpness: 30, warmth: 80, mystical: 30 },
+          focus_areas: ["career", "love"]
+        }
+      },
+      "/api/demo/combined": {
+        name: "テスト太郎",
+        birth_date: "1990-01-01",
+        birth_time: "12:00",
+        birth_place: "東京都",
+        lat: 35.6812,
+        lon: 139.7671,
+        gender: "female",
+        day_boundary: "23:00",
+        target_date: "2026-05-01",
+        period: "day",
+        writing: {
+          tone: { sharpness: 40, warmth: 80, mystical: 30 },
+          focus_areas: ["career", "love", "money"]
+        }
+      }
+    };
+
+    const requiredFields = {
+      "/api/demo/western": ["birth_date", "birth_place"],
+      "/api/demo/shichu": ["birth_date", "birth_place"],
+      "/api/demo/transit": ["birth_date", "birth_place", "target_date"],
+      "/api/demo/combined": ["birth_date", "birth_place", "target_date"]
+    };
+
+    const endpointSelect = document.getElementById("endpointSelect");
+    const requestBody = document.getElementById("requestBody");
+    const responseBody = document.getElementById("responseBody");
+    const statusLine = document.getElementById("statusLine");
+
+    function stringify(value) {
+      return JSON.stringify(value, null, 2);
+    }
+
+    function loadSample() {
+      requestBody.value = stringify(samples[endpointSelect.value]);
+      responseBody.textContent = "{}";
+      statusLine.textContent = "サンプルを読み込みました";
+      statusLine.className = "api-test-status";
+    }
+
+    function parseRequest() {
+      try {
+        return JSON.parse(requestBody.value);
+      } catch (error) {
+        statusLine.textContent = `JSONエラー: ${error.message}`;
+        statusLine.className = "api-test-status is-error";
+        responseBody.textContent = stringify({ ok: false, error: { code: "INVALID_JSON", message: error.message } });
+        return null;
+      }
+    }
+
+    function formatRequest() {
+      const parsed = parseRequest();
+      if (!parsed) return;
+      requestBody.value = stringify(parsed);
+      statusLine.textContent = "リクエストJSONを整形しました";
+      statusLine.className = "api-test-status";
+    }
+
+    async function checkRequest() {
+      const payload = parseRequest();
+      if (!payload) return;
+      const endpoint = endpointSelect.value;
+      const missing = requiredFields[endpoint].filter((field) => {
+        const value = payload[field];
+        return value === undefined || value === null || String(value).trim() === "";
+      });
+      if (missing.length) {
+        statusLine.textContent = `不足項目: ${missing.join(", ")}`;
+        statusLine.className = "api-test-status is-error";
+        responseBody.textContent = stringify({
+          ok: false,
+          error: {
+            code: "INVALID_INPUT",
+            message: `Required fields are missing: ${missing.join(", ")}`
+          }
+        });
+        return;
+      }
+      statusLine.textContent = `送信中: POST ${endpoint}`;
+      statusLine.className = "api-test-status is-loading";
+      responseBody.textContent = "";
+      const startedAt = performance.now();
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const elapsed = Math.round(performance.now() - startedAt);
+        const body = await response.json();
+        responseBody.textContent = stringify(body);
+        statusLine.textContent = `${response.status} ${response.statusText} / ${elapsed}ms / 固定レスポンス`;
+        statusLine.className = response.ok ? "api-test-status is-ok" : "api-test-status is-error";
+      } catch (error) {
+        statusLine.textContent = `通信エラー: ${error.message}`;
+        statusLine.className = "api-test-status is-error";
+        responseBody.textContent = stringify({ ok: false, error: { code: "NETWORK_ERROR", message: error.message } });
+      }
+    }
+
+    async function copyText(source, button) {
+      await navigator.clipboard.writeText(source.textContent || source.value);
+      const original = button.textContent;
+      button.textContent = "コピー済み";
+      setTimeout(() => { button.textContent = original; }, 1100);
+    }
+
+    endpointSelect.addEventListener("change", loadSample);
+    document.getElementById("loadSampleButton").addEventListener("click", loadSample);
+    document.getElementById("formatRequestButton").addEventListener("click", formatRequest);
+    document.getElementById("checkButton").addEventListener("click", checkRequest);
+    document.getElementById("copyRequestButton").addEventListener("click", (event) => copyText(requestBody, event.currentTarget));
+    document.getElementById("copyResponseButton").addEventListener("click", (event) => copyText(responseBody, event.currentTarget));
+
+    loadSample();
+  </script>
+</body>
+</html>

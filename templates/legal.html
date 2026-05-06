@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特定商取引法に基づく表記 | nanami astro</title>
+<meta name="description" content="nanami astro の特定商取引法に基づく表記、提供内容、納期、返品・キャンセル、注意事項を掲載しています。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Serif+JP:wght@300;400;500;600&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #120f16;
+  --card: #211a29;
+  --line: rgba(214, 185, 126, 0.18);
+  --gold: #d6b97e;
+  --text: #f4ecdf;
+  --muted: #c3b8a7;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Serif JP', serif; line-height: 1.9; }
+a { color: inherit; text-decoration: none; }
+.container { width: min(880px, calc(100% - 32px)); margin: 0 auto; }
+.header { border-bottom: 1px solid var(--line); padding: 24px 0; }
+.brand { font-family: 'Cinzel', serif; letter-spacing: 0.22em; color: var(--gold); font-size: 14px; }
+.hero { padding: 44px 0 28px; }
+.hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px, 6vw, 58px); margin: 0 0 10px; }
+.hero p { margin: 0; color: var(--muted); font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 28px; margin: 0 0 18px; }
+.table { display: grid; gap: 14px; }
+.row { display: grid; grid-template-columns: 220px 1fr; gap: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.row:last-child { border-bottom: none; padding-bottom: 0; }
+.dt { color: var(--gold); font-size: 13px; }
+.dd { color: var(--text); font-size: 14px; }
+.note { color: var(--muted); font-size: 13px; }
+.links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+.btn { display: inline-flex; min-height: 44px; padding: 0 18px; align-items: center; justify-content: center; border: 1px solid var(--gold); border-radius: 999px; font-size: 13px; }
+@media (max-width: 680px) {
+  .row { grid-template-columns: 1fr; gap: 8px; }
+}
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a class="brand" href="/">nanami astro</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>特定商取引法に基づく表記</h1>
+      <p>オンライン鑑定サービスの購入前にご確認ください。</p>
+    </section>
+
+    <section class="card">
+      <div class="table">
+        <div class="row"><div class="dt">販売事業者</div><div class="dd">nanami astro</div></div>
+        <div class="row"><div class="dt">運営責任者</div><div class="dd">nanami</div></div>
+        <div class="row"><div class="dt">所在地</div><div class="dd">請求があった場合、遅滞なく開示します。</div></div>
+        <div class="row"><div class="dt">電話番号</div><div class="dd">請求があった場合、遅滞なく開示します。</div></div>
+        <div class="row"><div class="dt">メールアドレス</div><div class="dd">請求があった場合、遅滞なく開示します。お問い合わせはLINEまたは案内済み連絡先をご利用ください。</div></div>
+        <div class="row"><div class="dt">販売価格</div><div class="dd">各サービス申込ページに税込価格を表示します。現在の主なメニューは、恋愛鑑定3,000円、仕事鑑定5,000円、総合鑑定10,000円です。</div></div>
+        <div class="row"><div class="dt">商品代金以外の必要料金</div><div class="dd">インターネット接続に必要な通信料等はお客様のご負担となります。</div></div>
+        <div class="row"><div class="dt">支払方法</div><div class="dd">Stripeを利用したオンライン決済</div></div>
+        <div class="row"><div class="dt">支払時期</div><div class="dd">申込内容確認後、Stripe決済ページでお支払いが確定した時点で決済完了となります。</div></div>
+        <div class="row"><div class="dt">役務の提供時期</div><div class="dd">決済完了後、通常3日以内に鑑定結果を納品します。混雑時や確認事項がある場合は個別にご案内します。</div></div>
+        <div class="row"><div class="dt">提供方法</div><div class="dd">LINEまたは電子メールにて、テキストまたはPDF形式の鑑定結果を送付します。</div></div>
+        <div class="row"><div class="dt">返品・キャンセル</div><div class="dd">デジタルコンテンツという商品の性質上、決済完了後の返品・返金は原則としてお受けしていません。</div></div>
+        <div class="row"><div class="dt">表現および商品に関する注意書き</div><div class="dd">本サービスは占い・鑑定コンテンツであり、結果や効果、将来の出来事を保証するものではありません。医療、法律、投資その他の専門的判断の代替を目的とするものではありません。</div></div>
+      </div>
+      <div class="links">
+        <a class="btn" href="/">トップへ戻る</a>
+        <a class="btn" href="https://nanami-astro.com/products" rel="noopener">申込ページへ進む</a>
+      </div>
+    </section>
+
+    <p class="note" style="padding-bottom: 48px;">上記内容は、販売内容や提供形態の変更に応じて更新されることがあります。</p>
+  </main>
+</body>
+</html>

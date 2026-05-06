@@ -4,84 +4,349 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI鑑定用データ</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <title>{{ chart.buyer_name or "あなた" }}{% if is_transit_yaml %}のイベントデータ{% else %}さん専用の鑑定データ{% endif %}</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+  <style>
+    .buyer-card { padding-bottom: 28px; }
+    .page-title-block { display: grid; gap: 10px; }
+    .page-title-block .lead { max-width: 62ch; }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .info-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: .8rem;
+      color: var(--gold);
+      background: var(--gold-bg);
+    }
+    .key-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .key-actions .primary-action {
+      width: 100%;
+      margin-top: 0;
+    }
+    .key-actions .secondary-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .key-actions .secondary-action { margin-top: 0; }
+    .helper-note {
+      margin-top: 10px;
+      color: var(--dim);
+      font-size: .84rem;
+    }
+    .page-url-panel {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--card2);
+      display: grid;
+      gap: 10px;
+    }
+    .page-url-panel h2 {
+      margin: 0;
+      font-size: .9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .page-url-panel .copyline { align-items: center; }
+    .data-preview-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .data-preview-card {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      min-width: 0;
+    }
+    .data-preview-card h2 {
+      margin: 0 0 6px;
+      font-size: .95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .data-preview-card p {
+      margin: 0 0 12px;
+      color: var(--dim);
+      font-size: .84rem;
+      line-height: 1.8;
+    }
+    .data-preview-card pre {
+      max-height: 220px;
+      overflow: auto;
+      margin: 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--body);
+      font-size: .78rem;
+      line-height: 1.65;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+    }
+    .data-preview-card .data-preview-note {
+      margin: 10px 0 0;
+      color: var(--gold-dim);
+      font-size: .8rem;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .step-card {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 16px 14px;
+      min-width: 0;
+    }
+    .step-card .step-num {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    .step-card h3 {
+      font-size: .95rem;
+      font-weight: 500;
+      color: var(--text);
+      margin: 0 0 6px;
+    }
+    .step-card p {
+      font-size: .86rem;
+      color: var(--body);
+      margin: 0;
+      line-height: 1.8;
+    }
+    .followup-box ul { padding-left: 1.2rem; }
+    .followup-box li { color: var(--body); font-size: .88rem; line-height: 1.9; }
+    details.detail-box {
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card2);
+      padding: 14px 16px;
+    }
+    details.detail-box summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: .9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    details.detail-box summary::-webkit-details-marker { display: none; }
+    details.detail-box summary::after {
+      content: '＋';
+      float: right;
+      color: var(--gold-dim);
+    }
+    details.detail-box[open] summary::after { content: '－'; }
+    .detail-body {
+      display: grid;
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .detail-intro {
+      color: var(--dim);
+      font-size: .85rem;
+      line-height: 1.8;
+      margin: 0;
+    }
+    .detail-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .detail-section h3 {
+      font-size: .9rem;
+      font-weight: 500;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .detail-section textarea { min-height: 220px; }
+    @media (max-width: 640px) {
+      .section-grid { grid-template-columns: 1fr; }
+      .key-actions .secondary-row { display: grid; }
+    }
+  </style>
 </head>
 <body>
   <main class="wrap wide">
     <div class="card buyer-card">
-      <p class="eyebrow">AI鑑定用データ</p>
-      <h1>{{ chart.buyer_name or "鑑定データ" }}</h1>
-      <p class="lead">
-        このページは購入者専用のAI鑑定用データページです。<br>
-        このURLを知っている方はどなたでもアクセスできます。大切に保存してください。
-      </p>
+      <p class="eyebrow">{% if is_transit_yaml %}AI分析データ{% else %}AI鑑定データ{% endif %}</p>
+      <div class="page-title-block">
+        <h1>{% if is_transit_yaml %}{{ chart.buyer_name or "イベント" }}のトランジットYAML{% else %}{{ chart.buyer_name or "あなた" }}さん専用の鑑定データ{% endif %}</h1>
+        <p class="lead">
+          {% if is_transit_yaml %}
+          このデータをAIに貼るだけで、イベント時点の天体配置分析を始められます。<br>
+          出生情報を使わない、トランジットのみのYAMLです。
+          {% else %}
+          このデータをAIに貼るだけで、あなた専用の鑑定がはじまります。<br>
+          難しい設定は必要ありません。
+          {% endif %}
+        </p>
+        <div class="badge-row">
+          <span class="info-badge">{{ chart.buyer_name or "鑑定データ" }}</span>
+          <span class="info-badge">{% if is_transit_yaml %}日付{% else %}生年月日{% endif %}: {{ chart.birth_date }}</span>
+          {% if chart.birth_time %}<span class="info-badge">{% if is_transit_yaml %}時刻{% else %}出生時刻{% endif %}: {{ chart.birth_time }}</span>{% endif %}
+          <span class="info-badge">{% if is_transit_yaml %}場所{% else %}出生地{% endif %}: {{ chart.birth_place or "不明" }}</span>
+        </div>
+        <p class="hint">このページはURLを知っている人が開けます。大切に保管してください。</p>
+        <div class="page-url-panel">
+          <h2>この{% if is_transit_yaml %}イベントデータ{% else %}鑑定データ{% endif %}ページのURL</h2>
+          <div class="copyline">
+            <input id="chart-url" value="{{ chart_url }}" readonly>
+            <button onclick="copyFrom('chart-url')">コピー</button>
+          </div>
+        </div>
+      </div>
 
       <section class="notice-box">
-        <h2>使い方</h2>
-        <ol class="steps">
-          <li>お好きなAIを開きます（ChatGPT / Claude / Gemini など）。</li>
-          <li>いちばん簡単なのは「AIに貼る全文コピー」を押して、AIにそのまま貼り付けて送信する方法です。</li>
-          <li>分けて使う場合は「プロンプト全文コピー」→「YAML全文コピー」の順に、同じメッセージへ貼り付けて送信してください。</li>
-          <li>AIが鑑定文を生成します。</li>
-        </ol>
-        <p class="hint">
-          別の方法として「YAML直リンク」をコピーし、AIにURLとして渡すこともできます。AIの種類やプランによってURL読み込み可否が異なるため、うまく読めない場合は全文コピーをご利用ください。
-        </p>
-      </section>
-
-      <section>
-        <h2>まずはこれをコピー</h2>
-        <p class="hint">プロンプトとYAMLをまとめた全文です。AIにそのまま貼り付けてください。</p>
-        <button class="primary-action" onclick="copyCombined()">AIに貼る全文コピー</button>
+        <h2>まずはこれだけ</h2>
+        <div class="key-actions">
+          <button class="primary-action" onclick="copyCombined()">AIへ貼って{% if is_transit_yaml %}分析{% else %}鑑定{% endif %}を始める</button>
+          <div class="secondary-row">
+            <button class="secondary-action" onclick="copyCombinedChunk()">続きからコピー</button>
+            <button class="secondary-action" onclick="downloadCombinedMarkdown()">ファイルとして保存</button>
+          </div>
+        </div>
+        <p class="helper-note">うまく貼れない場合は、ファイルとして保存してAIにアップロードしてください。</p>
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
+        <p class="hint" id="combined-size"></p>
       </section>
 
-      <section>
-        <h2>出生情報</h2>
-        <p style="margin:0">
-          生年月日：{{ chart.birth_date }}
-          {% if chart.birth_time %}（{{ chart.birth_time }}）{% endif %}
-          ／ {{ chart.birth_place or "不明" }}
-        </p>
-      </section>
-
-      <section>
-        <h2>各種URL</h2>
-        <p style="margin:0 0 8px;font-weight:700;font-size:.9rem">このページのURL</p>
-        <div class="copyline">
-          <input id="chart-url" value="{{ chart_url }}" readonly>
-          <button onclick="copyFrom('chart-url')">コピー</button>
+      <section class="data-preview-grid" aria-label="AIに渡されるデータの一部">
+        <div class="data-preview-card">
+          <h2>AIに渡される計算済みデータ（一部）</h2>
+          <p>AIはこの計算済みデータをもとに{% if is_transit_yaml %}分析{% else %}鑑定{% endif %}を行います。</p>
+          <pre id="yaml-preview" aria-label="YAMLログの一部"></pre>
+          <p class="data-preview-note">AIが再計算せず、このデータを根拠として解釈します。</p>
         </div>
-        <p class="hint" style="margin:8px 0 16px">このページをあとから開くためのURLです。</p>
-
-        <p style="margin:0 0 8px;font-weight:700;font-size:.9rem">YAML直リンク</p>
-        <div class="copyline">
-          <input id="yaml-url" value="{{ yaml_url }}" readonly>
-          <button onclick="copyFrom('yaml-url')">コピー</button>
-        </div>
-        <p class="hint" style="margin:8px 0 16px">AIにURLとして渡す場合に使います。読み込めない場合は下の「YAML全文コピー」を使ってください。</p>
-
-        <p style="margin:0 0 8px;font-weight:700;font-size:.9rem">プロンプト直リンク</p>
-        <div class="copyline">
-          <input id="prompt-url" value="{{ prompt_url }}" readonly>
-          <button onclick="copyFrom('prompt-url')">コピー</button>
+        <div class="data-preview-card">
+          <h2>AIに渡すプロンプト（一部）</h2>
+          <p>このプロンプトが、AIに「どう読むか」を伝えます。</p>
+          <pre id="prompt-preview" aria-label="プロンプトの一部"></pre>
         </div>
       </section>
 
-      <section>
-        <h2>プロンプト全文</h2>
-        <p class="hint">AIに「どう鑑定してほしいか」を伝える文章です。</p>
-        <textarea id="prompt" readonly>{{ chart.prompt_text }}</textarea>
-        <button onclick="copyFrom('prompt')" style="margin-top:10px">プロンプト全文コピー</button>
+      <section class="notice-box soft followup-box">
+        <h2>AIに貼ると、こう使えます</h2>
+        <ul class="plain-list">
+          {% if is_transit_yaml %}
+          <li>イベント時点の天体配置が、AIの言葉で整理されます。</li>
+          <li>歴史イベント・満月・特定日時の象徴分析に使えます。</li>
+          <li>日付や暦の前提を明示したまま、あとから深掘りできます。</li>
+          {% else %}
+          <li>あなたの本質や傾向が、AIの言葉で整理されます。</li>
+          <li>今気になるテーマをそのまま質問できます。</li>
+          <li>仕事・恋愛・今月の注意日などを、あとから深掘りできます。</li>
+          {% endif %}
+        </ul>
+        <p class="hint" style="margin-top:10px">このページは鑑定結果を表示する場所ではなく、AI鑑定を始めるための入口です。</p>
       </section>
 
       <section>
-        <h2>YAML全文</h2>
-        <p class="hint">天体計算済みの出生図データです。AIにはこの計算結果を変更せず、解釈だけさせてください。</p>
-        <textarea id="yaml" readonly>{{ chart.yaml_text }}</textarea>
-        <button onclick="copyFrom('yaml')" style="margin-top:10px">YAML全文コピー</button>
+        <h2>かんたんな使い方</h2>
+        <div class="section-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <h3>AIを開く</h3>
+            <p>ChatGPT / Claude / Gemini など、お好きなAIを開きます。</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <h3>全文を貼る</h3>
+            <p>「AIへ貼って{% if is_transit_yaml %}分析{% else %}鑑定{% endif %}を始める」を押して、そのまま送信します。</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <h3>鑑定が届く</h3>
+            <p>AIが鑑定文を返します。気になる部分はそのまま質問できます。</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <h3>ファイルで送る</h3>
+            <p>うまく貼れない場合は、ファイルとして保存してAIにアップロードできます。</p>
+          </div>
+        </div>
       </section>
+
+      <section class="notice-box soft followup-box">
+        <h2>鑑定のあとに聞けること</h2>
+        <ul class="plain-list">
+          <li>「仕事の流れを詳しく知りたい」</li>
+          <li>「恋愛面をもう少し深掘りしたい」</li>
+          <li>「今月の注意日を教えてほしい」</li>
+        </ul>
+        <p class="hint" style="margin-top:10px">鑑定文のあとに、そのままAIへ続けて質問できます。</p>
+      </section>
+
+      <details class="detail-box">
+        <summary>YAML・プロンプト全文を確認する</summary>
+        <div class="detail-body">
+          <p class="detail-intro">
+            うまく読み込めない場合や、データを細かく確認したい場合だけ開いてください。通常は上のボタンだけで十分です。
+          </p>
+
+          <div class="detail-section">
+            <h3>YAML直リンク</h3>
+            <div class="copyline">
+              <input id="yaml-url" value="{{ yaml_url }}" readonly>
+              <button onclick="copyFrom('yaml-url')">コピー</button>
+            </div>
+            <p class="hint" style="margin-top:8px">AIにURLとして渡す場合に使います。</p>
+          </div>
+
+          <div class="detail-section">
+            <h3>プロンプト直リンク</h3>
+            <div class="copyline">
+              <input id="prompt-url" value="{{ prompt_url }}" readonly>
+              <button onclick="copyFrom('prompt-url')">コピー</button>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>プロンプト全文</h3>
+            <p class="hint">AIに「どう鑑定してほしいか」を伝える文章です。</p>
+            <textarea id="prompt" readonly>{{ chart.prompt_text }}</textarea>
+            <button onclick="copyFrom('prompt')" style="margin-top:10px">プロンプト全文コピー</button>
+          </div>
+
+          <div class="detail-section">
+            <h3>YAML全文</h3>
+            <p class="hint">{% if is_transit_yaml %}イベント時点の天体配置データです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% else %}天体計算済みの出生図データです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% endif %}</p>
+            <textarea id="yaml" readonly>{{ chart.yaml_text }}</textarea>
+            <button onclick="copyYamlFull()" style="margin-top:10px">YAML全文コピー</button>
+            <button class="secondary-action" onclick="copyYamlChunk()" style="margin-top:10px">続きからコピー</button>
+            <button class="secondary-action" onclick="downloadYamlOnly()" style="margin-top:10px">YAMLを保存</button>
+            <p class="hint" id="yaml-size"></p>
+          </div>
+        </div>
+      </details>
 
       <section class="notice-box soft">
         <h2>注意事項</h2>
@@ -89,13 +354,22 @@
           <li>入力後のデータ変更はできません。再発行が必要な場合は、販売者へお問い合わせください。</li>
           <li>AIの種類や設定によって、文章表現や鑑定の深さは変わります。</li>
           <li>YAMLは計算済みデータです。AIには「計算をやり直さず、このYAMLを根拠に解釈する」よう指示してください。</li>
+          {% if is_transit_yaml %}<li>歴史イベントの日付には諸説があり得ます。必要に応じて日付・暦種別の前提を確認してください。</li>{% endif %}
         </ul>
       </section>
     </div>
   </main>
 
   <script>
-    async function writeClipboard(text) {
+    const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
+    const COMBINED_YAML = {{ chart.yaml_text | tojson }};
+    const COPY_CHUNK_SIZE = 12000;
+    const copyState = {
+      combined: Number(localStorage.getItem('chart-copy-combined') || '0'),
+      yaml: Number(localStorage.getItem('chart-copy-yaml') || '0'),
+    };
+
+    async function writeClipboard(text, message = 'コピーしました') {
       try {
         await navigator.clipboard.writeText(text);
       } catch (e) {
@@ -111,11 +385,74 @@
       }
       const status = document.getElementById('copy-status');
       if (status) {
-        status.textContent = 'コピーしました';
+        status.textContent = message;
         setTimeout(() => status.textContent = '', 1800);
       } else {
-        alert('コピーしました');
+        alert(message);
       }
+    }
+
+    function buildCombinedText() {
+      return COMBINED_PROMPT + '\n\n---\n\n以下がYAMLデータです。\n\n```yaml\n' + COMBINED_YAML + '\n```\n';
+    }
+
+    function buildCombinedMarkdown() {
+      return [
+        '# 鑑定用データ',
+        '',
+        '## プロンプト',
+        '',
+        '```text',
+        COMBINED_PROMPT,
+        '```',
+        '',
+        '## YAML',
+        '',
+        '```yaml',
+        COMBINED_YAML,
+        '```',
+        '',
+      ].join('\n');
+    }
+
+    function splitText(text, size) {
+      const chunks = [];
+      for (let i = 0; i < text.length; i += size) {
+        chunks.push(text.slice(i, i + size));
+      }
+      return chunks;
+    }
+
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    async function copyChunk(text, key, label) {
+      const chunks = splitText(text, COPY_CHUNK_SIZE);
+      if (chunks.length <= 1) {
+        await writeClipboard(text);
+        return;
+      }
+      const index = copyState[key] % chunks.length;
+      copyState[key] += 1;
+      localStorage.setItem(`chart-copy-${key}`, String(copyState[key]));
+      await writeClipboard(chunks[index], `${label} ${index + 1}/${chunks.length} をコピーしました`);
+    }
+
+    function initCopyHelpers() {
+      const combined = buildCombinedText();
+      setText('combined-size', `全文: ${combined.length.toLocaleString()}文字。途中で切れたら「続きからコピー」を押してください。`);
+      setText('yaml-size', `YAML: ${COMBINED_YAML.length.toLocaleString()}文字。`);
+    }
+
+    function firstLines(text, count) {
+      return text.split(/\r?\n/).slice(0, count).join('\n');
+    }
+
+    function initDataPreviews() {
+      setText('yaml-preview', firstLines(COMBINED_YAML, 16));
+      setText('prompt-preview', firstLines(COMBINED_PROMPT, 6));
     }
 
     async function copyFrom(id) {
@@ -124,11 +461,48 @@
     }
 
     async function copyCombined() {
-      const prompt = document.getElementById('prompt').value;
-      const yaml = document.getElementById('yaml').value;
-      const text = prompt + '\n\n---\n\n以下がYAMLデータです。\n\n```yaml\n' + yaml + '\n```\n';
-      await writeClipboard(text);
+      copyState.combined = 1;
+      localStorage.setItem('chart-copy-combined', '1');
+      await writeClipboard(buildCombinedText(), '全文をコピーしました。必要なら「続きからコピー」で次の分を送れます。');
     }
+
+    async function copyCombinedChunk() {
+      await copyChunk(buildCombinedText(), 'combined', 'AI貼付用');
+    }
+
+    async function copyYamlFull() {
+      copyState.yaml = 1;
+      localStorage.setItem('chart-copy-yaml', '1');
+      await writeClipboard(COMBINED_YAML, 'YAML全文をコピーしました。必要なら「続きからコピー」で次の分を送れます。');
+    }
+
+    async function copyYamlChunk() {
+      await copyChunk(COMBINED_YAML, 'yaml', 'YAML');
+    }
+
+    function downloadText(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function downloadCombinedMarkdown() {
+      downloadText('nanami-astro-chart.md', buildCombinedMarkdown(), 'text/markdown;charset=utf-8');
+    }
+
+    function downloadYamlOnly() {
+      downloadText('nanami-astro-chart.yaml', COMBINED_YAML, 'text/yaml;charset=utf-8');
+    }
+
+    initCopyHelpers();
+    initDataPreviews();
+
   </script>
 </body>
 </html>

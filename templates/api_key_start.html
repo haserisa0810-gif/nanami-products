@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APIキー発行</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260504-api-key">
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <p class="eyebrow">nanami products API</p>
+      <h1>APIキー発行</h1>
+      <p class="lead">STORESの購入確認メールに記載された10桁のオーダー番号を入力してください。</p>
+
+      <section class="notice-box soft">
+        <h2>発行内容</h2>
+        <ul class="plain-list">
+          <li>APIキーを1つ発行します。</li>
+          <li>お試しAPIクレジット: {{ trial_credits }} credits</li>
+          <li>APIクレジット: {{ standard_credits }} credits</li>
+          <li>商品名を判定できない場合: {{ default_credits }} credits</li>
+          <li>APIキーはこの画面で一度だけ表示されます。</li>
+        </ul>
+      </section>
+
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" action="/api-key/redeem" class="form">
+        <div class="form-section">
+          <label>STORESオーダー番号<span class="required">必須</span>
+            <input name="order_code" inputmode="numeric" autocomplete="one-time-code" placeholder="例: 1234567890" value="{{ form.order_code if form else '' }}" required>
+          </label>
+          <label>メールアドレス<span class="optional">任意</span>
+            <input name="email" type="email" placeholder="sample@example.com" value="{{ form.email if form else '' }}">
+          </label>
+        </div>
+
+        <div class="form-section final-check">
+          <p>発行前の確認</p>
+          <label class="checkbox-line">
+            <input type="checkbox" name="agree_final" value="1" {% if form and form.agree_final %}checked{% endif %}>
+            <span>APIキーは一度だけ表示されることを確認しました。</span>
+          </label>
+        </div>
+
+        <button type="submit" class="submit-button">APIキーを発行する</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

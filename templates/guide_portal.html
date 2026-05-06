@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星月七海 鑑定サポートガイド</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --paper:#f8f5ef;
+      --paper-2:#f2ede4;
+      --ink:#5d5672;
+      --text:#544e62;
+      --text-soft:#7c748c;
+      --gold:#c6a45b;
+      --gold-soft:#ddc48f;
+      --line:rgba(198,164,91,.55);
+      --line-soft:rgba(198,164,91,.18);
+      --card-bg:rgba(255,255,255,.34);
+      --shadow:0 12px 34px rgba(0,0,0,.08);
+      --wash1:rgba(216,207,233,.34);
+      --wash2:rgba(232,223,243,.28);
+      --wash3:rgba(241,236,247,.6);
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      min-height:100vh;
+      font-family:"Noto Serif JP", serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 12% 14%, var(--wash1) 0%, transparent 18%),
+        radial-gradient(circle at 88% 12%, var(--wash2) 0%, transparent 18%),
+        radial-gradient(circle at 8% 90%, var(--wash2) 0%, transparent 16%),
+        radial-gradient(circle at 92% 88%, var(--wash1) 0%, transparent 18%),
+        linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+      overflow-x:hidden;
+    }
+
+    .page{
+      max-width:980px;
+      margin:0 auto;
+      padding:40px 20px 56px;
+      position:relative;
+    }
+
+    .frame{
+      position:relative;
+      border:1px solid rgba(198,164,91,.34);
+      border-radius:28px;
+      padding:40px 26px 34px;
+      background:rgba(255,255,255,.18);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .frame::before{
+      content:"";
+      position:absolute;
+      inset:14px;
+      border:1px solid rgba(198,164,91,.14);
+      border-radius:20px;
+      pointer-events:none;
+    }
+
+    .star{
+      position:absolute;
+      color:var(--gold);
+      opacity:.8;
+      font-size:14px;
+      pointer-events:none;
+    }
+    .s1{left:30px;top:30px}
+    .s2{left:80px;top:120px;font-size:11px}
+    .s3{right:42px;top:56px}
+    .s4{right:96px;top:160px;font-size:11px}
+    .s5{left:70px;bottom:120px;font-size:18px}
+    .s6{right:54px;bottom:90px;font-size:16px}
+
+    .moon{
+      position:absolute;
+      left:22px;
+      top:18px;
+      width:88px;
+      height:88px;
+      opacity:.95;
+      pointer-events:none;
+    }
+
+    .compass{
+      position:absolute;
+      right:16px;
+      bottom:12px;
+      width:150px;
+      height:150px;
+      opacity:.14;
+      pointer-events:none;
+    }
+
+    .top-ornament{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      color:var(--gold);
+      font-size:14px;
+      margin-bottom:14px;
+    }
+
+    .top-ornament .line{
+      width:160px;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .top-ornament .line::after{
+      content:"";
+      position:absolute;
+      right:-2px;
+      top:50%;
+      width:4px;
+      height:4px;
+      background:var(--gold);
+      border-radius:50%;
+      transform:translateY(-50%);
+    }
+
+    .top-ornament .line.left::after{
+      right:auto;
+      left:-2px;
+    }
+
+    .brand{
+      text-align:center;
+      color:#9f8752;
+      font-size:12px;
+      letter-spacing:.08em;
+      margin-bottom:10px;
+    }
+
+    h1{
+      text-align:center;
+      font-size:34px;
+      line-height:1.45;
+      color:var(--ink);
+      margin:0;
+      font-weight:500;
+      letter-spacing:.05em;
+    }
+
+    .subtitle{
+      text-align:center;
+      margin-top:8px;
+      font-size:18px;
+      color:#9d8752;
+      letter-spacing:.04em;
+    }
+
+    .divider{
+      width:280px;
+      margin:18px auto 22px;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .divider::before{
+      content:"✦";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-55%);
+      color:var(--gold);
+      font-size:12px;
+      background:var(--paper);
+      padding:0 8px;
+    }
+
+    .lead{
+      max-width:660px;
+      margin:0 auto 28px;
+      text-align:center;
+      font-size:15px;
+      line-height:2;
+      color:var(--text);
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:18px;
+      margin-top:22px;
+    }
+
+    .card{
+      position:relative;
+      background:var(--card-bg);
+      border:1px solid rgba(198,164,91,.18);
+      border-radius:20px;
+      padding:22px 18px 20px;
+      box-shadow:0 8px 22px rgba(0,0,0,.04);
+      backdrop-filter:blur(2px);
+    }
+
+    .card .mini{
+      color:#9f8752;
+      font-size:11px;
+      letter-spacing:.08em;
+      margin-bottom:10px;
+    }
+
+    .card h2{
+      margin:0 0 10px;
+      font-size:23px;
+      line-height:1.5;
+      color:var(--ink);
+      font-weight:500;
+    }
+
+    .card p{
+      margin:0 0 18px;
+      font-size:14px;
+      line-height:1.9;
+      color:var(--text-soft);
+      min-height:122px;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:100%;
+      padding:12px 14px;
+      border-radius:999px;
+      border:1px solid rgba(198,164,91,.42);
+      background:rgba(255,255,255,.46);
+      color:var(--ink);
+      text-decoration:none;
+      font-size:14px;
+      font-weight:500;
+      transition:.2s ease;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.66);
+      box-shadow:0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .subsection{
+      max-width:760px;
+      margin:28px auto 0;
+      padding:22px 22px 18px;
+      border:1px solid rgba(198,164,91,.16);
+      border-radius:18px;
+      background:rgba(255,255,255,.28);
+    }
+
+    .subsection h3{
+      margin:0 0 10px;
+      font-size:22px;
+      color:var(--ink);
+      font-weight:500;
+    }
+
+    .subsection p{
+      margin:0;
+      font-size:14px;
+      line-height:1.95;
+      color:var(--text-soft);
+    }
+
+    .footer-note{
+      text-align:center;
+      margin-top:26px;
+      font-size:13px;
+      line-height:1.9;
+      color:#7d7489;
+    }
+
+    .author{
+      text-align:center;
+      margin-top:16px;
+      color:#8f7a49;
+      font-size:14px;
+      letter-spacing:.08em;
+    }
+
+    @media (max-width: 860px){
+  body{
+    background: var(--paper-2);
+  }
+
+  .page{
+    padding: 14px 10px 24px;
+  }
+
+  .frame{
+    padding: 28px 14px 24px;
+    border-radius: 20px;
+  }
+
+  .frame::before{
+    inset: 10px;
+    border-radius: 14px;
+  }
+
+  .cards{
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .card{
+    padding: 18px 14px 16px;
+    border-radius: 16px;
+  }
+
+  .card p{
+    min-height: 0;
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  h1{
+    font-size: clamp(26px, 8vw, 32px);
+    line-height: 1.35;
+  }
+
+  .subtitle{
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .lead{
+    font-size: 14px;
+    line-height: 1.95;
+    margin-bottom: 20px;
+  }
+
+  .top-ornament{
+    gap: 10px;
+  }
+
+  .top-ornament .line{
+    width: 82px;
+  }
+
+  .divider{
+    width: min(72vw, 240px);
+    margin: 16px auto 18px;
+  }
+
+  .subsection{
+    padding: 18px 14px 16px;
+    border-radius: 16px;
+  }
+
+  .subsection h3{
+    font-size: 20px;
+  }
+
+  .subsection p,
+  .footer-note{
+    font-size: 13px;
+    line-height: 1.9;
+  }
+
+  .moon{
+    width: 58px;
+    height: 58px;
+    left: 8px;
+    top: 8px;
+    opacity: .78;
+  }
+
+  .compass{
+    width: 86px;
+    height: 86px;
+    right: 6px;
+    bottom: 6px;
+    opacity: .08;
+  }
+
+  .s4, .s5, .s6{
+    display: none;
+  }
+
+  .s1{left: 16px; top: 16px;}
+  .s2{left: 54px; top: 82px; font-size: 10px;}
+  .s3{right: 18px; top: 86px; font-size: 11px;}
+}
+      .card p{
+        min-height:0;
+      }
+      h1{
+        font-size:28px;
+      }
+      .subtitle{
+        font-size:16px;
+      }
+      .top-ornament .line{
+        width:90px;
+      }
+      .moon{
+        width:72px;
+        height:72px;
+        left:14px;
+        top:14px;
+      }
+      .compass{
+        width:110px;
+        height:110px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="frame">
+      <div class="star s1">✦</div>
+      <div class="star s2">✦</div>
+      <div class="star s3">✦</div>
+      <div class="star s4">✦</div>
+      <div class="star s5">✦</div>
+      <div class="star s6">✦</div>
+
+      <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <linearGradient id="moonGradPortal" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ead8a7"/>
+            <stop offset="100%" stop-color="#c9a85e"/>
+          </linearGradient>
+        </defs>
+        <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z"
+              fill="url(#moonGradPortal)" opacity="0.9"/>
+        <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z"
+              fill="#f7f1dc" opacity="0.72"/>
+        <circle cx="63" cy="34" r="6" fill="none" stroke="#d7ba74" stroke-width="1.2"/>
+        <path d="M63 24v20M53 34h20M56 27l14 14M70 27L56 41" stroke="#d7ba74" stroke-width="1" opacity=".85"/>
+      </svg>
+
+      <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+        <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+        <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+        <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+        <path d="M42 42l20 20M138 138l20 20M158 42l-20 20M42 158l20-20" stroke="#cbb173" stroke-width="1"/>
+        <path d="M100 34l8 18 18 8-18 8-8 18-8-18-18-8 18-8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+        <path d="M100 166l8-18 18-8-18-8-8-18-8 18-18 8 18 8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+      </svg>
+
+      <div class="top-ornament">
+        <div class="line left"></div>
+        <div>✦</div>
+        <div class="line"></div>
+      </div>
+
+      <div class="brand">星月七海 鑑定サポートガイド</div>
+      <h1>ガイドポータル</h1>
+      <div class="subtitle">― 鑑定書をより深く味わうために ―</div>
+      <div class="divider"></div>
+
+      <p class="lead">
+        こちらのページでは、鑑定書とあわせてお読みいただける各種入門ガイドをご案内しています。<br>
+        気になるテーマから、ご自身のペースでご覧ください。
+      </p>
+
+      <div class="cards">
+        <section class="card">
+          <div class="mini">Western Astrology</div>
+          <h2>ホロスコープ<br>入門ガイド</h2>
+          <p>
+            天体・サイン・ハウス・アスペクトなど、
+            西洋占星術の基本要素をやさしく整理したガイドです。
+          </p>
+          <a class="btn" href="/guide/horoscope">ガイドを見る</a>
+        </section>
+
+        <section class="card">
+          <div class="mini">Four Pillars of Destiny</div>
+          <h2>四柱推命<br>入門ガイド</h2>
+          <p>
+            日干、五行、通変星、大運など、
+            四柱推命の基礎を落ち着いて読み進められるガイドです。
+          </p>
+          <a class="btn" href="/guide/shichu">ガイドを見る</a>
+        </section>
+
+        <section class="card">
+          <div class="mini">Vedic Astrology</div>
+          <h2>インド占星術<br>入門ガイド</h2>
+          <p>
+            ラグナ、ナクシャトラ、ダシャーなど、
+            インド占星術の読み方の入口をまとめたガイドです。
+          </p>
+          <a class="btn" href="/guide/vedic">ガイドを見る</a>
+        </section>
+      </div>
+
+      <section class="subsection">
+        <h3>ご案内</h3>
+        <p>
+          鑑定書の中でわからない言葉があれば、該当するガイドを読み返しながら、
+          ゆっくりご自身のペースで受け取ってみてください。<br>
+          言葉の意味は、人生経験とともに少しずつ深まっていきます。
+        </p>
+      </section>
+
+      <div class="footer-note">
+        リンク先のファイル名は、実際の保存名や公開URLに合わせて変更してご利用ください。
+      </div>
+
+      <div class="author">― nanami-astro ―</div>
+    </div>
+  </div>
+</body>
+</html>

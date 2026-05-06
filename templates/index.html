@@ -1,17 +1,794 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="robots" content="noindex">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>nanami products</title>
-  <link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nanami astro | オンライン鑑定</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+JP:wght@300;400;500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0e0c10;
+  --deep: #16121c;
+  --surface: #1e1825;
+  --card: #231d2e;
+  --border: rgba(180,150,100,0.18);
+  --gold: #c9a96e;
+  --gold-soft: #e8d5b0;
+  --rose: #c4788a;
+  --text: #e8e0d4;
+  --muted: #b1a59a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 300;
+  line-height: 1.9;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 8%, rgba(201,169,110,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 80% 12%, rgba(201,169,110,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 85%, rgba(201,169,110,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 75%, rgba(255,255,255,0.5) 0%, transparent 100%);
+}
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 20px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, rgba(14,12,16,0.95) 0%, transparent 100%);
+}
+.logo {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  letter-spacing: 0.25em;
+  color: var(--gold);
+  text-decoration: none;
+}
+nav { display: flex; gap: 28px; }
+nav a {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+nav a:hover { color: var(--gold-soft); }
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(30,22,40,0.0) 0%, rgba(14,12,16,0.8) 100%),
+    radial-gradient(ellipse 40% 40% at 70% 30%, rgba(196,120,138,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 30% 70%, rgba(201,169,110,0.06) 0%, transparent 60%);
+}
+.hero-orb {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,120,138,0.06) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  animation: pulse 6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+}
+.hero-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  animation: rotate 40s linear infinite;
+}
+.hero-ring:nth-child(1) { width: 420px; height: 420px; }
+.hero-ring:nth-child(2) { width: 580px; height: 580px; animation-duration: 60s; animation-direction: reverse; }
+.hero-ring:nth-child(3) { width: 720px; height: 720px; animation-duration: 80s; border-color: rgba(196,120,138,0.08); }
+@keyframes rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.hero-content {
+  position: relative;
+  text-align: center;
+  z-index: 2;
+  padding: 0 24px;
+  animation: fadeUp 1.2s ease-out both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-tag {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  margin-bottom: 28px;
+  display: block;
+}
+.hero h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 8vw, 88px);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.hero h1 em { font-style: italic; color: var(--gold-soft); }
+.hero-sub {
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.hero-note {
+  max-width: 680px;
+  margin: 0 auto 42px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.hero-cta {
+  display: inline-block;
+  padding: 16px 44px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-decoration: none;
+  transition: all 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+.hero-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: translateX(-100%);
+  transition: transform 0.4s;
+  z-index: -1;
+}
+.hero-cta:hover { color: var(--ink); }
+.hero-cta:hover::before { transform: translateX(0); }
+.scroll-hint {
+  position: absolute;
+  bottom: 40px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 10px; letter-spacing: 0.3em;
+}
+.scroll-line {
+  width: 1px; height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--gold));
+  animation: scrollDown 2s ease-in-out infinite;
+}
+@keyframes scrollDown {
+  0% { transform: scaleY(0); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+section { position: relative; z-index: 1; }
+.section-wrap { max-width: 1040px; margin: 0 auto; padding: 100px 48px; }
+.section-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  color: var(--gold);
+  margin-bottom: 16px;
+  display: block;
+}
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 300;
+  line-height: 1.3;
+  margin-bottom: 48px;
+}
+.divider { width: 48px; height: 1px; background: var(--gold); margin-bottom: 40px; }
+.about { background: linear-gradient(to bottom, var(--ink), var(--deep)); }
+.about-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.about-photo { position: relative; }
+.about-photo-frame {
+  width: 100%; aspect-ratio: 3/4; position: relative; overflow: hidden;
+  background: var(--card);
+}
+.about-photo-frame img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center 28%;
+  filter: brightness(0.9) contrast(1.04);
+}
+.about-photo-frame::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(14,12,16,0.35) 0%, transparent 50%);
+}
+.about-photo-border {
+  position: absolute; top: 16px; left: 16px; right: -16px; bottom: -16px;
+  border: 1px solid var(--border); z-index: -1;
+}
+.about-text p, .text-block p, .legal-box p, .legal-box li {
+  color: var(--muted); font-size: 14px; line-height: 2;
+}
+.about-text p + p, .text-block p + p { margin-top: 18px; }
+.about-name {
+  font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300;
+  color: var(--gold-soft); margin-bottom: 4px;
+}
+.about-name-sub { font-size: 11px; letter-spacing: 0.3em; color: var(--muted); margin-bottom: 24px; }
+.about-skills {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px;
+}
+.about-skill-tag {
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.2em;
+  color: var(--gold); border: 1px solid rgba(201,169,110,0.4);
+  padding: 5px 14px; white-space: nowrap;
+}
+.about-skill-tag.featured {
+  background: rgba(201,169,110,0.08);
+}
+.about-profile-heading {
+  font-family: 'Cormorant Garamond', serif; font-size: 13px;
+  letter-spacing: 0.2em; color: var(--gold-soft); margin-bottom: 16px; margin-top: 32px;
+  display: flex; align-items: center; gap: 12px;
+}
+.about-profile-heading::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.menu { background: var(--deep); }
+.menu-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--border); border: 1px solid var(--border);
+}
+.menu-item {
+  background: var(--deep); padding: 40px 28px; transition: background 0.3s;
+  text-decoration: none; color: inherit; display: block; position: relative;
+}
+.menu-item:hover { background: var(--card); }
+.menu-item.vip {
+  background: linear-gradient(160deg, rgba(35,29,46,0.98) 0%, rgba(22,18,28,0.98) 100%);
+}
+.menu-item.vip:hover { background: linear-gradient(160deg, rgba(45,37,58,1) 0%, rgba(30,24,38,1) 100%); }
+.menu-item.vip::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg, rgba(201,169,110,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.menu-icon { font-size: 28px; margin-bottom: 20px; display: block; }
+.menu-item-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300;
+  margin-bottom: 8px;
+}
+.menu-item-sub { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 20px; }
+.menu-item-features {
+  list-style: none; padding: 0; margin-bottom: 28px; display: grid; gap: 8px;
+}
+.menu-item-features li {
+  font-size: 12px; color: var(--muted); line-height: 1.7;
+  padding-left: 16px; position: relative;
+}
+.menu-item-features li::before {
+  content: '—'; position: absolute; left: 0; color: var(--gold); opacity: 0.6; font-size: 10px; top: 3px;
+}
+.menu-item-features li.featured-item { color: var(--gold-soft); }
+.menu-item-features li.featured-item::before { opacity: 1; }
+.menu-item-desc { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 24px; }
+.menu-price { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--gold); }
+.menu-price span { font-size: 13px; color: var(--muted); font-family: 'Noto Serif JP', serif; }
+.menu-price.vip-price { font-size: 22px; }
+.menu-badge {
+  display: inline-block; font-size: 10px; letter-spacing: 0.2em; color: var(--rose);
+  border: 1px solid var(--rose); padding: 3px 10px; margin-bottom: 16px;
+}
+.menu-badge.main-badge {
+  color: var(--gold); border-color: var(--gold); background: rgba(201,169,110,0.08);
+}
+.flow { background: linear-gradient(to bottom, var(--deep), var(--ink)); }
+.flow-steps { display: grid; grid-template-columns: repeat(4, 1fr); position: relative; }
+.flow-steps::before {
+  content: ''; position: absolute; top: 28px; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), var(--border), transparent);
+}
+.flow-step { padding: 0 24px; text-align: center; }
+.flow-num {
+  width: 56px; height: 56px; border: 1px solid var(--gold); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+  font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold); background: var(--ink); position: relative; z-index: 1;
+}
+.flow-step-title { font-size: 14px; margin-bottom: 10px; letter-spacing: 0.05em; }
+.flow-step-desc { font-size: 12px; color: var(--muted); line-height: 1.8; }
+.notice-section { background: var(--ink); }
+.notice-box, .legal-box {
+  border: 1px solid var(--border); padding: 40px 48px; background: var(--card);
+}
+.notice-box p, .notice-box li, .legal-box li { font-size: 13px; color: var(--muted); line-height: 2; }
+.notice-box ul, .legal-box ul { padding-left: 1.25rem; margin-top: 8px; }
+.text-section { background: var(--deep); }
+.legal { background: linear-gradient(to bottom, var(--ink), var(--deep)); }
+.legal-grid {
+  display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start;
+}
+.legal-term {
+  color: var(--gold-soft); font-size: 13px; letter-spacing: 0.08em;
+  padding-top: 2px;
+}
+.legal-desc { color: var(--muted); font-size: 14px; }
+.legal-stack { display: grid; gap: 18px; }
+.line-cta { background: var(--deep); text-align: center; }
+.line-cta .section-wrap { padding: 80px 48px; }
+.line-cta p { font-size: 14px; color: var(--muted); margin-bottom: 40px; line-height: 2; }
+.line-btn {
+  display: inline-flex; align-items: center; gap: 12px; background: #06c755; color: #fff;
+  font-size: 15px; font-weight: 400; letter-spacing: 0.1em; padding: 18px 40px; text-decoration: none;
+  transition: opacity 0.3s;
+}
+.line-btn:hover { opacity: 0.88; }
+footer {
+  background: var(--ink); border-top: 1px solid var(--border); padding: 40px 48px;
+  display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;
+}
+.footer-logo { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.25em; color: var(--gold); }
+.footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer-links a { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+.footer-links a:hover { color: var(--gold-soft); }
+.footer-copy { font-size: 11px; color: var(--muted); opacity: 0.7; }
+.fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+.highlight-link { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,169,110,0.35); }
+.highlight-link:hover { color: var(--gold-soft); }
+@media (max-width: 900px) {
+  .menu-grid { grid-template-columns: 1fr; }
+  .flow-steps { grid-template-columns: 1fr 1fr; gap: 40px; }
+  .flow-steps::before { display: none; }
+  .legal-grid { grid-template-columns: 1fr; gap: 8px; }
+}
+
+
+/* daily card */
+.daily-card-panel {
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, rgba(35,29,46,0.98) 0%, rgba(22,18,28,0.98) 100%);
+  padding: 56px 64px;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 64px;
+  align-items: center;
+  position: relative;
+}
+.daily-card-panel::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, rgba(201,169,110,0.15), transparent 50%, rgba(196,120,138,0.08));
+  pointer-events: none;
+}
+.daily-card-visual {
+  position: relative;
+}
+.daily-card-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+}
+.daily-card-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.97) contrast(1.02);
+}
+.daily-card-frame::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border: 1px solid rgba(201,169,110,0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+.daily-card-frame::after {
+  content: '';
+  position: absolute;
+  inset: -18px;
+  border: 1px solid rgba(201,169,110,0.08);
+  pointer-events: none;
+  z-index: 1;
+}
+.daily-card-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.5em;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 24px;
+}
+.daily-card-copy h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(28px, 3.5vw, 42px);
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.daily-card-copy h3 em { font-style: italic; color: var(--gold-soft); }
+.daily-card-catch {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  margin-bottom: 28px;
+  display: block;
+}
+.daily-card-divider {
+  width: 40px; height: 1px;
+  background: var(--gold);
+  margin-bottom: 28px;
+}
+.daily-card-copy p { font-size: 14px; color: var(--muted); line-height: 2; margin-bottom: 10px; }
+.daily-card-points {
+  list-style: none;
+  margin: 24px 0 36px;
+  display: grid; gap: 12px;
+}
+.daily-card-points li {
+  padding-left: 20px;
+  position: relative;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.8;
+}
+.daily-card-points li::before {
+  content: '✦';
+  position: absolute;
+  left: 0; top: 1px;
+  font-size: 9px;
+  color: var(--gold);
+}
+.daily-card-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  transition: border-color 0.3s, color 0.3s;
+}
+.ghost-btn:hover { border-color: var(--gold); color: var(--gold-soft); }
+
+@media (max-width: 768px) {
+  header { padding: 16px 20px; }
+  nav { display: none; }
+  .section-wrap { padding: 72px 24px; }
+  .about-inner { grid-template-columns: 1fr; gap: 40px; }
+  .daily-card-panel { grid-template-columns: 1fr; padding: 28px 24px; gap: 36px; }
+  .daily-card-frame { max-width: 280px; margin: 0 auto; }
+  footer { flex-direction: column; gap: 20px; text-align: center; }
+  .hero-ring:nth-child(2), .hero-ring:nth-child(3) { display: none; }
+  .line-btn, .hero-cta { width: 100%; justify-content: center; }
+  .notice-box, .legal-box { padding: 28px 24px; }
+}
+</style>
 </head>
 <body>
-  <main class="card">
-    <p class="eyebrow">nanami products</p>
-    <h1>AI鑑定用データ発行サービス</h1>
-    <p>発行済みURLから鑑定用データを確認できます。</p>
-  </main>
+<div class="stars"></div>
+<header>
+  <a href="#top" class="logo">nanami astro</a>
+  <nav>
+    <a href="#about">占い師について</a>
+    <a href="#menu">鑑定メニュー</a>
+    <a href="#flow">お申し込み</a>
+    <a href="/type">占い診断</a>
+    <a href="https://nanami-astro.com/archive">星図アーカイブ</a>
+    <a href="#legal">特商法</a>
+  </nav>
+</header>
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="hero-orb"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-content">
+    <span class="hero-tag">ASTROLOGY · JYOTISH · 四柱推命</span>
+    <h1>星が語る、<br><em>あなたの物語</em></h1>
+    <p class="hero-sub">オンライン鑑定サービス</p>
+    <p class="hero-note">西洋占星術・インド占星術・四柱推命を組み合わせたオンライン鑑定です。サービス案内・ご注意事項・特定商取引法に関する表記をこのページにまとめています。内容をご確認のうえ、お申し込みください。</p>
+    <a href="/type" class="hero-cta">BOOK A READING</a>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>SCROLL</span>
+  </div>
+</section>
+<section class="about" id="about">
+  <div class="section-wrap">
+    <div class="about-inner fade-in">
+      <div class="about-photo">
+        <div class="about-photo-frame">
+          <img src="/static/images/nanami.jpg" alt="nanamiの写真">
+        </div>
+        <div class="about-photo-border"></div>
+      </div>
+      <div class="about-text">
+        <span class="section-label">ABOUT</span>
+        <div class="about-name">nanami-astro</div>
+        <div class="about-name-sub">占星術師 / 四柱推命鑑定士</div>
+        <div class="about-skills">
+          <span class="about-skill-tag featured">西洋占星術</span>
+          <span class="about-skill-tag featured">インド占星術</span>
+          <span class="about-skill-tag featured">四柱推命</span>
+        </div>
+        <div class="divider"></div>
+        <p>占星術との出会いは、自分自身が道に迷っていた時期のこと。答えを探して手にとったホロスコープは、「あなたはこういう人間だ」と断言するものではなく、自分をやさしく照らす地図のようでした。その感覚が、今も鑑定の根本にあります。</p>
+        <p>西洋占星術を軸に、インド占星術（ジョーティッシュ）と四柱推命も学びました。異なる叡智の体系が交わるとき、星と命が語りかけるものはより深く、より立体的になります。</p>
+        <p>得意としているのは、自己理解・本質の鑑定と、恋愛・人間関係の読み解き。答えをお伝えするよりも、あなた自身の中にある気づきに寄り添うことを大切にしています。</p>
+        <p>「なんとなく生きづらい」「この人との関係がわからない」、そんな言葉にならない問いを、一緒に星の言葉で解いていきましょう。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="menu" id="menu">
+  <div class="section-wrap">
+    <span class="section-label fade-in">READING MENU</span>
+    <h2 class="section-title fade-in">鑑定メニュー</h2>
+    <div class="menu-grid fade-in">
+
+      <!-- ライト -->
+      <a href="{{ base_light_url }}" class="menu-item">
+        <span class="menu-icon">☽</span>
+        <div class="menu-item-title">ライト</div>
+        <div class="menu-item-sub">LIGHT READING</div>
+        <ul class="menu-item-features">
+          <li>通常鑑定（基本チャート読み解き）</li>
+        </ul>
+        <div class="menu-price">¥3,000<span>（税込）</span></div>
+      </a>
+
+      <!-- スタンダード -->
+      <a href="{{ base_standard_url }}" class="menu-item">
+        <span class="menu-icon">✦</span>
+        <div class="menu-item-title">スタンダード</div>
+        <div class="menu-item-sub">STANDARD READING</div>
+        <ul class="menu-item-features">
+          <li>通常鑑定</li>
+          <li>テーマ鑑定 1つ</li>
+          <li class="featured-item" style="opacity:0.7">恋愛 または 仕事</li>
+        </ul>
+        <div class="menu-price">¥5,000<span>（税込）</span></div>
+      </a>
+
+      <!-- プレミアム -->
+      <div class="menu-item" style="opacity:0.6;cursor:default;pointer-events:none;">
+        <span class="menu-badge" style="color:var(--muted);border-color:var(--muted);">COMING SOON</span>
+        <span class="menu-icon" style="opacity:0.5;">◈</span>
+        <div class="menu-item-title">プレミアム</div>
+        <div class="menu-item-sub">PREMIUM READING</div>
+        <ul class="menu-item-features">
+          <li>通常鑑定</li>
+          <li class="featured-item">生涯年表（トランジット統合）</li>
+          <li class="featured-item">運命日リスト</li>
+          <li>テーマ鑑定 1つ</li>
+        </ul>
+        <div class="menu-price" style="color:var(--muted);">¥10,000<span>（税込）</span></div>
+        <div style="margin-top:12px;font-size:11px;letter-spacing:0.15em;color:var(--muted);">現在準備中です</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<section class="flow" id="flow">
+  <div class="section-wrap">
+    <span class="section-label fade-in">HOW IT WORKS</span>
+    <h2 class="section-title fade-in">お申し込みの流れ</h2>
+    <div class="flow-steps fade-in">
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div class="flow-step-title">内容を確認</div>
+        <p class="flow-step-desc">このページでメニュー・注意事項・特商法表記をご確認ください。</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div class="flow-step-title">STORESで購入</div>
+        <p class="flow-step-desc">各メニューのボタンからSTORESの商品ページへ進み、決済を完了してください。</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div class="flow-step-title">フォームで情報を送る</div>
+        <p class="flow-step-desc">購入後、購入完了メールに記載のフォームURLから必要な出生情報をご入力ください。</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div class="flow-step-title">鑑定結果のお届け</div>
+        <p class="flow-step-desc">内容確認後、鑑定を開始し、鑑定結果はメールで順次お届けします。</p>
+      </div>
+    </div>
+    <div class="notice-box fade-in" style="margin-top:32px">
+      <p>ご購入後は、購入したコースに対応する入力フォームへお進みください。</p>
+      <ul>
+        <li><a class="highlight-link" href="{{ intake_light_url }}">ライト鑑定の入力フォーム</a></li>
+        <li><a class="highlight-link" href="{{ intake_standard_url }}">スタンダード鑑定の入力フォーム</a></li>
+        <li style="color:var(--muted);opacity:0.5;">プレミアム鑑定の入力フォーム（準備中）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="about" id="daily-card">
+  <div class="section-wrap">
+    <span class="section-label fade-in">DAILY CARD</span>
+    <h2 class="section-title fade-in">今日の1枚</h2>
+    <div class="daily-card-panel fade-in">
+      <div class="daily-card-visual">
+        <div class="daily-card-frame">
+          <img src="/static/cards/card_01.jpg" alt="今日のカード">
+        </div>
+      </div>
+      <div class="daily-card-copy">
+        <span class="daily-card-label">1 DAY · 1 CARD</span>
+        <h3>毎日1回だけ引ける<br><em>あなただけのメッセージ</em></h3>
+        <span class="daily-card-catch">無料 · 登録不要</span>
+        <div class="daily-card-divider"></div>
+        <p>1日1回だけ引けるオラクルカードです。今日は何度開いても同じ1枚が表示されます。</p>
+        <ul class="daily-card-points">
+          <li>登録不要・無料でご利用いただけます</li>
+          <li>1日1回。今日は同じカードを表示</li>
+          <li>スマホからそのまま開ける専用ページ</li>
+        </ul>
+        <div class="daily-card-actions">
+          <a href="{{ daily_card_url }}" class="hero-cta">今日の1枚を引く</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="notice-section" id="notice">
+  <div class="section-wrap">
+    <span class="section-label fade-in">NOTICE</span>
+    <h2 class="section-title fade-in">ご注意事項</h2>
+    <div class="notice-box fade-in">
+      <p>当サービスは西洋占星術・インド占星術・四柱推命を用いたオンライン鑑定サービスです。提供内容は助言・参考情報・娯楽の範囲に限られ、医療・法律・投資その他の専門的判断を行うものではありません。</p>
+      <p>鑑定結果は、将来の出来事や特定の結果を保証するものではありません。ご自身の判断と責任のもとでご活用ください。</p>
+      <p>心身の不調や法的問題、資産運用など高い専門性が必要なご相談は、必要に応じて各分野の専門家へご相談ください。</p>
+      <ul>
+        <li>未成年の方は、必要に応じて保護者の同意のうえご利用ください。</li>
+        <li>暴言・嫌がらせ・過度な要求がある場合は対応をお断りすることがあります。</li>
+        <li>返信や納品までの目安は、混雑状況により変動する場合があります。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section class="text-section" id="cancel">
+  <div class="section-wrap">
+    <span class="section-label fade-in">CANCELLATION</span>
+    <h2 class="section-title fade-in">キャンセル・返金について</h2>
+    <div class="notice-box fade-in text-block">
+      <p>デジタルコンテンツ・個別鑑定サービスの性質上、鑑定着手後のキャンセル・返金は原則としてお受けしておりません。</p>
+      <p>ただし、重複決済など当方の確認が必要な事象がある場合は、内容を確認のうえ個別に対応いたします。まずはメールよりご連絡ください。</p>
+      <p>お支払い前に不明点がある場合は、必ず事前にご相談ください。<a class="highlight-link" href="/cdn-cgi/l/email-protection#c7aea9a1a887a9a6a9a6aaaeeaa6b4b3b5a8e9a4a8aa">メールでのお問い合わせ（<span class="__cf_email__" data-cfemail="f990979f96b9979897989490d4988a8d8b96d79a9694">[email&#160;protected]</span>）</a>をご利用いただけます。</p>
+    </div>
+  </div>
+</section>
+<section class="legal" id="legal">
+  <div class="section-wrap">
+    <span class="section-label fade-in">LEGAL</span>
+    <h2 class="section-title fade-in">特定商取引法に基づく表記</h2>
+    <div class="legal-box fade-in legal-stack">
+      <div class="legal-grid">
+        <div class="legal-term">販売事業者</div>
+        <div class="legal-desc">nanami astro</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">運営責任者</div>
+        <div class="legal-desc">nanami</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">所在地</div>
+        <div class="legal-desc">神奈川県川崎市高津区（詳細は請求があった場合、遅滞なく開示します。）</div>
+      </div>
+
+      <div class="legal-grid">
+        <div class="legal-term">メールアドレス</div>
+        <div class="legal-desc"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="224b4c444d624c434c434f4b0f435156504d0c414d4f">[email&#160;protected]</a></div>
+       <!--  <div class="legal-desc">請求があった場合、遅滞なく開示します。お問い合わせはLINEをご利用ください。</div> -->
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">販売価格</div>
+        <div class="legal-desc">各サービス申込ページに表示する金額（税込）／ライト ¥3,000・スタンダード ¥5,000・プレミアム ¥10,000（準備中）</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">商品代金以外の必要料金</div>
+        <div class="legal-desc">インターネット接続に必要な通信料等はお客様のご負担となります。</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">支払方法</div>
+        <div class="legal-desc">クレジットカード決済等、申込ページで表示する方法</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">支払時期</div>
+        <div class="legal-desc">申込時にお支払いが確定します。</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">役務の提供時期</div>
+        <div class="legal-desc">決済確認後、通常5日以内を目安にメールにて鑑定結果をお届けします。</div>
+      </div>
+      <div class="legal-grid">
+        <div class="legal-term">キャンセル・返金</div>
+        <div class="legal-desc">サービスの性質上、原則として決済後のキャンセル・返金はお受けしておりません。ただし、当方の都合によりサービス提供ができない場合は返金いたします。</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="line-cta" id="contact">
+  <div class="section-wrap">
+    <span class="section-label fade-in">CONTACT</span>
+    <h2 class="section-title fade-in">お問い合わせ</h2>
+    <p class="fade-in">お申し込み前のご相談やご不明点は、メールにてお気軽にお問い合わせください。</p>
+    <a href="/cdn-cgi/l/email-protection#aec7c0c8c1eec0cfc0cfc3c783cfdddadcc180cdc1c3" class="line-btn fade-in">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      メールでお問い合わせ
+    </a>
+  </div>
+</section>
+<footer>
+  <div class="footer-logo">nanami astro</div>
+  <div class="footer-links">
+    <a href="#about">占い師について</a>
+    <a href="/type">占い診断</a>
+    <a href="#notice">ご注意事項</a>
+    <a href="#legal">特定商取引法</a>
+    <a href="#cancel">返金について</a>
+  </div>
+  <div class="footer-copy">© nanami astro</div>
+</footer>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
 </body>
 </html>

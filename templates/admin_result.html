@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>YAML発行完了</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
 </head>
 <body>
   <main class="wrap wide">
@@ -43,8 +43,16 @@
     </div>
   </main>
   <script>
+    const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
+    const COMBINED_YAML = {{ chart.yaml_text | tojson }};
+
     async function copyText(t){ await navigator.clipboard.writeText(t); alert('コピーしました'); }
     async function copyFrom(id){ await navigator.clipboard.writeText(document.getElementById(id).value); alert('コピーしました'); }
+    async function copyCombined(){
+      const text = COMBINED_PROMPT + '\n\n---\n\n以下がYAMLデータです。\n\n```yaml\n' + COMBINED_YAML + '\n```\n';
+      await navigator.clipboard.writeText(text);
+      alert('コピーしました');
+    }
   </script>
 </body>
 </html>

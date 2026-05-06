@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星月七海 インド占星術入門ガイド</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --paper:#f8f5ef;
+      --paper-2:#f3efe8;
+      --ink:#65567a;
+      --ink-soft:#76678d;
+      --text:#564f67;
+      --text-strong:#5f5176;
+      --muted:#8a819b;
+      --gold:#c6a45b;
+      --gold-soft:#ddc48f;
+      --line:rgba(198,164,91,.64);
+      --line-soft:rgba(198,164,91,.22);
+      --wash1:rgba(216,207,233,.34);
+      --wash2:rgba(231,223,242,.28);
+      --wash3:rgba(241,237,247,.62);
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      background:#e8e2da;
+      font-family:"Noto Serif JP", serif;
+      color:var(--text);
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+    }
+
+    .page{
+      width:210mm;
+      max-width:100%;
+      min-height:297mm;
+      margin:0 auto 10mm;
+      position:relative;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 12% 14%, var(--wash1) 0%, transparent 18%),
+        radial-gradient(circle at 88% 12%, var(--wash2) 0%, transparent 18%),
+        radial-gradient(circle at 8% 90%, var(--wash2) 0%, transparent 16%),
+        radial-gradient(circle at 92% 88%, var(--wash1) 0%, transparent 18%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.56) 0%, transparent 52%),
+        linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }
+
+    .page::before{
+      content:"";
+      position:absolute;
+      inset:14mm;
+      border:1px solid rgba(198,164,91,.42);
+      pointer-events:none;
+    }
+
+    .page::after{
+      content:"";
+      position:absolute;
+      inset:22mm;
+      border:1px solid rgba(198,164,91,.14);
+      border-radius:18px;
+      pointer-events:none;
+    }
+
+    .inner{
+      position:relative;
+      z-index:2;
+      padding:18mm 20mm 18mm;
+      min-height:297mm;
+    }
+
+    .wash{
+      position:absolute;
+      border-radius:50%;
+      filter:blur(10px);
+      pointer-events:none;
+      z-index:0;
+    }
+    .wash.w1{
+      width:220px;height:160px;left:-30px;top:20px;
+      background:radial-gradient(circle at 50% 50%, rgba(216,207,233,.58), rgba(216,207,233,.08) 70%, transparent 100%);
+    }
+    .wash.w2{
+      width:240px;height:180px;right:-40px;top:10px;
+      background:radial-gradient(circle at 50% 50%, rgba(231,223,242,.55), rgba(231,223,242,.08) 70%, transparent 100%);
+    }
+    .wash.w3{
+      width:260px;height:180px;left:-50px;bottom:20px;
+      background:radial-gradient(circle at 50% 50%, rgba(231,223,242,.42), rgba(231,223,242,.08) 70%, transparent 100%);
+    }
+    .wash.w4{
+      width:280px;height:200px;right:-60px;bottom:-10px;
+      background:radial-gradient(circle at 50% 50%, rgba(216,207,233,.45), rgba(216,207,233,.08) 70%, transparent 100%);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:#9e8a66;
+      font-size:10px;
+      margin-bottom:10mm;
+      letter-spacing:.02em;
+    }
+
+    .brandline{
+      text-align:center;
+      color:#a88d57;
+      font-size:11px;
+      margin-bottom:8px;
+      letter-spacing:.08em;
+    }
+
+    .title{
+      text-align:center;
+      color:var(--ink);
+      font-size:31px;
+      line-height:1.45;
+      font-weight:500;
+      letter-spacing:.06em;
+      margin:10px 0 8px;
+    }
+
+    .subtitle{
+      text-align:center;
+      color:#9d8752;
+      font-size:18px;
+      margin-bottom:22px;
+      letter-spacing:.04em;
+    }
+
+    .top-ornament{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      color:var(--gold);
+      font-size:14px;
+      margin-bottom:16px;
+    }
+
+    .top-ornament .line{
+      width:180px;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .top-ornament .line::after{
+      content:"";
+      position:absolute;
+      right:-2px;
+      top:50%;
+      width:4px;
+      height:4px;
+      background:var(--gold);
+      border-radius:50%;
+      transform:translateY(-50%);
+    }
+
+    .top-ornament .line.left::after{
+      right:auto;
+      left:-2px;
+    }
+
+    .divider{
+      width:280px;
+      margin:0 auto 22px;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .divider::before{
+      content:"✦";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-55%);
+      color:var(--gold);
+      font-size:12px;
+      background:var(--paper);
+      padding:0 8px;
+    }
+
+    h2{
+      margin:0 0 18px;
+      color:var(--ink);
+      font-size:27px;
+      font-weight:500;
+      line-height:1.5;
+      text-align:left;
+    }
+
+    p{
+      margin:0 0 14px;
+      line-height:1.95;
+      font-size:15px;
+      color:var(--text);
+    }
+
+    strong{
+      color:var(--text-strong);
+      font-weight:600;
+    }
+
+    .lead{
+      max-width:560px;
+      margin:0 auto 0;
+      color:var(--text);
+      text-align:center;
+      font-size:15px;
+      line-height:2.05;
+    }
+
+    .intro-wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:24px 30px;
+      background:rgba(255,255,255,.28);
+      border:1px solid rgba(198,164,91,.18);
+      border-radius:18px;
+    }
+
+    .section-box{
+      max-width:720px;
+      margin:0 auto;
+      background:rgba(255,255,255,.18);
+      border:1px solid rgba(198,164,91,.12);
+      border-radius:18px;
+      padding:24px 28px;
+    }
+
+    .simple-table{
+      width:100%;
+      border-collapse:collapse;
+      margin:16px 0 16px;
+    }
+
+    .simple-table tr{
+      border-bottom:1px solid rgba(198,164,91,.22);
+    }
+
+    .simple-table td{
+      padding:11px 0;
+      vertical-align:top;
+      font-size:15px;
+      line-height:1.85;
+      color:var(--text);
+    }
+
+    .simple-table td:first-child{
+      width:120px;
+      color:var(--text-strong);
+      font-weight:600;
+      padding-right:14px;
+      white-space:nowrap;
+    }
+
+    .note{
+      margin-top:18px;
+      padding:14px 0 0 14px;
+      border-left:3px solid var(--gold);
+      color:#6a617c;
+      font-size:14px;
+      line-height:1.9;
+    }
+
+    .hint-block{
+      margin-top:18px;
+      padding:18px 20px;
+      border:1px solid rgba(198,164,91,.20);
+      border-radius:14px;
+      background:rgba(255,255,255,.32);
+    }
+
+    .hint-block p:last-child{
+      margin-bottom:0;
+    }
+
+    .author{
+      text-align:center;
+      margin-top:18px;
+      color:#8f7a49;
+      font-size:14px;
+      letter-spacing:.08em;
+    }
+
+    .bottomline{
+      width:220px;
+      margin:18px auto 0;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .bottomline::before{
+      content:"✦";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-55%);
+      color:var(--gold);
+      font-size:11px;
+      background:var(--paper);
+      padding:0 8px;
+    }
+
+    .moon{
+      position:absolute;
+      left:34px;
+      top:34px;
+      width:88px;
+      height:88px;
+      z-index:1;
+      opacity:.95;
+    }
+
+    .compass{
+      position:absolute;
+      right:18px;
+      bottom:18px;
+      width:150px;
+      height:150px;
+      z-index:1;
+      opacity:.18;
+    }
+
+    .star{
+      position:absolute;
+      color:var(--gold);
+      opacity:.8;
+      font-size:15px;
+      z-index:1;
+      pointer-events:none;
+    }
+    .s1{left:46px;top:66px}
+    .s2{left:78px;top:182px;font-size:12px}
+    .s3{left:102px;top:390px}
+    .s4{left:62px;top:705px;font-size:18px}
+    .s5{right:62px;top:92px}
+    .s6{right:88px;top:214px;font-size:12px}
+    .s7{right:54px;bottom:140px;font-size:18px}
+    .s8{right:102px;bottom:86px;font-size:12px}
+    .s9{left:136px;bottom:120px;font-size:12px}
+
+    @media print{
+      body{background:#fff}
+      .page{
+        width:210mm;
+        min-height:297mm;
+        margin:0;
+        box-shadow:none;
+        page-break-after:always;
+      }
+      .page:last-child{page-break-after:auto}
+      @page{
+        size:A4;
+        margin:0;
+      }
+    }
+
+    @media (max-width: 900px){
+  body{
+    background: var(--paper-2);
+  }
+
+  .page{
+    width: 100%;
+    min-height: auto;
+    margin: 0 0 12px;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .page::before{
+    inset: 12px;
+  }
+
+  .page::after{
+    inset: 24px 16px 16px;
+    border-radius: 16px;
+  }
+
+  .inner{
+    min-height: auto;
+    padding: 26px 16px 30px;
+  }
+
+  .topbar{
+    margin-bottom: 24px;
+    font-size: 11px;
+  }
+
+  .brandline{
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .top-ornament{
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .top-ornament .line{
+    width: 82px;
+  }
+
+  .title{
+    font-size: clamp(24px, 8.2vw, 32px);
+    line-height: 1.35;
+    letter-spacing: .03em;
+    margin: 8px 0 6px;
+  }
+
+  .subtitle{
+    font-size: 15px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .divider{
+    width: min(72vw, 240px);
+    margin: 0 auto 18px;
+  }
+
+  h2{
+    font-size: 23px;
+    line-height: 1.45;
+    margin-bottom: 14px;
+  }
+
+  p,
+  .simple-table td,
+  .note,
+  .hint-block p{
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  .intro-wrap,
+  .section-box{
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .lead{
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 1.95;
+  }
+
+  .simple-table{
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .simple-table td:first-child{
+    width: 86px;
+    min-width: 86px;
+    white-space: normal;
+    padding-right: 10px;
+  }
+
+  .note{
+    padding-left: 10px;
+    margin-top: 14px;
+  }
+
+  .hint-block{
+    margin-top: 14px;
+    padding: 16px 14px;
+  }
+
+  .author{
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .bottomline{
+    width: min(52vw, 200px);
+  }
+
+  .moon{
+    width: 58px;
+    height: 58px;
+    left: 8px;
+    top: 8px;
+    opacity: .78;
+  }
+
+  .compass{
+    width: 86px;
+    height: 86px;
+    right: 6px;
+    bottom: 6px;
+    opacity: .08;
+  }
+
+  .s4, .s5, .s6, .s7, .s8, .s9{
+    display: none;
+  }
+
+  .s1{left: 18px; top: 18px;}
+  .s2{left: 56px; top: 86px; font-size: 10px;}
+  .s3{right: 18px; top: 96px; font-size: 11px;}
+
+  .page:first-of-type .inner{
+    padding-top: 72px;
+    padding-bottom: 42px;
+    justify-content: flex-start !important;
+  }
+
+  .page:first-of-type .intro-wrap{
+    margin-top: 6px;
+  }
+}
+      .inner{
+        min-height:auto;
+        padding:24px 18px 28px;
+      }
+      .top-ornament .line{width:90px}
+      .title{font-size:27px}
+      .subtitle{font-size:16px}
+      h2{font-size:24px}
+      .section-box,.intro-wrap{padding:20px 16px}
+      .simple-table td,
+      p{font-size:15px}
+      .simple-table td:first-child{width:92px}
+      .moon{width:72px;height:72px;left:18px;top:18px}
+      .compass{width:110px;height:110px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="moonGradCover" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ead8a7"/>
+          <stop offset="100%" stop-color="#c9a85e"/>
+        </linearGradient>
+      </defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z"
+            fill="url(#moonGradCover)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z"
+            fill="#f7f1dc" opacity="0.72"/>
+      <circle cx="63" cy="34" r="6" fill="none" stroke="#d7ba74" stroke-width="1.2"/>
+      <path d="M63 24v20M53 34h20M56 27l14 14M70 27L56 41" stroke="#d7ba74" stroke-width="1" opacity=".85"/>
+    </svg>
+
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+      <path d="M42 42l20 20M138 138l20 20M158 42l-20 20M42 158l20-20" stroke="#cbb173" stroke-width="1"/>
+      <path d="M100 34l8 18 18 8-18 8-8 18-8-18-18-8 18-8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <path d="M100 166l8-18 18-8-18-8-8-18-8 18-18 8 18 8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner" style="display:flex;flex-direction:column;justify-content:center;">
+      <div class="top-ornament">
+        <div class="line left"></div>
+        <div>✦</div>
+        <div class="line"></div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h1 class="title">インド占星術入門ガイド</h1>
+      <div class="subtitle">― 魂の設計図を読む ―</div>
+      <div class="divider"></div>
+
+      <div class="intro-wrap">
+        <p class="lead">
+          生まれた瞬間の星の配置は、人生の流れだけでなく、魂がどのような学びを持ってこの世界に来たのかも映し出します。<br>
+          このガイドでは、インド占星術を読み解く基本的な要素を丁寧にご紹介します。<br>
+          鑑定書をより深く味わうための入口として、ご活用ください。
+        </p>
+      </div>
+
+      <div class="author" style="margin-top:26px;">nanami-astro</div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad2)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 インド占星術入門ガイド</div>
+        <div>2</div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h2>１．インド占星術とは</h2>
+
+      <div class="section-box">
+        <p>
+          インド占星術は、古代インドから受け継がれてきた伝統的な占星術です。
+          西洋占星術と同じく出生時の天体配置を読みますが、
+          より<strong>時期の流れ</strong>や<strong>魂の学び</strong>に重きを置く点が特徴です。
+        </p>
+
+        <p>
+          人生に起きる出来事を「偶然」としてではなく、
+          どのタイミングでどのテーマが開きやすいかを見るための道具として使われます。
+        </p>
+
+        <p>インド占星術では、主に次のような要素を組み合わせて読んでいきます。</p>
+
+        <table class="simple-table">
+          <tr><td>ラグナ</td><td>人生の入り口、身体、全体の土台</td></tr>
+          <tr><td>グラハ</td><td>惑星の役割と働き方</td></tr>
+          <tr><td>ハウス</td><td>人生のどの領域で作用するか</td></tr>
+          <tr><td>ナクシャトラ</td><td>月宿。魂の質感や深い性質</td></tr>
+          <tr><td>ダシャー</td><td>時期ごとの主役惑星と人生の流れ</td></tr>
+          <tr><td>ヨーガ</td><td>特別な星配置が示す資質や傾向</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad3)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 インド占星術入門ガイド</div>
+        <div>3</div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h2>２．ラグナ ― 人生の入り口</h2>
+
+      <div class="section-box">
+        <p>
+          ラグナとは、出生時に東の地平線に昇っていた星座のことです。
+          西洋占星術でいうアセンダントに近い概念で、
+          <strong>人生全体の土台</strong>、<strong>身体</strong>、<strong>第一印象</strong>、
+          そしてその人がどのように世界へ入っていくかを示します。
+        </p>
+
+        <p>
+          太陽や月がどんな性質を持っていても、
+          ラグナによって全体の出方が変わることがあります。
+          そのため、インド占星術ではラグナが非常に重要な基準になります。
+        </p>
+
+        <p>
+          鑑定書に「蠍座ラグナ」「天秤座ラグナ」などと書かれていたら、
+          それは人生全体を読むための入口だと思ってください。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad4)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 インド占星術入門ガイド</div>
+        <div>4</div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h2>３．グラハとハウス</h2>
+
+      <div class="section-box">
+        <p>
+          インド占星術では、太陽・月・水星・金星・火星・木星・土星などの惑星を
+          <strong>グラハ</strong>と呼びます。
+          グラハは、それぞれが人生の異なる役割を担っています。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>太陽</td><td>自我、中心意識、使命、生命力</td></tr>
+          <tr><td>月</td><td>感情、心の安定、反応の仕方</td></tr>
+          <tr><td>水星</td><td>知性、言語、学び、判断</td></tr>
+          <tr><td>金星</td><td>愛、美、喜び、快適さ</td></tr>
+          <tr><td>火星</td><td>行動力、闘志、衝動、突破力</td></tr>
+          <tr><td>木星</td><td>成長、恩恵、知恵、保護</td></tr>
+          <tr><td>土星</td><td>責任、制限、忍耐、成熟</td></tr>
+        </table>
+
+        <p>
+          そして、そのグラハがどのハウスに入っているかによって、
+          どの人生領域でその力が出やすいかが変わります。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>1室</td><td>自分自身、身体、人生の出発点</td></tr>
+          <tr><td>4室</td><td>家庭、土台、内面、安心感</td></tr>
+          <tr><td>7室</td><td>結婚、対人関係、パートナーシップ</td></tr>
+          <tr><td>10室</td><td>仕事、社会的役割、評価</td></tr>
+          <tr><td>12室</td><td>手放し、精神世界、見えない領域</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad5)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 インド占星術入門ガイド</div>
+        <div>5</div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h2>４．ナクシャトラ ― 月宿が語る本質</h2>
+
+      <div class="section-box">
+        <p>
+          ナクシャトラとは、月の通り道を27に分けた月宿のことです。
+          インド占星術では、サインよりもさらに細かく、
+          <strong>魂の質感や反応の癖</strong>を読むのに使われます。
+        </p>
+
+        <p>
+          同じ月星座でも、ナクシャトラが違えば雰囲気は大きく変わります。
+          鑑定書で「アヌラーダー」「ローヒニー」「アシュヴィニー」などの名前が出てきたら、
+          それがナクシャトラです。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>アシュヴィニー</td><td>始まり、スピード、直感的な動き</td></tr>
+          <tr><td>ローヒニー</td><td>豊かさ、美しさ、育てる力</td></tr>
+          <tr><td>アヌラーダー</td><td>信頼、継続、忠誠、深い結びつき</td></tr>
+          <tr><td>ウッタラーシャーダー</td><td>成熟、責任、揺るがない意志</td></tr>
+        </table>
+
+        <p>
+          ナクシャトラは、読めば読むほど「その人らしさ」が見えやすくなる領域です。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad6)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 インド占星術入門ガイド</div>
+        <div>6</div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h2>５．ダシャー ― 時期ごとの主役</h2>
+
+      <div class="section-box">
+        <p>
+          ダシャーとは、人生の時期ごとにどの惑星が主役になるかを示すシステムです。
+          インド占星術が時期読みで強いと言われる大きな理由のひとつが、このダシャーにあります。
+        </p>
+
+        <p>
+          同じ命式でも、今どの惑星の時期にいるかによって、
+          表に出やすいテーマや経験しやすい出来事は変わります。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>太陽期</td><td>自我、責任、表に立つテーマ</td></tr>
+          <tr><td>月期</td><td>感情、家庭、心の揺れや安定</td></tr>
+          <tr><td>水星期</td><td>学び、言葉、情報、判断</td></tr>
+          <tr><td>金星期</td><td>愛、美、楽しみ、人間関係</td></tr>
+          <tr><td>火星期</td><td>行動、闘志、衝突、決断</td></tr>
+          <tr><td>木星期</td><td>成長、恩恵、導き、拡大</td></tr>
+          <tr><td>土星期</td><td>責任、制限、忍耐、成熟</td></tr>
+        </table>
+
+        <p>
+          鑑定書に「いまは土星期」「現在は金星期」などとあれば、
+          それは今の人生で開きやすいテーマを示しています。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad7)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 インド占星術入門ガイド</div>
+        <div>7</div>
+      </div>
+
+      <div class="brandline">星月七海 インド占星術入門ガイド</div>
+      <h2>６．ヨーガと鑑定書を読む３つのヒント</h2>
+
+      <div class="section-box">
+        <p>
+          ヨーガとは、特別な星配置のことです。
+          成功運、精神性、知性、行動力などが強くまとまるとき、
+          鑑定書の中でその配置が取り上げられることがあります。
+        </p>
+
+        <div class="hint-block">
+          <p><strong>① まずはラグナを見る</strong><br>
+            人生全体の入口はラグナです。ここを押さえると、鑑定書全体の土台が見えやすくなります。
+          </p>
+        </div>
+
+        <div class="hint-block">
+          <p><strong>② 月とナクシャトラに注目する</strong><br>
+            月とナクシャトラは、心の質感や反応の癖を知る鍵になります。
+          </p>
+        </div>
+
+        <div class="hint-block">
+          <p><strong>③ 今のダシャーを重ねて読む</strong><br>
+            生まれ持った資質と、今の時期に開きやすいテーマは別です。
+            両方を分けて読むと、内容がつかみやすくなります。
+          </p>
+        </div>
+
+        <p class="note">
+          鑑定書の中でわからない言葉があれば、このガイドを読み返しながら、ゆっくりご自身のペースで受け取ってみてください。<br>
+          魂の言葉は、時間とともに少しずつ深まっていきます。
+        </p>
+
+        <div class="bottomline"></div>
+        <div class="author">― nanami-astro ―</div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

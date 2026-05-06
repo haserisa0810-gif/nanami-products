@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星月七海 四柱推命入門ガイド</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root{
+  --paper:#f8f5ee;
+  --paper-2:#f3efe6;
+  --ink:#3f5d63;
+  --ink-soft:#567177;
+  --text:#4b5f63;
+  --text-strong:#38545b;
+  --muted:#78898d;
+  --gold:#c5a45a;
+  --gold-soft:#dcc48e;
+  --line:rgba(197,164,90,.65);
+  --line-soft:rgba(197,164,90,.24);
+  --wash1:rgba(191,214,216,.30);
+  --wash2:rgba(211,225,226,.24);
+  --wash3:rgba(236,241,240,.58);
+}
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      background:#e8e4dc;
+      font-family:"Noto Serif JP", serif;
+      color:var(--text);
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+    }
+
+    .page{
+      width:210mm;
+      max-width:100%;
+      min-height:297mm;
+      margin:0 auto 10mm;
+      position:relative;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 12% 14%, var(--wash1) 0%, transparent 18%),
+        radial-gradient(circle at 88% 12%, var(--wash2) 0%, transparent 18%),
+        radial-gradient(circle at 8% 90%, var(--wash2) 0%, transparent 16%),
+        radial-gradient(circle at 92% 88%, var(--wash1) 0%, transparent 18%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.55) 0%, transparent 52%),
+        linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }
+
+    .page::before{
+      content:"";
+      position:absolute;
+      inset:14mm;
+      border:1px solid rgba(197,164,90,.45);
+      pointer-events:none;
+    }
+
+    .page::after{
+      content:"";
+      position:absolute;
+      inset:22mm;
+      border:1px solid rgba(197,164,90,.16);
+      border-radius:18px;
+      pointer-events:none;
+    }
+
+    .inner{
+      position:relative;
+      z-index:2;
+      padding:18mm 20mm 18mm;
+      min-height:297mm;
+    }
+
+    .wash{
+      position:absolute;
+      border-radius:50%;
+      filter:blur(10px);
+      pointer-events:none;
+      z-index:0;
+    }
+    .wash.w1{
+      width:220px;height:160px;left:-30px;top:20px;
+      background:radial-gradient(circle at 50% 50%, rgba(190,212,235,.55), rgba(190,212,235,.08) 70%, transparent 100%);
+    }
+    .wash.w2{
+      width:240px;height:180px;right:-40px;top:10px;
+      background:radial-gradient(circle at 50% 50%, rgba(205,220,240,.55), rgba(205,220,240,.08) 70%, transparent 100%);
+    }
+    .wash.w3{
+      width:260px;height:180px;left:-50px;bottom:20px;
+      background:radial-gradient(circle at 50% 50%, rgba(205,220,240,.42), rgba(205,220,240,.08) 70%, transparent 100%);
+    }
+    .wash.w4{
+      width:280px;height:200px;right:-60px;bottom:-10px;
+      background:radial-gradient(circle at 50% 50%, rgba(190,212,235,.45), rgba(190,212,235,.08) 70%, transparent 100%);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:#9c8a65;
+      font-size:10px;
+      margin-bottom:10mm;
+      letter-spacing:.02em;
+    }
+
+    .brandline{
+      text-align:center;
+      color:#a88d57;
+      font-size:11px;
+      margin-bottom:8px;
+      letter-spacing:.08em;
+    }
+
+    .title{
+      text-align:center;
+      color:var(--ink);
+      font-size:31px;
+      line-height:1.45;
+      font-weight:500;
+      letter-spacing:.06em;
+      margin:10px 0 8px;
+    }
+
+    .subtitle{
+      text-align:center;
+      color:#9d8752;
+      font-size:18px;
+      margin-bottom:22px;
+      letter-spacing:.04em;
+    }
+
+    .top-ornament{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      color:var(--gold);
+      font-size:14px;
+      margin-bottom:16px;
+    }
+
+    .top-ornament .line{
+      width:180px;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .top-ornament .line::after{
+      content:"";
+      position:absolute;
+      right:-2px;
+      top:50%;
+      width:4px;
+      height:4px;
+      background:var(--gold);
+      border-radius:50%;
+      transform:translateY(-50%);
+    }
+
+    .top-ornament .line.left::after{
+      right:auto;
+      left:-2px;
+    }
+
+    .divider{
+      width:280px;
+      margin:0 auto 22px;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .divider::before{
+      content:"✦";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-55%);
+      color:var(--gold);
+      font-size:12px;
+      background:var(--paper);
+      padding:0 8px;
+    }
+
+    h2{
+      margin:0 0 18px;
+      color:var(--ink);
+      font-size:27px;
+      font-weight:500;
+      line-height:1.5;
+      text-align:left;
+    }
+
+    p{
+      margin:0 0 14px;
+      line-height:1.95;
+      font-size:15px;
+      color:var(--text);
+    }
+
+    strong{
+      color:var(--text-strong);
+      font-weight:600;
+    }
+
+    .lead{
+      max-width:540px;
+      margin:0 auto 0;
+      color:var(--text);
+      text-align:center;
+      font-size:15px;
+      line-height:2.05;
+    }
+
+    .intro-wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:24px 30px;
+      background:rgba(255,255,255,.28);
+      border:1px solid rgba(197,164,90,.18);
+      border-radius:18px;
+    }
+
+    .section-box{
+      max-width:720px;
+      margin:0 auto;
+      background:rgba(255,255,255,.18);
+      border:1px solid rgba(197,164,90,.12);
+      border-radius:18px;
+      padding:24px 28px;
+    }
+
+    .section-intro{
+      margin-bottom:16px;
+    }
+
+    .simple-table{
+      width:100%;
+      border-collapse:collapse;
+      margin:16px 0 16px;
+    }
+
+    .simple-table tr{
+      border-bottom:1px solid rgba(197,164,90,.22);
+    }
+
+    .simple-table td{
+      padding:11px 0;
+      vertical-align:top;
+      font-size:15px;
+      line-height:1.85;
+      color:var(--text);
+    }
+
+    .simple-table td:first-child{
+      width:110px;
+      color:var(--text-strong);
+      font-weight:600;
+      padding-right:14px;
+      white-space:nowrap;
+    }
+
+    .note{
+      margin-top:18px;
+      padding:14px 0 0 14px;
+      border-left:3px solid var(--gold);
+      color:#52687d;
+      font-size:14px;
+      line-height:1.9;
+    }
+
+    .hint-block{
+      margin-top:18px;
+      padding:18px 20px;
+      border:1px solid rgba(197,164,90,.20);
+      border-radius:14px;
+      background:rgba(255,255,255,.32);
+    }
+
+    .hint-block p:last-child{
+      margin-bottom:0;
+    }
+
+    .author{
+      text-align:center;
+      margin-top:18px;
+      color:#8f7a49;
+      font-size:14px;
+      letter-spacing:.08em;
+    }
+
+    .bottomline{
+      width:220px;
+      margin:18px auto 0;
+      height:1px;
+      background:var(--line);
+      position:relative;
+    }
+
+    .bottomline::before{
+      content:"✦";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-55%);
+      color:var(--gold);
+      font-size:11px;
+      background:var(--paper);
+      padding:0 8px;
+    }
+
+    .moon{
+      position:absolute;
+      left:34px;
+      top:34px;
+      width:88px;
+      height:88px;
+      z-index:1;
+      opacity:.95;
+    }
+
+    .compass{
+      position:absolute;
+      right:18px;
+      bottom:18px;
+      width:150px;
+      height:150px;
+      z-index:1;
+      opacity:.18;
+    }
+
+    .star{
+      position:absolute;
+      color:var(--gold);
+      opacity:.8;
+      font-size:15px;
+      z-index:1;
+      pointer-events:none;
+    }
+    .s1{left:46px;top:66px}
+    .s2{left:78px;top:182px;font-size:12px}
+    .s3{left:102px;top:390px}
+    .s4{left:62px;top:705px;font-size:18px}
+    .s5{right:62px;top:92px}
+    .s6{right:88px;top:214px;font-size:12px}
+    .s7{right:54px;bottom:140px;font-size:18px}
+    .s8{right:102px;bottom:86px;font-size:12px}
+    .s9{left:136px;bottom:120px;font-size:12px}
+
+    @media print{
+      body{background:#fff}
+      .page{
+        width:210mm;
+        min-height:297mm;
+        margin:0;
+        box-shadow:none;
+        page-break-after:always;
+      }
+      .page:last-child{page-break-after:auto}
+      @page{
+        size:A4;
+        margin:0;
+      }
+    }
+
+    @media (max-width: 900px){
+  body{
+    background: var(--paper-2);
+  }
+
+  .page{
+    width: 100%;
+    min-height: auto;
+    margin: 0 0 12px;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .page::before{
+    inset: 12px;
+  }
+
+  .page::after{
+    inset: 24px 16px 16px;
+    border-radius: 16px;
+  }
+
+  .inner{
+    min-height: auto;
+    padding: 26px 16px 30px;
+  }
+
+  .topbar{
+    margin-bottom: 24px;
+    font-size: 11px;
+  }
+
+  .brandline{
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .top-ornament{
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .top-ornament .line{
+    width: 82px;
+  }
+
+  .title{
+    font-size: clamp(24px, 8.2vw, 32px);
+    line-height: 1.35;
+    letter-spacing: .03em;
+    margin: 8px 0 6px;
+  }
+
+  .subtitle{
+    font-size: 15px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .divider{
+    width: min(72vw, 240px);
+    margin: 0 auto 18px;
+  }
+
+  h2{
+    font-size: 23px;
+    line-height: 1.45;
+    margin-bottom: 14px;
+  }
+
+  p,
+  .simple-table td,
+  .note,
+  .hint-block p{
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  .intro-wrap,
+  .section-box{
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .lead{
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 1.95;
+  }
+
+  .simple-table{
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .simple-table td:first-child{
+    width: 86px;
+    min-width: 86px;
+    white-space: normal;
+    padding-right: 10px;
+  }
+
+  .note{
+    padding-left: 10px;
+    margin-top: 14px;
+  }
+
+  .hint-block{
+    margin-top: 14px;
+    padding: 16px 14px;
+  }
+
+  .author{
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .bottomline{
+    width: min(52vw, 200px);
+  }
+
+  .moon{
+    width: 58px;
+    height: 58px;
+    left: 8px;
+    top: 8px;
+    opacity: .78;
+  }
+
+  .compass{
+    width: 86px;
+    height: 86px;
+    right: 6px;
+    bottom: 6px;
+    opacity: .08;
+  }
+
+  .s4, .s5, .s6, .s7, .s8, .s9{
+    display: none;
+  }
+
+  .s1{left: 18px; top: 18px;}
+  .s2{left: 56px; top: 86px; font-size: 10px;}
+  .s3{right: 18px; top: 96px; font-size: 11px;}
+
+  .page:first-of-type .inner{
+    padding-top: 72px;
+    padding-bottom: 42px;
+    justify-content: flex-start !important;
+  }
+
+  .page:first-of-type .intro-wrap{
+    margin-top: 6px;
+  }
+}
+      .inner{
+        min-height:auto;
+        padding:24px 18px 28px;
+      }
+      .top-ornament .line{width:90px}
+      .title{font-size:27px}
+      .subtitle{font-size:16px}
+      h2{font-size:24px}
+      .section-box,.intro-wrap{padding:20px 16px}
+      .simple-table td,
+      p{font-size:15px}
+      .simple-table td:first-child{width:88px}
+      .moon{width:72px;height:72px;left:18px;top:18px}
+      .compass{width:110px;height:110px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 共通装飾 -->
+  <template id="decor-template">
+    <div class="wash w1"></div>
+    <div class="wash w2"></div>
+    <div class="wash w3"></div>
+    <div class="wash w4"></div>
+
+    <div class="star s1">✦</div>
+    <div class="star s2">✦</div>
+    <div class="star s3">✦</div>
+    <div class="star s4">✦</div>
+    <div class="star s5">✦</div>
+    <div class="star s6">✦</div>
+    <div class="star s7">✦</div>
+    <div class="star s8">✦</div>
+    <div class="star s9">✦</div>
+
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="moonGradA" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ead8a7"/>
+          <stop offset="100%" stop-color="#c9a85e"/>
+        </linearGradient>
+      </defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z"
+            fill="url(#moonGradA)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z"
+            fill="#f7f1dc" opacity="0.72"/>
+      <circle cx="63" cy="34" r="6" fill="none" stroke="#d7ba74" stroke-width="1.2"/>
+      <path d="M63 24v20M53 34h20M56 27l14 14M70 27L56 41" stroke="#d7ba74" stroke-width="1" opacity=".85"/>
+    </svg>
+
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+      <path d="M42 42l20 20M138 138l20 20M158 42l-20 20M42 158l20-20" stroke="#cbb173" stroke-width="1"/>
+      <path d="M100 34l8 18 18 8-18 8-8 18-8-18-18-8 18-8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <path d="M100 166l8-18 18-8-18-8-8-18-8 18-18 8 18 8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+  </template>
+
+  <!-- 1ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div>
+    <div class="wash w2"></div>
+    <div class="wash w3"></div>
+    <div class="wash w4"></div>
+
+    <div class="star s1">✦</div>
+    <div class="star s2">✦</div>
+    <div class="star s3">✦</div>
+    <div class="star s4">✦</div>
+    <div class="star s5">✦</div>
+    <div class="star s6">✦</div>
+    <div class="star s7">✦</div>
+    <div class="star s8">✦</div>
+    <div class="star s9">✦</div>
+
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="moonGradCover" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ead8a7"/>
+          <stop offset="100%" stop-color="#c9a85e"/>
+        </linearGradient>
+      </defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z"
+            fill="url(#moonGradCover)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z"
+            fill="#f7f1dc" opacity="0.72"/>
+      <circle cx="63" cy="34" r="6" fill="none" stroke="#d7ba74" stroke-width="1.2"/>
+      <path d="M63 24v20M53 34h20M56 27l14 14M70 27L56 41" stroke="#d7ba74" stroke-width="1" opacity=".85"/>
+    </svg>
+
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+      <path d="M42 42l20 20M138 138l20 20M158 42l-20 20M42 158l20-20" stroke="#cbb173" stroke-width="1"/>
+      <path d="M100 34l8 18 18 8-18 8-8 18-8-18-18-8 18-8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <path d="M100 166l8-18 18-8-18-8-8-18-8 18-18 8 18 8z" fill="none" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner" style="display:flex;flex-direction:column;justify-content:center;">
+      <div class="top-ornament">
+        <div class="line left"></div>
+        <div>✦</div>
+        <div class="line"></div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h1 class="title">四柱推命入門ガイド</h1>
+      <div class="subtitle">― 生まれ持った命式を読む ―</div>
+      <div class="divider"></div>
+
+      <div class="intro-wrap">
+        <p class="lead">
+          生まれた年・月・日・時間に刻まれた「気の流れ」は、あなたという人の土台を映し出します。<br>
+          このガイドでは、四柱推命を読み解く基本的な要素を丁寧にご紹介します。<br>
+          鑑定書をより深く味わうための入口として、ご活用ください。
+        </p>
+      </div>
+
+      <div class="author" style="margin-top:26px;">nanami-astro</div>
+    </div>
+  </section>
+
+  <!-- 2ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <use href="#"></use>
+      <defs>
+        <linearGradient id="moonGrad2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/>
+        </linearGradient>
+      </defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad2)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+      <path d="M42 42l20 20M138 138l20 20M158 42l-20 20M42 158l20-20" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>2</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>１．四柱推命とは</h2>
+
+      <div class="section-box">
+        <p class="section-intro">
+          四柱推命とは、あなたが生まれた年・月・日・時間から命式を立て、
+          その人の本質や才能、対人傾向、人生の流れを読み解く東洋の命術です。
+        </p>
+
+        <p>
+          西洋占星術が空にある天体の配置から人を読むように、
+          四柱推命は<strong>生まれた時間そのものを柱として人を読む</strong>占術です。
+          目に見えない「気の質」と「巡り方」を通して、
+          その人が持って生まれた傾向を立体的に見ていきます。
+        </p>
+
+        <p>四柱推命では、主に次のような要素を組み合わせて読んでいきます。</p>
+
+        <table class="simple-table">
+          <tr><td>四柱</td><td>年柱・月柱・日柱・時柱</td></tr>
+          <tr><td>日干</td><td>あなた自身の核</td></tr>
+          <tr><td>五行</td><td>木・火・土・金・水のバランス</td></tr>
+          <tr><td>通変星</td><td>才能・対人傾向・役割</td></tr>
+          <tr><td>十二運</td><td>エネルギーの質感</td></tr>
+          <tr><td>大運・年運</td><td>時期の流れ</td></tr>
+        </table>
+
+        <p class="note">
+          四柱推命は「良い命式・悪い命式」を決めるものではありません。<br>
+          どんな質を持ち、どんな場面でその力が出やすいかを知るためのものです。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad3)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>3</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>２．四柱 ― 命式を構成する４つの柱</h2>
+
+      <div class="section-box">
+        <p>
+          命式は、<strong>年柱・月柱・日柱・時柱</strong>という４つの柱で構成されます。
+          それぞれが別の役割を持ち、重ねて読むことでその人の全体像が見えてきます。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>年柱</td><td>家系・幼少期・外から見える印象・社会との最初の接点</td></tr>
+          <tr><td>月柱</td><td>社会性・仕事の仕方・青年期・現実面の軸</td></tr>
+          <tr><td>日柱</td><td>本人の核・本質・内面・対人の中心軸</td></tr>
+          <tr><td>時柱</td><td>晩年・奥にある才能・深層心理・年齢とともに育つ力</td></tr>
+        </table>
+
+        <p>
+          とくに大切なのが日柱です。日柱には、その人自身を表す「日干」が含まれているため、
+          四柱推命ではまずここから見ていくことが多くなります。
+        </p>
+
+        <p>
+          ただし、日柱だけでは全体はわかりません。たとえば本質は穏やかでも、月柱に社会的な緊張感が強く出ていれば、
+          仕事ではまったく違う顔を見せることがあります。四柱推命は、
+          <strong>一つの要素だけで決めつけず、柱同士の重なりを見る</strong>のが特徴です。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad4)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>4</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>３．日干 ― あなた自身の核</h2>
+
+      <div class="section-box">
+        <p>
+          日干（にっかん）とは、日柱の天干のことです。
+          これは四柱推命において、<strong>あなた自身を表す最も中心的な要素</strong>になります。
+        </p>
+
+        <p>
+          日干は全部で10種類あり、それぞれ自然界の象意を持っています。
+          四柱推命では、人を自然にたとえて読むことで、その人の質感をつかみます。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>甲</td><td>大木のようなまっすぐさ、成長力、芯の強さ</td></tr>
+          <tr><td>乙</td><td>草花のようなしなやかさ、繊細さ、柔らかさ</td></tr>
+          <tr><td>丙</td><td>太陽のような明るさ、情熱、表現力</td></tr>
+          <tr><td>丁</td><td>灯火のような温かさ、感受性、内面的な光</td></tr>
+          <tr><td>戊</td><td>山のような安定感、包容力、揺るがなさ</td></tr>
+          <tr><td>己</td><td>畑のような受容性、育てる力、現実感覚</td></tr>
+          <tr><td>庚</td><td>鋼鉄のような決断力、突破力、潔さ</td></tr>
+          <tr><td>辛</td><td>宝石のような美意識、洗練、繊細な強さ</td></tr>
+          <tr><td>壬</td><td>大河のようなスケール、柔軟さ、知性</td></tr>
+          <tr><td>癸</td><td>雨や霧のような静けさ、感受性、深い内面</td></tr>
+        </table>
+
+        <p>
+          ただし、同じ日干でも、周囲の五行や星の配置によって出方は変わります。
+          まっすぐ伸びる木でも、水に恵まれているのか、乾いた場所に立っているのかで状態が違うように、
+          日干もまた、命式全体の中で読んで初めて本当の質感が見えてきます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad5)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>5</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>４．五行 ― 気のバランスを見る</h2>
+
+      <div class="section-box">
+        <p>
+          四柱推命では、万物を<strong>木・火・土・金・水</strong>という５つの気で捉えます。
+          これを五行といいます。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>木</td><td>成長、発展、理想、やさしさ</td></tr>
+          <tr><td>火</td><td>情熱、表現、明るさ、拡散</td></tr>
+          <tr><td>土</td><td>安定、蓄積、受容、現実感覚</td></tr>
+          <tr><td>金</td><td>決断、整理、洗練、収穫</td></tr>
+          <tr><td>水</td><td>知性、柔軟性、感受性、内省</td></tr>
+        </table>
+
+        <p>
+          命式の中でどの要素が多いか、少ないかを見ることで、
+          その人のエネルギーの使い方や偏りがわかります。
+        </p>
+
+        <p>
+          たとえば木が強ければ、成長しようとする力や理想の高さが出やすくなります。
+          火が強ければ表現力や情熱が出やすく、土が強ければ安定感や現実性が増します。
+          一方で、どの要素も多すぎれば偏りになり、少なければそのテーマを意識的に補う必要が出てきます。
+        </p>
+
+        <p class="note">
+          五行の偏りは「欠点」ではありません。<br>
+          それはその人の特徴であり、強みの出方や疲れやすさの傾向を教えてくれるものです。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad6)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>6</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>５．通変星 ― 才能と対人傾向</h2>
+
+      <div class="section-box">
+        <p>
+          通変星（つうへんせい）は、日干から見て他の干がどんな関係にあるかを表したものです。
+          才能、考え方、人との関わり方、社会での役割がここに表れます。
+        </p>
+
+        <p>
+          通変星にはさまざまな種類がありますが、まずは大まかな方向性をつかめば十分です。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>比肩・劫財</td><td>自立心、仲間意識、負けず嫌い、自分の力で立つ感覚</td></tr>
+          <tr><td>食神・傷官</td><td>表現力、感性、創造性、言葉や感受性の鋭さ</td></tr>
+          <tr><td>偏財・正財</td><td>現実感覚、社交性、循環、お金や人とのつながり</td></tr>
+          <tr><td>偏官・正官</td><td>責任感、緊張感、社会性、管理力、規律</td></tr>
+          <tr><td>偏印・印綬</td><td>知性、理解力、学び、精神性、独自の視点</td></tr>
+        </table>
+
+        <p>
+          たとえば印綬が強い人は学びや理解に向きやすく、
+          正官が強い人は責任や信用に関わるテーマを持ちやすくなります。
+          傷官がある人は繊細で鋭い感性が出やすく、偏財が強い人は人との流れの中で力を発揮しやすくなります。
+        </p>
+
+        <p>
+          鑑定書の中で通変星が出てきたときは、
+          「良い星」「悪い星」としてではなく、<strong>どんな力として働くか</strong>に注目して読んでみてください。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad7)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>7</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>６．十二運 ― エネルギーの質感</h2>
+
+      <div class="section-box">
+        <p>
+          十二運（じゅうにうん）は、気の成熟度やエネルギーの出方を表す考え方です。
+          同じ星を持っていても、十二運によってその現れ方は変わってきます。
+        </p>
+
+        <p>
+          代表的なものには、長生・冠帯・建禄・帝旺・衰・病・死・墓などがあります。
+          名前だけを見ると強く感じるものもありますが、ここでも大切なのは善悪ではありません。
+        </p>
+
+        <table class="simple-table">
+          <tr><td>長生</td><td>生まれたてのような伸びやかさ、自然な成長力</td></tr>
+          <tr><td>冠帯</td><td>整い、華やかさ、社会に出る前の勢い</td></tr>
+          <tr><td>建禄</td><td>安定した力、自立、実務的な強さ</td></tr>
+          <tr><td>帝旺</td><td>最も強いピーク、迫力、存在感</td></tr>
+          <tr><td>衰・病</td><td>外向きより内向き、繊細さ、静かな深さ</td></tr>
+          <tr><td>死・墓</td><td>終わりではなく、蓄積・内省・内面の成熟</td></tr>
+        </table>
+
+        <p>
+          十二運は、その人の命式に流れている「空気感」のようなものです。
+          派手に前へ出る質なのか、静かに深める質なのかを見ることで、
+          鑑定文のニュアンスがぐっとつかみやすくなります。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad8)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>8</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>７．大運・年運 ― 時期の流れを読む</h2>
+
+      <div class="section-box">
+        <p>
+          四柱推命は、持って生まれた性質だけでなく、
+          <strong>今どんな時期にいるか</strong>を読むことにも優れています。
+        </p>
+
+        <p>
+          大運（たいうん）はおおよそ10年ごとの大きな流れ、
+          年運はその年ごとの流れです。
+          生まれ持った命式に対して、どんな気が巡ってきているかを重ねることで、
+          人生のテーマがどこで動きやすいかを見ていきます。
+        </p>
+
+        <p>
+          たとえば、もともと知性や学びに関わる星を持つ人に、
+          その力を後押しする運が入れば、勉強、資格、発信、仕事の評価などが動きやすくなります。
+          逆に、もともと強い要素にさらに同じ気が重なると、強みが増すこともあれば、
+          偏りがきつく出ることもあります。
+        </p>
+
+        <p>
+          つまり運とは、「急に良くなる・悪くなる」という単純なものではなく、
+          <strong>もともとの命式のどこが刺激されるか</strong>を見るものです。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9ページ目 -->
+  <section class="page">
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div><div class="wash w4"></div>
+    <div class="star s1">✦</div><div class="star s2">✦</div><div class="star s3">✦</div><div class="star s4">✦</div>
+    <div class="star s5">✦</div><div class="star s6">✦</div><div class="star s7">✦</div><div class="star s8">✦</div><div class="star s9">✦</div>
+    <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="moonGrad9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ead8a7"/><stop offset="100%" stop-color="#c9a85e"/></linearGradient></defs>
+      <path d="M62 10c-19 2-35 18-37 38-2 24 15 44 39 46 10 1 19-1 27-6-7 2-15 2-23 0-22-6-35-28-29-50 3-12 11-22 23-28z" fill="url(#moonGrad9)" opacity="0.9"/>
+      <path d="M61 18c-14 4-25 16-28 30-5 19 5 37 22 45-4 0-8 0-12-1-21-5-33-27-28-48 4-17 19-30 37-32 3 0 6 0 9 1z" fill="#f7f1dc" opacity="0.72"/>
+    </svg>
+    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#cbb173" stroke-width="1"/>
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#cbb173" stroke-width="1" opacity=".8"/>
+      <circle cx="100" cy="100" r="6" fill="#cbb173"/>
+      <path d="M100 18v28M100 154v28M18 100h28M154 100h28" stroke="#cbb173" stroke-width="1"/>
+    </svg>
+
+    <div class="inner">
+      <div class="topbar">
+        <div>星月七海 四柱推命入門ガイド</div>
+        <div>9</div>
+      </div>
+
+      <div class="brandline">星月七海 四柱推命入門ガイド</div>
+      <h2>８．鑑定書を読む３つのヒント</h2>
+
+      <div class="section-box">
+        <div class="hint-block">
+          <p><strong>① まずは日干から見よう</strong><br>
+            命式の中心は日干です。自分がどんな質の人かをつかむだけで、
+            鑑定書全体がかなり読みやすくなります。
+          </p>
+        </div>
+
+        <div class="hint-block">
+          <p><strong>② 五行の偏りに注目しよう</strong><br>
+            木が強い、火が少ない、金が効いている、などの偏りは、
+            その人のエネルギーの癖です。良し悪しではなく特徴として見てください。
+          </p>
+        </div>
+
+        <div class="hint-block">
+          <p><strong>③ 生まれ持った命式と、今の運気を分けて読む</strong><br>
+            命式そのものと、大運・年運は別です。
+            持って生まれた資質と、今起こりやすいテーマを分けて受け取ると理解しやすくなります。
+          </p>
+        </div>
+
+        <p class="closing">
+          鑑定書の中でわからない言葉があれば、このガイドを読み返しながら、ゆっくりご自身のペースで受け取ってみてください。<br>
+          言葉の意味は、人生経験とともに少しずつ深まっていきます。
+        </p>
+
+        <div class="bottomline"></div>
+        <div class="author">― nanami-astro ―</div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

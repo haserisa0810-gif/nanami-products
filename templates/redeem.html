@@ -5,7 +5,7 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ product.label }} 入力 | nanami-products</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
 </head>
 <body>
   <main class="wrap">
@@ -106,6 +106,41 @@
           {% endif %}
         </div>
 
+        <div class="form-section">
+          <h2>海外出生の場合</h2>
+          <label>出生地区分
+            <select name="birth_place_kind" id="birth_place_kind" data-initial-kind="{{ form.birth_place_kind if form and form.birth_place_kind == 'overseas' else 'domestic' }}" autocomplete="off">
+              <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>国内</option>
+              <option value="overseas" {% if form and form.birth_place_kind == 'overseas' %}selected{% endif %}>海外</option>
+            </select>
+          </label>
+          <div class="overseas-fields" id="overseas-fields">
+            <div class="location-grid">
+              <label class="full-span">出生地名（国・都市）
+                <input type="text" name="birth_place_overseas"
+                       value="{{ form.birth_place_overseas if form else '' }}"
+                       placeholder="例：New York, USA">
+              </label>
+              <label>緯度
+                <input type="number" name="birth_lat" step="any"
+                       value="{{ form.birth_lat if form else '' }}"
+                       placeholder="例：40.7128">
+              </label>
+              <label>経度
+                <input type="number" name="birth_lng" step="any"
+                       value="{{ form.birth_lng if form else '' }}"
+                       placeholder="例：-74.0060">
+              </label>
+              <label class="full-span">タイムゾーン（IANA名）
+                <input type="text" name="birth_timezone"
+                       value="{{ form.birth_timezone if form else '' }}"
+                       placeholder="例：America/New_York">
+                <small>海外出生の場合に入力してください。四柱推命の計算にも使います。</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
         {% if product_type == 'shichu' %}
         <div class="form-section highlight-section">
           <h2>四柱推命設定</h2>
@@ -156,9 +191,28 @@
     </div>
   </main>
   <script>
+    function syncBirthPlaceFields() {
+      const mode = document.getElementById('birth_place_kind');
+      const box = document.getElementById('overseas-fields');
+      if (!mode || !box) return;
+      const initialKind = mode.dataset.initialKind || 'domestic';
+      if (mode.value !== initialKind) mode.value = initialKind;
+      const active = mode.value === 'overseas';
+      const prefecture = document.querySelector('[name="prefecture"]');
+      if (prefecture) prefecture.required = !active;
+      box.classList.toggle('is-active', active);
+      box.querySelectorAll('input').forEach((el) => {
+        el.required = active;
+      });
+    }
+
     function confirmSubmit() {
       return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
     }
+    document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
+    });
   </script>
 </body>
 </html>
