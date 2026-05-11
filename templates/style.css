@@ -322,11 +322,16 @@ small { color: var(--text-dim); font-size: .80rem; }
 }
 .checkbox-line input {
   width: 18px;
+  height: 18px;
   min-height: 18px;
   flex-shrink: 0;
   margin-top: 2px;
   accent-color: var(--gold);
   cursor: pointer;
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+  padding: 0;
+  border-radius: 4px;
 }
 
 .submit-button, button {

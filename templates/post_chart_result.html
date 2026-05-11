@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>投稿用ホロスコープ</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+  <style>
+    .post-chart-preview {
+      width: min(100%, 720px);
+      margin: 24px auto 0;
+      border: 1px solid var(--border);
+      background: var(--card2);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .post-chart-preview svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .post-chart-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .post-chart-actions button,
+    .post-chart-actions a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      background: var(--gold);
+      color: #fff;
+      font: inherit;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products 管理画面</p>
+      <h1>投稿用ホロスコープ</h1>
+      <p class="lead">{{ result.title }} / {{ result.place }}</p>
+
+      <div class="post-chart-preview">
+        {{ result.svg | safe }}
+      </div>
+
+      <div class="post-chart-actions">
+        <button type="button" onclick="downloadPng()">PNGを保存</button>
+        <button type="button" onclick="downloadSvg()">SVGを保存</button>
+        <button type="button" onclick="copyCaption()">キャプションをコピー</button>
+        <a href="/admin/post-chart/new">新規作成</a>
+      </div>
+
+      <section>
+        <h2>投稿文下書き</h2>
+        <textarea id="caption" readonly>{{ result.caption }}</textarea>
+      </section>
+
+      <section>
+        <h2>SVGソース</h2>
+        <textarea id="svg-source" readonly>{{ result.svg }}</textarea>
+      </section>
+    </div>
+  </main>
+  <script>
+    const SVG_SOURCE = {{ result.svg | tojson }};
+    const CAPTION = {{ result.caption | tojson }};
+
+    async function copyCaption() {
+      await navigator.clipboard.writeText(CAPTION);
+      alert('コピーしました');
+    }
+
+    function downloadSvg() {
+      const blob = new Blob([SVG_SOURCE], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nanami-post-chart.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadPng() {
+      const svgBlob = new Blob([SVG_SOURCE], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth || 1080;
+        canvas.height = image.naturalHeight || 1280;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'nanami-post-chart.png';
+        a.click();
+      };
+      image.src = url;
+    }
+  </script>
+</body>
+</html>

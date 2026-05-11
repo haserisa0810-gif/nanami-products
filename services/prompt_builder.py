@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from services.birth_time import BIRTH_TIME_ACCURACY_NOTE
+
 WESTERN_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、天体計算済みの出生図データです。
 
 重要ルール:
@@ -79,9 +81,21 @@ SHICHUSUIMEI_PROMPT = """あなたは四柱推命の鑑定者です。以下のY
 以下のYAMLを読み込んで鑑定してください。
 """
 
-def build_prompt(*, include_shichusuimei: bool = False, include_asteroids: bool = False, include_transit: bool = False) -> str:
+def build_prompt(
+    *,
+    include_shichusuimei: bool = False,
+    include_asteroids: bool = False,
+    include_transit: bool = False,
+    birth_time_accuracy: str = "exact",
+    interpretation_flags: dict | None = None,
+) -> str:
     if include_shichusuimei and not include_asteroids and not include_transit:
-        return SHICHUSUIMEI_PROMPT.strip() + "\n"
-    if include_transit:
-        return WESTERN_FULL_PROMPT.strip() + "\n"
-    return WESTERN_PROMPT.strip() + "\n"
+        prompt = SHICHUSUIMEI_PROMPT
+    elif include_transit:
+        prompt = WESTERN_FULL_PROMPT
+    else:
+        prompt = WESTERN_PROMPT
+    flags = interpretation_flags or {}
+    if birth_time_accuracy in {"unknown", "approximate"} or flags.get("use_houses_as_reference_only"):
+        prompt = prompt.replace("以下のYAMLを読み込んで鑑定してください。", BIRTH_TIME_ACCURACY_NOTE + "\n\n以下のYAMLを読み込んで鑑定してください。")
+    return prompt.strip() + "\n"

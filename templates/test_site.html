@@ -95,6 +95,34 @@
       </div>
     </section>
 
+    <section class="api-key-issuer">
+      <div class="api-test-panel-head">
+        <div>
+          <p class="api-test-kicker">Order</p>
+          <h2>注文番号の再登録許可</h2>
+        </div>
+        <div class="api-test-actions">
+          <button type="button" id="lookupRedemptionButton">検索</button>
+          <button type="button" id="resetRedemptionButton" class="api-test-primary">未登録に戻す</button>
+        </div>
+      </div>
+      <div class="api-key-issuer-grid">
+        <label>
+          STORESオーダー番号
+          <input id="redemptionOrderCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="例: 1234567890">
+        </label>
+        <label>
+          確認入力
+          <input id="redemptionConfirmInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="実行時は同じ注文番号を入力">
+        </label>
+      </div>
+      <div class="api-key-result">
+        <div class="api-test-status" id="redemptionStatus">未検索</div>
+        <p class="hint">使用済み判定だけを解除します。既存のチャートURLは履歴として残り、同じ注文番号で新しい登録ができるようになります。</p>
+        <pre id="redemptionRecordBody">{}</pre>
+      </div>
+    </section>
+
     <section class="api-test-toolbar" aria-label="APIテスト設定">
       <label>
         Endpoint
@@ -161,7 +189,7 @@
         <li><code>X-API-Key</code> ヘッダーを付けて送信します。</li>
         <li>左のJSONを変更して、入力値ごとのレスポンス差分を確認できます。</li>
         <li>JSONが不正な場合は、API送信前に画面上でエラーを表示します。</li>
-        <li>西洋占星術を含むレスポンスでは <code>raw_data.western.natal</code> を表形式で展開します。</li>
+        <li>西洋占星術を含むレスポンスでは <code>raw_data.western.natal</code> と <code>chart.svg_url</code> を展開します。</li>
       </ul>
     </section>
   </main>
@@ -246,9 +274,28 @@
     const reissueStatus = document.getElementById("reissueStatus");
     const reissuedApiKeyOutput = document.getElementById("reissuedApiKeyOutput");
     const reissueRecordBody = document.getElementById("reissueRecordBody");
+    const redemptionOrderCodeInput = document.getElementById("redemptionOrderCodeInput");
+    const redemptionConfirmInput = document.getElementById("redemptionConfirmInput");
+    const redemptionStatus = document.getElementById("redemptionStatus");
+    const redemptionRecordBody = document.getElementById("redemptionRecordBody");
 
     function stringify(value) {
       return JSON.stringify(value, null, 2);
+    }
+
+    async function parseResponseBody(response) {
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        return {
+          ok: false,
+          error: {
+            code: `HTTP_${response.status}`,
+            message: text || response.statusText || "JSONではないレスポンスです"
+          }
+        };
+      }
     }
 
     function loadSample() {
@@ -311,12 +358,61 @@
       `;
     }
 
+    function renderChartResource(body) {
+      const westernChart = body?.chart;
+      const shichuChart = body?.shichusuimei_chart;
+      const sections = [];
+      if (westernChart?.svg_available && westernChart?.svg_url) {
+        sections.push(`
+          <div class="api-test-chart-section">
+            <h3>西洋占星術SVGチャート</h3>
+            ${renderTable(["項目", "値"], [
+              ["chart_id", westernChart.chart_id || ""],
+              ["svg_available", String(westernChart.svg_available)],
+              ["svg_url", westernChart.svg_url || ""]
+            ])}
+            <div class="api-test-actions" style="margin-top:10px">
+              <button type="button" onclick="fetchChartSvg('${escapeHtml(westernChart.svg_url)}', 'chartSvgPreview')">SVGを取得</button>
+              <a href="${escapeHtml(westernChart.svg_url)}" target="_blank" rel="noopener">別タブで開く</a>
+            </div>
+            <div id="chartSvgPreview" class="api-test-svg-preview">SVG未取得</div>
+          </div>
+        `);
+      }
+      if (shichuChart?.svg_available && shichuChart?.svg_url) {
+        sections.push(`
+          <div class="api-test-chart-section">
+            <h3>四柱推命 命式SVG</h3>
+            ${renderTable(["項目", "値"], [
+              ["chart_id", shichuChart.chart_id || ""],
+              ["svg_available", String(shichuChart.svg_available)],
+              ["png_available", String(shichuChart.png_available)],
+              ["svg_url", shichuChart.svg_url || ""],
+              ["png_url", shichuChart.png_url || ""]
+            ])}
+            <div class="api-test-actions" style="margin-top:10px">
+              <button type="button" onclick="fetchChartSvg('${escapeHtml(shichuChart.svg_url)}', 'shichuSvgPreview')">SVGを取得</button>
+              <a href="${escapeHtml(shichuChart.svg_url)}" target="_blank" rel="noopener">別タブで開く</a>
+            </div>
+            <div id="shichuSvgPreview" class="api-test-svg-preview">SVG未取得</div>
+          </div>
+        `);
+      }
+      if (!sections.length) {
+        return "";
+      }
+      return sections.join("");
+    }
+
     function renderNatalChart(body) {
       const natal = body?.raw_data?.western?.natal;
       if (!natal) {
         natalChartStatus.textContent = "出生図なし";
-        natalChartContent.className = "api-test-chart-empty";
-        natalChartContent.textContent = "このレスポンスには raw_data.western.natal がありません。western / transit / combined を送信すると表示されます。";
+        natalChartContent.className = "api-test-chart-content";
+        natalChartContent.innerHTML = `
+          <p class="api-test-chart-empty">このレスポンスには raw_data.western.natal がありません。western / transit / combined を送信すると表示されます。</p>
+          ${renderChartResource(body)}
+        `;
         return;
       }
 
@@ -364,7 +460,27 @@
           <h3>サマリー</h3>
           ${renderTable(["項目", "値"], summaryRows)}
         </div>
+        ${renderChartResource(body)}
       `;
+    }
+
+    async function fetchChartSvg(url, previewId = "chartSvgPreview") {
+      const preview = document.getElementById(previewId);
+      if (!preview) return;
+      preview.textContent = "SVG取得中";
+      try {
+        const response = await fetch(url, {
+          headers: { "X-API-Key": apiKeyInput.value.trim() }
+        });
+        const text = await response.text();
+        if (!response.ok) {
+          preview.textContent = text || `${response.status} ${response.statusText}`;
+          return;
+        }
+        preview.innerHTML = text;
+      } catch (error) {
+        preview.textContent = `SVG取得エラー: ${error.message}`;
+      }
     }
 
     async function sendRequest() {
@@ -434,7 +550,7 @@
             status: apiKeyStatusInput.value
           })
         });
-        const body = await response.json();
+        const body = await parseResponseBody(response);
         if (!response.ok || !body.ok) {
           const error = body.error || {};
           apiKeyIssueStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "発行に失敗しました"}`;
@@ -466,7 +582,7 @@
             order_code: reissueOrderCodeInput.value.trim()
           })
         });
-        const body = await response.json();
+        const body = await parseResponseBody(response);
         if (!response.ok || !body.ok) {
           const error = body.error || {};
           reissueStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "検索に失敗しました"}`;
@@ -504,7 +620,7 @@
             label: reissueLabelInput.value.trim()
           })
         });
-        const body = await response.json();
+        const body = await parseResponseBody(response);
         if (!response.ok || !body.ok) {
           const error = body.error || {};
           reissueStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "再発行に失敗しました"}`;
@@ -525,6 +641,79 @@
       }
     }
 
+    async function lookupRedemption() {
+      redemptionStatus.textContent = "検索中";
+      redemptionStatus.className = "api-test-status is-loading";
+      redemptionRecordBody.textContent = "{}";
+      try {
+        const response = await fetch("/internal/redemptions/lookup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            order_code: redemptionOrderCodeInput.value.trim()
+          })
+        });
+        const body = await parseResponseBody(response);
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          redemptionStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "検索に失敗しました"}`;
+          redemptionStatus.className = "api-test-status is-error";
+          return;
+        }
+        redemptionRecordBody.textContent = stringify(body);
+        redemptionStatus.textContent = `検索済み: order_status=${body.order_status} / redemption=${body.redemption ? "あり" : "なし"} / charts=${body.charts?.length || 0}`;
+        redemptionStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        redemptionStatus.textContent = `通信エラー: ${error.message}`;
+        redemptionStatus.className = "api-test-status is-error";
+      }
+    }
+
+    async function resetRedemption() {
+      const orderCode = redemptionOrderCodeInput.value.trim();
+      if (!orderCode || redemptionConfirmInput.value.trim() !== orderCode) {
+        redemptionStatus.textContent = "確認入力に同じ注文番号を入れてください";
+        redemptionStatus.className = "api-test-status is-error";
+        return;
+      }
+      if (!confirm(`注文番号 ${orderCode} を未登録に戻します。既存チャートは削除されません。実行しますか？`)) {
+        return;
+      }
+      redemptionStatus.textContent = "解除中";
+      redemptionStatus.className = "api-test-status is-loading";
+      try {
+        const response = await fetch("/internal/redemptions/reset", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            order_code: orderCode,
+            confirm: redemptionConfirmInput.value.trim()
+          })
+        });
+        const body = await parseResponseBody(response);
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          redemptionStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "解除に失敗しました"}`;
+          redemptionStatus.className = "api-test-status is-error";
+          return;
+        }
+        redemptionRecordBody.textContent = stringify(body);
+        redemptionStatus.textContent = body.reset
+          ? `未登録に戻しました: new_status=${body.order_status}`
+          : `登録行はありませんでした: status=${body.order_status}`;
+        redemptionStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        redemptionStatus.textContent = `通信エラー: ${error.message}`;
+        redemptionStatus.className = "api-test-status is-error";
+      }
+    }
+
     endpointSelect.addEventListener("change", loadSample);
     document.getElementById("loadSampleButton").addEventListener("click", loadSample);
     document.getElementById("formatRequestButton").addEventListener("click", formatRequest);
@@ -532,6 +721,8 @@
     document.getElementById("issueApiKeyButton").addEventListener("click", issueApiKey);
     document.getElementById("lookupReissueButton").addEventListener("click", lookupReissueKey);
     document.getElementById("reissueApiKeyButton").addEventListener("click", reissueApiKey);
+    document.getElementById("lookupRedemptionButton").addEventListener("click", lookupRedemption);
+    document.getElementById("resetRedemptionButton").addEventListener("click", resetRedemption);
     document.getElementById("useIssuedApiKeyButton").addEventListener("click", () => {
       apiKeyInput.value = issuedApiKeyOutput.value;
     });

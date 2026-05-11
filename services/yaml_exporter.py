@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta, timezone
+import hashlib
+import json
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -65,6 +67,46 @@ def _split_time(value: str | None) -> tuple[int, int]:
 
 def _round(x: Any, digits: int = 4) -> Any:
     return round(float(x), digits) if x is not None else None
+
+def _short_hash(prefix: str, payload: dict[str, Any]) -> str:
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+    return f"{prefix}_{digest}"
+
+def _birth_time_struct(
+    *,
+    input_value: str | None,
+    calculation_time: str,
+    accuracy: str,
+    note: str,
+    range_info: dict[str, Any] | None,
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "input_value": input_value if accuracy == "exact" else None,
+        "calculation_time": calculation_time,
+        "accuracy": accuracy,
+        "note": note,
+    }
+    if range_info:
+        data["range"] = range_info
+    return data
+
+def _interpretation_flags(accuracy: str) -> dict[str, Any]:
+    if accuracy in {"unknown", "approximate"}:
+        return {
+            "allow_house_interpretation": False,
+            "allow_asc_mc_interpretation": False,
+            "house_reliability": "low",
+            "moon_reliability": "medium",
+            "use_houses_as_reference_only": True,
+        }
+    return {
+        "allow_house_interpretation": True,
+        "allow_asc_mc_interpretation": True,
+        "house_reliability": "high",
+        "moon_reliability": "high",
+        "use_houses_as_reference_only": False,
+    }
 
 def _format_body(p: dict[str, Any]) -> dict[str, Any]:
     return {
@@ -229,8 +271,21 @@ def build_product_yaml(
     transit_start_date: datetime | None = None,
     transit_days: int = 31,
     day_change_at_23: bool = False,
+    birth_time_accuracy: str = "auto",
+    birth_time_range: dict[str, Any] | None = None,
+    birth_time_note: str | None = None,
+    data_role: str = "base_chart",
+    base: dict[str, Any] | None = None,
 ) -> tuple[str, str, dict[str, Any]]:
     include_western = not (include_shichusuimei and not include_asteroids and not include_transit)
+    if birth_time_accuracy == "auto":
+        birth_time_accuracy = "exact" if birth_time else "unknown"
+    if birth_time_accuracy == "unknown" and not birth_time_note:
+        birth_time_note = "出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。"
+    elif birth_time_accuracy == "approximate" and not birth_time_note:
+        birth_time_note = "出生時刻は推定レンジです。ハウス・ASC・MCは参考値です。"
+    elif not birth_time_note:
+        birth_time_note = "出生時刻あり。ハウス・ASC・MCを通常通り使用できます。"
     y, m, d = _split_date(birth_date)
     hour, minute = _split_time(birth_time)
     if birth_lat is not None and birth_lng is not None:
@@ -302,8 +357,66 @@ def build_product_yaml(
             tz_name=tz_name,
             day_change_at_23=day_change_at_23,
         )
+    calculation_time = f"{hour:02d}:{minute:02d}"
+    display_birth_time = birth_time if birth_time_accuracy == "exact" else birth_time_accuracy
+    profile_id = _short_hash("profile", {
+        "title": title or "",
+        "birth_date": birth_date,
+        "birth_place": birth_place_label or pref_name,
+        "timezone": tz_name,
+    })
+    chart_id = _short_hash("chart", {
+        "profile_id": profile_id,
+        "birth_date": birth_date,
+        "calculation_time": calculation_time,
+        "birth_time_accuracy": birth_time_accuracy,
+        "birth_time_range": birth_time_range,
+        "lat": _round(lat, 6),
+        "lng": _round(lng, 6),
+        "timezone": tz_name,
+        "house_system": house_system,
+        "include_asteroids": include_asteroids,
+        "include_shichusuimei": include_shichusuimei,
+        "include_transit": include_transit,
+        "transit_days": transit_days,
+        "day_change_at_23": day_change_at_23,
+    })
+    birth_time_data = _birth_time_struct(
+        input_value=birth_time,
+        calculation_time=calculation_time,
+        accuracy=birth_time_accuracy,
+        note=birth_time_note,
+        range_info=birth_time_range,
+    )
+    interpretation_flags = _interpretation_flags(birth_time_accuracy)
+    input_block = {
+        "title": title,
+        "birth_date": birth_date,
+        "birth_time": display_birth_time,
+        "calculation_time": calculation_time,
+        "birth_time_accuracy": birth_time_accuracy,
+        "birth_time_note": birth_time_note,
+        "prefecture": prefecture if birth_lat is None or birth_lng is None else None,
+        "birth_place_kind": "overseas" if birth_lat is not None and birth_lng is not None else "domestic",
+        "birth_place": birth_place_label or pref_name,
+        "timezone": tz_name,
+        "timezone_offset_hours": tz_offset_hours,
+        "gender": gender,
+    }
+    if birth_time_range:
+        input_block["birth_time_range"] = birth_time_range
+
     doc = {
         "version": "nanami-products-yaml-v1",
+        "meta": {
+            "schema_version": "1.1",
+            "product_type": "personal_ai_astrology_yaml",
+            "profile_id": profile_id,
+            "chart_id": chart_id,
+            "generated_at": generated_at.isoformat(),
+            "data_role": data_role,
+        },
+        "base": base,
         "product": {
             "type": "personal_ai_astrology_yaml",
             "options": {
@@ -314,20 +427,42 @@ def build_product_yaml(
             },
         },
         "generated_at": generated_at.isoformat(),
-        "input": {
-            "title": title,
-            "birth_date": birth_date,
-            "birth_time": birth_time or "unknown_noon_used",
-            "prefecture": prefecture if birth_lat is None or birth_lng is None else None,
-            "birth_place_kind": "overseas" if birth_lat is not None and birth_lng is not None else "domestic",
-            "birth_place": birth_place_label or pref_name,
+        "calculation": {
+            "engine": "Swiss Ephemeris" if include_western else "nanami-products shichusuimei",
+            "zodiac": "tropical" if include_western else None,
+            "house_system": house_system if include_western else None,
             "timezone": tz_name,
-            "timezone_offset_hours": tz_offset_hours,
-            "gender": gender,
+            "location_source": "input",
+            "ephemeris_version": None,
         },
+        "birth_time": birth_time_data,
+        "interpretation_flags": interpretation_flags,
+        "assets": {
+            "horoscope_svg": {
+                "available": bool(include_western),
+                "file_name": "horoscope.svg",
+                "generated_from_chart_id": chart_id,
+            },
+            "shichusuimei_svg": {
+                "available": bool(include_shichusuimei),
+                "file_name": "shichusuimei-chart.svg",
+                "generated_from_chart_id": chart_id,
+            },
+            "yaml_lite": {
+                "available": bool(include_transit),
+            },
+            "yaml_detail": {
+                "available": bool(include_transit and include_asteroids),
+            },
+            "yaml_full": {
+                "available": True,
+            },
+        },
+        "input": input_block,
         "usage_note": {
             "for_ai": "このYAMLは計算済みデータです。AIに解釈させる場合、生年月日から再計算させず、この値を根拠にしてください。",
             "not_included": "鑑定本文は含みません。AI解釈用の構造化データです。",
+            "continuous_use": "このYAMLはAIに一度読み込ませて継続的に使える基礎データです。今後、月ごとのトランジット追加データと組み合わせて使うこともできます。",
         },
         "systems": systems,
     }
@@ -336,5 +471,7 @@ def build_product_yaml(
         include_shichusuimei=include_shichusuimei,
         include_asteroids=include_asteroids,
         include_transit=include_transit,
+        birth_time_accuracy=birth_time_accuracy,
+        interpretation_flags=interpretation_flags,
     )
     return yaml_text, prompt_text, doc

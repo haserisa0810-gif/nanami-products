@@ -1,5 +1,22 @@
 # nanami-products デプロイ手順
 
+## ライセンス
+
+nanami-products は GNU Affero General Public License v3.0 or later
+（AGPL-3.0-or-later）で公開します。
+
+このプロジェクトは Swiss Ephemeris / pyswisseph を使用しています。Swiss
+Ephemeris は Astrodienst AG によるデュアルライセンスで、AGPL または Swiss
+Ephemeris Professional License のいずれかを選択する必要があります。本リポジトリ
+では、Professional License を購入するまで AGPL の条件に従って公開運用します。
+
+公開サービスとして動かす場合、利用者が対応するソースコードへアクセスできる必要が
+あります。現在のソースコードURL:
+
+```text
+https://github.com/haserisa0810-gif/nanami-products
+```
+
 ## 初回デプロイ
 
 ```bash
@@ -29,9 +46,9 @@ gcloud run deploy nanami-products \
 STORESのコンテンツ販売には、商品ごとの入口URLを設定します。
 
 ```text
-https://chart.nanami-astro.com/start?type=western_basic
-https://chart.nanami-astro.com/start?type=western_full
-https://chart.nanami-astro.com/start?type=shichu
+https://chart.nanami-astro.com/start/western-basic
+https://chart.nanami-astro.com/start/western-full
+https://chart.nanami-astro.com/start/shichu
 https://chart.nanami-astro.com/api-key/start
 ```
 

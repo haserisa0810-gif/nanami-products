@@ -447,6 +447,8 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
             payment_status = (row.get("payment_status") or "").lower()
             if payment_status == "cancelled":
                 return "cancelled", dict(row)
+            if payment_status == "reset_once":
+                return "ok", dict(row)
             if payment_status in {"reusable", "test", "permanent"}:
                 return "reusable", dict(row)
 

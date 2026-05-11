@@ -1,0 +1,10 @@
+nanami-products
+Copyright (C) 2026 nanami astro
+
+License: GNU Affero General Public License v3.0 or later
+Source: https://github.com/haserisa0810-gif/nanami-products
+
+This project uses Swiss Ephemeris through pyswisseph.
+Swiss Ephemeris is provided by Astrodienst AG under a dual licensing model:
+GNU AGPL or Swiss Ephemeris Professional License.
+

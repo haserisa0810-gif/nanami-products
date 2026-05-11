@@ -1,0 +1,364 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import date, datetime, timedelta
+from typing import Any
+from zoneinfo import ZoneInfo
+
+import yaml
+
+KEY_BODY_NAMES = {"Sun", "Moon", "ASC", "MC", "Saturn", "Uranus", "Neptune", "Pluto"}
+POSITIVE_ASPECTS = {"trine", "sextile", "conjunction"}
+CAUTION_ASPECTS = {"square", "opposition"}
+
+MEANING_HINTS = {
+    "Sun": "自己表現",
+    "Moon": "感情調整",
+    "Mercury": "思考整理",
+    "Venus": "対人調整",
+    "Mars": "行動力",
+    "Jupiter": "拡大しすぎ注意",
+    "Saturn": "責任と整理",
+    "Uranus": "変化対応",
+    "Neptune": "直感と境界",
+    "Pluto": "深い切り替え",
+    "ASC": "見せ方",
+    "MC": "仕事の方向性",
+}
+
+
+def _safe_load_yaml(yaml_text: str) -> dict[str, Any]:
+    doc = yaml.safe_load(yaml_text) or {}
+    return doc if isinstance(doc, dict) else {}
+
+
+def _transit_timezone_name(doc: dict[str, Any]) -> str:
+    western = ((doc.get("systems") or {}).get("western") or {})
+    period = ((western.get("transit") or {}).get("period") or {})
+    calculation = doc.get("calculation") or {}
+    input_block = doc.get("input") or {}
+    return str(period.get("timezone") or calculation.get("timezone") or input_block.get("timezone") or "Asia/Tokyo")
+
+
+def _today_for_doc(doc: dict[str, Any], today: date | None = None) -> date:
+    if today:
+        return today
+    try:
+        return datetime.now(ZoneInfo(_transit_timezone_name(doc))).date()
+    except Exception:
+        return date.today()
+
+
+def _copy_common_blocks(doc: dict[str, Any], *, product_type: str, yaml_variant: str) -> dict[str, Any]:
+    return {
+        "meta": {
+            **(doc.get("meta") or {}),
+            "schema_version": (doc.get("meta") or {}).get("schema_version") or "1.1",
+            "product_type": product_type,
+            "data_role": "base_chart",
+            "yaml_variant": yaml_variant,
+        },
+        "base": doc.get("base"),
+        "generated_at": doc.get("generated_at"),
+        "calculation": doc.get("calculation") or {},
+        "birth_time": doc.get("birth_time") or {},
+        "interpretation_flags": doc.get("interpretation_flags") or {},
+        "assets": {
+            **(doc.get("assets") or {}),
+            "yaml_base": {"available": True},
+            "yaml_lite": {"available": True},
+            "yaml_detail": {"available": True},
+            "yaml_full": {"available": True},
+        },
+        "input": doc.get("input") or {},
+    }
+
+
+def transit_period_status(full_yaml_text: str, *, today: date | None = None) -> dict[str, Any]:
+    doc = _safe_load_yaml(full_yaml_text)
+    period = (((doc.get("systems") or {}).get("western") or {}).get("transit") or {}).get("period") or {}
+    start_raw = period.get("start_date")
+    days_raw = period.get("days")
+    if not start_raw or not days_raw:
+        return {"available": False, "expired": False}
+    try:
+        start_date = date.fromisoformat(str(start_raw))
+        days = int(days_raw)
+    except (TypeError, ValueError):
+        return {"available": False, "expired": False}
+    end_date = start_date + timedelta(days=max(days, 1) - 1)
+    today_date = _today_for_doc(doc, today)
+    return {
+        "available": True,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "days": days,
+        "expired": today_date > end_date,
+        "today": today_date.isoformat(),
+    }
+
+
+def _orb_limit(item: dict[str, Any]) -> float:
+    names = {str(item.get("transit_body") or item.get("body1") or ""), str(item.get("natal_body") or item.get("body2") or "")}
+    return 1.5 if names & KEY_BODY_NAMES else 1.0
+
+
+def _is_key_aspect(item: dict[str, Any]) -> bool:
+    orb = item.get("orb")
+    if orb is None:
+        return False
+    try:
+        return float(orb) <= _orb_limit(item)
+    except (TypeError, ValueError):
+        return False
+
+
+def _meaning_hint(item: dict[str, Any]) -> str:
+    transit_body = str(item.get("transit_body") or item.get("body1") or "")
+    aspect = str(item.get("aspect") or "")
+    base = MEANING_HINTS.get(transit_body, "流れの変化")
+    if aspect in CAUTION_ASPECTS:
+        return f"{base}、調整"
+    if aspect in POSITIVE_ASPECTS:
+        return f"{base}、活用"
+    return base
+
+
+def _compact_aspect(item: dict[str, Any], *, include_date: str | None = None) -> dict[str, Any]:
+    out = {}
+    if include_date:
+        out["date"] = include_date
+    for key in ("transit_body", "natal_body", "body1", "body2", "aspect", "orb"):
+        if key in item:
+            out[key] = item[key]
+    out["meaning_hint"] = _meaning_hint(item)
+    return out
+
+
+def _day_score(aspects: list[dict[str, Any]]) -> tuple[int, int]:
+    easy = sum(1 for item in aspects if item.get("aspect") in POSITIVE_ASPECTS)
+    caution = sum(1 for item in aspects if item.get("aspect") in CAUTION_ASPECTS)
+    return easy, caution
+
+
+def _active_periods(key_aspects: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for item in key_aspects:
+        grouped[(str(item.get("transit_body")), str(item.get("natal_body")), str(item.get("aspect")))].append(item)
+
+    periods: list[dict[str, Any]] = []
+    for (_transit, _natal, _aspect), items in grouped.items():
+        if len(items) < 2:
+            continue
+        dates = sorted(str(item.get("date")) for item in items if item.get("date"))
+        if not dates:
+            continue
+        source = items[:3]
+        periods.append({
+            "start_date": dates[0],
+            "end_date": dates[-1],
+            "theme": _meaning_hint(items[0]),
+            "source_aspects": source,
+        })
+    return periods[:8]
+
+
+def _parse_date(value: Any) -> date | None:
+    try:
+        return date.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _select_today_entry(
+    daily: list[dict[str, Any]],
+    doc: dict[str, Any],
+    *,
+    today: date | None = None,
+) -> tuple[dict[str, Any], date, str]:
+    today_date = _today_for_doc(doc, today)
+    dated_entries = [
+        (day_date, day)
+        for day in daily
+        if isinstance(day, dict) and (day_date := _parse_date(day.get("date")))
+    ]
+    if not dated_entries:
+        return {}, today_date, "no_daily_data"
+
+    for day_date, day in dated_entries:
+        if day_date == today_date:
+            return day, today_date, "current_date"
+
+    first_date, first_day = dated_entries[0]
+    last_date, _last_day = dated_entries[-1]
+    if today_date < first_date:
+        return first_day, today_date, "before_period_uses_first_day"
+    return {}, today_date, "out_of_period"
+
+
+def build_light_astrology_yaml(
+    full_yaml_text: str,
+    *,
+    include_asteroids: bool = False,
+    max_key_aspects: int = 40,
+    max_daily_aspects: int = 3,
+    max_easy_days: int = 5,
+    max_caution_days: int = 5,
+    max_active_periods: int = 5,
+    version: str = "nanami-products-yaml-light-v1",
+    product_type: str = "personal_ai_astrology_yaml_light",
+    current_date: date | None = None,
+) -> str:
+    doc = _safe_load_yaml(full_yaml_text)
+    western = ((doc.get("systems") or {}).get("western") or {})
+    natal = western.get("natal") or {}
+    transit = western.get("transit") or {}
+    daily = transit.get("daily") or []
+    today, selected_date, selection_status = _select_today_entry(daily, doc, today=current_date)
+
+    natal_aspects = [item for item in natal.get("aspects", []) if isinstance(item, dict) and _is_key_aspect(item)]
+    today_aspects = [item for item in today.get("natal_aspects", []) if isinstance(item, dict) and _is_key_aspect(item)]
+
+    key_aspects: list[dict[str, Any]] = []
+    easy_days: list[dict[str, Any]] = []
+    caution_days: list[dict[str, Any]] = []
+    for day in daily:
+        date = str(day.get("date") or "")
+        aspects = [
+            _compact_aspect(item, include_date=date)
+            for item in day.get("natal_aspects", [])
+            if isinstance(item, dict) and _is_key_aspect(item)
+        ]
+        aspects = sorted(aspects, key=lambda item: float(item.get("orb") or 99))[:max_daily_aspects]
+        key_aspects.extend(aspects)
+        if aspects:
+            easy, caution = _day_score(aspects)
+            if easy >= caution:
+                easy_days.append({"date": date, "reason": "動きやすい配置が多い日", "source_aspects": aspects[:3]})
+            if caution > 0:
+                caution_days.append({"date": date, "reason": "調整が必要な配置がある日", "source_aspects": aspects[:3]})
+
+    asteroids = western.get("asteroids") if include_asteroids else None
+    light = {
+        "version": version,
+        **_copy_common_blocks(
+            doc,
+            product_type=product_type,
+            yaml_variant="detail" if include_asteroids else "lite",
+        ),
+        "product": {
+            "type": product_type,
+            "options": {
+                "western_natal": bool(natal),
+                "asteroids": bool(asteroids),
+                "transit_today": bool(today),
+                "transit_31days_summary": bool(daily),
+            },
+        },
+        "usage_note": {
+            "for_ai": "このYAMLはFULL版の計算済みデータから抽出したAI貼り付け用データです。生年月日から再計算せず、この値を根拠にしてください。",
+            "full_yaml": "完全版YAMLは検証・保存用です。AI貼り付けにはAI貼り付け版を優先してください。",
+        },
+        "systems": {
+            "western": {
+                "natal": {
+                    "bodies": natal.get("bodies") or {},
+                    "houses": natal.get("houses") or {},
+                    "aspects": {
+                        "major_only": True,
+                        "items": natal_aspects,
+                    },
+                    "summary": natal.get("summary") or {},
+                },
+                "asteroids": {"bodies": asteroids or {}} if asteroids else None,
+                "transit": {
+                    "period": transit.get("period") or {},
+                    "today": {
+                        "selected_date": selected_date.isoformat(),
+                        "selection_status": selection_status,
+                        "date": today.get("date"),
+                        "transiting_bodies": today.get("transiting_bodies") or {},
+                        "natal_aspects": today_aspects,
+                        "moon_timepoints": {
+                            str(item.get("label")): {
+                                "time": item.get("time"),
+                                "moon": item.get("body"),
+                                "natal_aspects": [
+                                    aspect for aspect in item.get("natal_aspects", [])
+                                    if isinstance(aspect, dict) and _is_key_aspect(aspect)
+                                ],
+                            }
+                            for item in today.get("moon_timepoints", [])
+                            if isinstance(item, dict) and item.get("label")
+                        },
+                    } if today else None,
+                    "next_31_days_summary": {} if daily else None,
+                } if transit else None,
+            },
+            "shichusuimei": None,
+        },
+    }
+    summary = light["systems"]["western"]["transit"]["next_31_days_summary"] if transit and daily else None
+    if summary:
+        summary["key_aspects"] = key_aspects[:max_key_aspects]
+        summary["active_periods"] = _active_periods(key_aspects)[:max_active_periods]
+        summary["easy_to_move_days"] = easy_days[:max_easy_days]
+        summary["caution_days"] = caution_days[:max_caution_days]
+    return yaml.safe_dump(light, allow_unicode=True, sort_keys=False, width=120)
+
+
+def build_detail_astrology_yaml(full_yaml_text: str, *, current_date: date | None = None) -> str:
+    return build_light_astrology_yaml(
+        full_yaml_text,
+        include_asteroids=True,
+        max_key_aspects=120,
+        max_daily_aspects=5,
+        max_easy_days=10,
+        max_caution_days=10,
+        max_active_periods=8,
+        version="nanami-products-yaml-detail-v1",
+        product_type="personal_ai_astrology_yaml_detail",
+        current_date=current_date,
+    )
+
+
+def build_base_astrology_yaml(full_yaml_text: str) -> str:
+    doc = _safe_load_yaml(full_yaml_text)
+    western = ((doc.get("systems") or {}).get("western") or {})
+    natal = western.get("natal") or {}
+    asteroids = western.get("asteroids") or None
+    base = {
+        "version": "nanami-products-yaml-base-v1",
+        **_copy_common_blocks(
+            doc,
+            product_type="personal_ai_astrology_yaml_base",
+            yaml_variant="base",
+        ),
+        "product": {
+            "type": "personal_ai_astrology_yaml_base",
+            "options": {
+                "western_natal": bool(natal),
+                "asteroids": bool(asteroids),
+                "transit_today": False,
+                "transit_31days_summary": False,
+            },
+        },
+        "usage_note": {
+            "for_ai": "この基礎YAMLはネイタルデータ中心の継続利用用データです。生年月日から再計算せず、この値を根拠にしてください。",
+            "transit_updates": "月次トランジット追加データと組み合わせる場合は、このYAMLを土台として使用してください。",
+        },
+        "systems": {
+            "western": {
+                "natal": {
+                    "bodies": natal.get("bodies") or {},
+                    "houses": natal.get("houses") or {},
+                    "aspects": natal.get("aspects") or [],
+                    "summary": natal.get("summary") or {},
+                },
+                "asteroids": {"bodies": asteroids or {}} if asteroids else None,
+                "transit": None,
+            },
+            "shichusuimei": None,
+        },
+    }
+    return yaml.safe_dump(base, allow_unicode=True, sort_keys=False, width=120)

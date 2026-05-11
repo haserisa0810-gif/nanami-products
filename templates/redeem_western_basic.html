@@ -23,7 +23,7 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="/redeem?type=western_basic" class="form" onsubmit="return confirmSubmit()">
+      <form method="post" action="{{ redeem_url }}" class="form" onsubmit="return confirmSubmit()">
         <input type="hidden" name="product_type" value="western_basic">
         <input type="hidden" name="gender" value="unknown">
 
@@ -51,10 +51,21 @@
             <input type="date" name="birth_date" required
                    value="{{ form.birth_date if form else '' }}">
           </label>
-          <label>出生時刻<span class="optional">任意</span>
-            <input type="time" name="birth_time"
+          <label>出生時刻の精度<span class="required">必須</span>
+            <select name="birth_time_accuracy" id="birth_time_accuracy" required>
+              {% set time_accuracy = form.birth_time_accuracy if form and form.birth_time_accuracy else 'exact' %}
+              <option value="exact" {% if time_accuracy == 'exact' %}selected{% endif %}>正確な時刻あり</option>
+              <option value="unknown" {% if time_accuracy == 'unknown' %}selected{% endif %}>不明</option>
+              <option value="morning" {% if time_accuracy == 'morning' %}selected{% endif %}>午前</option>
+              <option value="afternoon" {% if time_accuracy == 'afternoon' %}selected{% endif %}>午後</option>
+              <option value="night" {% if time_accuracy == 'night' %}selected{% endif %}>夜</option>
+            </select>
+            <small>推定時刻の場合、ハウス・ASC・MCなどは参考値になります。</small>
+          </label>
+          <label id="birth-time-field">出生時刻
+            <input type="time" name="birth_time" id="birth_time"
                    value="{{ form.birth_time if form else '' }}">
-            <small>不明な場合は空欄のままで構いません（正午で計算します）。</small>
+            <small>正確な出生時刻が分かる場合のみ入力してください。</small>
           </label>
           <label>出生都道府県<span class="required">必須</span>
             <select name="prefecture" required>
@@ -135,9 +146,22 @@
     function confirmSubmit() {
       return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
     }
+    function syncBirthTimeFields() {
+      const mode = document.getElementById('birth_time_accuracy');
+      const input = document.getElementById('birth_time');
+      const field = document.getElementById('birth-time-field');
+      if (!mode || !input || !field) return;
+      const exact = mode.value === 'exact';
+      input.required = exact;
+      input.disabled = !exact;
+      field.style.display = exact ? '' : 'none';
+      if (!exact) input.value = '';
+    }
     document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
+    document.addEventListener('DOMContentLoaded', syncBirthTimeFields);
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
+      document.getElementById('birth_time_accuracy')?.addEventListener('change', syncBirthTimeFields);
     });
   </script>
 </body>

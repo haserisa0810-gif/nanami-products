@@ -104,12 +104,25 @@ def ensure_api_tables(cur=None) -> None:
             )
         """)
         cur.execute(f"""
+            CREATE TABLE IF NOT EXISTS {SCHEMA}.api_chart_snapshots (
+                chart_id   TEXT        PRIMARY KEY,
+                api_key_id BIGINT      REFERENCES {SCHEMA}.api_keys(id),
+                endpoint   TEXT        NOT NULL,
+                yaml_text  TEXT        NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute(f"""
             CREATE INDEX IF NOT EXISTS idx_api_usage_logs_key_created
             ON {SCHEMA}.api_usage_logs (api_key_id, created_at DESC)
         """)
         cur.execute(f"""
             CREATE INDEX IF NOT EXISTS idx_api_usage_logs_endpoint_created
             ON {SCHEMA}.api_usage_logs (endpoint, created_at DESC)
+        """)
+        cur.execute(f"""
+            CREATE INDEX IF NOT EXISTS idx_api_chart_snapshots_key_created
+            ON {SCHEMA}.api_chart_snapshots (api_key_id, created_at DESC)
         """)
         cur.execute(f"ALTER TABLE {SCHEMA}.api_keys ADD COLUMN IF NOT EXISTS owner_email TEXT")
         cur.execute(f"ALTER TABLE {SCHEMA}.api_keys ADD COLUMN IF NOT EXISTS order_code TEXT")
@@ -354,6 +367,39 @@ def consume_api_credits(*, api_key_id: int, credits: int) -> bool:
             return cur.fetchone() is not None
 
 
+def save_api_chart_snapshot(*, api_key_id: int, endpoint: str, yaml_text: str) -> str:
+    chart_id = "ch_" + secrets.token_urlsafe(18)
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.api_chart_snapshots
+                    (chart_id, api_key_id, endpoint, yaml_text)
+                VALUES (%s, %s, %s, %s)
+                RETURNING chart_id
+                """,
+                (chart_id, api_key_id, endpoint, yaml_text),
+            )
+            row = cur.fetchone()
+    return str(row["chart_id"])
+
+
+def get_api_chart_snapshot(*, chart_id: str, api_key_id: int) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT chart_id, api_key_id, endpoint, yaml_text, created_at
+                FROM {SCHEMA}.api_chart_snapshots
+                WHERE chart_id = %s
+                  AND api_key_id = %s
+                """,
+                (chart_id, api_key_id),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
 def save_chart(
     *,
     token: str,
@@ -392,6 +438,85 @@ def get_chart(token: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+def get_redemption_by_order_code(order_code: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT order_code, email, buyer_name, token, used_at, created_at
+                FROM {SCHEMA}.redemptions
+                WHERE order_code = %s
+                """,
+                (order_code,),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def get_redemption_reset_by_order_code(order_code: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT stores_order_no AS order_code, payment_status, updated_at
+                FROM {SCHEMA}.stores_orders
+                WHERE stores_order_no = %s
+                  AND payment_status = 'reset_once'
+                """,
+                (order_code,),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def list_charts_by_order_code(order_code: str) -> list[dict[str, Any]]:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT token, order_code, buyer_name, birth_date, birth_time, birth_place, options, created_at
+                FROM {SCHEMA}.charts
+                WHERE order_code = %s
+                ORDER BY created_at DESC
+                LIMIT 10
+                """,
+                (order_code,),
+            )
+            rows = cur.fetchall()
+    return [dict(row) for row in rows]
+
+
+def reset_redemption_by_order_code(order_code: str) -> dict[str, Any]:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {SCHEMA}.stores_orders
+                SET payment_status = 'reset_once',
+                    updated_at = NOW()
+                WHERE stores_order_no = %s
+                  AND COALESCE(payment_status, '') <> 'cancelled'
+                RETURNING stores_order_no AS order_code, payment_status, updated_at
+                """,
+                (order_code,),
+            )
+            reset_row = cur.fetchone()
+    try:
+        charts = list_charts_by_order_code(order_code)
+    except Exception as exc:
+        charts = []
+        charts_error = str(exc)
+    else:
+        charts_error = None
+    return {
+        "reset": reset_row is not None,
+        "reset_override": dict(reset_row) if reset_row else None,
+        "deleted_redemption": None,
+        "charts": charts,
+        "charts_error": charts_error,
+    }
+
+
 def redeem_and_save(
     *,
     order_code: str,
@@ -422,7 +547,19 @@ def redeem_and_save(
                 (order_code, email, buyer_name, token),
             )
             if cur.fetchone() is None:
-                return False
+                cur.execute(
+                    f"""
+                    UPDATE {SCHEMA}.stores_orders
+                    SET payment_status = 'paid',
+                        updated_at = NOW()
+                    WHERE stores_order_no = %s
+                      AND payment_status = 'reset_once'
+                    RETURNING stores_order_no
+                    """,
+                    (order_code,),
+                )
+                if cur.fetchone() is None:
+                    return False
 
             cur.execute(
                 f"""

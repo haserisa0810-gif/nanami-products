@@ -20,27 +20,63 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone, timedelta
+import os
 from zoneinfo import ZoneInfo
 from typing import Any
 
 from pathlib import Path
 import swisseph as swe
 
+def _ephe_candidates() -> list[Path]:
+    candidates: list[Path] = []
+
+    env_path = os.getenv("SWEPH_EPHE_PATH", "").strip()
+    if env_path:
+        candidates.append(Path(env_path))
+
+    candidates.extend([
+        Path(__file__).resolve().parents[1] / "ephe",
+        Path("/app/ephe"),
+    ])
+
+    deduped: list[Path] = []
+    seen: set[str] = set()
+    for path in candidates:
+        key = str(path.resolve()) if path.exists() else str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(path)
+    return deduped
+
+
+def _resolve_ephe_dir() -> Path | None:
+    for ephe_dir in _ephe_candidates():
+        if ephe_dir.exists() and any(ephe_dir.glob("*.se1")):
+            return ephe_dir
+    return None
+
+
 def configure_ephemeris() -> int:
-    ephe_dir = Path(__file__).resolve().parents[2] / "ephe"
-    if ephe_dir.exists() and any(ephe_dir.glob("*.se1")):
+    ephe_dir = _resolve_ephe_dir()
+    if ephe_dir is not None:
         swe.set_ephe_path(str(ephe_dir))
         return swe.FLG_SWIEPH
     return swe.FLG_MOSEPH
 
 def ephemeris_debug_info() -> dict:
-    ephe_dir = Path(__file__).resolve().parents[2] / "ephe"
+    resolved = _resolve_ephe_dir()
+    candidates = _ephe_candidates()
+    ephe_dir = resolved or candidates[0]
     files = sorted([p.name for p in ephe_dir.glob("*")]) if ephe_dir.exists() else []
     return {
         "ephe_dir": str(ephe_dir),
         "ephe_dir_exists": ephe_dir.exists(),
         "ephe_files": files,
         "has_se1": any(name.endswith(".se1") for name in files),
+        "resolved_ephe_dir": str(resolved) if resolved is not None else None,
+        "searched_ephe_dirs": [str(p) for p in candidates],
+        "env_sweph_ephe_path": os.getenv("SWEPH_EPHE_PATH", "").strip() or None,
     }
 
 # Swiss Ephemeris（節気計算に使用）

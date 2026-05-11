@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3ヶ月の恋愛星読みレポート｜さばめ様</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #0d090d;
+  --bg2:     #160f14;
+  --bg3:     #1c1219;
+  --ink:     #ece0e8;
+  --ink2:    #b89aaa;
+  --ink3:    #605258;
+  --gold:    #d4849a;
+  --gold-l:  #f0a8bc;
+  --gold-p:  rgba(212,132,154,.18);
+  --red:     #c06070;
+  --green:   #a080a8;
+  --blue:    #9080c0;
+  --border:  rgba(212,132,154,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Shippori Mincho',serif;
+  font-size:16px;
+  line-height:2;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 20px 100px;}
+
+/* COVER */
+.cover{
+  padding:60px 0 50px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+}
+.cover-label{
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:.4em;
+  color:var(--gold);
+  margin-bottom:24px;
+}
+.cover-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(40px,8vw,60px);
+  font-weight:300;
+  font-style:italic;
+  line-height:1.15;
+  margin-bottom:8px;
+}
+.cover-period{
+  font-size:13px;
+  color:var(--ink3);
+  letter-spacing:.15em;
+  margin-bottom:36px;
+}
+.cover-lead{
+  font-size:14px;
+  color:var(--ink2);
+  line-height:2;
+  max-width:440px;
+  margin:0 auto 36px;
+}
+.cover-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+.chip{
+  padding:4px 16px;
+  border:1px solid var(--border);
+  border-radius:99px;
+  font-size:11px;
+  color:var(--ink3);
+  letter-spacing:.08em;
+  background:var(--bg2);
+}
+
+/* HOW TO READ */
+.howto{
+  margin:40px 0;
+  padding:20px 24px;
+  background:var(--bg2);
+  border-left:3px solid var(--gold-p);
+}
+.howto-title{
+  font-size:11px;
+  letter-spacing:.25em;
+  color:var(--gold);
+  margin-bottom:12px;
+}
+.howto-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:6px;
+  font-size:14px;
+  color:var(--ink2);
+}
+.howto-row:last-child{margin-bottom:0;}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;height:28px;
+  border-radius:50%;
+  font-size:14px;
+  flex-shrink:0;
+}
+.badge.s{background:rgba(201,168,76,.15);}
+.badge.g{background:rgba(80,160,144,.12);}
+.badge.c{background:rgba(192,96,96,.12);}
+
+/* SECTION TITLE */
+.sec{
+  display:flex;align-items:center;gap:12px;
+  margin:56px 0 28px;
+}
+.sec::before,.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+.sec span{
+  font-family:'Cinzel',serif;
+  font-size:10px;letter-spacing:.4em;
+  color:var(--gold);white-space:nowrap;
+}
+
+/* PORTRAIT — あなたの3ヶ月テーマ */
+.portrait{
+  display:flex;flex-direction:column;gap:12px;
+  margin-bottom:8px;
+}
+.portrait-item{
+  padding:20px 22px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  position:relative;
+}
+.portrait-item.main{
+  border-color:rgba(201,168,76,.35);
+  background:rgba(201,168,76,.04);
+}
+.portrait-emoji{
+  font-size:22px;
+  margin-bottom:8px;
+  display:block;
+}
+.portrait-title{
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink);
+  margin-bottom:6px;
+  letter-spacing:.03em;
+}
+.portrait-body{
+  font-size:14px;
+  line-height:2;
+  color:var(--ink2);
+}
+
+/* MONTH */
+.month-block{margin-bottom:56px;}
+.month-head{
+  display:flex;
+  align-items:baseline;
+  gap:16px;
+  margin-bottom:24px;
+  padding-bottom:16px;
+  border-bottom:2px solid var(--gold-p);
+}
+.month-num{
+  font-family:'Cormorant Garamond',serif;
+  font-size:56px;
+  font-weight:300;
+  color:var(--gold-p);
+  line-height:1;
+  flex-shrink:0;
+}
+.month-name{
+  font-family:'Cinzel',serif;
+  font-size:16px;
+  letter-spacing:.15em;
+  color:var(--gold);
+}
+.month-theme{
+  font-size:13px;
+  color:var(--ink3);
+  margin-top:2px;
+}
+
+/* EVENT */
+.event{
+  display:grid;
+  grid-template-columns:52px 1fr;
+  margin-bottom:10px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  overflow:hidden;
+}
+.event.star{
+  border-color:rgba(201,168,76,.4);
+  background:rgba(201,168,76,.04);
+}
+.event.care{
+  border-color:rgba(192,96,96,.3);
+  background:rgba(192,96,96,.04);
+}
+.event-left{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:14px 4px 14px;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  gap:4px;
+}
+.event-icon{font-size:18px;line-height:1;}
+.event-date-d{
+  font-family:'Cinzel',serif;
+  font-size:15px;
+  color:var(--gold);
+  line-height:1;
+}
+.event-date-m{font-size:9px;color:var(--ink3);letter-spacing:.05em;}
+.event-body{padding:14px 16px 16px;}
+
+.event-headline{
+  font-size:15px;
+  font-weight:600;
+  color:var(--ink);
+  line-height:1.6;
+  margin-bottom:8px;
+  letter-spacing:.02em;
+}
+.event.star .event-headline{color:var(--gold-l);}
+.event.care .event-headline{color:var(--red);}
+
+.event-desc{
+  font-size:14px;
+  line-height:2;
+  color:var(--ink2);
+  margin-bottom:10px;
+}
+.event-action{
+  font-size:13px;
+  color:var(--green);
+  padding:10px 14px;
+  background:rgba(80,160,144,.08);
+  border-left:2px solid var(--green);
+  line-height:1.8;
+}
+.event.care .event-action{
+  color:var(--red);
+  background:rgba(192,96,96,.08);
+  border-left-color:var(--red);
+}
+.event-detail{
+  margin-top:8px;
+  font-size:11px;
+  color:var(--ink3);
+  cursor:pointer;
+}
+.detail-content{
+  display:none;
+  font-size:11px;
+  color:var(--ink3);
+  margin-top:4px;
+  font-style:italic;
+  line-height:1.7;
+}
+.event-detail.open + .detail-content,
+.detail-content.open{display:block;}
+
+/* PERIOD EVENT — 期間あるもの */
+.event-period{
+  display:inline-block;
+  font-size:10px;
+  color:var(--ink3);
+  letter-spacing:.08em;
+  margin-bottom:4px;
+}
+
+/* MONTH SUMMARY */
+.month-summary{
+  margin-top:16px;
+  padding:18px 20px;
+  background:var(--bg2);
+  border-top:2px solid var(--gold-p);
+}
+.ms-label{
+  font-size:10px;
+  letter-spacing:.25em;
+  color:var(--gold);
+  margin-bottom:8px;
+}
+.ms-text{
+  font-size:14px;
+  line-height:2;
+  color:var(--ink2);
+}
+
+/* LONG RANGE — 3ヶ月を通じた流れ */
+.flow-block{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.flow-item{
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:12px;
+  align-items:start;
+  font-size:14px;
+}
+.flow-period{
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:.08em;
+  color:var(--gold);
+  padding-top:3px;
+  text-align:right;
+  border-right:1px solid var(--border);
+  padding-right:12px;
+}
+.flow-text{color:var(--ink2);line-height:1.8;}
+.flow-text strong{color:var(--ink);font-weight:600;}
+
+/* DIVIDER */
+.div{text-align:center;color:var(--gold-p);letter-spacing:.6em;font-size:11px;margin:40px 0;}
+
+/* FOOTER */
+footer{
+  margin-top:64px;padding-top:28px;
+  border-top:1px solid var(--border);
+  text-align:center;
+}
+.footer-brand{
+  font-family:'Cinzel',serif;
+  font-size:10px;letter-spacing:.4em;
+  color:var(--gold);margin-bottom:10px;
+}
+.footer-note{font-size:11px;color:var(--ink3);line-height:1.85;}
+
+/* MOBILE */
+@media(max-width:480px){
+  .wrap{padding:0 14px 80px;}
+  .cover{padding:44px 0 36px;}
+  .month-num{font-size:44px;}
+  .event{grid-template-columns:44px 1fr;}
+  .event-date-d{font-size:13px;}
+  .flow-item{grid-template-columns:60px 1fr;}
+  .flow-period{font-size:9px;}
+}
+@media print{
+  body{background:#fff;color:#111;}
+  .event,.portrait-item,.month-summary{break-inside:avoid;}
+  .detail-content{display:block !important;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">3ヶ月の恋愛星読みレポート</div>
+  <div class="cover-name">さばめ様</div>
+  <div class="cover-period">2026年 4月 — 6月</div>
+  <div class="cover-lead">
+    このレポートは、あなたの生年月日・時刻・出生地をもとに、<br>
+    今後3ヶ月の恋愛・パートナーシップの流れを読み解いたものです。<br>
+    占星術の知識がなくても、日々の行動のヒントとして使えます。
+  </div>
+  <div class="cover-chips">
+    <span class="chip">1986年2月23日生まれ</span>
+    <span class="chip">宮城県仙台市</span>
+  </div>
+</div>
+
+<!-- HOW TO READ -->
+<div class="howto">
+  <div class="howto-title">このレポートの読み方</div>
+  <div class="howto-row">
+    <span class="badge s">⭐</span>
+    <span>恋愛面で特に重要な日・期間。見逃したくないタイミング。</span>
+  </div>
+  <div class="howto-row">
+    <span class="badge g">💗</span>
+    <span>気持ちが動きやすい日。好きな人への行動を起こしやすい。</span>
+  </div>
+  <div class="howto-row">
+    <span class="badge c">⚠</span>
+    <span>すれ違いや誤解が生じやすい日。言葉を丁寧に選んで。</span>
+  </div>
+</div>
+
+<!-- 3ヶ月のテーマ -->
+<div class="sec"><span>この3ヶ月の恋愛テーマ</span></div>
+
+<div class="portrait">
+  <div class="portrait-item main">
+    <span class="portrait-emoji">🌹</span>
+    <div class="portrait-title">「本当に求めているもの」が見えてくる3ヶ月</div>
+    <div class="portrait-body">
+      あなたの星の配置（魚座に主要天体が集中）は、相手に合わせすぎてしまいやすい傾向を示しています。この3ヶ月は「相手がどう思うか」より「自分は本当はどうしたいか」を軸に動くと、恋愛がうまく動き始めます。
+    </div>
+  </div>
+  <div class="portrait-item">
+    <span class="portrait-emoji">🔓</span>
+    <div class="portrait-title">6月以降、出会いや関係が動きやすくなる</div>
+    <div class="portrait-body">
+      4〜5月は内側で感情が整理される静かな時期。6月9日以降、「あなた自身」が輝きを放ちやすくなる配置が来ます。新しい出会い、関係の深まり、告白——そういった動きが自然と起きやすくなります。
+    </div>
+  </div>
+  <div class="portrait-item">
+    <span class="portrait-emoji">💫</span>
+    <div class="portrait-title">感情の揺れを「信号」として読む</div>
+    <div class="portrait-body">
+      この3ヶ月は特に感情が揺れやすい星の動きがあります。「なんかモヤモヤする」「急に寂しくなった」——そういう感覚は、あなたの本音が表面に出てきているサインです。揺れを怖がらず、受け取ってみて。
+    </div>
+  </div>
+</div>
+
+<!-- 3ヶ月の流れ -->
+<div class="sec"><span>3ヶ月を通じた恋愛の流れ</span></div>
+
+<div class="flow-block">
+  <div class="flow-item">
+    <div class="flow-period">〜4月末</div>
+    <div class="flow-text"><strong>理想と現実のギャップを感じやすい</strong>。「こうなりたい」という気持ちと今の状況のズレが気になる時期。焦らず、今の気持ちをそのまま感じることが大事。</div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-period">5月〜</div>
+    <div class="flow-text"><strong>感情の土台が静かに安定してくる</strong>。自分の気持ちがわかりやすくなる時期。好きな人への気持ち、関係への本音——ぼんやりしていたものが形になってくる。</div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-period">6月9日〜</div>
+    <div class="flow-text"><strong>この3ヶ月のハイライト</strong>。あなた自身の魅力が自然と外に出やすくなる。出会い・告白・関係の進展——動くなら今。</div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-period">8月以降</div>
+    <div class="flow-text"><strong>大きな恵みの時期へ</strong>。今3ヶ月に育てたものが、8〜9月に実を結びやすい。今は種まき期間。</div>
+  </div>
+</div>
+
+<div class="div">· · · 💗 · · ·</div>
+
+<!-- ══ 4月 ══ -->
+<div class="month-block">
+  <div class="month-head">
+    <div class="month-num">04</div>
+    <div>
+      <div class="month-name">April · 4月</div>
+      <div class="month-theme">感じ切る月——本音を大切にする</div>
+    </div>
+  </div>
+
+  <div class="event star">
+    <div class="event-left">
+      <div class="event-icon">⭐</div>
+      <div class="event-date-d">21</div>
+      <div class="event-date-m">4月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-headline">「本当に好きな人・関係」が見えやすい日</div>
+      <div class="event-desc">自分が恋愛で本当に求めているものが、自然と感じ取れる一日。「好きかどうかわからない」と迷っていた気持ちに、答えらしきものが見えてくることも。頭で考えるより、直感を信じて。</div>
+      <div class="event-action">💗 今日やってみること：「今、誰のことが一番気になっているか」を正直に紙に書き出してみる。見せなくていい、自分だけのメモで◎</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T太陽(牡牛座) ☌ ネイタル北ノード(牡牛座) / orb 0.19° ／ 魂の方向性が照らされるタイミング</div>
+    </div>
+  </div>
+
+  <div class="event">
+    <div class="event-left">
+      <div class="event-icon">💗</div>
+      <div class="event-date-d">21</div>
+      <div class="event-date-m">4月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-headline">気持ちを伝えたいなら、小さく動ける日</div>
+      <div class="event-desc">「連絡してみようかな」「会いたいと言ってみようかな」——そういう小さな一歩が、いつもより軽く踏み出せる日。大きな告白じゃなくていい。ちょっとしたメッセージや、さりげないアクションが今日は自然とできる。</div>
+      <div class="event-action">💗 今日やってみること：気になっている人に、ひとこと連絡してみる。「最近どう？」くらいの軽さで十分。</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T火星(牡羊座) △ ネイタル土星(射手座) / orb 0.22° ／ 行動力と安定感が噛み合う配置</div>
+    </div>
+  </div>
+
+  <div class="event care">
+    <div class="event-left">
+      <div class="event-icon">⚠</div>
+      <div class="event-date-d">〜28</div>
+      <div class="event-date-m">4月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-period">4月中〜28日まで続く流れ</div>
+      <div class="event-headline">「なんかうまくいかない」と感じやすい時期</div>
+      <div class="event-desc">理想の関係と今の現実のギャップが気になりやすい時期。「もっとこうしてほしい」「なんで伝わらないんだろう」という気持ちが出やすい。相手を責めたくなったら、少し立ち止まってみて。</div>
+      <div class="event-action">⚠ この時期のコツ：相手へのリクエストは、この期間が落ち着いてから。今は「自分はどうしたいか」を整理する時間にあてて。</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T土星(牡羊座) □ ネイタル海王星(山羊座) / orb 2.76° ／ 理想と現実の摩擦が生じやすい配置 〜4/28</div>
+    </div>
+  </div>
+
+  <div class="month-summary">
+    <div class="ms-label">4月まとめ</div>
+    <div class="ms-text">4月21日は「本音」が見えやすい日。気になっている人への小さなアクションを起こすのに向いています。月後半は少しすれ違いを感じやすいかもしれませんが、それは関係が整理されているサイン。焦らず、自分の気持ちを丁寧に扱って。</div>
+  </div>
+</div>
+
+<div class="div">· · ·</div>
+
+<!-- ══ 5月 ══ -->
+<div class="month-block">
+  <div class="month-head">
+    <div class="month-num">05</div>
+    <div>
+      <div class="month-name">May · 5月</div>
+      <div class="month-theme">気持ちが固まる月——本音と向き合う</div>
+    </div>
+  </div>
+
+  <div class="event care">
+    <div class="event-left">
+      <div class="event-icon">⚠</div>
+      <div class="event-date-d">5</div>
+      <div class="event-date-m">5月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-headline">「この関係、本当にこれでいい？」と問われる日</div>
+      <div class="event-desc">今の恋愛や関係に「本当にこれが自分の求めているものか」という問いが来やすい日。答えを急ぐ必要はない。「そう感じているんだな」と受け取るだけでいい。</div>
+      <div class="event-action">⚠ この日のコツ：重要な話し合いや決断はこの日を避けて。感じたことだけ、こっそりメモしておくと後で役立つ。</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T天王星(双子座) □ ネイタル木星(魚座 12H) / orb 0.02° ピーク ／ 信念・価値観への問い直し 〜6/2</div>
+    </div>
+  </div>
+
+  <div class="event star">
+    <div class="event-left">
+      <div class="event-icon">⭐</div>
+      <div class="event-date-d">5〜</div>
+      <div class="event-date-m">5月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-period">5月5日〜10月中旬まで続く長い流れ</div>
+      <div class="event-headline">感情が安定して、好きな人と自然に向き合えるようになる</div>
+      <div class="event-desc">ドキドキしすぎて空回りしたり、急に不安になったり——そういう感情の揺れが少しずつ落ち着いてくる時期です。自分の気持ちを落ち着いて相手に伝えやすくなります。</div>
+      <div class="event-action">💗 この期間を活かすコツ：感情が安定しているうちに、伝えたかったことを少しずつ言葉にしてみる。</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T土星(牡羊座) △ ネイタル月(獅子座 5H) / peak orb 0.08° ／ 感情の土台が補強される長期トランジット 5/5〜10/13</div>
+    </div>
+  </div>
+
+  <div class="event">
+    <div class="event-left">
+      <div class="event-icon">💗</div>
+      <div class="event-date-d">12</div>
+      <div class="event-date-m">5月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-headline">気持ちを言葉にしやすい日</div>
+      <div class="event-desc">「好き」とはっきり言わなくていい。「一緒にいると楽しい」「また会いたい」——そういう素直な一言が、今日は自然とスムーズに出てくる。メッセージを送るなら、この日がおすすめ。</div>
+      <div class="event-action">💗 今日やってみること：気になる人に「最近どう？会えたら嬉しい」くらいの一言を送ってみる</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T木星(蟹座) △ ネイタル水星(魚座 12H) / peak orb 0.19° ／ コミュニケーションが広がる配置 〜6/2</div>
+    </div>
+  </div>
+
+  <div class="month-summary">
+    <div class="ms-label">5月まとめ</div>
+    <div class="ms-text">5月上旬は「この関係でいいのか」という問いが来ることがありますが、それは本音が浮上してきているサインです。5月5日以降は感情が落ち着き始め、5月12日前後は気持ちを伝えやすい窓が開きます。揺れながらも、少しずつ前に進める月です。</div>
+  </div>
+</div>
+
+<div class="div">· · ·</div>
+
+<!-- ══ 6月 ══ -->
+<div class="month-block">
+  <div class="month-head">
+    <div class="month-num">06</div>
+    <div>
+      <div class="month-name">June · 6月</div>
+      <div class="month-theme">動く月——あなたの魅力が外に出る</div>
+    </div>
+  </div>
+
+  <div class="event care">
+    <div class="event-left">
+      <div class="event-icon">⚠</div>
+      <div class="event-date-d">2〜</div>
+      <div class="event-date-m">6月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-period">6月2日〜10月中旬まで続く長い流れ</div>
+      <div class="event-headline">「今までの自分の恋愛パターン」が変わり始める</div>
+      <div class="event-desc">いつも同じような人に惹かれる、同じところで躓く——そういう恋愛のパターンに気づいて、変えていきたくなる時期です。新しい「自分らしい恋愛」を模索するタイミング。</div>
+      <div class="event-action">⚠ この時期のコツ：「いつもと違うタイプの人」に対して、少し心を開いてみる。変化を怖がらず、観察する姿勢で。</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T天王星(双子座) □ ネイタル太陽(魚座 12H) / peak orb 0.02° ／ 自己像・アイデンティティの変容 6/2〜10/13</div>
+    </div>
+  </div>
+
+  <div class="event star">
+    <div class="event-left">
+      <div class="event-icon">⭐</div>
+      <div class="event-date-d">9〜</div>
+      <div class="event-date-m">6月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-period">6月9日〜7月14日 ／ この3ヶ月で最も重要な時期</div>
+      <div class="event-headline">あなたの魅力が自然と輝く、最高のタイミング</div>
+      <div class="event-desc">特別なことをしなくても、あなた自身が「いい感じ」に見えやすい時期です。新しい出会いが生まれやすく、好きな人との距離が縮まりやすい。告白するなら、このタイミングが最も後押しされます。</div>
+      <div class="event-action">💗 この期間にやりたいこと：気になっている人と会う約束をする、告白する、マッチングアプリを始めてみる——今動いた分は8〜9月に実を結びやすい。</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T木星(獅子座) △ ネイタルASC(魚座 29°) / peak orb 0.64° ／ 3ヶ月最重要トランジット ／ 6/9〜7/14</div>
+    </div>
+  </div>
+
+  <div class="event">
+    <div class="event-left">
+      <div class="event-icon">💗</div>
+      <div class="event-date-d">23〜</div>
+      <div class="event-date-m">6月</div>
+    </div>
+    <div class="event-body">
+      <div class="event-headline">「この人と一緒にいていいのか」を確認できるタイミング</div>
+      <div class="event-desc">関係が深まっていく中で、「この人は本当に自分に合っているか」を冷静に見直せる時期。批判的になるのではなく、「私が大切にしていることを、この人は大切にしてくれるか」という視点で。</div>
+      <div class="event-action">💗 この時期にやること：相手との関係で「大切にしたいこと」をひとつ、言葉にしてみる</div>
+      <span class="event-detail">▸ 星の根拠を見る</span>
+      <div class="detail-content">T木星(獅子座) □ ネイタル北ノード(牡牛座) / orb 0.10° ／ 方向性の問い直し 6/23〜7/21</div>
+    </div>
+  </div>
+
+  <div class="month-summary">
+    <div class="ms-label">6月まとめ</div>
+    <div class="ms-text">6月9日以降は、この3ヶ月のハイライト。あなたの魅力が自然と外に出やすく、恋愛の動きが活発になります。勇気を出して動いた分だけ、8〜9月に答えが返ってくる時期です。迷っているなら、今が動く時。</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">星月七海 · nanami-astro</div>
+  <div class="footer-note">
+    このレポートはSwiss Ephemerisによる精密な天体計算をもとに作成しています。<br><br>
+    星の流れはひとつの「地図」です。最終的な判断はあなた自身がしてください。
+  </div>
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll('.event-detail').forEach(el => {
+  el.style.cursor = 'pointer';
+  // onclick属性を無効化
+  el.removeAttribute('onclick');
+  const content = el.nextElementSibling;
+  content.style.display = 'none';
+  el.addEventListener('click', () => {
+    const isOpen = content.style.display === 'block';
+    content.style.display = isOpen ? 'none' : 'block';
+    el.textContent = isOpen ? '▸ 星の根拠を見る' : '▾ 星の根拠を閉じる';
+  });
+});
+</script>
+</body>
+</html>

@@ -7,3 +7,4 @@ pyswisseph>=2.10
 PyYAML>=6.0
 requests>=2.31
 psycopg2-binary>=2.9
+CairoSVG>=2.7

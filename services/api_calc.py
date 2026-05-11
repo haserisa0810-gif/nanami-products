@@ -30,7 +30,7 @@ def _error(code: str, message: str, *, status_code: int = 400) -> tuple[dict[str
     }, status_code
 
 
-def _success(endpoint: str, input_data: dict[str, Any], doc: dict[str, Any]) -> tuple[dict[str, Any], int]:
+def _success(endpoint: str, input_data: dict[str, Any], doc: dict[str, Any], *, yaml_text: str | None = None) -> tuple[dict[str, Any], int]:
     raw_western = doc.get("systems", {}).get("western")
     raw_shichu = doc.get("systems", {}).get("shichusuimei")
     raw_transit = None
@@ -101,7 +101,23 @@ def _success(endpoint: str, input_data: dict[str, Any], doc: dict[str, Any]) -> 
             ],
         },
     }
+    if isinstance(western, dict) and isinstance((western.get("natal") if western else None), dict):
+        response_doc["chart"] = {
+            "svg_available": False,
+            "chart_id": None,
+            "svg_url": None,
+        }
+    if isinstance(shichu, dict):
+        response_doc["shichusuimei_chart"] = {
+            "svg_available": False,
+            "png_available": False,
+            "chart_id": None,
+            "svg_url": None,
+            "png_url": None,
+        }
     response_doc["handoff_yaml"] = build_handoff_yaml(response_doc)
+    if yaml_text and ("chart" in response_doc or "shichusuimei_chart" in response_doc):
+        response_doc["_internal_chart_yaml_text"] = yaml_text
     return {
         "ok": True,
         **response_doc,
@@ -183,7 +199,7 @@ def _build_doc(
     transit_days: int = 31,
     day_change_at_23: bool = False,
 ) -> dict[str, Any]:
-    _yaml_text, _prompt_text, doc = build_product_yaml(
+    yaml_text, _prompt_text, doc = build_product_yaml(
         title=title,
         birth_date=birth_date,
         birth_time=birth_time,
@@ -202,6 +218,7 @@ def _build_doc(
     )
     return {
         "doc": doc,
+        "yaml_text": yaml_text,
     }
 
 
@@ -235,7 +252,7 @@ def calc_western_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
             include_shichusuimei=False,
             include_transit=False,
         )
-        return _success("western", input_data, result["doc"])
+        return _success("western", input_data, result["doc"], yaml_text=result.get("yaml_text"))
     except ApiCalcError as exc:
         return _error(exc.code, exc.message, status_code=exc.status_code)
     except Exception as exc:
@@ -271,7 +288,7 @@ def calc_shichu_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
             include_transit=False,
             day_change_at_23=_normalize_day_boundary(payload),
         )
-        return _success("shichu", input_data, result["doc"])
+        return _success("shichu", input_data, result["doc"], yaml_text=result.get("yaml_text"))
     except ApiCalcError as exc:
         return _error(exc.code, exc.message, status_code=exc.status_code)
     except Exception as exc:
@@ -316,7 +333,7 @@ def calc_transit_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
             transit_start_date=target_start,
             transit_days=transit_days,
         )
-        return _success("transit", input_data, result["doc"])
+        return _success("transit", input_data, result["doc"], yaml_text=result.get("yaml_text"))
     except ApiCalcError as exc:
         return _error(exc.code, exc.message, status_code=exc.status_code)
     except Exception as exc:
@@ -364,7 +381,7 @@ def calc_combined_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
             transit_days=transit_days,
             day_change_at_23=_normalize_day_boundary(payload),
         )
-        return _success("combined", input_data, result["doc"])
+        return _success("combined", input_data, result["doc"], yaml_text=result.get("yaml_text"))
     except ApiCalcError as exc:
         return _error(exc.code, exc.message, status_code=exc.status_code)
     except Exception as exc:

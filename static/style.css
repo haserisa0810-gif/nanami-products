@@ -271,11 +271,17 @@ small { color: var(--dim); font-size: .78rem; font-weight: 300; }
   color: var(--body);
 }
 .checkbox-line input {
-  width: 16px; min-height: 16px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
   flex-shrink: 0;
   margin-top: 3px;
   accent-color: var(--gold);
   cursor: pointer;
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+  padding: 0;
+  border-radius: 4px;
 }
 
 /* ── Submit ── */
@@ -686,6 +692,22 @@ textarea {
 }
 .api-test-table td {
   color: #25364a;
+}
+.api-test-svg-preview {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #e4ebf2;
+  border-radius: 10px;
+  background: #fff;
+  color: #7a8da0;
+  font-size: .82rem;
+  overflow: auto;
+}
+.api-test-svg-preview svg {
+  display: block;
+  width: min(100%, 420px);
+  height: auto;
+  margin: 0 auto;
 }
 .api-test-notes {
   margin-top: 16px;

@@ -8,13 +8,30 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from fastapi import Body, FastAPI, Form, Header, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from services import pg_store, stores_mail_sync
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
+from services.api_demo import build_demo_response, build_demo_shichu_svg, build_demo_svg
+from services.birth_time import extract_birth_time_notice, resolve_birth_time_accuracy
+from services.chart_svg import build_horoscope_svg_from_yaml, has_asteroid_svg_data
+from services.api_yaml import build_handoff_yaml
 from services.location import PREFECTURE_OPTIONS
+from services.light_yaml import (
+    build_base_astrology_yaml,
+    build_detail_astrology_yaml,
+    build_light_astrology_yaml,
+    transit_period_status,
+)
+from services.post_chart import build_post_chart
+from services.shichu_chart import (
+    build_shichusuimei_svg_from_yaml,
+    is_shichusuimei_png_renderer_available,
+    render_shichusuimei_png_from_svg,
+)
 from services.transit_yaml import build_transit_only_yaml
 from services.yaml_exporter import build_product_yaml
 
@@ -96,6 +113,14 @@ PRODUCT_CONFIG = {
     },
 }
 
+PRODUCT_SLUGS = {
+    "western_basic": "western-basic",
+    "western_full": "western-full",
+    "shichu": "shichu",
+    "transit_yaml": "transit-yaml",
+}
+PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
+
 
 def _product_type_from_request(request: Request) -> str:
     product_type = request.query_params.get("type", "western_basic").strip()
@@ -104,9 +129,28 @@ def _product_type_from_request(request: Request) -> str:
     return product_type
 
 
+def _product_type_from_slug(product_slug: str | None) -> str:
+    if not product_slug:
+        return "western_basic"
+    return PRODUCT_TYPES_BY_SLUG.get(product_slug.strip(), "western_basic")
+
+
+def _start_url(product_type: str) -> str:
+    return f"/start/{PRODUCT_SLUGS.get(product_type, PRODUCT_SLUGS['western_basic'])}"
+
+
+def _redeem_url(product_type: str) -> str:
+    return f"/redeem/{PRODUCT_SLUGS.get(product_type, PRODUCT_SLUGS['western_basic'])}"
+
+
 def _product_context(product_type: str) -> dict:
     config = PRODUCT_CONFIG.get(product_type, PRODUCT_CONFIG["western_basic"])
-    return {"product_type": product_type, "product": config}
+    return {
+        "product_type": product_type,
+        "product": config,
+        "start_url": _start_url(product_type),
+        "redeem_url": _redeem_url(product_type),
+    }
 
 
 def _buyer_template(prefix: str, product_type: str) -> str:
@@ -281,6 +325,16 @@ def _admin_access_error(request: Request) -> JSONResponse | None:
     return None
 
 
+def _sync_stores_orders_for_lookup() -> dict[str, object] | None:
+    if not _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+        return None
+    try:
+        submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
+    except ValueError:
+        submit_limit = 100
+    return stores_mail_sync.sync(limit=submit_limit)
+
+
 @app.post("/internal/api-keys")
 def internal_create_api_key(request: Request, payload: dict[str, object] = Body(default={})):
     error = _admin_access_error(request)
@@ -435,6 +489,91 @@ def internal_reissue_api_key(request: Request, payload: dict[str, object] = Body
     )
 
 
+@app.post("/internal/redemptions/lookup")
+def internal_lookup_redemption(request: Request, payload: dict[str, object] = Body(default={})):
+    error = _admin_access_error(request)
+    if error:
+        return error
+
+    order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
+    if not order_code_clean:
+        return _api_error("INVALID_INPUT", "order_code is required", 400)
+    if not re.fullmatch(r"\d{10}", order_code_clean):
+        return _api_error("INVALID_INPUT", "order_code must be 10 digits", 400)
+
+    try:
+        sync_result = None
+        status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
+        if status == "not_found":
+            sync_result = _sync_stores_orders_for_lookup()
+            status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
+        redemption = pg_store.get_redemption_by_order_code(order_code_clean)
+        reset_override = pg_store.get_redemption_reset_by_order_code(order_code_clean)
+        charts = pg_store.list_charts_by_order_code(order_code_clean)
+    except Exception as exc:
+        return _api_error("REDEMPTION_LOOKUP_FAILED", str(exc), 500)
+
+    return JSONResponse(
+        jsonable_encoder({
+            "ok": True,
+            "order_code": order_code_clean,
+            "order_status": status,
+            "stores_order": order_row,
+            "redemption": redemption,
+            "reset_override": reset_override,
+            "charts": charts,
+            "sync_result": sync_result,
+            "can_redeem_after_reset": status in {"ok", "already_used"},
+        })
+    )
+
+
+@app.post("/internal/redemptions/reset")
+def internal_reset_redemption(request: Request, payload: dict[str, object] = Body(default={})):
+    error = _admin_access_error(request)
+    if error:
+        return error
+
+    order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
+    if not order_code_clean:
+        return _api_error("INVALID_INPUT", "order_code is required", 400)
+    if not re.fullmatch(r"\d{10}", order_code_clean):
+        return _api_error("INVALID_INPUT", "order_code must be 10 digits", 400)
+    if str(payload.get("confirm") or "").strip() != order_code_clean:
+        return _api_error("CONFIRMATION_REQUIRED", "confirm must match order_code", 400)
+
+    try:
+        sync_result = None
+        status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
+        if status == "not_found":
+            sync_result = _sync_stores_orders_for_lookup()
+            status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
+    except Exception as exc:
+        return _api_error("ORDER_LOOKUP_FAILED", str(exc), 500)
+    if status == "not_found":
+        return _api_error("ORDER_NOT_FOUND", "order_code was not found", 404)
+    if status == "cancelled":
+        return _api_error("ORDER_CANCELLED", "cancelled order cannot be reset for redemption", 409)
+
+    try:
+        result = pg_store.reset_redemption_by_order_code(order_code_clean)
+        new_status, _new_order_row = stores_mail_sync.verify_order_no(order_code_clean)
+    except Exception as exc:
+        return _api_error("REDEMPTION_RESET_FAILED", str(exc), 500)
+
+    return JSONResponse(
+        jsonable_encoder({
+            "ok": True,
+            "order_code": order_code_clean,
+            "previous_order_status": status,
+            "order_status": new_status,
+            "stores_order": order_row,
+            "sync_result": sync_result,
+            **result,
+        })
+    )
+
+
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "service": "nanami-products"}
@@ -499,7 +638,7 @@ def _check_api_rate_limit(*, api_key_id: int, endpoint: str) -> tuple[bool, str 
     return True, None, None
 
 
-def _demo_response(endpoint: str, payload: dict[str, object]) -> JSONResponse:
+def _demo_response(request: Request, endpoint: str, payload: dict[str, object]) -> JSONResponse:
     missing = [
         field
         for field in API_DEMO_REQUIRED_FIELDS[endpoint]
@@ -512,50 +651,12 @@ def _demo_response(endpoint: str, payload: dict[str, object]) -> JSONResponse:
             400,
         )
 
-    response = {
-        "ok": True,
-        "meta": {
-            "api_version": "1.0",
-            "engine": "nanami-products",
-            "endpoint": endpoint,
-            "mode": "demo",
-            "mock": True,
-        },
-        "input": payload,
-        "raw_data": {
-            "western": {
-                "natal": {
-                    "bodies": {
-                        "Sun": {"sign_ja": "山羊座", "degree": 10.5, "house": 10},
-                        "Moon": {"sign_ja": "牡牛座", "degree": 2.1, "house": 2},
-                    },
-                    "houses": {"1": {"sign_ja": "牡羊座", "degree": 0}},
-                    "aspects": [{"body1": "Sun", "aspect": "trine", "body2": "Moon", "orb": 1.2}],
-                }
-            } if endpoint in {"western", "combined"} else None,
-            "shichu": {
-                "summary": {"day_master": "庚", "sample": True}
-            } if endpoint in {"shichu", "combined"} else None,
-            "transit": {
-                "days": [{"date": str(payload.get("target_date") or "2026-05-01"), "active_aspects": []}]
-            } if endpoint in {"transit", "combined"} else None,
-        },
-        "interpreted_tags": {
-            "western": [],
-            "shichu": [],
-            "transit": [],
-            "integration": [],
-        },
-        "writing_hints": {
-            "key_concepts": ["demo"],
-        },
-        "handoff_yaml": f"mock: true\nendpoint: {endpoint}\n",
-    }
-    return JSONResponse(response)
+    return JSONResponse(build_demo_response(endpoint, payload, base_url=_public_base_url(request)))
 
 
 def _handle_calc_api(
     *,
+    request: Request,
     endpoint: str,
     payload: dict[str, object],
     api_key: str | None,
@@ -657,6 +758,48 @@ def _handle_calc_api(
         )
         return JSONResponse(body, status_code=status_code)
 
+    internal_chart_yaml = body.pop("_internal_chart_yaml_text", None)
+    if internal_chart_yaml and (
+        isinstance(body.get("chart"), dict) or isinstance(body.get("shichusuimei_chart"), dict)
+    ):
+        try:
+            chart_id = pg_store.save_api_chart_snapshot(
+                api_key_id=api_key_id,
+                endpoint=endpoint,
+                yaml_text=str(internal_chart_yaml),
+            )
+            base_url = _public_base_url(request)
+            if isinstance(body.get("chart"), dict):
+                body["chart"].update(
+                    {
+                        "svg_available": True,
+                        "chart_id": chart_id,
+                        "svg_url": f"{base_url}/api/western/natal/{chart_id}/chart.svg",
+                    }
+                )
+            if isinstance(body.get("shichusuimei_chart"), dict):
+                png_available = is_shichusuimei_png_renderer_available()
+                body["shichusuimei_chart"].update(
+                    {
+                        "svg_available": True,
+                        "png_available": png_available,
+                        "chart_id": chart_id,
+                        "svg_url": f"{base_url}/api/shichusuimei/{chart_id}/chart.svg",
+                        "png_url": f"{base_url}/api/shichusuimei/{chart_id}/chart.png" if png_available else None,
+                    }
+                )
+            body["handoff_yaml"] = build_handoff_yaml(
+                {key: value for key, value in body.items() if key not in {"ok", "handoff_yaml"}}
+            )
+        except Exception as exc:
+            pg_store.update_api_usage(
+                usage_id=usage_id,
+                credits_used=0,
+                status="error",
+                error_code="API_CHART_SNAPSHOT_FAILED",
+            )
+            return _api_error("API_CHART_SNAPSHOT_FAILED", f"chart snapshot creation failed: {exc}", 500)
+
     consumed = pg_store.consume_api_credits(api_key_id=api_key_id, credits=credits_required)
     if not consumed:
         pg_store.update_api_usage(
@@ -676,32 +819,156 @@ def _handle_calc_api(
     return JSONResponse(body, status_code=status_code)
 
 
+def _authenticate_api_key_for_read(api_key: str | None) -> tuple[dict | None, JSONResponse | None]:
+    if not api_key:
+        return None, _api_error("MISSING_API_KEY", "X-API-Key header is required", 401)
+    try:
+        key_row = pg_store.get_api_key_for_auth(api_key)
+    except Exception as exc:
+        return None, _api_error("API_AUTH_UNAVAILABLE", f"API authentication failed: {exc}", 500)
+    if not key_row:
+        return None, _api_error("INVALID_API_KEY", "API key is invalid", 401)
+    if key_row.get("status") != "active":
+        return None, _api_error("API_KEY_INACTIVE", "API key is not active", 403)
+    return key_row, None
+
+
+def _api_chart_snapshot(chart_id: str, x_api_key: str | None) -> tuple[dict | None, JSONResponse | None]:
+    if not re.fullmatch(r"ch_[A-Za-z0-9_-]{10,80}", chart_id):
+        return None, _api_error("INVALID_CHART_ID", "chart_id is invalid", 400)
+    key_row, error_response = _authenticate_api_key_for_read(x_api_key)
+    if error_response:
+        return None, error_response
+    try:
+        snapshot = pg_store.get_api_chart_snapshot(chart_id=chart_id, api_key_id=int(key_row["id"]))
+    except Exception as exc:
+        return None, _api_error("API_CHART_UNAVAILABLE", f"chart lookup failed: {exc}", 500)
+    if not snapshot:
+        return None, _api_error("CHART_NOT_FOUND", "chart was not found for this API key", 404)
+    return snapshot, None
+
+
+def _api_chart_svg_response(chart_id: str, x_api_key: str | None) -> PlainTextResponse | JSONResponse:
+    snapshot, error_response = _api_chart_snapshot(chart_id, x_api_key)
+    if error_response:
+        return error_response
+    svg = build_horoscope_svg_from_yaml(snapshot["yaml_text"], compact=True)
+    if not svg:
+        return _api_error("CHART_SVG_UNAVAILABLE", "SVG is not available for this chart", 404)
+    return PlainTextResponse(svg, media_type="image/svg+xml; charset=utf-8")
+
+
+def _api_shichusuimei_svg_response(chart_id: str, x_api_key: str | None) -> PlainTextResponse | JSONResponse:
+    snapshot, error_response = _api_chart_snapshot(chart_id, x_api_key)
+    if error_response:
+        return error_response
+    svg = build_shichusuimei_svg_from_yaml(snapshot["yaml_text"], compact=True)
+    if not svg:
+        return _api_error("SHICHUSUIMEI_CHART_SVG_UNAVAILABLE", "SVG is not available for this chart", 404)
+    return PlainTextResponse(svg, media_type="image/svg+xml; charset=utf-8")
+
+
+def _api_shichusuimei_png_response(chart_id: str, x_api_key: str | None) -> Response | JSONResponse:
+    snapshot, error_response = _api_chart_snapshot(chart_id, x_api_key)
+    if error_response:
+        return error_response
+    svg = build_shichusuimei_svg_from_yaml(snapshot["yaml_text"], compact=True)
+    if not svg:
+        return _api_error("SHICHUSUIMEI_CHART_SVG_UNAVAILABLE", "SVG is not available for this chart", 404)
+    png = render_shichusuimei_png_from_svg(svg)
+    if png is None:
+        return _api_error(
+            "PNG_RENDERER_UNAVAILABLE",
+            "PNG rendering is not configured on this server",
+            501,
+        )
+    return Response(content=png, media_type="image/png")
+
+
+@app.get("/api/western/natal/{chart_id}/chart.svg")
+def api_western_natal_chart_svg(
+    chart_id: str,
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
+):
+    return _api_chart_svg_response(chart_id, x_api_key)
+
+
+@app.get("/api/charts/{chart_id}.svg")
+def api_chart_svg_alias(
+    chart_id: str,
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
+):
+    return _api_chart_svg_response(chart_id, x_api_key)
+
+
+@app.get("/api/shichusuimei/{chart_id}/chart.svg")
+def api_shichusuimei_chart_svg(
+    chart_id: str,
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
+):
+    return _api_shichusuimei_svg_response(chart_id, x_api_key)
+
+
+@app.get("/api/shichusuimei/{chart_id}/chart.png")
+def api_shichusuimei_chart_png(
+    chart_id: str,
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
+):
+    return _api_shichusuimei_png_response(chart_id, x_api_key)
+
+
+@app.get("/api/charts/{chart_id}/shichusuimei.svg")
+def api_shichusuimei_chart_svg_alias(
+    chart_id: str,
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
+):
+    return _api_shichusuimei_svg_response(chart_id, x_api_key)
+
+
 @app.post("/api/demo/western")
-def api_demo_western(payload: dict[str, object] = Body(...)):
-    return _demo_response("western", payload)
+def api_demo_western(request: Request, payload: dict[str, object] = Body(...)):
+    return _demo_response(request, "western", payload)
 
 
 @app.post("/api/demo/shichu")
-def api_demo_shichu(payload: dict[str, object] = Body(...)):
-    return _demo_response("shichu", payload)
+def api_demo_shichu(request: Request, payload: dict[str, object] = Body(...)):
+    return _demo_response(request, "shichu", payload)
 
 
 @app.post("/api/demo/transit")
-def api_demo_transit(payload: dict[str, object] = Body(...)):
-    return _demo_response("transit", payload)
+def api_demo_transit(request: Request, payload: dict[str, object] = Body(...)):
+    return _demo_response(request, "transit", payload)
 
 
 @app.post("/api/demo/combined")
-def api_demo_combined(payload: dict[str, object] = Body(...)):
-    return _demo_response("combined", payload)
+def api_demo_combined(request: Request, payload: dict[str, object] = Body(...)):
+    return _demo_response(request, "combined", payload)
+
+
+@app.get("/api/demo/charts/{chart_id}.svg")
+def api_demo_chart_svg(chart_id: str):
+    svg = build_demo_svg(chart_id)
+    if not svg:
+        return _api_error("CHART_NOT_FOUND", "demo chart was not found", 404)
+    return PlainTextResponse(svg, media_type="image/svg+xml; charset=utf-8")
+
+
+@app.get("/api/demo/shichusuimei/{chart_id}/chart.svg")
+def api_demo_shichusuimei_chart_svg(chart_id: str):
+    svg = build_demo_shichu_svg(chart_id)
+    if not svg:
+        return _api_error("CHART_NOT_FOUND", "demo shichusuimei chart was not found", 404)
+    return PlainTextResponse(svg, media_type="image/svg+xml; charset=utf-8")
 
 
 @app.post("/api/calc/western")
 def api_calc_western(
+    request: Request,
     payload: dict[str, object] = Body(...),
     x_api_key: str | None = Header(None, alias="X-API-Key"),
 ):
     return _handle_calc_api(
+        request=request,
         endpoint="western",
         payload=payload,
         api_key=x_api_key,
@@ -711,10 +978,12 @@ def api_calc_western(
 
 @app.post("/api/calc/shichu")
 def api_calc_shichu(
+    request: Request,
     payload: dict[str, object] = Body(...),
     x_api_key: str | None = Header(None, alias="X-API-Key"),
 ):
     return _handle_calc_api(
+        request=request,
         endpoint="shichu",
         payload=payload,
         api_key=x_api_key,
@@ -724,10 +993,12 @@ def api_calc_shichu(
 
 @app.post("/api/calc/transit")
 def api_calc_transit(
+    request: Request,
     payload: dict[str, object] = Body(...),
     x_api_key: str | None = Header(None, alias="X-API-Key"),
 ):
     return _handle_calc_api(
+        request=request,
         endpoint="transit",
         payload=payload,
         api_key=x_api_key,
@@ -737,10 +1008,12 @@ def api_calc_transit(
 
 @app.post("/api/calc/combined")
 def api_calc_combined(
+    request: Request,
     payload: dict[str, object] = Body(...),
     x_api_key: str | None = Header(None, alias="X-API-Key"),
 ):
     return _handle_calc_api(
+        request=request,
         endpoint="combined",
         payload=payload,
         api_key=x_api_key,
@@ -917,6 +1190,17 @@ def internal_mail_sync(request: Request):
 @app.get("/start")
 def start(request: Request):
     product_type = _product_type_from_request(request)
+    if "type" in request.query_params:
+        return RedirectResponse(_start_url(product_type), status_code=301)
+    return templates.TemplateResponse(
+        _buyer_template("start", product_type),
+        {"request": request, **_product_context(product_type)},
+    )
+
+
+@app.get("/start/{product_slug}")
+def start_by_slug(request: Request, product_slug: str):
+    product_type = _product_type_from_slug(product_slug)
     return templates.TemplateResponse(
         _buyer_template("start", product_type),
         {"request": request, **_product_context(product_type)},
@@ -924,8 +1208,11 @@ def start(request: Request):
 
 
 @app.get("/redeem", response_class=HTMLResponse)
-def redeem_get(request: Request):
-    product_type = _product_type_from_request(request)
+@app.get("/redeem/{product_slug}", response_class=HTMLResponse)
+def redeem_get(request: Request, product_slug: str | None = None):
+    product_type = _product_type_from_slug(product_slug) if product_slug else _product_type_from_request(request)
+    if not product_slug and "type" in request.query_params and "order" not in request.query_params:
+        return RedirectResponse(_redeem_url(product_type), status_code=301)
     order_code = request.query_params.get("order", "").strip()
     return templates.TemplateResponse(
         _buyer_template("redeem", product_type),
@@ -940,13 +1227,16 @@ def redeem_get(request: Request):
 
 
 @app.post("/redeem", response_class=HTMLResponse)
+@app.post("/redeem/{product_slug}", response_class=HTMLResponse)
 def redeem_post(
     request: Request,
+    product_slug: str | None = None,
     order_code: str = Form(...),
     buyer_name: str = Form(""),
     email: str = Form(""),
     birth_date: str = Form(""),
     birth_time: str = Form(""),
+    birth_time_accuracy: str = Form("auto"),
     prefecture: str = Form(""),
     birth_place_kind: str = Form("domestic"),
     birth_place_overseas: str = Form(""),
@@ -967,7 +1257,10 @@ def redeem_post(
     calendar_note: str = Form(""),
     agree_final: str | None = Form(None),
 ):
-    product_type = request.query_params.get("type", product_type).strip() or "western_basic"
+    if product_slug:
+        product_type = _product_type_from_slug(product_slug)
+    else:
+        product_type = request.query_params.get("type", product_type).strip() or "western_basic"
     if product_type not in PRODUCT_CONFIG:
         product_type = "western_basic"
     product = PRODUCT_CONFIG[product_type]
@@ -994,6 +1287,7 @@ def redeem_post(
                     "email": email,
                     "birth_date": birth_date,
                     "birth_time": birth_time,
+                    "birth_time_accuracy": birth_time_accuracy,
                     "prefecture": prefecture,
                     "birth_place_kind": birth_place_kind,
                     "birth_place_overseas": birth_place_overseas,
@@ -1126,6 +1420,14 @@ def redeem_post(
         return _form_err("生年月日を入力してください。")
 
     try:
+        birth_time_info = resolve_birth_time_accuracy(
+            selected_accuracy=birth_time_accuracy,
+            birth_time=birth_time,
+        )
+    except Exception as e:
+        return _form_err(str(e))
+
+    try:
         birth_location = _build_birth_location(
             prefecture=prefecture,
             birth_place_kind=birth_place_kind,
@@ -1178,7 +1480,7 @@ def redeem_post(
         yaml_text, prompt_text, doc = build_product_yaml(
             title=buyer_name.strip() or None,
             birth_date=birth_date.strip(),
-            birth_time=birth_time.strip() or None,
+            birth_time=birth_time_info["calculation_time"],
             prefecture=prefecture.strip(),
             birth_place_label=birth_place_label,
             birth_lat=birth_lat_value if isinstance(birth_lat_value, float) else None,
@@ -1189,6 +1491,9 @@ def redeem_post(
             include_shichusuimei=include_shichusuimei,
             include_transit=include_transit,
             day_change_at_23=day_change_at_23_bool,
+            birth_time_accuracy=birth_time_info["accuracy"],
+            birth_time_range=birth_time_info["range"],
+            birth_time_note=birth_time_info["note"],
         )
     except Exception as e:
         return _form_err(str(e))
@@ -1201,7 +1506,7 @@ def redeem_post(
                 order_code=order_code_clean,
                 buyer_name=buyer_name.strip() or None,
                 birth_date=birth_date.strip(),
-                birth_time=birth_time.strip() or None,
+                birth_time=birth_time_info["birth_time"] or birth_time_info["calculation_time"],
                 birth_place=birth_place_label,
                 options={**doc.get("product", {}).get("options", {}), "product_type": product_type, "reusable_order": True},
                 yaml_text=yaml_text,
@@ -1215,7 +1520,7 @@ def redeem_post(
                 buyer_name=buyer_name.strip() or None,
                 token=token,
                 birth_date=birth_date.strip(),
-                birth_time=birth_time.strip() or None,
+                birth_time=birth_time_info["birth_time"] or birth_time_info["calculation_time"],
                 birth_place=birth_place_label,
                 options={**doc.get("product", {}).get("options", {}), "product_type": product_type},
                 yaml_text=yaml_text,
@@ -1252,7 +1557,48 @@ def chart_prompt(token: str):
 def chart_page(request: Request, token: str):
     chart = _load_chart_or_404(token)
     options = chart.get("options") or {}
-    is_transit_yaml = options.get("product_type") == "transit_yaml"
+    product_type = options.get("product_type")
+    is_transit_yaml = product_type == "transit_yaml"
+    has_yaml_mode_selector = product_type == "western_full"
+    horoscope_svg = None
+    horoscope_copy_svg = None
+    shichusuimei_svg = None
+    shichusuimei_copy_svg = None
+    has_asteroids = False
+    birth_time_notice = {"show": False}
+    transit_status = {"available": False, "expired": False}
+    base_yaml_text = chart["yaml_text"]
+    detail_yaml_text = chart["yaml_text"]
+    share_yaml_text = chart["yaml_text"]
+    if has_yaml_mode_selector:
+        try:
+            transit_status = transit_period_status(chart["yaml_text"])
+            base_yaml_text = build_base_astrology_yaml(chart["yaml_text"])
+            detail_yaml_text = build_detail_astrology_yaml(chart["yaml_text"])
+            share_yaml_text = build_light_astrology_yaml(chart["yaml_text"])
+        except Exception:
+            base_yaml_text = chart["yaml_text"]
+            detail_yaml_text = chart["yaml_text"]
+            share_yaml_text = chart["yaml_text"]
+    if not is_transit_yaml:
+        try:
+            horoscope_svg = build_horoscope_svg_from_yaml(chart["yaml_text"])
+            horoscope_copy_svg = build_horoscope_svg_from_yaml(chart["yaml_text"], compact=True)
+            has_asteroids = has_asteroid_svg_data(chart["yaml_text"])
+        except Exception:
+            horoscope_svg = None
+            horoscope_copy_svg = None
+            has_asteroids = False
+        try:
+            shichusuimei_svg = build_shichusuimei_svg_from_yaml(chart["yaml_text"])
+            shichusuimei_copy_svg = build_shichusuimei_svg_from_yaml(chart["yaml_text"], compact=True)
+        except Exception:
+            shichusuimei_svg = None
+            shichusuimei_copy_svg = None
+        try:
+            birth_time_notice = extract_birth_time_notice(chart["yaml_text"])
+        except Exception:
+            birth_time_notice = {"show": False}
     base_url = _public_base_url(request)
     return templates.TemplateResponse(
         "chart_page.html",
@@ -1261,6 +1607,17 @@ def chart_page(request: Request, token: str):
             "token": token,
             "chart": chart,
             "is_transit_yaml": is_transit_yaml,
+            "has_yaml_mode_selector": has_yaml_mode_selector,
+            "horoscope_svg": horoscope_svg,
+            "horoscope_copy_svg": horoscope_copy_svg,
+            "shichusuimei_svg": shichusuimei_svg,
+            "shichusuimei_copy_svg": shichusuimei_copy_svg,
+            "has_asteroid_svg_data": has_asteroids,
+            "birth_time_notice": birth_time_notice,
+            "transit_status": transit_status,
+            "base_yaml_text": base_yaml_text,
+            "detail_yaml_text": detail_yaml_text,
+            "share_yaml_text": share_yaml_text,
             "chart_url": f"{base_url}/chart/{token}",
             "yaml_url": f"{base_url}/chart/{token}.yaml",
             "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
@@ -1298,6 +1655,61 @@ def yaml_new(request: Request):
     return templates.TemplateResponse(
         "yaml_form.html",
         {"request": request, "prefectures": PREFECTURE_OPTIONS},
+    )
+
+
+@app.get("/admin/post-chart/new", response_class=HTMLResponse)
+def post_chart_new(request: Request):
+    now = datetime.now(ZoneInfo("Asia/Tokyo"))
+    return templates.TemplateResponse(
+        "post_chart_form.html",
+        {
+            "request": request,
+            "prefectures": PREFECTURE_OPTIONS,
+            "default_date": now.strftime("%Y-%m-%d"),
+            "default_time": now.strftime("%H:%M"),
+            "form": None,
+        },
+    )
+
+
+@app.post("/admin/post-chart/generate", response_class=HTMLResponse)
+def post_chart_generate(
+    request: Request,
+    title: str = Form(""),
+    chart_date: str = Form(...),
+    chart_time: str = Form(""),
+    prefecture: str = Form("東京都"),
+):
+    form = {
+        "title": title,
+        "chart_date": chart_date,
+        "chart_time": chart_time,
+        "prefecture": prefecture,
+    }
+    try:
+        result = build_post_chart(
+            title=title,
+            chart_date=chart_date.strip(),
+            chart_time=chart_time.strip() or None,
+            prefecture=prefecture.strip(),
+        )
+    except Exception as e:
+        return templates.TemplateResponse(
+            "post_chart_form.html",
+            {
+                "request": request,
+                "prefectures": PREFECTURE_OPTIONS,
+                "default_date": chart_date,
+                "default_time": chart_time,
+                "form": form,
+                "error": str(e),
+            },
+            status_code=400,
+        )
+    return templates.TemplateResponse(
+        "post_chart_result.html",
+        {"request": request, "result": result},
     )
 
 

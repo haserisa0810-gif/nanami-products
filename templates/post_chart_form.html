@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>投稿用ホロスコープ生成</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <p class="eyebrow">nanami-products 管理画面</p>
+      <h1>投稿用ホロスコープ生成</h1>
+      <p class="lead">出生日時・出生地から、トランジットなしのホロスコープと小惑星を入れた投稿向け正方形SVGを作ります。販売導線・DB保存はありません。</p>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      <form method="post" action="/admin/post-chart/generate" class="form">
+        <label>投稿タイトル
+          <input type="text" name="title" value="{{ form.title if form else '' }}" placeholder="例：出生ホロスコープ">
+        </label>
+        <label>出生日
+          <input type="date" name="chart_date" required value="{{ form.chart_date if form else default_date }}">
+        </label>
+        <label>出生時刻
+          <input type="time" name="chart_time" value="{{ form.chart_time if form else default_time }}">
+          <small>空欄の場合は正午で計算します。</small>
+        </label>
+        <label>出生地
+          <select name="prefecture" required>
+            {% for pref in prefectures %}
+              <option value="{{ pref }}" {% if (form and form.prefecture == pref) or ((not form) and pref == "東京都") %}selected{% endif %}>{{ pref }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button type="submit">ホロスコープを作成</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

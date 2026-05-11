@@ -453,6 +453,7 @@
     <li><a href="#interpreted-tags">interpreted_tags</a></li>
     <li><a href="#handoff-yaml">handoff_yaml</a></li>
     <li><a href="#writing-hints">writing_hints</a></li>
+    <li><a href="#svg">SVG / チャート画像</a></li>
     <li><a href="#quickstart">クイックスタート</a></li>
     <li><a href="#terms">利用規約・免責</a></li>
   </ul>
@@ -495,6 +496,27 @@
         <tr><td class="param-name">POST /api/calc/combined</td><td>上記3つを統合した本命API</td><td>★ 推奨</td></tr>
       </tbody>
     </table>
+
+    <h3>処理時間の目安</h3>
+    <p>通常、APIレスポンスは数秒以内に返ります。</p>
+    <table class="param-table">
+      <thead><tr><th>エンドポイント</th><th>目安</th></tr></thead>
+      <tbody>
+        <tr><td class="param-name">western（小惑星なし）</td><td>1秒以内</td></tr>
+        <tr><td class="param-name">western FULL（小惑星・トランジット含む）</td><td>1〜3秒程度</td></tr>
+        <tr><td class="param-name">combined（西洋・四柱推命・トランジット）</td><td>1〜3秒程度</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn-box">
+      <strong>タイムアウト設定に注意：</strong><br>
+      初回アクセス時のCloud Run起動・外部天体データ取得・通信状況により、<strong>5〜15秒程度かかる場合</strong>があります。APIクライアント側のタイムアウトは、余裕を持って <strong>30秒以上</strong> に設定することを推奨します。
+    </div>
+
+    <div class="info-box">
+      <strong>SVGホロスコープ図について：</strong><br>
+      SVGはAPIレスポンス本体には含まれません。レスポンス内の <code>chart.svg_url</code> から、必要な場合のみ別途取得してください。詳細は <a href="#svg" style="color:var(--accent2);">SVG / チャート画像</a> をご参照ください。
+    </div>
   </section>
 
   <!-- AUTHENTICATION -->
@@ -722,6 +744,7 @@ response = requests.post(url, json=payload, headers=headers)</pre>
           <tbody>
             <tr><td class="param-name">western.natal</td><td>ネイタルチャートデータ（天体配置・ハウス・アスペクト）</td></tr>
             <tr><td class="param-name">western.asteroids</td><td>小惑星・リリス・キロンのデータ</td></tr>
+            <tr><td class="param-name">chart</td><td>SVG取得用の <code>chart_id</code> と <code>svg_url</code>（詳細は <a href="#svg" style="color:var(--accent2);">SVGセクション</a>）</td></tr>
           </tbody>
         </table>
       </div>
@@ -1055,6 +1078,90 @@ response = requests.post(url, json=payload, headers=headers)</pre>
       APIキーの取得方法はSTORESの購入ページに同梱のユーザーマニュアルをご参照ください。
     </div>
   </section>
+
+  <!-- SVG -->
+  <section id="svg">
+    <h2>SVG / チャート画像</h2>
+    <div class="section-rule"></div>
+
+    <p>計算APIのレスポンスにSVGの全文は含まれません。SVGが利用できる場合、西洋占星術は <code>chart</code>、四柱推命は <code>shichusuimei_chart</code> オブジェクトに取得用URLが返されます。</p>
+
+    <h3>計算APIのレスポンス（chart フィールド）</h3>
+    <p>以下のエンドポイントが対象です。</p>
+    <table class="param-table">
+      <thead><tr><th>エンドポイント</th><th>chartフィールド</th></tr></thead>
+      <tbody>
+        <tr><td class="param-name">POST /api/calc/western</td><td>西洋占星術の出生図データがある場合に含まれる</td></tr>
+        <tr><td class="param-name">POST /api/calc/shichu</td><td>四柱推命の命式データがある場合に <code>shichusuimei_chart</code> が含まれる</td></tr>
+        <tr><td class="param-name">POST /api/calc/combined</td><td>同上</td></tr>
+      </tbody>
+    </table>
+
+    <span class="code-label">chart フィールドの例</span>
+    <pre>{
+  <span class="key">"chart"</span>: {
+    <span class="key">"svg_available"</span>: <span class="kw">true</span>,
+    <span class="key">"chart_id"</span>:     <span class="str">"ch_xxxxx"</span>,
+    <span class="key">"svg_url"</span>:      <span class="str">"https://chart.nanami-astro.com/api/western/natal/ch_xxxxx/chart.svg"</span>
+  },
+  <span class="key">"shichusuimei_chart"</span>: {
+    <span class="key">"svg_available"</span>: <span class="kw">true</span>,
+    <span class="key">"png_available"</span>: <span class="kw">false</span>,
+    <span class="key">"chart_id"</span>:     <span class="str">"ch_xxxxx"</span>,
+    <span class="key">"svg_url"</span>:      <span class="str">"https://chart.nanami-astro.com/api/shichusuimei/ch_xxxxx/chart.svg"</span>,
+    <span class="key">"png_url"</span>:      <span class="kw">null</span>
+  }
+}</pre>
+
+    <h3>SVG取得API</h3>
+    <table class="param-table">
+      <thead><tr><th>メソッド</th><th>エンドポイント</th></tr></thead>
+      <tbody>
+        <tr><td class="param-name">GET</td><td><code>/api/western/natal/{chart_id}/chart.svg</code></td></tr>
+        <tr><td class="param-name">GET</td><td><code>/api/charts/{chart_id}.svg</code></td></tr>
+        <tr><td class="param-name">GET</td><td><code>/api/shichusuimei/{chart_id}/chart.svg</code></td></tr>
+        <tr><td class="param-name">GET</td><td><code>/api/shichusuimei/{chart_id}/chart.png</code>（PNGレンダラー有効時）</td></tr>
+        <tr><td class="param-name">GET</td><td><code>/api/charts/{chart_id}/shichusuimei.svg</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box">
+      <strong>認証：</strong>SVG取得にも <code>X-API-Key</code> ヘッダーが必要です。同じAPIキーで生成した <code>chart_id</code> のみ取得できます。
+    </div>
+
+    <span class="code-label">curl</span>
+    <pre><span class="kw">curl</span> https://chart.nanami-astro.com/api/western/natal/ch_xxxxx/chart.svg \
+  -H <span class="str">'X-API-Key: your_api_key_here'</span></pre>
+
+    <h3>SVGの内容</h3>
+    <p>API用SVGは安定版・軽量版です。デザインのカスタマイズはAPI利用側で行う設計です。</p>
+
+    <table class="param-table">
+      <thead><tr><th>項目</th><th>含まれるもの / 含まれないもの</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:#2a7a4f;font-weight:500;">含まれる</td>
+          <td>西洋占星術: 12サイン・12ハウス・天体位置・ASC / MC・アスペクト線・小惑星（データがある場合） / 四柱推命: 年柱・月柱・日柱・時柱・天干・地支・蔵干・通変星・十二運・空亡・五行バランス</td>
+        </tr>
+        <tr>
+          <td class="error-code">含まれない</td>
+          <td>背景グラデーション・外枠装飾・タイトル・nanami-astroロゴ・投稿用デザイン・SVG全文の本体レスポンス埋め込み</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>設計方針</h3>
+    <table class="param-table">
+      <thead><tr><th>方針</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>レスポンス軽量化</td><td>鑑定AI用レスポンスはSVG全文を含まず軽量に保つ</td></tr>
+        <tr><td>オンデマンド取得</td><td>図が必要な利用者だけ別URLで取得する設計</td></tr>
+        <tr><td>認証つきSVG</td><td>SVG取得にもAPIキー認証が必要</td></tr>
+        <tr><td>PNG対応</td><td>四柱推命PNGはPNGレンダラーが有効な環境で提供。未設定時はSVGのみ返します</td></tr>
+      </tbody>
+    </table>
+  </section>
+
   <!-- TERMS -->
   <section id="terms">
     <h2>利用規約・免責事項</h2>
