@@ -197,8 +197,9 @@ def _select_today_entry(
 
 
 def build_light_astrology_yaml(
-    full_yaml_text: str,
+    full_yaml_text: str = "",
     *,
+    doc: dict[str, Any] | None = None,
     include_asteroids: bool = False,
     max_key_aspects: int = 40,
     max_daily_aspects: int = 3,
@@ -209,7 +210,7 @@ def build_light_astrology_yaml(
     product_type: str = "personal_ai_astrology_yaml_light",
     current_date: date | None = None,
 ) -> str:
-    doc = _safe_load_yaml(full_yaml_text)
+    doc = doc if isinstance(doc, dict) else _safe_load_yaml(full_yaml_text)
     western = ((doc.get("systems") or {}).get("western") or {})
     natal = western.get("natal") or {}
     transit = western.get("transit") or {}
@@ -322,23 +323,23 @@ def build_detail_astrology_yaml(full_yaml_text: str, *, current_date: date | Non
     )
 
 
-def build_base_astrology_yaml(full_yaml_text: str) -> str:
+def _build_natal_yaml(full_yaml_text: str, *, include_asteroids: bool, version: str, product_type: str) -> str:
     doc = _safe_load_yaml(full_yaml_text)
     western = ((doc.get("systems") or {}).get("western") or {})
     natal = western.get("natal") or {}
     asteroids = western.get("asteroids") or None
     base = {
-        "version": "nanami-products-yaml-base-v1",
+        "version": version,
         **_copy_common_blocks(
             doc,
-            product_type="personal_ai_astrology_yaml_base",
-            yaml_variant="base",
+            product_type=product_type,
+            yaml_variant="natal_asteroids" if include_asteroids else "natal",
         ),
         "product": {
-            "type": "personal_ai_astrology_yaml_base",
+            "type": product_type,
             "options": {
                 "western_natal": bool(natal),
-                "asteroids": bool(asteroids),
+                "asteroids": bool(asteroids) if include_asteroids else False,
                 "transit_today": False,
                 "transit_31days_summary": False,
             },
@@ -355,10 +356,64 @@ def build_base_astrology_yaml(full_yaml_text: str) -> str:
                     "aspects": natal.get("aspects") or [],
                     "summary": natal.get("summary") or {},
                 },
-                "asteroids": {"bodies": asteroids or {}} if asteroids else None,
+                "asteroids": {"bodies": asteroids or {}} if include_asteroids and asteroids else None,
                 "transit": None,
             },
             "shichusuimei": None,
         },
     }
     return yaml.safe_dump(base, allow_unicode=True, sort_keys=False, width=120)
+
+
+def build_base_astrology_yaml(full_yaml_text: str) -> str:
+    return _build_natal_yaml(
+        full_yaml_text,
+        include_asteroids=False,
+        version="nanami-products-yaml-natal-v1",
+        product_type="personal_ai_astrology_yaml_natal",
+    )
+
+
+def build_natal_asteroids_yaml(full_yaml_text: str) -> str:
+    return _build_natal_yaml(
+        full_yaml_text,
+        include_asteroids=True,
+        version="nanami-products-yaml-natal-asteroids-v1",
+        product_type="personal_ai_astrology_yaml_natal_asteroids",
+    )
+
+
+def build_transit_astrology_yaml(full_yaml_text: str) -> str:
+    doc = _safe_load_yaml(full_yaml_text)
+    western = ((doc.get("systems") or {}).get("western") or {})
+    transit = western.get("transit") or None
+    out = {
+        "version": "nanami-products-yaml-transit-v1",
+        **_copy_common_blocks(
+            doc,
+            product_type="personal_ai_astrology_yaml_transit",
+            yaml_variant="transit",
+        ),
+        "product": {
+            "type": "personal_ai_astrology_yaml_transit",
+            "options": {
+                "western_natal": False,
+                "asteroids": False,
+                "transit_today": bool((transit or {}).get("today")),
+                "transit_31days_summary": bool((transit or {}).get("daily")),
+            },
+        },
+        "usage_note": {
+            "for_ai": "このYAMLはトランジット追加データです。ネイタル保存用YAMLと組み合わせて使用してください。",
+            "base_yaml": "出生図の解釈は、別保存したネイタルYAMLを土台にしてください。",
+        },
+        "systems": {
+            "western": {
+                "natal": None,
+                "asteroids": None,
+                "transit": transit,
+            },
+            "shichusuimei": None,
+        },
+    }
+    return yaml.safe_dump(out, allow_unicode=True, sort_keys=False, width=120)

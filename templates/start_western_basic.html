@@ -4,16 +4,17 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ホロスコープ基本版 | AI鑑定データ作成</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+  <title>{{ product.label }} | AI鑑定データ作成</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
 </head>
 <body>
   <main class="wrap">
-    <div class="card buyer-card product-western_basic">
+    <div class="card buyer-card product-western_basic product-{{ product_type }}">
       <p class="eyebrow">nanami-products</p>
-      <div class="product-pill">ホロスコープ基本版</div>
-      <h1>ホロスコープ基本版<br>鑑定データ作成</h1>
-      <p class="lead">西洋占星術の出生図データを作成します。<br>注文番号と出生情報を入力してください。</p>
+      <div class="product-pill">{{ product.label }}</div>
+      <h1>{{ product.label }}<br>鑑定データ作成</h1>
+      <p class="lead">{{ product.description }}<br>注文番号と出生情報を入力してください。</p>
       <section class="notice-box warn">
         <h2>登録前に必ず確認してください</h2>
         <ul class="plain-list">

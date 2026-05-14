@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>追加部品YAML生成 | nanami-products</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products</p>
+      <h1>追加部品YAML生成</h1>
+      <p class="lead">STORESで購入した追加部品を、AIに渡せるYAMLとして生成するフォームです。</p>
+      <section class="notice-box">
+        <h2>使い方</h2>
+        <ul class="plain-list">
+          <li>STORESの購入確認メールに記載された10桁のオーダー番号を入力してください。</li>
+          <li>手元の基本版YAMLを貼り付けて、追加部品を選びます。</li>
+          <li>生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。</li>
+          <li>YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。</li>
+          <li>貼り付けたYAMLは保存しません。</li>
+        </ul>
+      </section>
+
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+      <form method="post" action="{{ addon_form_action }}" class="form">
+        <div class="form-section">
+          <h2>生成する追加部品</h2>
+          <label>addon種別
+            <select name="addon_type" required>
+              {% for option in addon_options %}
+                <option value="{{ option.value }}" {% if form and form.addon_type == option.value %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>STORESオーダー番号
+            <input type="text" name="order_code" required
+                   value="{{ form.order_code if form else '' }}"
+                   placeholder="例：9824333454"
+                   inputmode="numeric"
+                   pattern="[0-9]{10}"
+                   autocomplete="off">
+            <small>購入確認メールの件名にある10桁の番号です。追加部品ごとに1回だけ使用できます。</small>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h2>基本版YAML</h2>
+          <label>YAML貼り付け欄
+            <textarea name="base_yaml" id="base-yaml" required spellcheck="false" placeholder="ここに基本版YAMLを貼り付けてください">{{ form.base_yaml if form else '' }}</textarea>
+            <small>基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。</small>
+          </label>
+        </div>
+
+        <button type="submit" class="submit-button">追加部品YAMLを生成する</button>
+      </form>
+
+      {% if transit_result_url %}
+        <section class="form-section">
+          <h2>31日トランジットデータを生成しました</h2>
+          <p class="lead">以下のURLから32日間アクセスできます。</p>
+          <label>閲覧URL
+            <input type="text" id="transit-result-url" value="{{ transit_result_url }}" readonly>
+          </label>
+          <p class="hint">有効期限: {{ transit_expires_label }}</p>
+          <p class="hint">AIに詳しく読ませたい場合は、ダウンロードしたYAMLファイルを添付してください。</p>
+          <div class="links" style="margin-top:12px">
+            <button type="button" onclick="copyTransitUrl()">URLをコピー</button>
+            <a href="{{ transit_result_url }}" target="_blank" rel="noopener">ページを開く</a>
+            <a href="{{ transit_download_url }}" download="nanami-transit-addon.yaml">YAMLをダウンロード</a>
+          </div>
+          <p class="hint" id="copy-status" aria-live="polite"></p>
+        </section>
+      {% else %}
+        <section class="form-section">
+          <h2>生成結果YAML</h2>
+          <p class="hint">このaddon YAMLを基本版YAMLと一緒にAIへ貼り付けてください。</p>
+          <textarea id="result-yaml" readonly spellcheck="false" placeholder="生成結果がここに表示されます">{{ result_yaml }}</textarea>
+          <div class="links" style="margin-top:12px">
+            <button type="button" onclick="copyResultYaml()">コピー</button>
+            <button type="button" onclick="downloadResultYaml()">ダウンロード</button>
+          </div>
+          <p class="hint" id="copy-status" aria-live="polite"></p>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+  <script>
+    const resultYaml = document.getElementById('result-yaml');
+    const transitResultUrl = document.getElementById('transit-result-url');
+    const statusEl = document.getElementById('copy-status');
+
+    function setStatus(text) {
+      if (statusEl) statusEl.textContent = text;
+    }
+
+    async function copyResultYaml() {
+      const text = resultYaml ? resultYaml.value : '';
+      if (!text) {
+        setStatus('コピーするYAMLがありません。');
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      setStatus('コピーしました。');
+    }
+
+    async function copyTransitUrl() {
+      const text = transitResultUrl ? transitResultUrl.value : '';
+      if (!text) {
+        setStatus('コピーするURLがありません。');
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      setStatus('URLをコピーしました。');
+    }
+
+    function downloadResultYaml() {
+      const text = resultYaml ? resultYaml.value : '';
+      if (!text) {
+        setStatus('ダウンロードするYAMLがありません。');
+        return;
+      }
+      const blob = new Blob([text], { type: 'text/yaml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nanami-addon.yaml';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus('ダウンロードを開始しました。');
+    }
+  </script>
+</body>
+</html>

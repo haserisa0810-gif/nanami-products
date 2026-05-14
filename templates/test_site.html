@@ -5,7 +5,8 @@
   <meta name="robots" content="noindex">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APIテスト | nanami products</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260503-api-test">
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
 </head>
 <body class="api-test-page">
   <header class="api-test-header">
@@ -120,6 +121,34 @@
         <div class="api-test-status" id="redemptionStatus">未検索</div>
         <p class="hint">使用済み判定だけを解除します。既存のチャートURLは履歴として残り、同じ注文番号で新しい登録ができるようになります。</p>
         <pre id="redemptionRecordBody">{}</pre>
+      </div>
+    </section>
+
+    <section class="api-key-issuer">
+      <div class="api-test-panel-head">
+        <div>
+          <p class="api-test-kicker">Cleanup</p>
+          <h2>期限切れチャート掃除</h2>
+        </div>
+        <div class="api-test-actions">
+          <button type="button" id="lookupExpiredChartsButton">件数確認</button>
+          <button type="button" id="cleanupExpiredChartsButton" class="api-test-primary">削除実行</button>
+        </div>
+      </div>
+      <div class="api-key-issuer-grid">
+        <label>
+          猶予日数
+          <input id="cleanupGraceDaysInput" type="number" min="0" max="365" step="1" value="0">
+        </label>
+        <label>
+          確認入力
+          <input id="cleanupConfirmInput" type="text" placeholder="DELETE_EXPIRED_CHARTS">
+        </label>
+      </div>
+      <div class="api-key-result">
+        <div class="api-test-status" id="cleanupStatus">未確認</div>
+        <p class="hint">expires_at を過ぎた charts だけを削除します。購入履歴や注文番号の再登録状態は変更しません。</p>
+        <pre id="cleanupRecordBody">{}</pre>
       </div>
     </section>
 
@@ -278,6 +307,10 @@
     const redemptionConfirmInput = document.getElementById("redemptionConfirmInput");
     const redemptionStatus = document.getElementById("redemptionStatus");
     const redemptionRecordBody = document.getElementById("redemptionRecordBody");
+    const cleanupGraceDaysInput = document.getElementById("cleanupGraceDaysInput");
+    const cleanupConfirmInput = document.getElementById("cleanupConfirmInput");
+    const cleanupStatus = document.getElementById("cleanupStatus");
+    const cleanupRecordBody = document.getElementById("cleanupRecordBody");
 
     function stringify(value) {
       return JSON.stringify(value, null, 2);
@@ -714,6 +747,76 @@
       }
     }
 
+    async function lookupExpiredCharts() {
+      cleanupStatus.textContent = "確認中";
+      cleanupStatus.className = "api-test-status is-loading";
+      cleanupRecordBody.textContent = "{}";
+      try {
+        const response = await fetch("/internal/charts/expired/summary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            grace_days: Number(cleanupGraceDaysInput.value || 0)
+          })
+        });
+        const body = await parseResponseBody(response);
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          cleanupStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "確認に失敗しました"}`;
+          cleanupStatus.className = "api-test-status is-error";
+          return;
+        }
+        cleanupRecordBody.textContent = stringify(body);
+        cleanupStatus.textContent = `削除対象: ${body.expired_count || 0} 件 / 猶予 ${body.grace_days || 0} 日`;
+        cleanupStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        cleanupStatus.textContent = `通信エラー: ${error.message}`;
+        cleanupStatus.className = "api-test-status is-error";
+      }
+    }
+
+    async function cleanupExpiredCharts() {
+      if (cleanupConfirmInput.value.trim() !== "DELETE_EXPIRED_CHARTS") {
+        cleanupStatus.textContent = "確認入力に DELETE_EXPIRED_CHARTS を入れてください";
+        cleanupStatus.className = "api-test-status is-error";
+        return;
+      }
+      if (!confirm("期限切れ charts を削除します。購入履歴は残ります。実行しますか？")) {
+        return;
+      }
+      cleanupStatus.textContent = "削除中";
+      cleanupStatus.className = "api-test-status is-loading";
+      try {
+        const response = await fetch("/internal/charts/expired/cleanup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Token": adminTokenInput.value.trim()
+          },
+          body: JSON.stringify({
+            grace_days: Number(cleanupGraceDaysInput.value || 0),
+            confirm: cleanupConfirmInput.value.trim()
+          })
+        });
+        const body = await parseResponseBody(response);
+        if (!response.ok || !body.ok) {
+          const error = body.error || {};
+          cleanupStatus.textContent = `${response.status} ${error.code || "ERROR"}: ${error.message || "削除に失敗しました"}`;
+          cleanupStatus.className = "api-test-status is-error";
+          return;
+        }
+        cleanupRecordBody.textContent = stringify(body);
+        cleanupStatus.textContent = `削除完了: ${body.deleted_count || 0} 件`;
+        cleanupStatus.className = "api-test-status is-ok";
+      } catch (error) {
+        cleanupStatus.textContent = `通信エラー: ${error.message}`;
+        cleanupStatus.className = "api-test-status is-error";
+      }
+    }
+
     endpointSelect.addEventListener("change", loadSample);
     document.getElementById("loadSampleButton").addEventListener("click", loadSample);
     document.getElementById("formatRequestButton").addEventListener("click", formatRequest);
@@ -723,6 +826,8 @@
     document.getElementById("reissueApiKeyButton").addEventListener("click", reissueApiKey);
     document.getElementById("lookupRedemptionButton").addEventListener("click", lookupRedemption);
     document.getElementById("resetRedemptionButton").addEventListener("click", resetRedemption);
+    document.getElementById("lookupExpiredChartsButton").addEventListener("click", lookupExpiredCharts);
+    document.getElementById("cleanupExpiredChartsButton").addEventListener("click", cleanupExpiredCharts);
     document.getElementById("useIssuedApiKeyButton").addEventListener("click", () => {
       apiKeyInput.value = issuedApiKeyOutput.value;
     });

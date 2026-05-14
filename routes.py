@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import os
 import re
 import secrets
+import subprocess
+import zipfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import yaml
 from fastapi import Body, FastAPI, Form, Header, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
@@ -22,9 +27,9 @@ from services.api_yaml import build_handoff_yaml
 from services.location import PREFECTURE_OPTIONS
 from services.light_yaml import (
     build_base_astrology_yaml,
-    build_detail_astrology_yaml,
     build_light_astrology_yaml,
-    transit_period_status,
+    build_natal_asteroids_yaml,
+    build_transit_astrology_yaml,
 )
 from services.post_chart import build_post_chart
 from services.shichu_chart import (
@@ -33,11 +38,63 @@ from services.shichu_chart import (
     render_shichusuimei_png_from_svg,
 )
 from services.transit_yaml import build_transit_only_yaml
-from services.yaml_exporter import build_product_yaml
+from services.yaml_exporter import (
+    build_31days_transit_addon_yaml,
+    build_asteroid_addon_yaml,
+    build_product_yaml,
+    build_shichu_fortune_cycles_addon_yaml,
+)
 
 app = FastAPI(title="nanami-products")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+def _resolve_asset_version() -> str:
+    version = os.getenv("ASSET_VERSION", "").strip()
+    if version:
+        return version
+    revision = os.getenv("K_REVISION", "").strip()
+    if revision:
+        return revision
+    try:
+        repo_root = Path(__file__).resolve().parent
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        git_sha = result.stdout.strip()
+        if git_sha:
+            return git_sha
+    except Exception:
+        pass
+    return "app-1.0.0"
+
+
+ASSET_VERSION = _resolve_asset_version()
+
+
+def _asset_url(path: str) -> str:
+    clean_path = path.lstrip("/")
+    return f"/static/{clean_path}?v={ASSET_VERSION}"
+
+
+templates.env.globals.update(asset_version=ASSET_VERSION, asset_url=_asset_url)
+
+
+@app.middleware("http")
+async def _asset_cache_control_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/") and request.url.path.endswith((".css", ".js")):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+    content_type = response.headers.get("content-type", "")
+    if content_type.startswith("text/html"):
+        response.headers["Cache-Control"] = "no-store, max-age=0, must-revalidate"
+    return response
 
 API_CREDIT_COSTS = {
     "western": 1,
@@ -85,6 +142,20 @@ PRODUCT_CONFIG = {
         "include_shichusuimei": False,
         "include_transit": True,
     },
+    "western_asteroids_addon": {
+        "label": "ホロスコープ：小惑星追加",
+        "description": "基本版購入後に、小惑星データだけを追加するためのYAMLを生成します。",
+        "features": [
+            "Ceres / Pallas / Juno / Vesta / Chiron / Lilith / Vertex",
+            "基本版ホロスコープに追加して使う部品データ",
+            "トランジットなし",
+            "四柱推命なし",
+        ],
+        "include_asteroids": True,
+        "include_shichusuimei": False,
+        "include_transit": False,
+        "addon_type": "western_asteroids",
+    },
     "shichu": {
         "label": "四柱推命版",
         "description": "四柱推命データを生成します。日替わり境界は、購入者が23時または1時から選択できます。",
@@ -116,10 +187,30 @@ PRODUCT_CONFIG = {
 PRODUCT_SLUGS = {
     "western_basic": "western-basic",
     "western_full": "western-full",
+    "western_asteroids_addon": "western-asteroids-addon",
     "shichu": "shichu",
     "transit_yaml": "transit-yaml",
 }
 PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
+CHART_EXPIRES_DAYS = 90
+OVERSEAS_TIMEZONE_OPTIONS = [
+    {"value": "America/New_York", "label": "アメリカ東部（New York など）"},
+    {"value": "America/Chicago", "label": "アメリカ中部（Chicago など）"},
+    {"value": "America/Denver", "label": "アメリカ山岳部（Denver など）"},
+    {"value": "America/Los_Angeles", "label": "アメリカ西部（Los Angeles など）"},
+    {"value": "America/Honolulu", "label": "ハワイ（Honolulu）"},
+    {"value": "Europe/London", "label": "イギリス（London）"},
+    {"value": "Europe/Paris", "label": "フランス・中央ヨーロッパ（Paris など）"},
+    {"value": "Europe/Berlin", "label": "ドイツ（Berlin）"},
+    {"value": "Europe/Rome", "label": "イタリア（Rome）"},
+    {"value": "Asia/Seoul", "label": "韓国（Seoul）"},
+    {"value": "Asia/Shanghai", "label": "中国（Shanghai）"},
+    {"value": "Asia/Taipei", "label": "台湾（Taipei）"},
+    {"value": "Asia/Hong_Kong", "label": "香港（Hong Kong）"},
+    {"value": "Asia/Bangkok", "label": "タイ（Bangkok）"},
+    {"value": "Asia/Singapore", "label": "シンガポール（Singapore）"},
+    {"value": "Australia/Sydney", "label": "オーストラリア東部（Sydney）"},
+]
 
 
 def _product_type_from_request(request: Request) -> str:
@@ -153,9 +244,46 @@ def _product_context(product_type: str) -> dict:
     }
 
 
+def _chart_expires_at() -> datetime:
+    return datetime.now(timezone.utc) + timedelta(days=CHART_EXPIRES_DAYS)
+
+
+def _build_chart_artifacts(
+    *,
+    yaml_text: str,
+    doc: dict,
+    product_type: str,
+) -> dict[str, str | None]:
+    share_yaml_text = yaml_text
+    horoscope_svg = None
+    shichusuimei_svg = None
+    if product_type == "western_full":
+        try:
+            share_yaml_text = build_light_astrology_yaml(yaml_text, doc=doc)
+        except Exception:
+            share_yaml_text = yaml_text
+    if product_type in {"western_basic", "western_full"}:
+        try:
+            horoscope_svg = build_horoscope_svg_from_yaml(yaml_text, doc=doc)
+        except Exception:
+            horoscope_svg = None
+    if product_type == "shichu":
+        try:
+            shichusuimei_svg = build_shichusuimei_svg_from_yaml(yaml_text, doc=doc)
+        except Exception:
+            shichusuimei_svg = None
+    return {
+        "share_yaml_text": share_yaml_text,
+        "horoscope_svg": horoscope_svg,
+        "shichusuimei_svg": shichusuimei_svg,
+    }
+
+
 def _buyer_template(prefix: str, product_type: str) -> str:
     if product_type not in PRODUCT_CONFIG:
         product_type = "western_basic"
+    if product_type == "western_asteroids_addon":
+        return f"{prefix}_western_basic.html"
     return f"{prefix}_{product_type}.html"
 
 
@@ -174,6 +302,13 @@ def _product_label(product_type: str | None) -> str:
         return "APIクレジット"
     if product_type in API_KEY_PRODUCT_TYPES:
         return "APIキー"
+    addon_labels = {
+        "western_asteroids_addon": "ホロスコープ：小惑星追加",
+        "western_31days_transit_addon": "ホロスコープ：31日トランジット追加",
+        "shichu_fortune_cycles_addon": "四柱推命：大運・流年追加",
+    }
+    if product_type in addon_labels:
+        return addon_labels[str(product_type)]
     if product_type and product_type in PRODUCT_CONFIG:
         return PRODUCT_CONFIG[product_type]["label"]
     return "購入商品"
@@ -223,6 +358,8 @@ def _build_birth_location(
 ) -> dict[str, object]:
     kind = birth_place_kind.strip().lower() or "domestic"
     if kind == "overseas":
+        if prefecture.strip():
+            raise ValueError("海外出生の場合は、出生都道府県を未選択にしてください。")
         place = birth_place_overseas.strip()
         if not place:
             raise ValueError("海外出生の場合は出生地名を入力してください。")
@@ -251,12 +388,20 @@ def _build_birth_location(
     pref_name = prefecture.strip()
     if not pref_name:
         raise ValueError("出生都道府県を選択してください。")
+    if birth_place_overseas.strip() or birth_timezone.strip():
+        raise ValueError("国内出生の場合は、海外出生地名とタイムゾーン欄を空にしてください。")
+    lat = _parse_optional_float(birth_lat, "緯度")
+    lon = _parse_optional_float(birth_lng, "経度")
+    if (lat is None) != (lon is None):
+        raise ValueError("緯度・経度を指定する場合は、両方入力してください。")
+    if lat is not None and lon is not None:
+        _validate_lat_lon(lat, lon)
     return {
         "kind": "domestic",
         "birth_place": pref_name,
         "prefecture": pref_name,
-        "lat": None,
-        "lng": None,
+        "lat": lat,
+        "lng": lon,
         "tz_name": "Asia/Tokyo",
         "tz": ZoneInfo("Asia/Tokyo"),
     }
@@ -571,6 +716,58 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
             "sync_result": sync_result,
             **result,
         })
+    )
+
+
+def _cleanup_grace_days(payload: dict[str, object]) -> int:
+    value = payload.get("grace_days", 0)
+    try:
+        return max(0, min(365, int(value or 0)))
+    except (TypeError, ValueError):
+        raise ValueError("grace_days must be an integer between 0 and 365")
+
+
+@app.post("/internal/charts/expired/summary")
+def internal_expired_charts_summary(request: Request, payload: dict[str, object] = Body(default={})):
+    error = _admin_access_error(request)
+    if error:
+        return error
+    try:
+        grace_days = _cleanup_grace_days(payload)
+        summary = pg_store.expired_charts_summary(grace_days=grace_days)
+    except ValueError as exc:
+        return _api_error("INVALID_INPUT", str(exc), 400)
+    except Exception as exc:
+        return _api_error("EXPIRED_CHARTS_SUMMARY_FAILED", str(exc), 500)
+    return JSONResponse(jsonable_encoder({"ok": True, "grace_days": grace_days, **summary}))
+
+
+@app.post("/internal/charts/expired/cleanup")
+def internal_cleanup_expired_charts(request: Request, payload: dict[str, object] = Body(default={})):
+    error = _admin_access_error(request)
+    if error:
+        return error
+    if str(payload.get("confirm") or "").strip() != "DELETE_EXPIRED_CHARTS":
+        return _api_error("CONFIRMATION_REQUIRED", "confirm must be DELETE_EXPIRED_CHARTS", 400)
+    try:
+        grace_days = _cleanup_grace_days(payload)
+        before = pg_store.expired_charts_summary(grace_days=grace_days)
+        result = pg_store.delete_expired_charts(grace_days=grace_days)
+        after = pg_store.expired_charts_summary(grace_days=grace_days)
+    except ValueError as exc:
+        return _api_error("INVALID_INPUT", str(exc), 400)
+    except Exception as exc:
+        return _api_error("EXPIRED_CHARTS_CLEANUP_FAILED", str(exc), 500)
+    return JSONResponse(
+        jsonable_encoder(
+            {
+                "ok": True,
+                "grace_days": grace_days,
+                "before": before,
+                **result,
+                "after": after,
+            }
+        )
     )
 
 
@@ -1219,6 +1416,7 @@ def redeem_get(request: Request, product_slug: str | None = None):
         {
             "request": request,
             "prefectures": PREFECTURE_OPTIONS,
+            "timezone_options": OVERSEAS_TIMEZONE_OPTIONS,
             "error": None,
             "form": {"order_code": order_code} if order_code else None,
             **_product_context(product_type),
@@ -1280,6 +1478,7 @@ def redeem_post(
             {
                 "request": request,
                 "prefectures": PREFECTURE_OPTIONS,
+                "timezone_options": OVERSEAS_TIMEZONE_OPTIONS,
                 "error": msg,
                 "form": {
                     "order_code": order_code,
@@ -1381,6 +1580,8 @@ def redeem_post(
 
         token = secrets.token_urlsafe(18)
         chart_options = {**doc.get("product", {}).get("options", {}), "product_type": product_type}
+        artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
+        expires_at = _chart_expires_at()
         try:
             if status == "reusable":
                 pg_store.save_chart(
@@ -1393,6 +1594,8 @@ def redeem_post(
                     options={**chart_options, "reusable_order": True},
                     yaml_text=yaml_text,
                     prompt_text=prompt_text,
+                    **artifacts,
+                    expires_at=expires_at,
                 )
                 ok = True
             else:
@@ -1407,6 +1610,8 @@ def redeem_post(
                     options=chart_options,
                     yaml_text=yaml_text,
                     prompt_text=prompt_text,
+                    **artifacts,
+                    expires_at=expires_at,
                 )
         except Exception as e:
             return _form_err(f"保存に失敗しました: {e}", status=500)
@@ -1477,28 +1682,37 @@ def redeem_post(
         status = "ok"
 
     try:
-        yaml_text, prompt_text, doc = build_product_yaml(
-            title=buyer_name.strip() or None,
-            birth_date=birth_date.strip(),
-            birth_time=birth_time_info["calculation_time"],
-            prefecture=prefecture.strip(),
-            birth_place_label=birth_place_label,
-            birth_lat=birth_lat_value if isinstance(birth_lat_value, float) else None,
-            birth_lng=birth_lng_value if isinstance(birth_lng_value, float) else None,
-            tz_name=birth_tz_name,
-            gender=gender.strip() or "unknown",
-            include_asteroids=include_asteroids,
-            include_shichusuimei=include_shichusuimei,
-            include_transit=include_transit,
-            day_change_at_23=day_change_at_23_bool,
-            birth_time_accuracy=birth_time_info["accuracy"],
-            birth_time_range=birth_time_info["range"],
-            birth_time_note=birth_time_info["note"],
-        )
+        common_product_args = {
+            "title": buyer_name.strip() or None,
+            "birth_date": birth_date.strip(),
+            "birth_time": birth_time_info["calculation_time"],
+            "prefecture": prefecture.strip(),
+            "birth_place_label": birth_place_label,
+            "birth_lat": birth_lat_value if isinstance(birth_lat_value, float) else None,
+            "birth_lng": birth_lng_value if isinstance(birth_lng_value, float) else None,
+            "tz_name": birth_tz_name,
+            "gender": gender.strip() or "unknown",
+            "birth_time_accuracy": birth_time_info["accuracy"],
+            "birth_time_range": birth_time_info["range"],
+            "birth_time_note": birth_time_info["note"],
+        }
+        if product_type == "western_asteroids_addon":
+            yaml_text, prompt_text, doc = build_asteroid_addon_yaml(**common_product_args)
+        else:
+            yaml_text, prompt_text, doc = build_product_yaml(
+                **common_product_args,
+                include_asteroids=include_asteroids,
+                include_shichusuimei=include_shichusuimei,
+                include_transit=include_transit,
+                day_change_at_23=day_change_at_23_bool,
+            )
     except Exception as e:
         return _form_err(str(e))
 
     token = secrets.token_urlsafe(18)
+    chart_options = {**doc.get("product", {}).get("options", {}), "product_type": product_type}
+    artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
+    expires_at = _chart_expires_at()
     try:
         if status == "reusable":
             pg_store.save_chart(
@@ -1508,9 +1722,11 @@ def redeem_post(
                 birth_date=birth_date.strip(),
                 birth_time=birth_time_info["birth_time"] or birth_time_info["calculation_time"],
                 birth_place=birth_place_label,
-                options={**doc.get("product", {}).get("options", {}), "product_type": product_type, "reusable_order": True},
+                options={**chart_options, "reusable_order": True},
                 yaml_text=yaml_text,
                 prompt_text=prompt_text,
+                **artifacts,
+                expires_at=expires_at,
             )
             ok = True
         else:
@@ -1522,9 +1738,11 @@ def redeem_post(
                 birth_date=birth_date.strip(),
                 birth_time=birth_time_info["birth_time"] or birth_time_info["calculation_time"],
                 birth_place=birth_place_label,
-                options={**doc.get("product", {}).get("options", {}), "product_type": product_type},
+                options=chart_options,
                 yaml_text=yaml_text,
                 prompt_text=prompt_text,
+                **artifacts,
+                expires_at=expires_at,
             )
     except Exception as e:
         return _form_err(f"保存に失敗しました: {e}", status=500)
@@ -1544,63 +1762,134 @@ def redeem_post(
 @app.get("/chart/{token}.yaml", response_class=PlainTextResponse)
 def chart_yaml(token: str):
     chart = _load_chart_or_404(token)
-    return PlainTextResponse(chart["yaml_text"], media_type="text/yaml; charset=utf-8")
+    response = PlainTextResponse(chart["yaml_text"], media_type="text/yaml; charset=utf-8")
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/natal.yaml", response_class=PlainTextResponse)
+def chart_natal_yaml(token: str):
+    chart = _load_chart_or_404(token)
+    response = PlainTextResponse(build_base_astrology_yaml(chart["yaml_text"]), media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-natal.yaml"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/natal-asteroids.yaml", response_class=PlainTextResponse)
+def chart_natal_asteroids_yaml(token: str):
+    chart = _load_chart_or_404(token)
+    response = PlainTextResponse(build_natal_asteroids_yaml(chart["yaml_text"]), media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-natal-asteroids.yaml"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/transit.yaml", response_class=PlainTextResponse)
+def chart_transit_yaml(token: str):
+    chart = _load_chart_or_404(token)
+    response = PlainTextResponse(build_transit_astrology_yaml(chart["yaml_text"]), media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-transit.yaml"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/horoscope.svg")
+def chart_horoscope_svg(token: str):
+    chart = _load_chart_or_404(token)
+    svg = chart.get("horoscope_svg")
+    if not svg:
+        raise HTTPException(status_code=404, detail="horoscope svg not found")
+    response = Response(content=svg, media_type="image/svg+xml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-horoscope.svg"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/shichusuimei.svg")
+def chart_shichusuimei_svg(token: str):
+    chart = _load_chart_or_404(token)
+    svg = chart.get("shichusuimei_svg")
+    if not svg:
+        raise HTTPException(status_code=404, detail="shichusuimei svg not found")
+    response = Response(content=svg, media_type="image/svg+xml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-shichusuimei.svg"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/download.zip")
+def chart_download_zip(token: str):
+    chart = _load_chart_or_404(token)
+    options = chart.get("options") or {}
+    product_type = _chart_product_type(options)
+    share_yaml_text = _chart_share_yaml_text(chart)
+    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
+    detail_yaml = share_yaml_text
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("full.yaml", chart["yaml_text"])
+        zf.writestr("detail.yaml", detail_yaml)
+        zf.writestr("ai_paste.txt", ai_paste_text)
+        if product_type == "western_full":
+            zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
+            zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
+            zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"]))
+        elif product_type == "western_basic":
+            zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
+        if chart.get("horoscope_svg"):
+            zf.writestr("horoscope.svg", chart["horoscope_svg"])
+        if chart.get("shichusuimei_svg"):
+            zf.writestr("shichusuimei.svg", chart["shichusuimei_svg"])
+        zf.writestr("prompt.txt", chart["prompt_text"])
+        zf.writestr("README.txt", _chart_zip_readme(chart))
+    response = Response(content=buffer.getvalue(), media_type="application/zip")
+    response.headers["Content-Disposition"] = f'attachment; filename="{_chart_zip_filename(token)}"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
 
 
 @app.get("/chart/{token}/prompt.txt", response_class=PlainTextResponse)
 def chart_prompt(token: str):
     chart = _load_chart_or_404(token)
-    return PlainTextResponse(chart["prompt_text"], media_type="text/plain; charset=utf-8")
+    response = PlainTextResponse(chart["prompt_text"], media_type="text/plain; charset=utf-8")
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
 
 
 @app.get("/chart/{token}", response_class=HTMLResponse)
 def chart_page(request: Request, token: str):
     chart = _load_chart_or_404(token)
     options = chart.get("options") or {}
-    product_type = options.get("product_type")
+    product_type = _chart_product_type(options)
     is_transit_yaml = product_type == "transit_yaml"
     has_yaml_mode_selector = product_type == "western_full"
-    horoscope_svg = None
-    horoscope_copy_svg = None
-    shichusuimei_svg = None
-    shichusuimei_copy_svg = None
+    horoscope_svg = chart.get("horoscope_svg") if product_type in {"western_basic", "western_full"} else None
+    shichusuimei_svg = chart.get("shichusuimei_svg") if product_type == "shichu" else None
     has_asteroids = False
     birth_time_notice = {"show": False}
-    transit_status = {"available": False, "expired": False}
-    base_yaml_text = chart["yaml_text"]
-    detail_yaml_text = chart["yaml_text"]
-    share_yaml_text = chart["yaml_text"]
-    if has_yaml_mode_selector:
+    share_yaml_text = _chart_share_yaml_text(chart)
+    chart_doc = None
+    if has_yaml_mode_selector or not is_transit_yaml:
         try:
-            transit_status = transit_period_status(chart["yaml_text"])
-            base_yaml_text = build_base_astrology_yaml(chart["yaml_text"])
-            detail_yaml_text = build_detail_astrology_yaml(chart["yaml_text"])
-            share_yaml_text = build_light_astrology_yaml(chart["yaml_text"])
+            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
         except Exception:
-            base_yaml_text = chart["yaml_text"]
-            detail_yaml_text = chart["yaml_text"]
-            share_yaml_text = chart["yaml_text"]
+            chart_doc = None
+    if horoscope_svg:
+        try:
+            has_asteroids = has_asteroid_svg_data(chart["yaml_text"], doc=chart_doc)
+        except Exception:
+            has_asteroids = False
     if not is_transit_yaml:
         try:
-            horoscope_svg = build_horoscope_svg_from_yaml(chart["yaml_text"])
-            horoscope_copy_svg = build_horoscope_svg_from_yaml(chart["yaml_text"], compact=True)
-            has_asteroids = has_asteroid_svg_data(chart["yaml_text"])
-        except Exception:
-            horoscope_svg = None
-            horoscope_copy_svg = None
-            has_asteroids = False
-        try:
-            shichusuimei_svg = build_shichusuimei_svg_from_yaml(chart["yaml_text"])
-            shichusuimei_copy_svg = build_shichusuimei_svg_from_yaml(chart["yaml_text"], compact=True)
-        except Exception:
-            shichusuimei_svg = None
-            shichusuimei_copy_svg = None
-        try:
-            birth_time_notice = extract_birth_time_notice(chart["yaml_text"])
+            birth_time_notice = extract_birth_time_notice(chart["yaml_text"], doc=chart_doc)
         except Exception:
             birth_time_notice = {"show": False}
+    expires_at = _chart_expiry(chart)
+    expires_label = _chart_expiry_label(expires_at)
     base_url = _public_base_url(request)
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "chart_page.html",
         {
             "request": request,
@@ -1609,20 +1898,25 @@ def chart_page(request: Request, token: str):
             "is_transit_yaml": is_transit_yaml,
             "has_yaml_mode_selector": has_yaml_mode_selector,
             "horoscope_svg": horoscope_svg,
-            "horoscope_copy_svg": horoscope_copy_svg,
             "shichusuimei_svg": shichusuimei_svg,
-            "shichusuimei_copy_svg": shichusuimei_copy_svg,
             "has_asteroid_svg_data": has_asteroids,
             "birth_time_notice": birth_time_notice,
-            "transit_status": transit_status,
-            "base_yaml_text": base_yaml_text,
-            "detail_yaml_text": detail_yaml_text,
             "share_yaml_text": share_yaml_text,
             "chart_url": f"{base_url}/chart/{token}",
             "yaml_url": f"{base_url}/chart/{token}.yaml",
+            "natal_yaml_url": f"{base_url}/chart/{token}/natal.yaml",
+            "natal_asteroids_yaml_url": f"{base_url}/chart/{token}/natal-asteroids.yaml",
+            "transit_yaml_url": f"{base_url}/chart/{token}/transit.yaml",
+            "horoscope_svg_url": f"{base_url}/chart/{token}/horoscope.svg",
+            "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
+            "download_zip_url": f"{base_url}/chart/{token}/download.zip",
             "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
+            "expires_at": expires_at,
+            "expires_label": expires_label,
         },
     )
+    _apply_public_chart_headers(response, chart, max_age=300)
+    return response
 
 
 # ─── 管理者フロー ────────────────────────────────────────────────
@@ -1757,6 +2051,16 @@ def yaml_generate(
             status_code=400,
         )
 
+    if include_shichusuimei and not include_asteroids and not include_transit:
+        admin_product_type = "shichu"
+    elif include_transit or include_asteroids:
+        admin_product_type = "western_full"
+    else:
+        admin_product_type = "western_basic"
+    chart_options = {**doc.get("product", {}).get("options", {}), "product_type": admin_product_type}
+    artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=admin_product_type)
+    expires_at = _chart_expires_at()
+
     try:
         pg_store.save_chart(
             token=token,
@@ -1765,9 +2069,11 @@ def yaml_generate(
             birth_date=birth_date.strip(),
             birth_time=birth_time.strip() or None,
             birth_place=prefecture.strip(),
-            options=doc.get("product", {}).get("options", {}),
+            options=chart_options,
             yaml_text=yaml_text,
             prompt_text=prompt_text,
+            **artifacts,
+            expires_at=expires_at,
         )
     except Exception as e:
         return templates.TemplateResponse(
@@ -1806,7 +2112,438 @@ def admin_yaml_result(request: Request, token: str):
     )
 
 
+ADDON_FORM_OPTIONS = [
+    {"value": "western_asteroids_addon", "label": "小惑星追加"},
+    {"value": "western_31days_transit_addon", "label": "31日トランジット追加"},
+    {"value": "shichu_fortune_cycles_addon", "label": "四柱推命 大運・流年追加"},
+]
+
+
+def _addon_form_response(
+    request: Request,
+    *,
+    form: dict[str, str] | None = None,
+    result_yaml: str = "",
+    transit_result_url: str = "",
+    transit_download_url: str = "",
+    transit_expires_label: str = "",
+    error: str | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "addon_form.html",
+        {
+            "request": request,
+            "addon_options": ADDON_FORM_OPTIONS,
+            "form": form or {"addon_type": "western_asteroids_addon", "order_code": "", "base_yaml": ""},
+            "result_yaml": result_yaml,
+            "transit_result_url": transit_result_url,
+            "transit_download_url": transit_download_url,
+            "transit_expires_label": transit_expires_label,
+            "error": error,
+            "addon_form_action": "/addon/generate" if request.url.path.startswith("/addon/") else "/admin/addon/generate",
+        },
+        status_code=status_code,
+    )
+
+
+def _load_addon_base_yaml(base_yaml: str) -> dict:
+    raw_yaml = base_yaml.strip()
+    fenced = re.search(r"```(?:yaml|yml)?\s*(.*?)```", raw_yaml, flags=re.I | re.S)
+    if fenced:
+        raw_yaml = fenced.group(1).strip()
+    else:
+        version_match = re.search(r"(?m)^version\s*:", raw_yaml)
+        if version_match:
+            raw_yaml = raw_yaml[version_match.start():].strip()
+    try:
+        doc = yaml.safe_load(raw_yaml) or {}
+    except yaml.YAMLError as exc:
+        raise ValueError(
+            "YAMLとして読み込めません。"
+            "プロンプト文ではなく、version: から始まるYAML本文だけを貼り付けてください。"
+        ) from exc
+    if not isinstance(doc, dict):
+        raise ValueError("YAMLの最上位はオブジェクト形式である必要があります。")
+    return doc
+
+
+def _float_or_none(value: object) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
+    input_block = doc.get("input") or {}
+    if not isinstance(input_block, dict):
+        raise ValueError("YAML内の input 情報が不正です。")
+
+    birth_date = str(input_block.get("birth_date") or "").strip()
+    if not birth_date:
+        raise ValueError("YAML内に input.birth_date がありません。")
+
+    calculation_time = str(input_block.get("calculation_time") or "").strip()
+    birth_time_value = input_block.get("birth_time")
+    birth_time = calculation_time or (str(birth_time_value).strip() if birth_time_value else None)
+    if birth_time in {"unknown", "approximate", "morning", "afternoon", "night"}:
+        birth_time = calculation_time or None
+
+    birth_place = str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip()
+    lat = _float_or_none(input_block.get("birth_lat"))
+    lng = _float_or_none(input_block.get("birth_lng"))
+    prefecture = str(input_block.get("prefecture") or "").strip()
+    birth_place_kind = str(input_block.get("birth_place_kind") or "").strip()
+    if birth_place_kind == "overseas":
+        prefecture = ""
+    if not prefecture and (lat is None or lng is None):
+        raise ValueError("海外出生または都道府県なしのYAMLでは input.birth_lat / input.birth_lng が必要です。")
+
+    birth_time_block = doc.get("birth_time") or {}
+    if not isinstance(birth_time_block, dict):
+        birth_time_block = {}
+
+    return {
+        "title": input_block.get("title"),
+        "birth_date": birth_date,
+        "birth_time": birth_time,
+        "prefecture": prefecture,
+        "birth_place_label": birth_place or None,
+        "birth_lat": lat,
+        "birth_lng": lng,
+        "tz_name": str(input_block.get("timezone") or "Asia/Tokyo"),
+        "gender": str(input_block.get("gender") or "unknown"),
+        "birth_time_accuracy": str(input_block.get("birth_time_accuracy") or birth_time_block.get("accuracy") or "auto"),
+        "birth_time_range": input_block.get("birth_time_range") if isinstance(input_block.get("birth_time_range"), dict) else None,
+        "birth_time_note": str(input_block.get("birth_time_note") or birth_time_block.get("note") or "") or None,
+    }
+
+
+def _validate_addon_base_doc(doc: dict, addon_type: str) -> None:
+    systems = doc.get("systems") or {}
+    if not isinstance(systems, dict):
+        raise ValueError("YAML内の systems 情報が不正です。")
+    western = systems.get("western") or {}
+    shichu = systems.get("shichusuimei") or {}
+
+    if addon_type in {"western_asteroids_addon", "western_31days_transit_addon"}:
+        if not isinstance(western, dict) or not isinstance(western.get("natal"), dict):
+            raise ValueError("western addon には western の基本版YAMLが必要です。")
+        return
+
+    if addon_type == "shichu_fortune_cycles_addon":
+        if not isinstance(shichu, dict) or not isinstance(shichu.get("normalized_data"), dict):
+            raise ValueError("shichu addon には shichusuimei の基本版YAMLが必要です。")
+        return
+
+    raise ValueError("未対応のaddon種別です。")
+
+
+def _build_addon_yaml_from_base(doc: dict, addon_type: str) -> str:
+    _validate_addon_base_doc(doc, addon_type)
+    args = _addon_args_from_base_doc(doc)
+    if addon_type == "western_asteroids_addon":
+        yaml_text, _prompt_text, _addon_doc = build_asteroid_addon_yaml(**args)
+        return yaml_text
+    if addon_type == "western_31days_transit_addon":
+        yaml_text, _prompt_text, _addon_doc = build_31days_transit_addon_yaml(**args)
+        return yaml_text
+
+    shichu = ((doc.get("systems") or {}).get("shichusuimei") or {})
+    assumptions = ((shichu.get("input") or {}).get("assumptions") or {})
+    args["day_change_at_23"] = bool(assumptions.get("day_change_at_23"))
+    yaml_text, _prompt_text, _addon_doc = build_shichu_fortune_cycles_addon_yaml(**args)
+    return yaml_text
+
+
+def _transit_addon_expires_at() -> datetime:
+    return datetime.now(timezone.utc) + timedelta(days=32)
+
+
+def _redeem_and_save_transit_addon_or_raise(order_code: str, addon_type: str, yaml_text: str) -> tuple[str, datetime]:
+    if not os.environ.get("DATABASE_URL"):
+        raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
+    order_code_clean = _normalize_stores_order_no(order_code)
+    if not order_code_clean:
+        raise ValueError("STORESオーダー番号を入力してください。")
+    if not re.fullmatch(r"\d{10}", order_code_clean):
+        raise ValueError("STORESオーダー番号は10桁の数字で入力してください。")
+
+    last_exc: Exception | None = None
+    for _ in range(3):
+        token = secrets.token_urlsafe(24)
+        expires_at = _transit_addon_expires_at()
+        try:
+            status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
+                order_code=order_code_clean,
+                addon_type=addon_type,
+                token=token,
+                yaml_text=yaml_text,
+                expires_at=expires_at,
+            )
+            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+                _sync_stores_orders_for_lookup()
+                status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
+                    order_code=order_code_clean,
+                    addon_type=addon_type,
+                    token=token,
+                    yaml_text=yaml_text,
+                    expires_at=expires_at,
+                )
+        except Exception as exc:
+            last_exc = exc
+            continue
+
+        if status == "ok":
+            return token, expires_at
+        if status == "not_found":
+            raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。STORESの購入確認メールに記載の番号を確認してください。")
+        if status == "already_used":
+            raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
+        if status == "cancelled":
+            raise ValueError(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。")
+        if status == "product_mismatch":
+            purchased_type = (order_row or {}).get("product_type")
+            raise ValueError(
+                f"この注文番号は{_product_label(purchased_type)}用です。"
+                f"{_product_label(addon_type)}の生成には使用できません。"
+            )
+        raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
+
+    raise ValueError(f"トランジットデータの一時保存に失敗しました: {last_exc}")
+
+
+def _redeem_addon_order_or_raise(order_code: str, addon_type: str) -> str:
+    order_code_clean = _normalize_stores_order_no(order_code)
+    if not order_code_clean:
+        raise ValueError("STORESオーダー番号を入力してください。")
+    if not re.fullmatch(r"\d{10}", order_code_clean):
+        raise ValueError("STORESオーダー番号は10桁の数字で入力してください。")
+    if not os.environ.get("DATABASE_URL"):
+        raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
+
+    try:
+        status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+        if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+            _sync_stores_orders_for_lookup()
+            status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+    except Exception as exc:
+        raise ValueError(f"注文番号の照合に失敗しました: {exc}") from exc
+
+    if status == "ok":
+        return order_code_clean
+    if status == "not_found":
+        raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。STORESの購入確認メールに記載の番号を確認してください。")
+    if status == "already_used":
+        raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
+    if status == "cancelled":
+        raise ValueError(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。")
+    if status == "product_mismatch":
+        purchased_type = (order_row or {}).get("product_type")
+        raise ValueError(
+            f"この注文番号は{_product_label(purchased_type)}用です。"
+            f"{_product_label(addon_type)}の生成には使用できません。"
+        )
+    raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
+
+
+@app.get("/admin/addon/new", response_class=HTMLResponse)
+def addon_new(request: Request):
+    return _addon_form_response(request)
+
+
+@app.get("/addon/new", response_class=HTMLResponse)
+def public_addon_new(request: Request):
+    return _addon_form_response(request)
+
+
+@app.post("/admin/addon/generate", response_class=HTMLResponse)
+@app.post("/addon/generate", response_class=HTMLResponse)
+def addon_generate(
+    request: Request,
+    addon_type: str = Form("western_asteroids_addon"),
+    order_code: str = Form(""),
+    base_yaml: str = Form(""),
+):
+    form = {"addon_type": addon_type, "order_code": order_code, "base_yaml": base_yaml}
+    if addon_type not in {item["value"] for item in ADDON_FORM_OPTIONS}:
+        return _addon_form_response(request, form=form, error="addon種別が不正です。", status_code=400)
+    if not base_yaml.strip():
+        return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
+    try:
+        doc = _load_addon_base_yaml(base_yaml)
+        result_yaml = _build_addon_yaml_from_base(doc, addon_type)
+        if addon_type == "western_31days_transit_addon":
+            token, expires_at = _redeem_and_save_transit_addon_or_raise(order_code, addon_type, result_yaml)
+            base_url = _public_base_url(request)
+            result_url = f"{base_url}/addon/transit/{token}"
+            return _addon_form_response(
+                request,
+                form=form,
+                transit_result_url=result_url,
+                transit_download_url=f"{result_url}.yaml",
+                transit_expires_label=_chart_expiry_label(expires_at),
+            )
+        _redeem_addon_order_or_raise(order_code, addon_type)
+    except Exception as exc:
+        return _addon_form_response(request, form=form, error=str(exc), status_code=400)
+    return _addon_form_response(request, form=form, result_yaml=result_yaml)
+
+
+def _load_transit_addon_link(token: str) -> tuple[dict | None, bool]:
+    if not re.fullmatch(r"[A-Za-z0-9_-]{20,120}", token):
+        raise HTTPException(status_code=404, detail="transit addon not found")
+    link = pg_store.get_transit_addon_link(token)
+    if not link:
+        raise HTTPException(status_code=404, detail="transit addon not found")
+    expires_at = _chart_expiry(link)
+    expired = bool(expires_at and datetime.now(timezone.utc) >= expires_at)
+    return link, expired
+
+
+@app.get("/addon/transit/{token}.yaml", response_class=PlainTextResponse)
+@app.get("/admin/addon/transit/{token}.yaml", response_class=PlainTextResponse)
+def transit_addon_yaml(token: str):
+    link, expired = _load_transit_addon_link(token)
+    if expired:
+        return PlainTextResponse("このトランジットデータの有効期限は終了しました。\n", status_code=410)
+    response = PlainTextResponse(str((link or {}).get("yaml_text") or ""), media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-transit-addon.yaml"'
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+@app.get("/addon/transit/{token}", response_class=HTMLResponse)
+@app.get("/admin/addon/transit/{token}", response_class=HTMLResponse)
+def transit_addon_page(request: Request, token: str):
+    link, expired = _load_transit_addon_link(token)
+    expires_at = _chart_expiry(link or {})
+    return templates.TemplateResponse(
+        "transit_addon_page.html",
+        {
+            "request": request,
+            "expired": expired,
+            "yaml_text": "" if expired else str((link or {}).get("yaml_text") or ""),
+            "expires_label": _chart_expiry_label(expires_at),
+            "download_url": f"/addon/transit/{token}.yaml",
+        },
+        status_code=410 if expired else 200,
+    )
+
+
 # ─── 共通ヘルパー ────────────────────────────────────────────────
+
+def _chart_product_type(options: dict) -> str | None:
+    product_type = options.get("product_type") if isinstance(options, dict) else None
+    if product_type:
+        return str(product_type)
+    if not isinstance(options, dict):
+        return None
+    if options.get("shichusuimei") and not options.get("western_natal"):
+        return "shichu"
+    if options.get("transit") or options.get("asteroids"):
+        return "western_full"
+    if options.get("western_natal"):
+        return "western_basic"
+    return None
+
+
+def _chart_expiry(chart: dict) -> datetime | None:
+    expires_at = chart.get("expires_at")
+    if isinstance(expires_at, datetime):
+        return expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
+    if isinstance(expires_at, str) and expires_at.strip():
+        try:
+            parsed = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    created_at = chart.get("created_at")
+    if isinstance(created_at, datetime):
+        base = created_at if created_at.tzinfo else created_at.replace(tzinfo=timezone.utc)
+        return base + timedelta(days=CHART_EXPIRES_DAYS)
+    if isinstance(created_at, str) and created_at.strip():
+        try:
+            parsed = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            base = parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+            return base + timedelta(days=CHART_EXPIRES_DAYS)
+        except ValueError:
+            return None
+    return None
+
+
+def _chart_expiry_label(expires_at: datetime | None) -> str:
+    if not expires_at:
+        return "発行から90日間"
+    dt = expires_at.astimezone(ZoneInfo("Asia/Tokyo"))
+    return f"{dt.year}年{dt.month}月{dt.day}日 {dt.hour:02d}:{dt.minute:02d}まで"
+
+
+def _chart_zip_filename(token: str) -> str:
+    safe_token = re.sub(r"[^A-Za-z0-9_-]", "", token)[:32] or "data"
+    return f"nanami_chart_{safe_token}.zip"
+
+
+def _chart_share_yaml_text(chart: dict) -> str:
+    share_yaml_text = chart.get("share_yaml_text") or chart["yaml_text"]
+    options = chart.get("options") or {}
+    if _chart_product_type(options) == "western_full" and not chart.get("share_yaml_text"):
+        try:
+            return build_light_astrology_yaml(chart["yaml_text"])
+        except Exception:
+            return chart["yaml_text"]
+    return share_yaml_text
+
+
+def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None) -> str:
+    prompt_text = str(chart.get("prompt_text") or "").rstrip()
+    yaml_text = share_yaml_text or chart.get("share_yaml_text") or chart.get("yaml_text") or ""
+    parts = [prompt_text, "", "---", "", "以下がYAMLデータです。", "", "```yaml", str(yaml_text), "```"]
+    return "\n".join(parts).rstrip() + "\n"
+
+
+def _chart_zip_readme(chart: dict) -> str:
+    expires_label = _chart_expiry_label(_chart_expiry(chart))
+    return f"""nanami-products 鑑定データ保存用ZIP
+
+このZIPは鑑定データを手元に保存するためのファイルです。
+共有URLの有効期限は発行から90日間です。このデータページは {expires_label} に開けなくなります。
+
+AIに渡す場合:
+- ai_paste.txt: AIに渡す推奨ファイルです。軽量版なので、迷ったらまずこれを使ってください。
+- natal-asteroids.yaml: 小惑星データを含む場合に、追加で詳しく読ませたいときに添付します。
+- transit.yaml: トランジット詳細を追加したい場合に添付します。
+- prompt.txt: AIへの読み方の指示文です。この内容は ai_paste.txt にも含まれています。
+
+保存・確認用:
+- full.yaml: 保存・検証用の完全版データです。細かく確認したい場合に使います。
+- detail.yaml: AIに渡しやすい軽量版YAMLです。ai_paste.txt の元データに近い内容です。
+- natal.yaml: ネイタル基本データです。出生図だけを確認したい場合に使います。
+
+図の確認:
+- horoscope.svg が入っている場合は、ホロスコープ図として確認できます。
+- shichusuimei.svg が入っている場合は、四柱推命の命式図として確認できます。
+
+注意:
+- YAML内の天体位置・ハウス・アスペクトなどは計算済みデータです。
+- AIに依頼するときは、生年月日から再計算せず、このYAMLを根拠に解釈するよう伝えてください。
+"""
+
+
+def _apply_public_chart_headers(response: Response, chart: dict, *, max_age: int) -> None:
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    expires_at = _chart_expiry(chart)
+    if expires_at:
+        seconds_left = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+        if seconds_left <= 0:
+            response.headers["Cache-Control"] = "no-store"
+            return
+        max_age = max(0, min(max_age, seconds_left))
+    response.headers["Cache-Control"] = f"public, max-age={max_age}"
+
 
 def _public_base_url(request: Request) -> str:
     env_url = os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/")
@@ -1822,4 +2559,7 @@ def _load_chart_or_404(token: str) -> dict:
     chart = pg_store.get_chart(token)
     if not chart:
         raise HTTPException(status_code=404, detail="chart not found")
+    expires_at = _chart_expiry(chart)
+    if expires_at and datetime.now(timezone.utc) >= expires_at:
+        raise HTTPException(status_code=410, detail="chart expired")
     return chart

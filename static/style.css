@@ -207,8 +207,13 @@ section { margin-top: 20px; }
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
 }
 .location-grid .full-span { grid-column: 1 / -1; }
+.location-grid .coordinate-note {
+  grid-column: 1 / -1;
+  margin-top: -6px;
+}
 
 label { display: grid; gap: 6px; font-size: .86rem; font-weight: 500; color: var(--body); }
 

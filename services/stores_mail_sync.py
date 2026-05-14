@@ -55,10 +55,13 @@ _SUBJECT_ORDER_NO_RE = re.compile(
     r"[（(]\s*(?:オーダー番号|注文番号)\s*[：:]\s*([0-9]{10})\s*[)）]"
 )
 # 商品名コードからフォーム種別を判定する。STORESの商品名に
-# [NP-WB] / [NP-WF] / [NP-SC] / [NP-TY] を入れておく前提。
+# [NP-WB] / [NP-WF] / [NP-WA] / [NP-WT] / [NP-SF] / [NP-SC] / [NP-TY] を入れておく前提。
 _PRODUCT_CODE_PATTERNS = [
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WB\s*[\]］】]?", re.I), "western_basic"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WF\s*[\]］】]?", re.I), "western_full"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?WA\s*[\]］】]?", re.I), "western_asteroids_addon"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?WT\s*[\]］】]?", re.I), "western_31days_transit_addon"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?SF\s*[\]］】]?", re.I), "shichu_fortune_cycles_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?SC\s*[\]］】]?", re.I), "shichu"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?TY\s*[\]］】]?", re.I), "transit_yaml"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?API\s*[\]］】]?", re.I), "api_key"),
@@ -66,6 +69,9 @@ _PRODUCT_CODE_PATTERNS = [
 # 旧商品名や手動テスト用の補助判定。通常運用では商品名コードを使う。
 _PRODUCT_TYPE_PATTERNS = [
     (re.compile(r"FULL|フル|プレミアム|premium", re.I), "western_full"),
+    (re.compile(r"小惑星.*追加|追加.*小惑星|asteroids? addon|asteroids?追加", re.I), "western_asteroids_addon"),
+    (re.compile(r"(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット).*追加|追加.*(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット)|transit.*addon", re.I), "western_31days_transit_addon"),
+    (re.compile(r"(大運|流年).*追加|追加.*(大運|流年)|fortune cycles? addon", re.I), "shichu_fortune_cycles_addon"),
     (re.compile(r"四柱|しちゅう|シチュウ"), "shichu"),
     (re.compile(r"トランジット|transit|イベント|歴史", re.I), "transit_yaml"),
     (re.compile(r"API|クレジット|credits?", re.I), "api_key"),

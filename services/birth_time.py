@@ -74,8 +74,8 @@ def resolve_birth_time_accuracy(*, selected_accuracy: str | None, birth_time: st
     raise ValueError("出生時刻の選択肢が不正です。")
 
 
-def extract_birth_time_notice(yaml_text: str) -> dict[str, Any]:
-    doc = yaml.safe_load(yaml_text) or {}
+def extract_birth_time_notice(yaml_text: str, *, doc: dict[str, Any] | None = None) -> dict[str, Any]:
+    doc = doc if isinstance(doc, dict) else (yaml.safe_load(yaml_text) or {})
     input_block = doc.get("input") or {}
     birth_time_block = doc.get("birth_time") or {}
     accuracy = birth_time_block.get("accuracy") or input_block.get("birth_time_accuracy") or "exact"

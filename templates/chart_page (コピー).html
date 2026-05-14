@@ -5,7 +5,8 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ chart.buyer_name or "あなた" }}{% if is_transit_yaml %}のイベントデータ{% else %}さん専用の鑑定データ{% endif %}</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
   <style>
     .buyer-card { padding-bottom: 28px; }
     .page-title-block { display: grid; gap: 10px; }

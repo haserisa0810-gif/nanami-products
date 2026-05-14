@@ -389,6 +389,7 @@ def build_product_yaml(
         range_info=birth_time_range,
     )
     interpretation_flags = _interpretation_flags(birth_time_accuracy)
+    is_overseas_birth = birth_lat is not None and birth_lng is not None and not prefecture.strip()
     input_block = {
         "title": title,
         "birth_date": birth_date,
@@ -396,9 +397,11 @@ def build_product_yaml(
         "calculation_time": calculation_time,
         "birth_time_accuracy": birth_time_accuracy,
         "birth_time_note": birth_time_note,
-        "prefecture": prefecture if birth_lat is None or birth_lng is None else None,
-        "birth_place_kind": "overseas" if birth_lat is not None and birth_lng is not None else "domestic",
+        "prefecture": None if is_overseas_birth else prefecture,
+        "birth_place_kind": "overseas" if is_overseas_birth else "domestic",
         "birth_place": birth_place_label or pref_name,
+        "birth_lat": _round(lat, 6),
+        "birth_lng": _round(lng, 6),
         "timezone": tz_name,
         "timezone_offset_hours": tz_offset_hours,
         "gender": gender,
@@ -475,3 +478,381 @@ def build_product_yaml(
         interpretation_flags=interpretation_flags,
     )
     return yaml_text, prompt_text, doc
+
+
+ASTEROID_ADDON_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、基本版ホロスコープに後から追加する小惑星データです。
+
+重要ルール:
+- このYAML単体を出生図全体として扱わないでください。
+- 先に読み込ませた基本版ホロスコープYAMLに、systems.western.asteroids の追加部品として結合して読んでください。
+- 小惑星位置・ハウス・度数の計算結果は変更しないでください。
+- 生年月日から再計算しないでください。
+- YAML内の計算結果を根拠として、性格・テーマ・関係性の深掘りに使ってください。
+
+以下のYAMLを読み込んで、基本版データに追加して解釈してください。
+"""
+
+
+def build_asteroid_addon_yaml(
+    *,
+    title: str | None,
+    birth_date: str,
+    birth_time: str | None,
+    prefecture: str,
+    birth_place_label: str | None = None,
+    birth_lat: float | None = None,
+    birth_lng: float | None = None,
+    tz_name: str = "Asia/Tokyo",
+    gender: str = "unknown",
+    house_system: str = "P",
+    birth_time_accuracy: str = "auto",
+    birth_time_range: dict[str, Any] | None = None,
+    birth_time_note: str | None = None,
+) -> tuple[str, str, dict[str, Any]]:
+    _full_yaml_text, _full_prompt_text, full_doc = build_product_yaml(
+        title=title,
+        birth_date=birth_date,
+        birth_time=birth_time,
+        prefecture=prefecture,
+        birth_place_label=birth_place_label,
+        birth_lat=birth_lat,
+        birth_lng=birth_lng,
+        tz_name=tz_name,
+        gender=gender,
+        house_system=house_system,
+        include_asteroids=True,
+        include_shichusuimei=False,
+        include_transit=False,
+        birth_time_accuracy=birth_time_accuracy,
+        birth_time_range=birth_time_range,
+        birth_time_note=birth_time_note,
+        data_role="addon",
+    )
+    meta = full_doc.get("meta") or {}
+    western = ((full_doc.get("systems") or {}).get("western") or {})
+    asteroids = western.get("asteroids") or {}
+    doc = {
+        "version": "nanami-products-yaml-addon-v1",
+        "meta": {
+            **meta,
+            "schema_version": meta.get("schema_version") or "1.1",
+            "product_type": "western_asteroids_addon",
+            "data_role": "addon",
+            "addon_type": "western_asteroids",
+            "source_logic": "western_full_asteroid_calculation",
+        },
+        "base": {
+            "target_product_type": "western_basic",
+            "target_system": "western",
+            "merge_path": "systems.western.asteroids",
+            "compatible_with": ["western_basic", "personal_ai_astrology_yaml_natal"],
+        },
+        "product": {
+            "type": "western_asteroids_addon",
+            "label": "ホロスコープ：小惑星追加",
+            "options": {
+                "addon": True,
+                "western_natal": False,
+                "asteroids": True,
+                "transit": False,
+                "shichusuimei": False,
+            },
+        },
+        "generated_at": full_doc.get("generated_at"),
+        "calculation": full_doc.get("calculation") or {},
+        "birth_time": full_doc.get("birth_time") or {},
+        "interpretation_flags": full_doc.get("interpretation_flags") or {},
+        "assets": {
+            "yaml_addon": {
+                "available": True,
+                "merge_path": "systems.western.asteroids",
+            },
+            "horoscope_svg": {"available": False},
+            "shichusuimei_svg": {"available": False},
+        },
+        "input": full_doc.get("input") or {},
+        "usage_note": {
+            "for_ai": "これは追加部品データです。基本版ホロスコープYAMLを土台にし、このYAMLの小惑星データを追加して解釈してください。",
+            "merge_instruction": "systems.western.asteroids を、同じ出生情報で作成済みの基本版YAMLへ追加する想定です。",
+            "not_included": "出生図全体・トランジット・鑑定本文は含みません。小惑星追加用の計算済みデータです。",
+        },
+        "systems": {
+            "western": {
+                "natal": None,
+                "asteroids": asteroids,
+                "transit": None,
+            },
+            "shichusuimei": None,
+        },
+    }
+    yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
+    return yaml_text, ASTEROID_ADDON_PROMPT.strip() + "\n", doc
+
+
+TRANSIT_31DAYS_ADDON_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、基本版ホロスコープに後から追加する31日トランジットデータです。
+
+重要ルール:
+- このYAML単体を出生図全体として扱わないでください。
+- 先に読み込ませた基本版ホロスコープYAMLと一緒にAIへ貼り付けて使ってください。
+- systems.western.transit を、基本版ホロスコープYAMLの追加部品として読んでください。
+- トランジット天体位置・出生図へのアスペクト・月の時間帯データは変更しないでください。
+- 生年月日から再計算しないでください。
+- YAML内の計算結果を根拠として、今後31日間の流れを読んでください。
+
+以下のYAMLを読み込んで、基本版データと組み合わせて解釈してください。
+"""
+
+
+def build_31days_transit_addon_yaml(
+    *,
+    title: str | None,
+    birth_date: str,
+    birth_time: str | None,
+    prefecture: str,
+    birth_place_label: str | None = None,
+    birth_lat: float | None = None,
+    birth_lng: float | None = None,
+    tz_name: str = "Asia/Tokyo",
+    gender: str = "unknown",
+    house_system: str = "P",
+    transit_start_date: datetime | None = None,
+    birth_time_accuracy: str = "auto",
+    birth_time_range: dict[str, Any] | None = None,
+    birth_time_note: str | None = None,
+) -> tuple[str, str, dict[str, Any]]:
+    full_yaml_text, _full_prompt_text, full_doc = build_product_yaml(
+        title=title,
+        birth_date=birth_date,
+        birth_time=birth_time,
+        prefecture=prefecture,
+        birth_place_label=birth_place_label,
+        birth_lat=birth_lat,
+        birth_lng=birth_lng,
+        tz_name=tz_name,
+        gender=gender,
+        house_system=house_system,
+        include_asteroids=False,
+        include_shichusuimei=False,
+        include_transit=True,
+        transit_start_date=transit_start_date,
+        transit_days=31,
+        birth_time_accuracy=birth_time_accuracy,
+        birth_time_range=birth_time_range,
+        birth_time_note=birth_time_note,
+        data_role="addon",
+    )
+    meta = full_doc.get("meta") or {}
+    western = ((full_doc.get("systems") or {}).get("western") or {})
+    transit = dict(western.get("transit") or {})
+    try:
+        from services.light_yaml import build_light_astrology_yaml
+
+        current_date = None
+        if transit_start_date is not None:
+            current_date = transit_start_date.astimezone(ZoneInfo(tz_name)).date()
+        light_yaml_text = build_light_astrology_yaml(full_yaml_text, doc=full_doc, current_date=current_date)
+        light_doc = yaml.safe_load(light_yaml_text) or {}
+        light_transit = (((light_doc.get("systems") or {}).get("western") or {}).get("transit") or {})
+        if light_transit.get("today") is not None:
+            transit["today"] = light_transit.get("today")
+        if light_transit.get("next_31_days_summary") is not None:
+            transit["next_31_days_summary"] = light_transit.get("next_31_days_summary")
+    except Exception:
+        pass
+    if isinstance(transit.get("next_31_days_summary"), dict):
+        summary = transit["next_31_days_summary"]
+        summary.setdefault("key_aspects", [])
+        summary.setdefault("active_periods", [])
+        summary.setdefault("easy_to_move_days", [])
+        summary.setdefault("caution_days", [])
+    doc = {
+        "version": "nanami-products-yaml-addon-v1",
+        "meta": {
+            **meta,
+            "schema_version": meta.get("schema_version") or "1.1",
+            "product_type": "western_31days_transit_addon",
+            "data_role": "addon",
+            "addon_type": "western_31days_transit",
+            "source_logic": "western_full_31days_transit_calculation",
+        },
+        "base": {
+            "target_product_type": "western_basic",
+            "target_system": "western",
+            "merge_path": "systems.western.transit",
+            "compatible_with": ["western_basic", "personal_ai_astrology_yaml_natal"],
+        },
+        "product": {
+            "type": "western_31days_transit_addon",
+            "label": "ホロスコープ：31日トランジット追加",
+            "options": {
+                "addon": True,
+                "western_natal": False,
+                "asteroids": False,
+                "transit": True,
+                "transit_days": 31,
+                "shichusuimei": False,
+            },
+        },
+        "generated_at": full_doc.get("generated_at"),
+        "calculation": full_doc.get("calculation") or {},
+        "birth_time": full_doc.get("birth_time") or {},
+        "interpretation_flags": full_doc.get("interpretation_flags") or {},
+        "assets": {
+            "yaml_addon": {
+                "available": True,
+                "merge_path": "systems.western.transit",
+            },
+            "horoscope_svg": {"available": False},
+            "shichusuimei_svg": {"available": False},
+        },
+        "input": full_doc.get("input") or {},
+        "usage_note": {
+            "for_ai": "これは追加部品データです。基本版ホロスコープYAMLと一緒にAIへ貼り付けて使ってください。",
+            "merge_instruction": "systems.western.transit を、同じ出生情報で作成済みの基本版YAMLへ追加する想定です。",
+            "not_included": "出生図全体・小惑星・四柱推命・鑑定本文は含みません。31日トランジット追加用の計算済みデータです。",
+        },
+        "systems": {
+            "western": {
+                "natal": None,
+                "asteroids": None,
+                "transit": transit,
+            },
+            "shichusuimei": None,
+        },
+    }
+    yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
+    return yaml_text, TRANSIT_31DAYS_ADDON_PROMPT.strip() + "\n", doc
+
+
+SHICHU_FORTUNE_CYCLES_ADDON_PROMPT = """あなたは四柱推命の鑑定者です。以下のYAMLは、四柱推命基本版に後から追加する大運・流年データです。
+
+重要ルール:
+- このYAML単体を四柱推命の基本命式全体として扱わないでください。
+- 先に読み込ませた四柱推命基本版YAMLと一緒にAIへ貼り付けて使ってください。
+- systems.shichusuimei.normalized_data.daiun と systems.shichusuimei.normalized_data.annual_fortune を追加部品として読んでください。
+- 大運・流年の干支、年齢、関係性、計算前提は変更しないでください。
+- 生年月日から再計算しないでください。
+- YAML内の計算結果を根拠として、長期運勢と今年の流れを読んでください。
+
+以下のYAMLを読み込んで、四柱推命基本版データと組み合わせて解釈してください。
+"""
+
+
+def build_shichu_fortune_cycles_addon_yaml(
+    *,
+    title: str | None,
+    birth_date: str,
+    birth_time: str | None,
+    prefecture: str,
+    birth_place_label: str | None = None,
+    birth_lat: float | None = None,
+    birth_lng: float | None = None,
+    tz_name: str = "Asia/Tokyo",
+    gender: str = "unknown",
+    birth_time_accuracy: str = "auto",
+    birth_time_range: dict[str, Any] | None = None,
+    birth_time_note: str | None = None,
+    day_change_at_23: bool = False,
+) -> tuple[str, str, dict[str, Any]]:
+    _full_yaml_text, _full_prompt_text, full_doc = build_product_yaml(
+        title=title,
+        birth_date=birth_date,
+        birth_time=birth_time,
+        prefecture=prefecture,
+        birth_place_label=birth_place_label,
+        birth_lat=birth_lat,
+        birth_lng=birth_lng,
+        tz_name=tz_name,
+        gender=gender,
+        include_asteroids=False,
+        include_shichusuimei=True,
+        include_transit=False,
+        day_change_at_23=day_change_at_23,
+        birth_time_accuracy=birth_time_accuracy,
+        birth_time_range=birth_time_range,
+        birth_time_note=birth_time_note,
+        data_role="addon",
+    )
+    meta = full_doc.get("meta") or {}
+    shichu = (full_doc.get("systems") or {}).get("shichusuimei") or {}
+    normalized = shichu.get("normalized_data") or {}
+    daiun = normalized.get("daiun") or {}
+    annual_fortune = normalized.get("annual_fortune") or {}
+    shichu_input = shichu.get("input") or {}
+    assumptions = shichu_input.get("assumptions") or {}
+    doc = {
+        "version": "nanami-products-yaml-addon-v1",
+        "meta": {
+            **meta,
+            "schema_version": meta.get("schema_version") or "1.1",
+            "product_type": "shichu_fortune_cycles_addon",
+            "data_role": "addon",
+            "addon_type": "shichu_fortune_cycles",
+            "source_logic": "shichu_full_fortune_cycles_calculation",
+        },
+        "base": {
+            "target_product_type": "shichu",
+            "target_system": "shichusuimei",
+            "merge_path": "systems.shichusuimei",
+            "compatible_with": ["shichu", "personal_ai_astrology_yaml"],
+        },
+        "product": {
+            "type": "shichu_fortune_cycles_addon",
+            "label": "四柱推命：大運・流年追加",
+            "options": {
+                "addon": True,
+                "western_natal": False,
+                "asteroids": False,
+                "transit": False,
+                "shichusuimei": True,
+                "fortune_cycles": True,
+            },
+        },
+        "generated_at": full_doc.get("generated_at"),
+        "calculation": {
+            "engine": "nanami-products shichusuimei",
+            "timezone": tz_name,
+            "day_change_at_23": day_change_at_23,
+            "year_boundary_rule": assumptions.get("year_boundary_rule"),
+            "daiun_start_mode": assumptions.get("daiun_start_mode"),
+        },
+        "birth_time": full_doc.get("birth_time") or {},
+        "interpretation_flags": full_doc.get("interpretation_flags") or {},
+        "assets": {
+            "yaml_addon": {
+                "available": True,
+                "merge_path": "systems.shichusuimei",
+            },
+            "horoscope_svg": {"available": False},
+            "shichusuimei_svg": {"available": False},
+        },
+        "input": full_doc.get("input") or {},
+        "usage_note": {
+            "for_ai": "これは追加部品データです。四柱推命基本版YAMLと一緒にAIへ貼り付けて使ってください。",
+            "merge_instruction": "systems.shichusuimei.normalized_data.daiun と annual_fortune を、同じ出生情報で作成済みの四柱推命基本版YAMLへ追加する想定です。",
+            "not_included": "基本命式全体・通変星一覧・十二運一覧・神殺・五行バランス・鑑定本文は含みません。大運・流年追加用の計算済みデータです。",
+            "reference_scope": "流年の十神・十二運を読むため、日主と計算前提だけを最小参照情報として含めています。",
+        },
+        "systems": {
+            "western": None,
+            "shichusuimei": {
+                "normalized_data": {
+                    "daiun": daiun,
+                    "annual_fortune": annual_fortune,
+                },
+                "reference": {
+                    "day_master": shichu.get("day_master"),
+                    "assumptions": {
+                        "tz_name": assumptions.get("tz_name"),
+                        "day_change_at_23": assumptions.get("day_change_at_23"),
+                        "day_boundary_rule": assumptions.get("day_boundary_rule"),
+                        "year_boundary_rule": assumptions.get("year_boundary_rule"),
+                        "daiun_start_mode": assumptions.get("daiun_start_mode"),
+                    },
+                    "note": "大運・流年の解釈に必要な最小参照です。基本命式の代替としては使わないでください。",
+                },
+            },
+        },
+    }
+    yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
+    return yaml_text, SHICHU_FORTUNE_CYCLES_ADDON_PROMPT.strip() + "\n", doc

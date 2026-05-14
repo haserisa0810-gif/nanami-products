@@ -5,11 +5,30 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ chart.buyer_name or "あなた" }}{% if is_transit_yaml %}のイベントデータ{% else %}さん専用の鑑定データ{% endif %}</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
   <style>
     .buyer-card { padding-bottom: 28px; }
     .page-title-block { display: grid; gap: 10px; }
-    .page-title-block .lead { max-width: 62ch; }
+    .page-title-block h1 {
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+    .page-title-block .lead {
+      max-width: 62ch;
+      overflow-wrap: anywhere;
+    }
+    .buyer-card,
+    .notice-box,
+    .save-data-panel,
+    .page-url-panel,
+    .ai-data-box,
+    .ai-mode-copy,
+    .helper-note,
+    .hint {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
     .badge-row {
       display: flex;
       flex-wrap: wrap;
@@ -59,6 +78,47 @@
       background: var(--card2);
       border-color: var(--border2);
       color: var(--text);
+    }
+    .fallback-share {
+      margin-top: 12px;
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      background: var(--card2);
+      padding: 10px 12px 12px;
+    }
+    .fallback-share summary {
+      cursor: pointer;
+      list-style: none;
+      color: var(--text);
+      font-size: .92rem;
+      font-weight: 600;
+      line-height: 1.4;
+      padding: 4px 2px;
+    }
+    .fallback-share summary::-webkit-details-marker { display: none; }
+    .fallback-share summary::after {
+      content: '＋';
+      float: right;
+      color: var(--gold);
+    }
+    .fallback-share[open] summary::after { content: '－'; }
+    .fallback-share .fallback-lead {
+      margin: 8px 2px 0;
+      color: var(--dim);
+      font-size: .82rem;
+      line-height: 1.7;
+    }
+    .fallback-share .fallback-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .fallback-share .fallback-actions .secondary-action {
+      width: 100%;
+      margin-top: 0;
+    }
+    .fallback-share .fallback-actions .secondary-action.secondary-emphasis {
+      background: var(--card2);
     }
     .ai-data-box {
       border: 1px solid var(--border);
@@ -167,6 +227,74 @@
       color: var(--text);
     }
     .page-url-panel .copyline { align-items: center; }
+    .save-data-panel {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 250, 242, .56);
+      display: grid;
+      gap: 8px;
+    }
+    .save-data-panel h2 {
+      margin: 0;
+      font-size: .9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .download-primary {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--gold);
+      text-align: center;
+      text-decoration: none;
+      font-size: .88rem;
+      font-weight: 500;
+      box-shadow: none;
+    }
+    .download-primary:hover { background: var(--gold-bg); }
+    .advanced-downloads {
+      margin-top: 2px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .advanced-downloads summary {
+      cursor: pointer;
+      color: var(--dim);
+      font-size: .82rem;
+      list-style: none;
+    }
+    .advanced-downloads summary::-webkit-details-marker { display: none; }
+    .advanced-downloads summary::after {
+      content: '＋';
+      float: right;
+      color: var(--gold-dim);
+    }
+    .advanced-downloads[open] summary::after { content: '－'; }
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .download-link {
+      display: block;
+      min-height: 36px;
+      padding: 9px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--gold);
+      text-align: center;
+      text-decoration: none;
+      font-size: .84rem;
+      line-height: 1.4;
+    }
+    .download-link:hover { background: var(--gold-bg); }
     .data-preview-grid {
       display: grid;
       gap: 12px;
@@ -409,7 +537,9 @@
     }
     .detail-section textarea { min-height: 220px; }
     @media (max-width: 640px) {
+      .page-title-block h1 { font-size: 1.65rem; }
       .section-grid { grid-template-columns: 1fr; }
+      .download-grid { grid-template-columns: 1fr; }
       .key-actions .secondary-row { display: grid; }
       .horoscope-actions { display: grid; }
       .asteroid-toggle { margin-right: 0; }
@@ -437,14 +567,7 @@
           {% if chart.birth_time %}<span class="info-badge">{% if is_transit_yaml %}時刻{% elif birth_time_notice.show %}計算用時刻{% else %}出生時刻{% endif %}: {{ chart.birth_time }}</span>{% endif %}
           <span class="info-badge">{% if is_transit_yaml %}場所{% else %}出生地{% endif %}: {{ chart.birth_place or "不明" }}</span>
         </div>
-        <p class="hint">このページはURLを知っている人が開けます。大切に保管してください。</p>
-        <div class="page-url-panel">
-          <h2>この{% if is_transit_yaml %}イベントデータ{% else %}鑑定データ{% endif %}ページのURL</h2>
-          <div class="copyline">
-            <input id="chart-url" value="{{ chart_url }}" readonly>
-            <button onclick="copyFrom('chart-url')">コピー</button>
-          </div>
-        </div>
+        <p class="hint">このページはURLを知っている人が開けます。有効期限は{{ expires_label }}（発行から90日間）です。</p>
       </div>
 
       <section class="notice-box">
@@ -478,17 +601,57 @@
         </div>
         {% endif %}
         <div class="key-actions">
-          <button class="primary-action" id="primary-ai-action" onclick="shareSelectedAiText()">AIアプリで開く</button>
-          <div class="secondary-row">
-            <button class="secondary-action secondary-emphasis" onclick="downloadSelectedAiText()">ファイルとして保存</button>
-            <button class="secondary-action" onclick="copySelectedAiText()">コピーして貼り付ける</button>
-          </div>
+          <button class="primary-action" id="primary-ai-action" onclick="shareSelectedAiText()">AI用TXTファイルを共有</button>
         </div>
-        <p class="helper-note">ChatGPTや Gemini、Claude などのAIへ渡せます。「AIアプリで開く」を押すと、共有メニューが開きます。</p>
-        <p class="helper-note">ChatGPTで共有がうまくいかない場合は「ファイルとして保存」を使い、保存したファイルをアップロードしてください。</p>
+        <p class="helper-note">ChatGPTや Gemini、Claude などのAIへ渡せます。ファイルを読めないアプリでは、AI用TXT本文がチャット欄に入る場合があります。</p>
+        <details class="fallback-share">
+          <summary>共有できない場合はこちら</summary>
+          <p class="fallback-lead">共有できない場合は、コピーまたはTXT保存をご利用ください。</p>
+          <div class="fallback-actions">
+            <button class="secondary-action" onclick="copySelectedAiText()">AI用データをコピー</button>
+            <button class="secondary-action" onclick="downloadAiPasteTxt()">AI用TXTを保存</button>
+          </div>
+        </details>
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
         <p class="hint" id="combined-size"></p>
       </section>
+
+      <div class="save-data-panel">
+        <h2>保存用データ</h2>
+        <p class="hint">このURLは90日後に開けなくなります。必要な場合はZIPを保存してください。</p>
+        <button class="download-primary" onclick="downloadFullArchiveZip()">保存先を選んでZIPを保存</button>
+        <details class="advanced-downloads">
+          <summary>個別ファイルを表示</summary>
+          <div class="download-grid">
+          {% if is_transit_yaml %}
+          <a class="download-link" href="{{ yaml_url }}" download="nanami-transit-event.yaml">イベントYAML</a>
+          {% elif horoscope_svg %}
+          <a class="download-link" href="{{ natal_yaml_url }}" download="nanami-natal.yaml">ネイタル</a>
+          {% if has_yaml_mode_selector %}
+          <a class="download-link" href="{{ natal_asteroids_yaml_url }}" download="nanami-natal-asteroids.yaml">ネイタル＋小惑星</a>
+          <a class="download-link" href="{{ transit_yaml_url }}" download="nanami-transit.yaml">トランジット</a>
+          {% endif %}
+          {% else %}
+          <a class="download-link" href="{{ yaml_url }}" download="nanami-chart.yaml">YAMLデータ</a>
+          {% endif %}
+          {% if horoscope_svg %}
+          <a class="download-link" href="{{ horoscope_svg_url }}" download="nanami-horoscope.svg">ホロスコープSVG</a>
+          {% endif %}
+          {% if shichusuimei_svg %}
+          <a class="download-link" href="{{ shichusuimei_svg_url }}" download="nanami-shichusuimei.svg">命式SVG</a>
+          {% endif %}
+          </div>
+        </details>
+      </div>
+
+      <div class="page-url-panel">
+        <h2>この{% if is_transit_yaml %}イベントデータ{% else %}鑑定データ{% endif %}ページのURL</h2>
+        <div class="copyline">
+          <input id="chart-url" value="{{ chart_url }}" readonly>
+          <button onclick="copyFrom('chart-url')">コピー</button>
+        </div>
+        <p class="hint">URLを共有する場合に使います。ページ自体は90日後に開けなくなります。</p>
+      </div>
 
       {% if horoscope_svg %}
       <section class="horoscope-panel" aria-label="SVGホロスコープ図">
@@ -670,8 +833,8 @@
 
           <div class="detail-section">
             <h3>{% if has_yaml_mode_selector %}完全版YAML{% else %}YAML全文{% endif %}</h3>
-            <p class="hint">{% if is_transit_yaml %}イベント時点の天体配置データです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% elif has_yaml_mode_selector %}完全版YAMLは保存・検証用です。AIに貼る場合は上のAI貼り付け版を優先してください。{% else %}通常版YAMLです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% endif %}</p>
-            <textarea id="yaml" readonly>{{ chart.yaml_text }}</textarea>
+            <p class="hint">{% if is_transit_yaml %}イベント時点の天体配置データです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% elif has_yaml_mode_selector %}完全版YAMLは、小惑星や31日分の詳細までじっくり読みたい時に使います。{% else %}通常版YAMLです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% endif %}</p>
+            <textarea id="yaml" readonly>{% if not has_yaml_mode_selector %}{{ chart.yaml_text }}{% endif %}</textarea>
             <button onclick="copyYamlFull()" style="margin-top:10px">{% if has_yaml_mode_selector %}完全版YAMLコピー{% else %}YAML全文コピー{% endif %}</button>
             <button class="secondary-action" onclick="copyYamlChunk()" style="margin-top:10px">続きからコピー</button>
             <button class="secondary-action" onclick="downloadYamlOnly()" style="margin-top:10px">{% if has_yaml_mode_selector %}完全版YAMLをダウンロード{% else %}YAMLを保存{% endif %}</button>
@@ -695,9 +858,13 @@
     <script>
     const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
     const SHARE_YAML = {{ share_yaml_text | tojson }};
-    const FULL_YAML = {{ chart.yaml_text | tojson }};
-    const HOROSCOPE_SVG = {{ horoscope_svg | default('', true) | tojson }};
-    const SHICHU_SVG = {{ shichusuimei_svg | default('', true) | tojson }};
+    const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
+    const FULL_YAML_URL = {{ yaml_url | tojson }};
+    const FULL_ARCHIVE_ZIP_URL = {{ download_zip_url | tojson }};
+    const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% else %}{{ chart.yaml_text | tojson }}{% endif %};
+    let fullYamlCache = FULL_YAML_INLINE;
+    const TXT_SHARE_TEST_MODE = new URLSearchParams(window.location.search).get('txtShareTest') === 'small';
+    const preparedAiTextFiles = { paste: null, full: null };
     const copyState = {
       paste: Number(localStorage.getItem('chart-copy-paste') || '0'),
       full: Number(localStorage.getItem('chart-copy-full') || '0'),
@@ -736,12 +903,34 @@
       return mode === 'full' ? '完全版' : 'AI貼り付け版';
     }
 
-    function getSelectedYaml(mode = getSelectedAiMode()) {
-      return mode === 'full' ? FULL_YAML : SHARE_YAML;
+    function setYamlTextarea(text) {
+      const el = document.getElementById('yaml');
+      if (el) el.value = text;
     }
 
-    function buildAiText(mode = getSelectedAiMode()) {
-      const yaml = getSelectedYaml(mode);
+    async function getFullYaml() {
+      if (fullYamlCache) return fullYamlCache;
+      setYamlTextarea('完全版YAMLを読み込んでいます...');
+      const response = await fetch(FULL_YAML_URL, { credentials: 'same-origin' });
+      if (!response.ok) {
+        setYamlTextarea('');
+        throw new Error('full_yaml_load_failed');
+      }
+      fullYamlCache = await response.text();
+      setYamlTextarea(fullYamlCache);
+      prepareAiTextFile('full');
+      if (getSelectedAiMode() === 'full') {
+        setText('yaml-preview', firstLines(fullYamlCache, 16));
+      }
+      updateSizeLabels();
+      return fullYamlCache;
+    }
+
+    async function getSelectedYaml(mode = getSelectedAiMode()) {
+      return mode === 'full' ? await getFullYaml() : SHARE_YAML;
+    }
+
+    function buildAiTextFromYaml(yaml) {
       const parts = [
         COMBINED_PROMPT,
         '',
@@ -756,18 +945,26 @@
       return parts.join('\n') + '\n';
     }
 
-    function buildSelectedAiText(mode = getSelectedAiMode()) {
-      return buildAiText(mode);
+    async function buildAiText(mode = getSelectedAiMode()) {
+      return buildAiTextFromYaml(await getSelectedYaml(mode));
     }
 
-    function buildSelectedFileName(mode = getSelectedAiMode()) {
+    async function buildSelectedAiText(mode = getSelectedAiMode()) {
+      return await buildAiText(mode);
+    }
+
+    function buildDatedZipFileName(prefix) {
       const today = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Tokyo',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
       }).format(new Date()).replace(/-/g, '');
-      return mode === 'full' ? `nanami_ai_full_${today}.txt` : `nanami_ai_paste_${today}.txt`;
+      return `${prefix}_${today}.zip`;
+    }
+
+    function buildFullArchiveZipFileName() {
+      return buildDatedZipFileName('nanami_chart_bundle');
     }
 
     function splitText(text, size) {
@@ -783,9 +980,27 @@
       if (el) el.textContent = text;
     }
 
+    function buildAiTextLengthFromYaml(yaml) {
+      return COMBINED_PROMPT.length + yaml.length + 31;
+    }
+
+    function updateSizeLabels() {
+      const pasteLength = buildAiTextLengthFromYaml(SHARE_YAML).toLocaleString();
+      if (HAS_YAML_MODE_SELECTOR && !fullYamlCache) {
+        setText('combined-size', `AI貼り付け版.txt: ${pasteLength}文字。完全版は選択時に読み込みます。`);
+        setText('yaml-size', `AI貼り付け版: ${SHARE_YAML.length.toLocaleString()}文字。完全版は必要時に読み込みます。`);
+        return;
+      }
+      const fullLength = buildAiTextLengthFromYaml(fullYamlCache).toLocaleString();
+      setText('combined-size', `AI貼り付け版.txt: ${pasteLength}文字。完全版: ${fullLength}文字。`);
+      setText('yaml-size', `完全版: ${fullYamlCache.length.toLocaleString()}文字。AI貼り付け版: ${SHARE_YAML.length.toLocaleString()}文字。`);
+    }
+
     function initCopyHelpers() {
-      setText('combined-size', `AI貼り付け版.txt: ${buildSelectedAiText('paste').length.toLocaleString()}文字。完全版の保存用: ${buildSelectedAiText('full').length.toLocaleString()}文字。`);
-      setText('yaml-size', `完全版: ${FULL_YAML.length.toLocaleString()}文字。AI貼り付け版: ${SHARE_YAML.length.toLocaleString()}文字。`);
+      if (fullYamlCache) setYamlTextarea(fullYamlCache);
+      updateSizeLabels();
+      prepareAiTextFile('paste');
+      if (fullYamlCache) prepareAiTextFile('full');
     }
 
     function firstLines(text, count) {
@@ -812,9 +1027,17 @@
         fullInput.checked = !isPaste;
       }
       localStorage.setItem('chart-ai-output-mode', isPaste ? 'paste' : 'full');
-      setText('yaml-preview', firstLines(getSelectedYaml(isPaste ? 'paste' : 'full'), 16));
-      setText('combined-size', `AI貼り付け版.txt: ${buildSelectedAiText('paste').length.toLocaleString()}文字。完全版の保存用: ${buildSelectedAiText('full').length.toLocaleString()}文字。`);
-      setText('yaml-size', `完全版: ${FULL_YAML.length.toLocaleString()}文字。AI貼り付け版: ${SHARE_YAML.length.toLocaleString()}文字。`);
+      if (isPaste) {
+        setText('yaml-preview', firstLines(SHARE_YAML, 16));
+      } else {
+        setText('yaml-preview', fullYamlCache ? firstLines(fullYamlCache, 16) : '完全版YAMLは、完全版を使う時に読み込みます。');
+      }
+      updateSizeLabels();
+      if (isPaste || fullYamlCache || TXT_SHARE_TEST_MODE) {
+        prepareAiTextFile(isPaste ? 'paste' : 'full');
+      } else {
+        getFullYaml().catch(() => {});
+      }
     }
 
     async function copyFrom(id) {
@@ -822,23 +1045,121 @@
       await writeClipboard(el.value);
     }
 
-    function canUseShare() {
-      return Boolean(navigator.share);
-    }
-
-    function shouldUseShareSheet() {
-      if (!canUseShare()) return false;
-      return window.matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    }
-
-    async function openShareSheet(file, text) {
-      if (!shouldUseShareSheet()) return false;
+    function canUseFileShare(file) {
+      if (!file) return false;
       try {
-        await navigator.share({
-          title: 'AI鑑定用YAMLログ',
-          text: text || 'AI向けデータです。共有メニューからAIアプリを選んでください。',
+        return Boolean(navigator.share && navigator.canShare?.({ files: [file] }));
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function buildAiTextFileName(mode = getSelectedAiMode()) {
+      const today = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date()).replace(/-/g, '');
+      return mode === 'full' ? `nanami_ai_full_${today}.txt` : `nanami_ai_paste_${today}.txt`;
+    }
+
+    function buildSmallTxtShareTest() {
+      return [
+        'nanami TXT share small test',
+        'This file is intentionally short for Android Chrome Web Share file testing.',
+        '0123456789',
+      ].join('\n') + '\n';
+    }
+
+    function buildPreparedAiTextFile(mode = getSelectedAiMode()) {
+      const yaml = mode === 'full' ? fullYamlCache : SHARE_YAML;
+      if (!TXT_SHARE_TEST_MODE && !yaml) return null;
+      const text = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : buildAiTextFromYaml(yaml);
+      return new File([text], buildAiTextFileName(mode), { type: 'text/plain' });
+    }
+
+    function prepareAiTextFile(mode = getSelectedAiMode()) {
+      const file = buildPreparedAiTextFile(mode);
+      if (file) preparedAiTextFiles[mode] = file;
+      return file;
+    }
+
+    function getPreparedAiTextFile(mode = getSelectedAiMode()) {
+      return preparedAiTextFiles[mode] || prepareAiTextFile(mode);
+    }
+
+    function getPreparedAiTextShareText(mode = getSelectedAiMode()) {
+      if (TXT_SHARE_TEST_MODE) return buildSmallTxtShareTest();
+      const yaml = mode === 'full' ? fullYamlCache : SHARE_YAML;
+      return yaml ? buildAiTextFromYaml(yaml) : '';
+    }
+
+    async function fetchZipBlob(url) {
+      const response = await fetch(url, { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error('zip_fetch_failed');
+      }
+      return await response.blob();
+    }
+
+    function shareSelectedAiText() {
+      const mode = getSelectedAiMode();
+      const file = getPreparedAiTextFile(mode);
+      try {
+        if (!file) {
+          const error = new Error('txt_file_is_not_prepared');
+          error.name = 'NotReadyError';
+          throw error;
+        }
+        const canShareFiles = canUseFileShare(file);
+        if (!canShareFiles) {
+          const error = new Error('navigator.canShare({ files }) is false');
+          error.name = 'NotSupportedError';
+          throw error;
+        }
+        const sharePromise = navigator.share({
+          title: 'AI用TXTファイル',
+          text: getPreparedAiTextShareText(mode),
           files: [file],
         });
+        sharePromise.catch((e) => {
+          if (e && e.name === 'AbortError') {
+            return;
+          }
+          const status = document.getElementById('copy-status');
+          if (status) {
+            status.textContent = 'この端末では共有に対応していません。コピーまたはTXT保存をご利用ください。';
+            setTimeout(() => status.textContent = '', 4000);
+          }
+        });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') {
+          return;
+        }
+        const status = document.getElementById('copy-status');
+        if (status) {
+          status.textContent = 'この端末では共有に対応していません。コピーまたはTXT保存をご利用ください。';
+          setTimeout(() => status.textContent = '', 4000);
+        }
+        return;
+      }
+    }
+
+    async function saveBlobWithPicker(blob, filename, mimeType, description) {
+      if (!window.showSaveFilePicker) return false;
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{
+            description,
+            accept: { [mimeType]: [`.${filename.split('.').pop()}`] },
+          }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
         return true;
       } catch (e) {
         if (e && e.name === 'AbortError') return true;
@@ -846,34 +1167,36 @@
       }
     }
 
-    async function shareSelectedAiText() {
-      const mode = getSelectedAiMode();
-      const aiText = buildSelectedAiText(mode);
-      const file = new File([aiText], buildSelectedFileName(mode), { type: 'text/plain' });
+    async function downloadZipFromUrl(zipUrl, filename, description) {
       try {
-        if (navigator.canShare?.({ files: [file] }) && await openShareSheet(file, aiText)) {
-          return;
-        }
+        const blob = await fetchZipBlob(zipUrl);
+        const saved = await saveBlobWithPicker(blob, filename, 'application/zip', description);
+        if (saved) return;
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       } catch (e) {
-        if (e && e.name === 'AbortError') return;
-      }
-      downloadText(buildSelectedFileName(mode), aiText, 'text/plain;charset=utf-8');
-      const status = document.getElementById('copy-status');
-      if (status) {
-        status.textContent = 'この端末では直接共有できません。ファイルとして保存してから、AIへアップロードしてください。';
-        setTimeout(() => status.textContent = '', 2600);
+        const status = document.getElementById('copy-status');
+        if (status) {
+          status.textContent = 'ZIPの保存に失敗しました。共有かコピーを試してください。';
+          setTimeout(() => status.textContent = '', 2600);
+        }
       }
     }
 
-    function shareTextFile(text, filename, title) {
-      const file = new File([text], filename, { type: 'text/plain;charset=utf-8' });
-      if (navigator.canShare?.({ files: [file] })) {
-        return navigator.share({
-          title,
-          files: [file],
-        });
-      }
-      return Promise.reject(new Error('file_share_unavailable'));
+    function downloadAiPasteTxt() {
+      const file = getPreparedAiTextFile('paste');
+      if (!file) return;
+      downloadBlob(file.name, file);
+    }
+
+    async function downloadFullArchiveZip() {
+      await downloadZipFromUrl(FULL_ARCHIVE_ZIP_URL, buildFullArchiveZipFileName(), 'nanami-products ZIP');
     }
 
     function downloadText(filename, content, mimeType) {
@@ -901,12 +1224,12 @@
 
     async function copySelectedAiText() {
       const mode = getSelectedAiMode();
-      await writeClipboard(buildSelectedAiText(mode), `${getSelectedAiLabel(mode)}をコピーしました。必要なら「続きからコピー」で次の分を送れます。`);
+      await writeClipboard(await buildSelectedAiText(mode), `${getSelectedAiLabel(mode)}をコピーしました。必要なら「続きからコピー」で次の分を送れます。`);
     }
 
     async function copySelectedAiChunk() {
       const mode = getSelectedAiMode();
-      const text = buildSelectedAiText(mode);
+      const text = await buildSelectedAiText(mode);
       const chunks = splitText(text, 12000);
       const key = mode === 'full' ? 'chart-copy-full' : 'chart-copy-paste';
       if (chunks.length <= 1) {
@@ -918,20 +1241,14 @@
       await writeClipboard(chunks[index], `${getSelectedAiLabel(mode)} ${index + 1}/${chunks.length} をコピーしました`);
     }
 
-    function downloadSelectedAiText() {
-      const mode = getSelectedAiMode();
-      downloadText(buildSelectedFileName(mode), buildSelectedAiText(mode), 'text/plain;charset=utf-8');
-    }
-
     function currentHoroscopeSvg() {
       const svg = document.querySelector('#horoscope-view svg');
-      if (!svg) return HOROSCOPE_SVG;
-      return new XMLSerializer().serializeToString(svg);
+      return svg ? new XMLSerializer().serializeToString(svg) : '';
     }
 
     async function shareHoroscopeTxt() {
-      if (!HOROSCOPE_SVG) return;
       const text = currentHoroscopeSvg();
+      if (!text) return;
       try {
         await shareTextFile(text, 'nanami-astro-horoscope.txt', 'AI鑑定用ホロスコープ図');
       } catch (e) {
@@ -946,19 +1263,19 @@
     }
 
     function downloadHoroscopeSvg() {
-      if (!HOROSCOPE_SVG) return;
-      downloadText('nanami-astro-horoscope.svg', currentHoroscopeSvg(), 'image/svg+xml;charset=utf-8');
+      const text = currentHoroscopeSvg();
+      if (!text) return;
+      downloadText('nanami-astro-horoscope.svg', text, 'image/svg+xml;charset=utf-8');
     }
 
     function currentShichuSvg() {
       const svg = document.querySelector('#shichu-view svg');
-      if (!svg) return SHICHU_SVG;
-      return new XMLSerializer().serializeToString(svg);
+      return svg ? new XMLSerializer().serializeToString(svg) : '';
     }
 
     async function shareShichuTxt() {
-      if (!SHICHU_SVG) return;
       const text = currentShichuSvg();
+      if (!text) return;
       try {
         await shareTextFile(text, 'nanami-shichusuimei-chart.txt', 'AI鑑定用命式図');
       } catch (e) {
@@ -973,15 +1290,17 @@
     }
 
     async function copyYamlFull() {
+      const fullYaml = await getFullYaml();
       copyState.yaml = 1;
       localStorage.setItem('chart-copy-yaml', '1');
-      await writeClipboard(FULL_YAML, '完全版YAMLをコピーしました。必要なら「続きからコピー」で次の分を送れます。');
+      await writeClipboard(fullYaml, '完全版YAMLをコピーしました。必要なら「続きからコピー」で次の分を送れます。');
     }
 
     async function copyYamlChunk() {
-      const chunks = splitText(FULL_YAML, 12000);
+      const fullYaml = await getFullYaml();
+      const chunks = splitText(fullYaml, 12000);
       if (chunks.length <= 1) {
-        await writeClipboard(FULL_YAML, '完全版YAMLをコピーしました。');
+        await writeClipboard(fullYaml, '完全版YAMLをコピーしました。');
         return;
       }
       const index = copyState.yaml % chunks.length;
@@ -990,13 +1309,14 @@
       await writeClipboard(chunks[index], `完全版YAML ${index + 1}/${chunks.length} をコピーしました`);
     }
 
-    function downloadYamlOnly() {
-      downloadText('nanami-astro-chart-full.yaml', FULL_YAML, 'text/yaml;charset=utf-8');
+    async function downloadYamlOnly() {
+      downloadText('nanami-astro-chart-full.yaml', await getFullYaml(), 'text/yaml;charset=utf-8');
     }
 
     function downloadShichuSvg() {
-      if (!SHICHU_SVG) return;
-      downloadText('nanami-shichusuimei-chart.svg', currentShichuSvg(), 'image/svg+xml;charset=utf-8');
+      const text = currentShichuSvg();
+      if (!text) return;
+      downloadText('nanami-shichusuimei-chart.svg', text, 'image/svg+xml;charset=utf-8');
     }
 
     async function downloadShichuPng() {
@@ -1038,8 +1358,17 @@
       if (svg && toggle) svg.classList.toggle('hide-houses', toggle.checked);
     }
 
+    function initLazyFullYaml() {
+      const detailBox = document.querySelector('details.detail-box');
+      if (!detailBox) return;
+      detailBox.addEventListener('toggle', () => {
+        if (detailBox.open) getFullYaml().catch(() => {});
+      }, { once: true });
+    }
+
     initCopyHelpers();
     initDataPreviews();
+    initLazyFullYaml();
     selectAiMode(localStorage.getItem('chart-ai-output-mode') || 'paste');
 
   </script>

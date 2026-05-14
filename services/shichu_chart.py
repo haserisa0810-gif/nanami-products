@@ -99,8 +99,8 @@ def has_shichusuimei_chart_data(yaml_text: str) -> bool:
     return _has_shichu_data(doc)
 
 
-def build_shichusuimei_svg_from_yaml(yaml_text: str, *, compact: bool = False) -> str | None:
-    doc = yaml.safe_load(yaml_text) or {}
+def build_shichusuimei_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc: dict[str, Any] | None = None) -> str | None:
+    doc = doc if isinstance(doc, dict) else (yaml.safe_load(yaml_text) or {})
     if not _has_shichu_data(doc):
         return None
 

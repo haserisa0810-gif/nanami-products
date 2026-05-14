@@ -5,7 +5,8 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ホロスコープFULL版 入力 | nanami-products</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260501-2">
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
 </head>
 <body>
   <main class="wrap">
@@ -79,9 +80,9 @@
         </div>
 
         <div class="form-section">
-          <h2>海外出生の場合</h2>
+          <h2>出生地の詳細</h2>
           <label>出生地区分
-            <select name="birth_place_kind" id="birth_place_kind" data-initial-kind="{{ form.birth_place_kind if form and form.birth_place_kind == 'overseas' else 'domestic' }}" autocomplete="off">
+            <select name="birth_place_kind" id="birth_place_kind" autocomplete="off">
               <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>国内</option>
               <option value="overseas" {% if form and form.birth_place_kind == 'overseas' %}selected{% endif %}>海外</option>
             </select>
@@ -103,11 +104,22 @@
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：-74.0060">
               </label>
-              <label class="full-span">タイムゾーン（IANA名）
-                <input type="text" name="birth_timezone"
-                       value="{{ form.birth_timezone if form else '' }}"
+              <small class="coordinate-note">国内は空欄なら都道府県の代表座標を使います。市区町村まで指定したい場合だけ入力してください。</small>
+              <label class="full-span">タイムゾーン
+                {% set current_timezone = form.birth_timezone if form and form.birth_timezone else '' %}
+                {% set timezone_values = timezone_options | map(attribute='value') | list %}
+                <select id="birth_timezone_select">
+                  <option value="" {% if not current_timezone %}selected{% endif %}>選択してください</option>
+                  {% for tz in timezone_options %}
+                    <option value="{{ tz.value }}" {% if current_timezone == tz.value %}selected{% endif %}>{{ tz.label }}</option>
+                  {% endfor %}
+                  <option value="__custom__" {% if current_timezone and current_timezone not in timezone_values %}selected{% endif %}>その他（手入力）</option>
+                </select>
+                <input type="hidden" name="birth_timezone" id="birth_timezone" value="{{ current_timezone }}" data-required="false">
+                <input type="text" id="birth_timezone_custom" data-required="false"
+                       value="{{ current_timezone if current_timezone and current_timezone not in timezone_values else '' }}"
                        placeholder="例：America/New_York">
-                <small>海外出生の場合に入力してください。西洋占星術の計算にも使います。</small>
+                <small>出生地に近い地域を選んでください。リストにない場合だけ「その他」を使います。</small>
               </label>
             </div>
           </div>
@@ -132,15 +144,33 @@
       const mode = document.getElementById('birth_place_kind');
       const box = document.getElementById('overseas-fields');
       if (!mode || !box) return;
-      const initialKind = mode.dataset.initialKind || 'domestic';
-      if (mode.value !== initialKind) mode.value = initialKind;
       const active = mode.value === 'overseas';
       const prefecture = document.querySelector('[name="prefecture"]');
-      if (prefecture) prefecture.required = !active;
-      box.classList.toggle('is-active', active);
-      box.querySelectorAll('input').forEach((el) => {
-        el.required = active;
+      if (prefecture) {
+        prefecture.required = !active;
+        prefecture.disabled = active;
+        if (active) prefecture.value = '';
+      }
+      box.classList.add('is-active');
+      box.querySelectorAll('input, select').forEach((el) => {
+        const isCoordinate = el.name === 'birth_lat' || el.name === 'birth_lng';
+        el.disabled = !active && !isCoordinate;
+        el.required = active && el.dataset.required !== 'false';
       });
+      syncTimezoneFields();
+    }
+
+    function syncTimezoneFields() {
+      const select = document.getElementById('birth_timezone_select');
+      const custom = document.getElementById('birth_timezone_custom');
+      const hidden = document.getElementById('birth_timezone');
+      if (!select || !custom || !hidden) return;
+      const customActive = select.value === '__custom__';
+      custom.style.display = customActive ? '' : 'none';
+      custom.disabled = select.disabled || !customActive;
+      custom.required = !custom.disabled;
+      hidden.disabled = select.disabled;
+      hidden.value = customActive ? custom.value.trim() : select.value;
     }
 
     function confirmSubmit() {
@@ -162,6 +192,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
       document.getElementById('birth_time_accuracy')?.addEventListener('change', syncBirthTimeFields);
+      document.getElementById('birth_timezone_select')?.addEventListener('change', syncTimezoneFields);
+      document.getElementById('birth_timezone_custom')?.addEventListener('input', syncTimezoneFields);
     });
   </script>
 </body>

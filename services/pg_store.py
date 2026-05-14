@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import hashlib
 import secrets
+from datetime import datetime
 from contextlib import contextmanager
 from typing import Any, Generator
 
@@ -62,12 +63,148 @@ def init_db() -> None:
                     options     JSONB,
                     yaml_text   TEXT        NOT NULL,
                     prompt_text TEXT        NOT NULL,
+                    share_yaml_text TEXT,
+                    horoscope_svg TEXT,
+                    shichusuimei_svg TEXT,
+                    expires_at  TIMESTAMPTZ,
                     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
             """)
-            # 旧DDLで order_code が NOT NULL になっている環境のための互換マイグレーション
-            cur.execute(f"ALTER TABLE {SCHEMA}.charts ALTER COLUMN order_code DROP NOT NULL")
+            _ensure_chart_columns(cur)
+            cur.execute(f"""
+                UPDATE {SCHEMA}.charts
+                SET share_yaml_text = yaml_text
+                WHERE share_yaml_text IS NULL
+            """)
+            cur.execute(f"""
+                UPDATE {SCHEMA}.charts
+                SET expires_at = created_at + INTERVAL '90 days'
+                WHERE expires_at IS NULL
+            """)
+            cur.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_charts_expires_at
+                ON {SCHEMA}.charts (expires_at)
+            """)
+            _ensure_addon_redemptions_table(cur)
+            _ensure_transit_addon_links_table(cur)
             ensure_api_tables(cur)
+
+
+def _ensure_chart_columns(cur) -> None:
+    # Cloud Run startup intentionally skips init_db(), so write paths must tolerate
+    # databases created from older DDL.
+    cur.execute(f"ALTER TABLE {SCHEMA}.charts ALTER COLUMN order_code DROP NOT NULL")
+    cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS share_yaml_text TEXT")
+    cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS horoscope_svg TEXT")
+    cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS shichusuimei_svg TEXT")
+    cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ")
+
+
+def _ensure_addon_redemptions_table(cur) -> None:
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS {SCHEMA}.addon_redemptions (
+            order_code  TEXT        NOT NULL,
+            addon_type  TEXT        NOT NULL,
+            used_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (order_code, addon_type)
+        )
+    """)
+
+
+def _ensure_transit_addon_links_table(cur) -> None:
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS {SCHEMA}.transit_addon_links (
+            token      TEXT        PRIMARY KEY,
+            yaml_text  TEXT        NOT NULL,
+            expires_at TIMESTAMPTZ NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    """)
+
+
+def _chart_columns(cur) -> set[str]:
+    cur.execute(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = %s
+          AND table_name = 'charts'
+        """,
+        (SCHEMA,),
+    )
+    return {row["column_name"] for row in cur.fetchall()}
+
+
+def _insert_chart(
+    cur,
+    *,
+    token: str,
+    order_code: str | None,
+    buyer_name: str | None,
+    birth_date: str,
+    birth_time: str | None,
+    birth_place: str | None,
+    options: dict[str, Any],
+    yaml_text: str,
+    prompt_text: str,
+    share_yaml_text: str | None,
+    horoscope_svg: str | None,
+    shichusuimei_svg: str | None,
+    expires_at: datetime | None,
+    on_conflict_do_nothing: bool = False,
+) -> None:
+    available = _chart_columns(cur)
+    columns = [
+        "token",
+        "order_code",
+        "buyer_name",
+        "birth_date",
+        "birth_time",
+        "birth_place",
+        "options",
+        "yaml_text",
+        "prompt_text",
+    ]
+    values: list[Any] = [
+        token,
+        order_code,
+        buyer_name,
+        birth_date,
+        birth_time,
+        birth_place,
+        Json(options),
+        yaml_text,
+        prompt_text,
+    ]
+    placeholders = ["%s"] * len(columns)
+
+    optional_values = {
+        "share_yaml_text": share_yaml_text,
+        "horoscope_svg": horoscope_svg,
+        "shichusuimei_svg": shichusuimei_svg,
+    }
+    for column, value in optional_values.items():
+        if column in available:
+            columns.append(column)
+            placeholders.append("%s")
+            values.append(value)
+
+    if "expires_at" in available:
+        columns.append("expires_at")
+        placeholders.append("COALESCE(%s, NOW() + INTERVAL '90 days')")
+        values.append(expires_at)
+
+    conflict_clause = " ON CONFLICT (token) DO NOTHING" if on_conflict_do_nothing else ""
+    cur.execute(
+        f"""
+        INSERT INTO {SCHEMA}.charts
+            ({", ".join(columns)})
+        VALUES ({", ".join(placeholders)})
+        {conflict_clause}
+        """,
+        values,
+    )
 
 
 def ensure_api_tables(cur=None) -> None:
@@ -411,19 +548,29 @@ def save_chart(
     options: dict[str, Any],
     yaml_text: str,
     prompt_text: str,
+    share_yaml_text: str | None = None,
+    horoscope_svg: str | None = None,
+    shichusuimei_svg: str | None = None,
+    expires_at: datetime | None = None,
 ) -> None:
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                INSERT INTO {SCHEMA}.charts
-                    (token, order_code, buyer_name, birth_date, birth_time, birth_place,
-                     options, yaml_text, prompt_text)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (token) DO NOTHING
-                """,
-                (token, order_code, buyer_name, birth_date, birth_time, birth_place,
-                 Json(options), yaml_text, prompt_text),
+            _insert_chart(
+                cur,
+                token=token,
+                order_code=order_code,
+                buyer_name=buyer_name,
+                birth_date=birth_date,
+                birth_time=birth_time,
+                birth_place=birth_place,
+                options=options,
+                yaml_text=yaml_text,
+                prompt_text=prompt_text,
+                share_yaml_text=share_yaml_text,
+                horoscope_svg=horoscope_svg,
+                shichusuimei_svg=shichusuimei_svg,
+                expires_at=expires_at,
+                on_conflict_do_nothing=True,
             )
 
 
@@ -438,6 +585,58 @@ def get_chart(token: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+def expired_charts_summary(*, grace_days: int = 0) -> dict[str, Any]:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT
+                  COUNT(*) AS expired_count,
+                  MIN(expires_at) AS oldest_expires_at,
+                  MAX(expires_at) AS newest_expires_at
+                FROM {SCHEMA}.charts
+                WHERE expires_at < NOW() - (%s * INTERVAL '1 day')
+                """,
+                (grace_days,),
+            )
+            row = cur.fetchone() or {}
+            cur.execute(
+                f"""
+                SELECT token, order_code, buyer_name, created_at, expires_at
+                FROM {SCHEMA}.charts
+                WHERE expires_at < NOW() - (%s * INTERVAL '1 day')
+                ORDER BY expires_at ASC
+                LIMIT 10
+                """,
+                (grace_days,),
+            )
+            samples = cur.fetchall()
+    return {
+        "expired_count": int(row.get("expired_count") or 0),
+        "oldest_expires_at": row.get("oldest_expires_at"),
+        "newest_expires_at": row.get("newest_expires_at"),
+        "samples": [dict(sample) for sample in samples],
+    }
+
+
+def delete_expired_charts(*, grace_days: int = 0) -> dict[str, Any]:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                DELETE FROM {SCHEMA}.charts
+                WHERE expires_at < NOW() - (%s * INTERVAL '1 day')
+                RETURNING token, order_code, buyer_name, created_at, expires_at
+                """,
+                (grace_days,),
+            )
+            deleted = cur.fetchall()
+    return {
+        "deleted_count": len(deleted),
+        "deleted_samples": [dict(row) for row in deleted[:10]],
+    }
+
+
 def get_redemption_by_order_code(order_code: str) -> dict[str, Any] | None:
     with _conn() as con:
         with con.cursor() as cur:
@@ -448,6 +647,143 @@ def get_redemption_by_order_code(order_code: str) -> dict[str, Any] | None:
                 WHERE order_code = %s
                 """,
                 (order_code,),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[str, Any] | None]:
+    """
+    addon生成用に STORES注文番号 + addon種別 を一回だけ消し込む。
+
+    通常商品の redemptions/charts には書き込まず、貼り付けYAMLも保存しない。
+    """
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT *
+                FROM {SCHEMA}.stores_orders
+                WHERE stores_order_no = %s
+                FOR UPDATE
+                """,
+                (order_code,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return "not_found", None
+
+            order = dict(row)
+            payment_status = str(order.get("payment_status") or "").lower()
+            if payment_status == "cancelled":
+                return "cancelled", order
+
+            purchased_type = order.get("product_type")
+            if purchased_type and str(purchased_type) != addon_type:
+                return "product_mismatch", order
+
+            if payment_status in {"reusable", "test", "permanent"}:
+                return "ok", order
+
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.addon_redemptions
+                    (order_code, addon_type, used_at)
+                VALUES (%s, %s, NOW())
+                ON CONFLICT (order_code, addon_type) DO NOTHING
+                RETURNING order_code, addon_type, used_at
+                """,
+                (order_code, addon_type),
+            )
+            if cur.fetchone() is None:
+                return "already_used", order
+
+            return "ok", order
+
+
+def redeem_addon_order_and_save_transit_link(
+    *,
+    order_code: str,
+    addon_type: str,
+    token: str,
+    yaml_text: str,
+    expires_at: datetime,
+) -> tuple[str, dict[str, Any] | None]:
+    """
+    31日トランジットaddon用に、注文消込と期限付きYAML保存を同一トランザクションで行う。
+    """
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT *
+                FROM {SCHEMA}.stores_orders
+                WHERE stores_order_no = %s
+                FOR UPDATE
+                """,
+                (order_code,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return "not_found", None
+
+            order = dict(row)
+            payment_status = str(order.get("payment_status") or "").lower()
+            if payment_status == "cancelled":
+                return "cancelled", order
+
+            purchased_type = order.get("product_type")
+            if purchased_type and str(purchased_type) != addon_type:
+                return "product_mismatch", order
+
+            if payment_status not in {"reusable", "test", "permanent"}:
+                cur.execute(
+                    f"""
+                    INSERT INTO {SCHEMA}.addon_redemptions
+                        (order_code, addon_type, used_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (order_code, addon_type) DO NOTHING
+                    RETURNING order_code, addon_type, used_at
+                    """,
+                    (order_code, addon_type),
+                )
+                if cur.fetchone() is None:
+                    return "already_used", order
+
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.transit_addon_links
+                    (token, yaml_text, expires_at)
+                VALUES (%s, %s, %s)
+                """,
+                (token, yaml_text, expires_at),
+            )
+            return "ok", order
+
+
+def save_transit_addon_link(*, token: str, yaml_text: str, expires_at: datetime) -> None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.transit_addon_links
+                    (token, yaml_text, expires_at)
+                VALUES (%s, %s, %s)
+                """,
+                (token, yaml_text, expires_at),
+            )
+
+
+def get_transit_addon_link(token: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT token, yaml_text, expires_at, created_at
+                FROM {SCHEMA}.transit_addon_links
+                WHERE token = %s
+                """,
+                (token,),
             )
             row = cur.fetchone()
     return dict(row) if row else None
@@ -529,6 +865,10 @@ def redeem_and_save(
     options: dict[str, Any],
     yaml_text: str,
     prompt_text: str,
+    share_yaml_text: str | None = None,
+    horoscope_svg: str | None = None,
+    shichusuimei_svg: str | None = None,
+    expires_at: datetime | None = None,
 ) -> bool:
     """
     redemptions と charts を同一トランザクションで挿入する。
@@ -561,14 +901,20 @@ def redeem_and_save(
                 if cur.fetchone() is None:
                     return False
 
-            cur.execute(
-                f"""
-                INSERT INTO {SCHEMA}.charts
-                    (token, order_code, buyer_name, birth_date, birth_time, birth_place,
-                     options, yaml_text, prompt_text)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (token, order_code, buyer_name, birth_date, birth_time, birth_place,
-                 Json(options), yaml_text, prompt_text),
+            _insert_chart(
+                cur,
+                token=token,
+                order_code=order_code,
+                buyer_name=buyer_name,
+                birth_date=birth_date,
+                birth_time=birth_time,
+                birth_place=birth_place,
+                options=options,
+                yaml_text=yaml_text,
+                prompt_text=prompt_text,
+                share_yaml_text=share_yaml_text,
+                horoscope_svg=horoscope_svg,
+                shichusuimei_svg=shichusuimei_svg,
+                expires_at=expires_at,
             )
     return True

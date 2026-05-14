@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS nanami_products.charts (
   options JSONB,
   yaml_text TEXT NOT NULL,
   prompt_text TEXT NOT NULL,
+  share_yaml_text TEXT,
+  horoscope_svg TEXT,
+  shichusuimei_svg TEXT,
+  expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -32,6 +36,21 @@ CREATE TABLE IF NOT EXISTS nanami_products.stores_orders (
   mail_received_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS nanami_products.addon_redemptions (
+  order_code TEXT NOT NULL,
+  addon_type TEXT NOT NULL,
+  used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (order_code, addon_type)
+);
+
+CREATE TABLE IF NOT EXISTS nanami_products.transit_addon_links (
+  token TEXT PRIMARY KEY,
+  yaml_text TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS nanami_products.api_keys (
@@ -80,11 +99,36 @@ ALTER TABLE nanami_products.stores_orders
 -- 旧DDL互換: 管理者手動発行では order_code が NULL になるため許可する
 ALTER TABLE nanami_products.charts ALTER COLUMN order_code DROP NOT NULL;
 
+ALTER TABLE nanami_products.charts
+  ADD COLUMN IF NOT EXISTS share_yaml_text TEXT;
+
+ALTER TABLE nanami_products.charts
+  ADD COLUMN IF NOT EXISTS horoscope_svg TEXT;
+
+ALTER TABLE nanami_products.charts
+  ADD COLUMN IF NOT EXISTS shichusuimei_svg TEXT;
+
+ALTER TABLE nanami_products.charts
+  ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+
+UPDATE nanami_products.charts
+SET share_yaml_text = yaml_text
+WHERE share_yaml_text IS NULL;
+
+UPDATE nanami_products.charts
+SET expires_at = created_at + INTERVAL '90 days'
+WHERE expires_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_charts_expires_at
+  ON nanami_products.charts (expires_at);
+
 -- Cloud Run の DATABASE_URL が authenticator の場合
 GRANT USAGE ON SCHEMA nanami_products TO authenticator;
 GRANT CREATE ON SCHEMA nanami_products TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.charts TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.redemptions TO authenticator;
+GRANT ALL PRIVILEGES ON TABLE nanami_products.addon_redemptions TO authenticator;
+GRANT ALL PRIVILEGES ON TABLE nanami_products.transit_addon_links TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.stores_orders TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.api_keys TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.api_usage_logs TO authenticator;

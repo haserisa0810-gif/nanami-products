@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>31日トランジット追加YAML | nanami-products</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products</p>
+      <h1>31日トランジット追加YAML</h1>
+
+      {% if expired %}
+        <div class="error">このトランジットデータの有効期限は終了しました。</div>
+      {% else %}
+        <p class="lead">このページは {{ expires_label }} まで開けます。</p>
+        <section class="notice-box">
+          <h2>使い方</h2>
+          <ul class="plain-list">
+            <li>AIに詳しく読ませたい場合は、このページのYAMLをコピーしてください。</li>
+            <li>または、YAMLファイルをダウンロードしてAIへ添付してください。</li>
+            <li>基本版YAMLと一緒に使う追加部品データです。</li>
+          </ul>
+        </section>
+
+        <section class="form-section">
+          <h2>YAML</h2>
+          <textarea id="transit-yaml" readonly spellcheck="false">{{ yaml_text }}</textarea>
+          <div class="links" style="margin-top:12px">
+            <button type="button" onclick="copyTransitYaml()">コピー</button>
+            <a href="{{ download_url }}" download="nanami-transit-addon.yaml">ダウンロード</a>
+          </div>
+          <p class="hint" id="copy-status" aria-live="polite"></p>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+  <script>
+    const yamlEl = document.getElementById('transit-yaml');
+    const statusEl = document.getElementById('copy-status');
+
+    async function copyTransitYaml() {
+      const text = yamlEl ? yamlEl.value : '';
+      if (!text) return;
+      await navigator.clipboard.writeText(text);
+      if (statusEl) statusEl.textContent = 'コピーしました。';
+    }
+  </script>
+</body>
+</html>

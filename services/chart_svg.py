@@ -116,8 +116,8 @@ def _directed_midpoint(start: float, end: float) -> float:
     return (start + span / 2) % 360
 
 
-def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False) -> str | None:
-    doc = yaml.safe_load(yaml_text) or {}
+def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc: dict[str, Any] | None = None) -> str | None:
+    doc = doc if isinstance(doc, dict) else (yaml.safe_load(yaml_text) or {})
     natal = (((doc.get("systems") or {}).get("western") or {}).get("natal") or {})
     bodies = natal.get("bodies") or {}
     houses = natal.get("houses") or {}
@@ -267,8 +267,8 @@ def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False) -> s
     return "\n".join(parts)
 
 
-def has_asteroid_svg_data(yaml_text: str) -> bool:
-    doc = yaml.safe_load(yaml_text) or {}
+def has_asteroid_svg_data(yaml_text: str, *, doc: dict[str, Any] | None = None) -> bool:
+    doc = doc if isinstance(doc, dict) else (yaml.safe_load(yaml_text) or {})
     asteroids = ((doc.get("systems") or {}).get("western") or {}).get("asteroids") or {}
     if not isinstance(asteroids, dict):
         return False
