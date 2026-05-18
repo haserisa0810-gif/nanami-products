@@ -18,7 +18,8 @@
         <h2>使い方</h2>
         <ul class="plain-list">
           <li>STORESの購入確認メールに記載された10桁のオーダー番号を入力してください。</li>
-          <li>手元の基本版YAMLを貼り付けて、追加部品を選びます。</li>
+          <li>トランジットaddonは、基本版の出生データを土台に生成します。</li>
+          <li>31日トランジット追加では、基本版YAML または 90日以内の前回鑑定URLを入力してください。</li>
           <li>生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。</li>
           <li>YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。</li>
           <li>貼り付けたYAMLは保存しません。</li>
@@ -48,11 +49,32 @@
           </label>
         </div>
 
-        <div class="form-section">
-          <h2>基本版YAML</h2>
+        <div class="form-section" id="base-data-section">
+          <h2>基本データ入力</h2>
+          <p class="hint" id="base-data-hint">トランジットaddonは、基本版の出生データを土台に生成します。</p>
           <label>YAML貼り付け欄
-            <textarea name="base_yaml" id="base-yaml" required spellcheck="false" placeholder="ここに基本版YAMLを貼り付けてください">{{ form.base_yaml if form else '' }}</textarea>
-            <small>基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。</small>
+            <textarea name="base_yaml" id="base-yaml" spellcheck="false" placeholder="ここに基本版YAMLを貼り付けてください">{{ form.base_yaml if form else '' }}</textarea>
+            <small>基本版YAMLの内容からネイタル情報を読み取り、addon生成に使用します。</small>
+          </label>
+          <div id="previous-chart-url-wrap">
+            <label>90日以内の前回鑑定URL
+              <input type="url" name="previous_chart_url" id="previous-chart-url"
+                     value="{{ form.previous_chart_url if form else '' }}"
+                     placeholder="https://.../chart/..."
+                     autocomplete="off">
+              <small>前回の鑑定結果ページURLから、ネイタル情報を引き継げます。</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section" id="transit-period-section">
+          <h2>トランジット期間</h2>
+          <p class="hint">期間は31日固定です。開始日は現在日から前後5年以内で指定できます。</p>
+          <label>開始日
+            <input type="date" name="transit_start_date" id="transit-start-date"
+                   min="{{ transit_min_date }}" max="{{ transit_max_date }}"
+                   value="{{ form.transit_start_date if form and form.transit_start_date else today_label }}">
+            <small>指定可能範囲: {{ transit_min_date }} 〜 {{ transit_max_date }}</small>
           </label>
         </div>
 
@@ -93,6 +115,12 @@
     const resultYaml = document.getElementById('result-yaml');
     const transitResultUrl = document.getElementById('transit-result-url');
     const statusEl = document.getElementById('copy-status');
+    const addonType = document.querySelector('select[name="addon_type"]');
+    const baseYaml = document.getElementById('base-yaml');
+    const previousChartUrl = document.getElementById('previous-chart-url');
+    const previousChartUrlWrap = document.getElementById('previous-chart-url-wrap');
+    const transitPeriodSection = document.getElementById('transit-period-section');
+    const baseDataHint = document.getElementById('base-data-hint');
 
     function setStatus(text) {
       if (statusEl) statusEl.textContent = text;
@@ -134,6 +162,24 @@
       a.remove();
       URL.revokeObjectURL(url);
       setStatus('ダウンロードを開始しました。');
+    }
+
+    function syncAddonFields() {
+      const isTransit = addonType && addonType.value === 'western_31days_transit_addon';
+      if (previousChartUrlWrap) previousChartUrlWrap.hidden = !isTransit;
+      if (transitPeriodSection) transitPeriodSection.hidden = !isTransit;
+      if (baseYaml) baseYaml.required = !isTransit;
+      if (previousChartUrl) previousChartUrl.disabled = !isTransit;
+      if (baseDataHint) {
+        baseDataHint.textContent = isTransit
+          ? 'トランジットaddonは、基本版の出生データを土台に生成します。'
+          : '基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。';
+      }
+    }
+
+    if (addonType) {
+      addonType.addEventListener('change', syncAddonFields);
+      syncAddonFields();
     }
   </script>
 </body>

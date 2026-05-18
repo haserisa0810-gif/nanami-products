@@ -7,8 +7,10 @@ import re
 import secrets
 import subprocess
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import quote
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -27,6 +29,7 @@ from services.api_yaml import build_handoff_yaml
 from services.location import PREFECTURE_OPTIONS
 from services.light_yaml import (
     build_base_astrology_yaml,
+    build_detail_astrology_yaml,
     build_light_astrology_yaml,
     build_natal_asteroids_yaml,
     build_transit_astrology_yaml,
@@ -1799,6 +1802,13 @@ def chart_horoscope_svg(token: str):
     chart = _load_chart_or_404(token)
     svg = chart.get("horoscope_svg")
     if not svg:
+        options = chart.get("options") or {}
+        if _chart_product_type(options) in {"western_basic", "western_full"}:
+            try:
+                svg = build_horoscope_svg_from_yaml(chart["yaml_text"])
+            except Exception:
+                svg = None
+    if not svg:
         raise HTTPException(status_code=404, detail="horoscope svg not found")
     response = Response(content=svg, media_type="image/svg+xml; charset=utf-8")
     response.headers["Content-Disposition"] = 'attachment; filename="nanami-horoscope.svg"'
@@ -1863,12 +1873,19 @@ def chart_page(request: Request, token: str):
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
     is_transit_yaml = product_type == "transit_yaml"
+    can_continue_with_transit = product_type in {"western_basic", "western_full"}
     has_yaml_mode_selector = product_type == "western_full"
     horoscope_svg = chart.get("horoscope_svg") if product_type in {"western_basic", "western_full"} else None
     shichusuimei_svg = chart.get("shichusuimei_svg") if product_type == "shichu" else None
     has_asteroids = False
     birth_time_notice = {"show": False}
     share_yaml_text = _chart_share_yaml_text(chart)
+    asteroid_yaml_text = None
+    if has_yaml_mode_selector:
+        try:
+            asteroid_yaml_text = build_detail_astrology_yaml(chart["yaml_text"])
+        except Exception:
+            asteroid_yaml_text = None
     chart_doc = None
     if has_yaml_mode_selector or not is_transit_yaml:
         try:
@@ -1876,6 +1893,11 @@ def chart_page(request: Request, token: str):
             chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
         except Exception:
             chart_doc = None
+    if product_type in {"western_basic", "western_full"} and not horoscope_svg:
+        try:
+            horoscope_svg = build_horoscope_svg_from_yaml(chart["yaml_text"], doc=chart_doc)
+        except Exception:
+            horoscope_svg = None
     if horoscope_svg:
         try:
             has_asteroids = has_asteroid_svg_data(chart["yaml_text"], doc=chart_doc)
@@ -1889,6 +1911,12 @@ def chart_page(request: Request, token: str):
     expires_at = _chart_expiry(chart)
     expires_label = _chart_expiry_label(expires_at)
     base_url = _public_base_url(request)
+    chart_url = f"{base_url}/chart/{token}"
+    next_transit_url = (
+        "/addon/new"
+        f"?addon_type=western_31days_transit_addon"
+        f"&previous_chart_url={quote(chart_url, safe='')}"
+    )
     response = templates.TemplateResponse(
         "chart_page.html",
         {
@@ -1896,13 +1924,15 @@ def chart_page(request: Request, token: str):
             "token": token,
             "chart": chart,
             "is_transit_yaml": is_transit_yaml,
+            "can_continue_with_transit": can_continue_with_transit,
             "has_yaml_mode_selector": has_yaml_mode_selector,
             "horoscope_svg": horoscope_svg,
             "shichusuimei_svg": shichusuimei_svg,
             "has_asteroid_svg_data": has_asteroids,
             "birth_time_notice": birth_time_notice,
             "share_yaml_text": share_yaml_text,
-            "chart_url": f"{base_url}/chart/{token}",
+            "asteroid_yaml_text": asteroid_yaml_text,
+            "chart_url": chart_url,
             "yaml_url": f"{base_url}/chart/{token}.yaml",
             "natal_yaml_url": f"{base_url}/chart/{token}/natal.yaml",
             "natal_asteroids_yaml_url": f"{base_url}/chart/{token}/natal-asteroids.yaml",
@@ -1911,6 +1941,8 @@ def chart_page(request: Request, token: str):
             "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
             "download_zip_url": f"{base_url}/chart/{token}/download.zip",
             "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
+            "usage_guide_url": "https://guide.nanami-astro.com/",
+            "next_transit_url": next_transit_url,
             "expires_at": expires_at,
             "expires_label": expires_label,
         },
@@ -2130,21 +2162,49 @@ def _addon_form_response(
     error: str | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
+    today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     return templates.TemplateResponse(
         "addon_form.html",
         {
             "request": request,
             "addon_options": ADDON_FORM_OPTIONS,
-            "form": form or {"addon_type": "western_asteroids_addon", "order_code": "", "base_yaml": ""},
+            "form": form or {
+                "addon_type": "western_asteroids_addon",
+                "order_code": "",
+                "base_yaml": "",
+                "previous_chart_url": "",
+                "transit_start_date": today_jst.isoformat(),
+            },
             "result_yaml": result_yaml,
             "transit_result_url": transit_result_url,
             "transit_download_url": transit_download_url,
             "transit_expires_label": transit_expires_label,
             "error": error,
             "addon_form_action": "/addon/generate" if request.url.path.startswith("/addon/") else "/admin/addon/generate",
+            "today_label": today_jst.isoformat(),
+            "transit_min_date": _shift_years(today_jst, -5).isoformat(),
+            "transit_max_date": _shift_years(today_jst, 5).isoformat(),
         },
         status_code=status_code,
     )
+
+
+def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
+    today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date().isoformat()
+    requested_addon_type = (request.query_params.get("addon_type") or "").strip()
+    addon_type = (
+        requested_addon_type
+        if requested_addon_type in {item["value"] for item in ADDON_FORM_OPTIONS}
+        else "western_asteroids_addon"
+    )
+    previous_chart_url = (request.query_params.get("previous_chart_url") or "").strip()
+    return {
+        "addon_type": addon_type,
+        "order_code": "",
+        "base_yaml": "",
+        "previous_chart_url": previous_chart_url,
+        "transit_start_date": today_jst,
+    }
 
 
 def _load_addon_base_yaml(base_yaml: str) -> dict:
@@ -2242,14 +2302,22 @@ def _validate_addon_base_doc(doc: dict, addon_type: str) -> None:
     raise ValueError("未対応のaddon種別です。")
 
 
-def _build_addon_yaml_from_base(doc: dict, addon_type: str) -> str:
+def _build_addon_yaml_from_base(
+    doc: dict,
+    addon_type: str,
+    *,
+    transit_start_date: datetime | None = None,
+) -> str:
     _validate_addon_base_doc(doc, addon_type)
     args = _addon_args_from_base_doc(doc)
     if addon_type == "western_asteroids_addon":
         yaml_text, _prompt_text, _addon_doc = build_asteroid_addon_yaml(**args)
         return yaml_text
     if addon_type == "western_31days_transit_addon":
-        yaml_text, _prompt_text, _addon_doc = build_31days_transit_addon_yaml(**args)
+        yaml_text, _prompt_text, _addon_doc = build_31days_transit_addon_yaml(
+            **args,
+            transit_start_date=transit_start_date,
+        )
         return yaml_text
 
     shichu = ((doc.get("systems") or {}).get("shichusuimei") or {})
@@ -2259,11 +2327,110 @@ def _build_addon_yaml_from_base(doc: dict, addon_type: str) -> str:
     return yaml_text
 
 
+def _build_transit_addon_from_base(
+    doc: dict,
+    *,
+    transit_start_date: datetime,
+) -> tuple[str, str, dict]:
+    _validate_addon_base_doc(doc, "western_31days_transit_addon")
+    args = _addon_args_from_base_doc(doc)
+    return build_31days_transit_addon_yaml(
+        **args,
+        transit_start_date=transit_start_date,
+    )
+
+
+def _transit_addon_chart_payload(
+    *,
+    yaml_text: str,
+    prompt_text: str,
+    addon_doc: dict,
+) -> dict[str, object]:
+    input_block = addon_doc.get("input") or {}
+    return {
+        "buyer_name": str(input_block.get("title") or "").strip() or None,
+        "birth_date": str(input_block.get("birth_date") or "").strip(),
+        "birth_time": str(input_block.get("birth_time") or input_block.get("calculation_time") or "").strip() or None,
+        "birth_place": str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip() or None,
+        "options": {**(addon_doc.get("product", {}).get("options", {}) or {}), "product_type": "western_31days_transit_addon"},
+        "yaml_text": yaml_text,
+        "prompt_text": prompt_text,
+        "share_yaml_text": yaml_text,
+        "horoscope_svg": None,
+        "shichusuimei_svg": None,
+    }
+
+
+def _shift_years(value: date, years: int) -> date:
+    try:
+        return value.replace(year=value.year + years)
+    except ValueError:
+        # うるう年の 2/29 は、対象年に存在しない場合だけ 2/28 に寄せる。
+        return value.replace(month=2, day=28, year=value.year + years)
+
+
+def _parse_transit_start_date(value: str) -> datetime:
+    raw = (value or "").strip()
+    if not raw:
+        raise ValueError("開始日を入力してください。現在日から前後5年以内の日付を指定できます。")
+    try:
+        selected = date.fromisoformat(raw)
+    except ValueError as exc:
+        raise ValueError("開始日の形式が不正です。YYYY-MM-DD で入力してください。") from exc
+
+    today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+    min_date = _shift_years(today_jst, -5)
+    max_date = _shift_years(today_jst, 5)
+    if not (min_date <= selected <= max_date):
+        raise ValueError(
+            f"開始日は現在日から前後5年以内で指定してください。"
+            f"{min_date.isoformat()}〜{max_date.isoformat()} の範囲で選び直してください。"
+        )
+    return datetime(selected.year, selected.month, selected.day, tzinfo=ZoneInfo("Asia/Tokyo"))
+
+
+def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str) -> dict:
+    raw_url = (previous_chart_url or "").strip()
+    try:
+        parsed = urlparse(raw_url)
+    except ValueError as exc:
+        raise ValueError("前回鑑定URLを読み取れません。鑑定結果ページのURLをそのまま貼り付けてください。") from exc
+
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("前回鑑定URLが不正です。https:// から始まる鑑定結果ページのURLを貼り付けてください。")
+
+    token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\\.yaml)?/?", parsed.path or "")
+    if not token_match:
+        raise ValueError("前回鑑定URLが不正です。鑑定結果ページのURLをそのまま貼り付けてください。")
+
+    token = token_match.group(1)
+    chart = pg_store.get_chart(token)
+    if not chart:
+        raise ValueError("前回鑑定URLが見つかりません。90日以内の有効な鑑定結果URLを入力してください。")
+
+    expires_at = _chart_expiry(chart)
+    if expires_at and datetime.now(timezone.utc) >= expires_at:
+        raise ValueError("前回鑑定URLの有効期限が切れています。基本版YAMLを貼り付けるか、90日以内の鑑定結果URLを入力してください。")
+
+    doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""))
+    try:
+        _validate_addon_base_doc(doc, "western_31days_transit_addon")
+    except ValueError as exc:
+        raise ValueError("このURLにはトランジットaddonに使えるネイタル情報がありません。基本版ホロスコープのYAMLまたはURLを入力してください。") from exc
+    return doc
+
+
 def _transit_addon_expires_at() -> datetime:
     return datetime.now(timezone.utc) + timedelta(days=32)
 
 
-def _redeem_and_save_transit_addon_or_raise(order_code: str, addon_type: str, yaml_text: str) -> tuple[str, datetime]:
+def _redeem_and_save_transit_addon_or_raise(
+    order_code: str,
+    addon_type: str,
+    yaml_text: str,
+    *,
+    chart_payload: dict[str, object] | None = None,
+) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
         raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
     order_code_clean = _normalize_stores_order_no(order_code)
@@ -2283,6 +2450,7 @@ def _redeem_and_save_transit_addon_or_raise(order_code: str, addon_type: str, ya
                 token=token,
                 yaml_text=yaml_text,
                 expires_at=expires_at,
+                chart_payload=chart_payload,
             )
             if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
                 _sync_stores_orders_for_lookup()
@@ -2292,6 +2460,7 @@ def _redeem_and_save_transit_addon_or_raise(order_code: str, addon_type: str, ya
                     token=token,
                     yaml_text=yaml_text,
                     expires_at=expires_at,
+                    chart_payload=chart_payload,
                 )
         except Exception as exc:
             last_exc = exc
@@ -2352,12 +2521,12 @@ def _redeem_addon_order_or_raise(order_code: str, addon_type: str) -> str:
 
 @app.get("/admin/addon/new", response_class=HTMLResponse)
 def addon_new(request: Request):
-    return _addon_form_response(request)
+    return _addon_form_response(request, form=_addon_initial_form_from_request(request))
 
 
 @app.get("/addon/new", response_class=HTMLResponse)
 def public_addon_new(request: Request):
-    return _addon_form_response(request)
+    return _addon_form_response(request, form=_addon_initial_form_from_request(request))
 
 
 @app.post("/admin/addon/generate", response_class=HTMLResponse)
@@ -2367,26 +2536,52 @@ def addon_generate(
     addon_type: str = Form("western_asteroids_addon"),
     order_code: str = Form(""),
     base_yaml: str = Form(""),
+    previous_chart_url: str = Form(""),
+    transit_start_date: str = Form(""),
 ):
-    form = {"addon_type": addon_type, "order_code": order_code, "base_yaml": base_yaml}
+    form = {
+        "addon_type": addon_type,
+        "order_code": order_code,
+        "base_yaml": base_yaml,
+        "previous_chart_url": previous_chart_url,
+        "transit_start_date": transit_start_date,
+    }
     if addon_type not in {item["value"] for item in ADDON_FORM_OPTIONS}:
         return _addon_form_response(request, form=form, error="addon種別が不正です。", status_code=400)
-    if not base_yaml.strip():
-        return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
     try:
+        if addon_type == "western_31days_transit_addon":
+            if not base_yaml.strip() and not previous_chart_url.strip():
+                return _addon_form_response(
+                    request,
+                    form=form,
+                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    status_code=400,
+                )
+            doc = (
+                _load_addon_base_yaml(base_yaml)
+                if base_yaml.strip()
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url)
+            )
+            start_dt = _parse_transit_start_date(transit_start_date)
+            result_yaml, prompt_text, addon_doc = _build_transit_addon_from_base(
+                doc,
+                transit_start_date=start_dt,
+            )
+            token, _expires_at = _redeem_and_save_transit_addon_or_raise(
+                order_code,
+                addon_type,
+                result_yaml,
+                chart_payload=_transit_addon_chart_payload(
+                    yaml_text=result_yaml,
+                    prompt_text=prompt_text,
+                    addon_doc=addon_doc,
+                ),
+            )
+            return RedirectResponse(f"/chart/{token}", status_code=303)
+        if not base_yaml.strip():
+            return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
         doc = _load_addon_base_yaml(base_yaml)
         result_yaml = _build_addon_yaml_from_base(doc, addon_type)
-        if addon_type == "western_31days_transit_addon":
-            token, expires_at = _redeem_and_save_transit_addon_or_raise(order_code, addon_type, result_yaml)
-            base_url = _public_base_url(request)
-            result_url = f"{base_url}/addon/transit/{token}"
-            return _addon_form_response(
-                request,
-                form=form,
-                transit_result_url=result_url,
-                transit_download_url=f"{result_url}.yaml",
-                transit_expires_label=_chart_expiry_label(expires_at),
-            )
         _redeem_addon_order_or_raise(order_code, addon_type)
     except Exception as exc:
         return _addon_form_response(request, form=form, error=str(exc), status_code=400)
@@ -2507,25 +2702,42 @@ def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None) -> str
 
 def _chart_zip_readme(chart: dict) -> str:
     expires_label = _chart_expiry_label(_chart_expiry(chart))
+    options = chart.get("options") or {}
+    product_type = _chart_product_type(options)
+    files: list[str] = [
+        "ai_paste.txt: AIにそのまま貼るための推奨テキストです。ファイル名の末尾の日付はダウンロード当日です。迷ったらまずこれを使ってください。",
+        "detail.yaml: AIに渡しやすい軽量版YAMLです。完全版より読みやすく、通常の鑑定向けです。",
+        "full.yaml: 保存・検証用の完全版YAMLです。内容を細かく確認したいときに使います。",
+        "prompt.txt: AIへの読み方を指定する文章です。ai_paste.txt の中にも同じ指示が含まれています。",
+    ]
+    if product_type == "western_basic":
+        files.extend([
+            "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
+        ])
+    elif product_type == "western_full":
+        files.extend([
+            "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
+            "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",
+            "transit.yaml: 31日分のトランジットデータです。今後の流れを詳しく見たいときに使います。",
+        ])
+    if chart.get("horoscope_svg"):
+        files.append("horoscope.svg: ホロスコープ図のSVGです。図として確認したいときに使います。")
+    if chart.get("shichusuimei_svg"):
+        files.append("shichusuimei.svg: 四柱推命の命式図SVGです。図として確認したいときに使います。")
+
+    file_lines = "\n".join(f"- {line}" for line in files)
     return f"""nanami-products 鑑定データ保存用ZIP
 
 このZIPは鑑定データを手元に保存するためのファイルです。
 共有URLの有効期限は発行から90日間です。このデータページは {expires_label} に開けなくなります。
 
-AIに渡す場合:
-- ai_paste.txt: AIに渡す推奨ファイルです。軽量版なので、迷ったらまずこれを使ってください。
-- natal-asteroids.yaml: 小惑星データを含む場合に、追加で詳しく読ませたいときに添付します。
-- transit.yaml: トランジット詳細を追加したい場合に添付します。
-- prompt.txt: AIへの読み方の指示文です。この内容は ai_paste.txt にも含まれています。
+このZIPに入っているファイル:
+{file_lines}
 
-保存・確認用:
-- full.yaml: 保存・検証用の完全版データです。細かく確認したい場合に使います。
-- detail.yaml: AIに渡しやすい軽量版YAMLです。ai_paste.txt の元データに近い内容です。
-- natal.yaml: ネイタル基本データです。出生図だけを確認したい場合に使います。
-
-図の確認:
-- horoscope.svg が入っている場合は、ホロスコープ図として確認できます。
-- shichusuimei.svg が入っている場合は、四柱推命の命式図として確認できます。
+使い分けの目安:
+- AIに貼るだけなら ai_paste.txt か detail.yaml を使ってください。
+- もっと厳密に確認したいときは full.yaml を見てください。
+- 図で確認したいときは SVG ファイルを開いてください。
 
 注意:
 - YAML内の天体位置・ハウス・アスペクトなどは計算済みデータです。

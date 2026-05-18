@@ -211,6 +211,85 @@
       color: var(--dim);
       font-size: .84rem;
     }
+    .full-version-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card2);
+      color: var(--body);
+      font-size: .84rem;
+      line-height: 1.8;
+    }
+    .full-version-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      background: var(--card);
+      padding: 8px 12px;
+      color: var(--gold);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .full-version-link::after { content: '↓'; }
+    .full-version-link:hover { background: var(--gold-bg); }
+    .chart-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card2);
+      color: var(--body);
+      font-size: .84rem;
+      line-height: 1.8;
+    }
+    .chart-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      background: var(--card);
+      padding: 8px 12px;
+      color: var(--gold);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .chart-link::after { content: '↓'; }
+    .chart-link:hover { background: var(--gold-bg); }
+    .guide-link-card {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--card2);
+      display: grid;
+      gap: 8px;
+    }
+    .guide-link-card a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 42px;
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      background: var(--card);
+      padding: 10px 16px;
+      color: var(--gold);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .guide-link-card a:hover { background: var(--gold-bg); }
+    .guide-link-card p {
+      margin: 0;
+      color: var(--dim);
+      font-size: .84rem;
+    }
     .page-url-panel {
       margin-top: 16px;
       padding: 14px;
@@ -295,6 +374,25 @@
       line-height: 1.4;
     }
     .download-link:hover { background: var(--gold-bg); }
+    .next-transit-box {
+      display: grid;
+      gap: 10px;
+    }
+    .next-transit-box h2 { margin-bottom: 0; }
+    .next-transit-action {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--gold);
+      text-align: center;
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 500;
+    }
+    .next-transit-action:hover { background: var(--gold-bg); }
     .data-preview-grid {
       display: grid;
       gap: 12px;
@@ -427,6 +525,28 @@
       margin: 6px 0 0;
       padding-left: 1.1rem;
     }
+    .time-accuracy-card {
+      margin-top: 8px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border-color: rgba(184, 128, 54, .14);
+      background: rgba(184, 128, 54, .04);
+      gap: 2px;
+    }
+    .time-accuracy-card .mini-label {
+      margin-bottom: 0;
+      font-size: 8px;
+      letter-spacing: .12em;
+    }
+    .time-accuracy-card strong {
+      color: var(--text);
+      font-size: .78rem;
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    .time-accuracy-card p {
+      display: none;
+    }
     .asteroid-toggle {
       display: inline-flex;
       align-items: center;
@@ -455,7 +575,7 @@
     }
     .section-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
     .step-card {
@@ -536,9 +656,30 @@
       margin-bottom: 10px;
     }
     .detail-section textarea { min-height: 220px; }
+    .detail-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .detail-actions .secondary-action {
+      width: 100%;
+      margin-top: 0;
+    }
     @media (max-width: 640px) {
       .page-title-block h1 { font-size: 1.65rem; }
       .section-grid { grid-template-columns: 1fr; }
+      .step-card {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        column-gap: 12px;
+        row-gap: 2px;
+        align-items: start;
+        padding: 13px 14px;
+      }
+      .step-card .step-num {
+        grid-row: span 2;
+        margin-bottom: 0;
+      }
       .download-grid { grid-template-columns: 1fr; }
       .key-actions .secondary-row { display: grid; }
       .horoscope-actions { display: grid; }
@@ -567,61 +708,137 @@
           {% if chart.birth_time %}<span class="info-badge">{% if is_transit_yaml %}時刻{% elif birth_time_notice.show %}計算用時刻{% else %}出生時刻{% endif %}: {{ chart.birth_time }}</span>{% endif %}
           <span class="info-badge">{% if is_transit_yaml %}場所{% else %}出生地{% endif %}: {{ chart.birth_place or "不明" }}</span>
         </div>
+        {% if birth_time_notice.show %}
+        <section class="notice-box soft time-accuracy-card">
+          <p class="mini-label">出生時刻の扱い</p>
+          <strong>{{ birth_time_notice.short }}</strong>
+        </section>
+        {% endif %}
         <p class="hint">このページはURLを知っている人が開けます。有効期限は{{ expires_label }}（発行から90日間）です。</p>
       </div>
 
-      <section class="notice-box">
-        <h2>まずはこれだけ</h2>
-        {% if has_yaml_mode_selector %}
-        <div class="ai-data-box">
-          <h3>AIに渡すデータ量</h3>
-          <p class="mode-help">迷ったら「AI貼り付け版」を選んでください。完全版は保存や検証が必要な場合だけ使います。</p>
-          <div class="ai-mode-list">
-            <label class="ai-mode-option is-active" id="mode-paste-card" onclick="selectAiMode('paste')">
-              <input type="radio" name="ai-output-mode" value="paste" id="mode-paste-input" checked>
-              <div class="ai-mode-copy">
-                <span class="ai-mode-title">
-                  <span class="mode-label">AI貼り付け版</span>
-                  <span class="mode-badge">おすすめ</span>
-                </span>
-                <span class="mode-desc">主要惑星＋今日のトランジット＋31日の流れ。AIが読みやすいサイズに最適化済み。</span>
-              </div>
-            </label>
-            <label class="ai-mode-option" id="mode-full-card" onclick="selectAiMode('full')">
-              <input type="radio" name="ai-output-mode" value="full" id="mode-full-input">
-              <div class="ai-mode-copy">
-                <span class="ai-mode-title">
-                  <span class="mode-label">完全版</span>
-                  <span class="mode-badge">じっくり鑑定用</span>
-                </span>
-                <span class="mode-desc">小惑星・31日全詳細データを含む全データ収録版。より細かく読みたい時に使います。</span>
-              </div>
-            </label>
+      <section>
+        <h2>3ステップで鑑定をはじめる</h2>
+        <div class="section-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <h3>データをAIに渡す</h3>
+            <p>下のボタンから、鑑定用データをAIへ送ります。</p>
           </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <h3>そのまま送信する</h3>
+            <p>ChatGPT / Claude / Gemini などで使えます。</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <h3>鑑定を受け取る</h3>
+            <p>返ってきた内容に、そのまま続けて質問できます。</p>
+          </div>
+        </div>
+        {% if usage_guide_url %}
+        <div class="guide-link-card">
+          <a href="{{ usage_guide_url }}">画像つきの使い方を見る</a>
+          <p>初めての方は、画面を見ながら手順を確認できます。</p>
         </div>
         {% endif %}
-        <div class="key-actions">
-          <button class="primary-action" id="primary-ai-action" onclick="shareSelectedAiText()">AI用TXTファイルを共有</button>
+      </section>
+
+      <div class="page-url-panel">
+        <h2>この{% if is_transit_yaml %}イベントデータ{% else %}ページ{% endif %}のURL</h2>
+        <div class="copyline">
+          <input id="chart-url" value="{{ chart_url }}" readonly>
+          <button onclick="copyFrom('chart-url')">コピー</button>
         </div>
-        <p class="helper-note">ChatGPTや Gemini、Claude などのAIへ渡せます。ファイルを読めないアプリでは、AI用TXT本文がチャット欄に入る場合があります。</p>
-        <details class="fallback-share">
-          <summary>共有できない場合はこちら</summary>
-          <p class="fallback-lead">共有できない場合は、コピーまたはTXT保存をご利用ください。</p>
+        <p class="hint">あとで開き直したい場合や、別の端末で使いたい場合にコピーしてください。</p>
+      </div>
+
+      <section class="notice-box">
+        <h2>AIに渡す</h2>
+        <div class="key-actions">
+          <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">AIに送る</button>
+        </div>
+        <details class="fallback-share" id="fallback-share">
+          <summary>うまくいかない場合</summary>
+          <p class="fallback-lead">AIに直接送れない場合は、コピーまたはTXT保存をご利用ください。</p>
           <div class="fallback-actions">
-            <button class="secondary-action" onclick="copySelectedAiText()">AI用データをコピー</button>
-            <button class="secondary-action" onclick="downloadAiPasteTxt()">AI用TXTを保存</button>
+            <button class="secondary-action" onclick="copyDefaultAiText()">コピーして使う</button>
+            <button class="secondary-action" onclick="downloadDefaultAiPasteTxt()">TXTを保存して使う</button>
           </div>
         </details>
+        <p class="helper-note">通常は、AIが読みやすい通常版のデータを使います。</p>
+        {% if has_yaml_mode_selector %}
+        <p class="full-version-note">
+          FULL版には、小惑星を含む詳しいデータも入っています。<br>
+          最初の鑑定後、もっと詳しく見たい時に使えます。<br>
+          <a class="full-version-link" href="#full-version-details" onclick="openFullVersionDetails()">FULL版の小惑星データを見る</a>
+        </p>
+        {% endif %}
+        {% if horoscope_svg %}
+        <p class="chart-note">
+          ホロスコープ図も用意されています。鑑定を始めるだけなら見なくて大丈夫ですが、図で確認したい方はこちらから見られます。<br>
+          <a class="chart-link" href="#horoscope-details" onclick="openHoroscopeDetails()">ホロスコープ図を見る</a>
+        </p>
+        {% endif %}
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
-        <p class="hint" id="combined-size"></p>
+      </section>
+
+      {% if birth_time_notice.show %}
+      <details class="time-accuracy-alert">
+        <summary>{{ birth_time_notice.short }}</summary>
+        <p>出生時刻が不明、または推定時刻のため、ハウス・ASC・MCなどは参考値として扱ってください。</p>
+        <p>出生時刻によって変わりやすいもの:</p>
+        <ul>
+          <li>ハウス</li>
+          <li>ASC（アセンダント）</li>
+          <li>MC</li>
+          <li>Vertex</li>
+          <li>月の度数やサイン（一部の場合）</li>
+        </ul>
+        <p>比較的安定して使いやすいもの:</p>
+        <ul>
+          <li>太陽・水星・金星・火星などの天体サイン</li>
+          <li>天体同士の主要アスペクト</li>
+          <li>エレメント</li>
+          <li>モード</li>
+          <li>世代天体の配置</li>
+        </ul>
+        <p>AIに貼る場合も、出生時刻の精度情報を一緒に渡してください。断定的なハウス解釈は避け、参考情報として扱うのがおすすめです。</p>
+      </details>
+      {% endif %}
+
+      <section class="notice-box soft followup-box">
+        <h2>AIに貼ると、こう使えます</h2>
+        <ul class="plain-list">
+          {% if is_transit_yaml %}
+          <li>イベント時点の天体配置が、AIの言葉で整理されます。</li>
+          <li>歴史イベント・満月・特定日時の象徴分析に使えます。</li>
+          <li>日付や暦の前提を明示したまま、あとから深掘りできます。</li>
+          {% else %}
+          <li>あなたの本質や傾向が、AIの言葉で整理されます。</li>
+          <li>今気になるテーマをそのまま質問できます。</li>
+          <li>仕事・恋愛・今月の注意日などを、あとから深掘りできます。</li>
+          {% endif %}
+        </ul>
+        <p class="hint" style="margin-top:10px">このページは鑑定結果を表示する場所ではなく、AIに渡すファイルを作る入口です。</p>
+      </section>
+
+      <section class="notice-box soft followup-box">
+        <h2>鑑定のあとに聞けること</h2>
+        <ul class="plain-list">
+          <li>「仕事の流れを詳しく知りたい」</li>
+          <li>「恋愛面をもう少し深掘りしたい」</li>
+          <li>「今月の注意日を教えてほしい」</li>
+        </ul>
+        <p class="hint" style="margin-top:10px">鑑定文のあとに、そのままAIへ続けて質問できます。</p>
       </section>
 
       <div class="save-data-panel">
-        <h2>保存用データ</h2>
-        <p class="hint">このURLは90日後に開けなくなります。必要な場合はZIPを保存してください。</p>
-        <button class="download-primary" onclick="downloadFullArchiveZip()">保存先を選んでZIPを保存</button>
+        <h2>保存しておきたい場合</h2>
+        <p class="hint">このURLは90日後に開けなくなります。必要な場合だけ、データをまとめて保存してください。</p>
+        <button class="download-primary" onclick="downloadFullArchiveZip()">ZIPを保存する</button>
         <details class="advanced-downloads">
-          <summary>個別ファイルを表示</summary>
+          <summary>個別ファイルを見る</summary>
           <div class="download-grid">
           {% if is_transit_yaml %}
           <a class="download-link" href="{{ yaml_url }}" download="nanami-transit-event.yaml">イベントYAML</a>
@@ -644,17 +861,22 @@
         </details>
       </div>
 
-      <div class="page-url-panel">
-        <h2>この{% if is_transit_yaml %}イベントデータ{% else %}鑑定データ{% endif %}ページのURL</h2>
-        <div class="copyline">
-          <input id="chart-url" value="{{ chart_url }}" readonly>
-          <button onclick="copyFrom('chart-url')">コピー</button>
-        </div>
-        <p class="hint">URLを共有する場合に使います。ページ自体は90日後に開けなくなります。</p>
-      </div>
+      {% if can_continue_with_transit %}
+      <section class="notice-box soft next-transit-box">
+        <h2>次のトランジットを作成</h2>
+        <p>前回の鑑定データを引き継いで、<br>次の31日トランジットを生成できます。</p>
+        <a class="next-transit-action" href="{{ next_transit_url }}">次のトランジットを作成</a>
+      </section>
+      {% endif %}
 
+      {% if horoscope_svg or shichusuimei_svg %}
+      <details class="detail-box" id="chart-details">
+        <summary>{% if horoscope_svg and shichusuimei_svg %}ホロスコープ図・命式図を見る{% elif horoscope_svg %}ホロスコープ図を見る{% else %}命式図を見る{% endif %}</summary>
+        <div class="detail-body">
+          <p class="detail-intro">鑑定を始めるだけなら確認しなくて大丈夫です。図で見たい方だけご利用ください。</p>
+      {% endif %}
       {% if horoscope_svg %}
-      <section class="horoscope-panel" aria-label="SVGホロスコープ図">
+      <section class="horoscope-panel" id="horoscope-details" aria-label="SVGホロスコープ図">
         <h2>ホロスコープ図</h2>
         <p>このホロスコープ図は、YAMLログと同じ計算済みデータから自動描画しています。AI生成画像ではありません。</p>
         {% if birth_time_notice.show %}
@@ -698,114 +920,69 @@
         <p>AIに貼る基本データはYAMLログです。命式図は商品ページや確認用の補助資料として使えます。</p>
       </section>
       {% endif %}
-
-      {% if birth_time_notice.show %}
-      <details class="time-accuracy-alert">
-        <summary>{{ birth_time_notice.short }}</summary>
-        <p>出生時刻が不明、または推定時刻のため、ハウス・ASC・MCなどは参考値として扱ってください。</p>
-        <p>出生時刻によって変わりやすいもの:</p>
-        <ul>
-          <li>ハウス</li>
-          <li>ASC（アセンダント）</li>
-          <li>MC</li>
-          <li>Vertex</li>
-          <li>月の度数やサイン（一部の場合）</li>
-        </ul>
-        <p>比較的安定して使いやすいもの:</p>
-        <ul>
-          <li>太陽・水星・金星・火星などの天体サイン</li>
-          <li>天体同士の主要アスペクト</li>
-          <li>エレメント</li>
-          <li>モード</li>
-          <li>世代天体の配置</li>
-        </ul>
-        <p>AIに貼る場合も、出生時刻の精度情報を一緒に渡してください。断定的なハウス解釈は避け、参考情報として扱うのがおすすめです。</p>
+      {% if horoscope_svg or shichusuimei_svg %}
+        </div>
       </details>
-      {% endif %}
-
-      <section class="data-preview-grid" aria-label="AIに渡されるデータの一部">
-        <div class="data-preview-card">
-          <h2>AIに渡される計算済みデータ（一部）</h2>
-          <p>AIはこの計算済みデータをもとに{% if is_transit_yaml %}分析{% else %}鑑定{% endif %}を行います。</p>
-          <pre id="yaml-preview" aria-label="YAMLログの一部"></pre>
-          <p class="data-preview-note">AIが再計算せず、このデータを根拠として解釈します。保存したい場合はファイルとして残せます。</p>
-        </div>
-        <div class="data-preview-card">
-          <h2>AIに渡すプロンプト（一部）</h2>
-          <p>このプロンプトが、AIに「どう読むか」を伝えます。</p>
-          <pre id="prompt-preview" aria-label="プロンプトの一部"></pre>
-        </div>
-      </section>
-
-      <section class="notice-box soft followup-box">
-        <h2>AIに貼ると、こう使えます</h2>
-        <ul class="plain-list">
-          {% if is_transit_yaml %}
-          <li>イベント時点の天体配置が、AIの言葉で整理されます。</li>
-          <li>歴史イベント・満月・特定日時の象徴分析に使えます。</li>
-          <li>日付や暦の前提を明示したまま、あとから深掘りできます。</li>
-          {% else %}
-          <li>あなたの本質や傾向が、AIの言葉で整理されます。</li>
-          <li>今気になるテーマをそのまま質問できます。</li>
-          <li>仕事・恋愛・今月の注意日などを、あとから深掘りできます。</li>
-          {% endif %}
-        </ul>
-        <p class="hint" style="margin-top:10px">このページは鑑定結果を表示する場所ではなく、AIに渡すファイルを作る入口です。</p>
-      </section>
-
-      {% if not is_transit_yaml %}
-      <section class="notice-box soft">
-        <h2>継続利用について</h2>
-        <p>このYAMLは、AIに一度読み込ませて継続的に使える基礎データです。今後、月ごとのトランジット追加データと組み合わせて使うこともできます。</p>
-      </section>
       {% endif %}
 
       <section class="usage-limits">
         <p>本商品は個人利用向けのデータ商品です。ChatGPT等のAIサービスへの入力、個人範囲での利用は可能です。再配布、転載、販売、サービス組み込み等の商用利用は禁止します。商用利用・アプリ組み込み用途はAPI版をご利用ください。</p>
       </section>
 
-      <section>
-        <h2>かんたんな使い方</h2>
-        <div class="section-grid">
-          <div class="step-card">
-            <div class="step-num">1</div>
-            <h3>AIを開く</h3>
-            <p>ChatGPT / Claude / Gemini など、お好きなAIを開きます。</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">2</div>
-            <h3>データを開く</h3>
-            <p>共有メニューからAIアプリを選びます。</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">3</div>
-            <h3>鑑定が届く</h3>
-            <p>AIが鑑定文を返します。気になる部分はそのまま質問できます。</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">4</div>
-            <h3>ファイルとして保存</h3>
-            <p>共有で受け取れない場合は、保存して手動でアップロードできます。</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="notice-box soft followup-box">
-        <h2>鑑定のあとに聞けること</h2>
-        <ul class="plain-list">
-          <li>「仕事の流れを詳しく知りたい」</li>
-          <li>「恋愛面をもう少し深掘りしたい」</li>
-          <li>「今月の注意日を教えてほしい」</li>
-        </ul>
-        <p class="hint" style="margin-top:10px">鑑定文のあとに、そのままAIへ続けて質問できます。</p>
-      </section>
-
-      <details class="detail-box">
-        <summary>YAML・プロンプト全文を確認する</summary>
+      <details class="detail-box" id="detail-box">
+        <summary>詳細を確認する</summary>
         <div class="detail-body">
           <p class="detail-intro">
-            うまく読み込めない場合や、データを細かく確認したい場合だけ開いてください。通常は上のボタンだけで十分です。
+            通常は上の操作だけで使えます。より詳しく見たい方だけ、完全版やYAMLの内容を確認してください。
           </p>
+          <p class="hint" id="combined-size"></p>
+
+          {% if has_yaml_mode_selector %}
+          <div class="detail-section" id="full-version-details">
+            <h3>FULL版・小惑星ありデータを使う</h3>
+            <p class="hint">FULL版では、小惑星を含む読みやすい版と、31日分の詳細まで含む完全版を使えます。</p>
+            <div class="ai-mode-list" style="margin-top:12px">
+              <label class="ai-mode-option" id="mode-asteroids-card" onclick="selectAiMode('asteroids')">
+                <input type="radio" name="ai-output-mode" value="asteroids" id="mode-asteroids-input">
+                <div class="ai-mode-copy">
+                  <span class="ai-mode-title">
+                    <span class="mode-label">小惑星つき版</span>
+                    <span class="mode-badge">おすすめ</span>
+                  </span>
+                  <span class="mode-desc">主要惑星＋小惑星＋今日のトランジット＋31日の流れ。FULL版を詳しく読みたい時の標準です。</span>
+                </div>
+              </label>
+              <label class="ai-mode-option" id="mode-full-card" onclick="selectAiMode('full')">
+                <input type="radio" name="ai-output-mode" value="full" id="mode-full-input">
+                <div class="ai-mode-copy">
+                  <span class="ai-mode-title">
+                    <span class="mode-label">完全版</span>
+                    <span class="mode-badge">全詳細</span>
+                  </span>
+                  <span class="mode-desc">小惑星・31日全詳細データを含む完全版です。</span>
+                </div>
+              </label>
+            </div>
+            <div class="detail-actions">
+              <button class="secondary-action" onclick="shareSelectedAiText()">選んだ版をAIに送る</button>
+              <button class="secondary-action" onclick="copySelectedAiText()">選んだ版をコピー</button>
+            </div>
+          </div>
+          {% endif %}
+
+          <section class="data-preview-grid" aria-label="AIに渡されるデータの一部">
+            <div class="data-preview-card">
+              <h2>AIに渡される計算済みデータ（一部）</h2>
+              <p>AIはこの計算済みデータをもとに{% if is_transit_yaml %}分析{% else %}鑑定{% endif %}を行います。</p>
+              <pre id="yaml-preview" aria-label="YAMLログの一部"></pre>
+              <p class="data-preview-note">AIが再計算せず、このデータを根拠として解釈します。保存したい場合はファイルとして残せます。</p>
+            </div>
+            <div class="data-preview-card">
+              <h2>AIに渡すプロンプト（一部）</h2>
+              <p>このプロンプトが、AIに「どう読むか」を伝えます。</p>
+              <pre id="prompt-preview" aria-label="プロンプトの一部"></pre>
+            </div>
+          </section>
 
           <div class="detail-section">
             <h3>YAML直リンク</h3>
@@ -846,7 +1023,7 @@
       <section class="notice-box soft">
         <h2>注意事項</h2>
         <ul class="plain-list">
-          <li>入力後のデータ変更はできません。再発行が必要な場合は、販売者へお問い合わせください。</li>
+          <li>入力後のデータ変更はできません。ご不明点やお困りのことがある場合は、お問い合わせください。</li>
           <li>AIの種類や設定によって、文章表現や鑑定の深さは変わります。</li>
           <li>YAMLは計算済みデータです。AIには「計算をやり直さず、このYAMLを根拠に解釈する」よう指示してください。</li>
           {% if is_transit_yaml %}<li>歴史イベントの日付には諸説があり得ます。必要に応じて日付・暦種別の前提を確認してください。</li>{% endif %}
@@ -858,15 +1035,17 @@
     <script>
     const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
     const SHARE_YAML = {{ share_yaml_text | tojson }};
+    const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
     const FULL_YAML_URL = {{ yaml_url | tojson }};
     const FULL_ARCHIVE_ZIP_URL = {{ download_zip_url | tojson }};
     const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% else %}{{ chart.yaml_text | tojson }}{% endif %};
     let fullYamlCache = FULL_YAML_INLINE;
     const TXT_SHARE_TEST_MODE = new URLSearchParams(window.location.search).get('txtShareTest') === 'small';
-    const preparedAiTextFiles = { paste: null, full: null };
+    const preparedAiTextFiles = { paste: null, asteroids: null, full: null };
     const copyState = {
       paste: Number(localStorage.getItem('chart-copy-paste') || '0'),
+      asteroids: Number(localStorage.getItem('chart-copy-asteroids') || '0'),
       full: Number(localStorage.getItem('chart-copy-full') || '0'),
       yaml: Number(localStorage.getItem('chart-copy-yaml') || '0'),
     };
@@ -896,11 +1075,13 @@
 
     function getSelectedAiMode() {
       const checked = document.querySelector('input[name="ai-output-mode"]:checked');
-      return checked ? checked.value : (localStorage.getItem('chart-ai-output-mode') || 'paste');
+      return checked ? checked.value : 'paste';
     }
 
     function getSelectedAiLabel(mode = getSelectedAiMode()) {
-      return mode === 'full' ? '完全版' : 'AI貼り付け版';
+      if (mode === 'full') return '完全版';
+      if (mode === 'asteroids') return '小惑星つき版';
+      return '通常版';
     }
 
     function setYamlTextarea(text) {
@@ -927,7 +1108,9 @@
     }
 
     async function getSelectedYaml(mode = getSelectedAiMode()) {
-      return mode === 'full' ? await getFullYaml() : SHARE_YAML;
+      if (mode === 'full') return await getFullYaml();
+      if (mode === 'asteroids' && ASTEROID_YAML) return ASTEROID_YAML;
+      return SHARE_YAML;
     }
 
     function buildAiTextFromYaml(yaml) {
@@ -987,19 +1170,22 @@
     function updateSizeLabels() {
       const pasteLength = buildAiTextLengthFromYaml(SHARE_YAML).toLocaleString();
       if (HAS_YAML_MODE_SELECTOR && !fullYamlCache) {
-        setText('combined-size', `AI貼り付け版.txt: ${pasteLength}文字。完全版は選択時に読み込みます。`);
-        setText('yaml-size', `AI貼り付け版: ${SHARE_YAML.length.toLocaleString()}文字。完全版は必要時に読み込みます。`);
+        const asteroidLength = ASTEROID_YAML ? buildAiTextLengthFromYaml(ASTEROID_YAML).toLocaleString() : '未生成';
+        setText('combined-size', `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版は必要時に読み込みます。`);
+        setText('yaml-size', `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版は必要時に読み込みます。`);
         return;
       }
       const fullLength = buildAiTextLengthFromYaml(fullYamlCache).toLocaleString();
-      setText('combined-size', `AI貼り付け版.txt: ${pasteLength}文字。完全版: ${fullLength}文字。`);
-      setText('yaml-size', `完全版: ${fullYamlCache.length.toLocaleString()}文字。AI貼り付け版: ${SHARE_YAML.length.toLocaleString()}文字。`);
+      const asteroidLength = ASTEROID_YAML ? buildAiTextLengthFromYaml(ASTEROID_YAML).toLocaleString() : '未生成';
+      setText('combined-size', `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版: ${fullLength}文字。`);
+      setText('yaml-size', `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版: ${fullYamlCache.length.toLocaleString()}文字。`);
     }
 
     function initCopyHelpers() {
       if (fullYamlCache) setYamlTextarea(fullYamlCache);
       updateSizeLabels();
       prepareAiTextFile('paste');
+      if (ASTEROID_YAML) prepareAiTextFile('asteroids');
       if (fullYamlCache) prepareAiTextFile('full');
     }
 
@@ -1013,28 +1199,29 @@
     }
 
     function selectAiMode(mode) {
-      const pasteCard = document.getElementById('mode-paste-card');
+      const asteroidsCard = document.getElementById('mode-asteroids-card');
       const fullCard = document.getElementById('mode-full-card');
-      const pasteInput = document.getElementById('mode-paste-input');
+      const asteroidsInput = document.getElementById('mode-asteroids-input');
       const fullInput = document.getElementById('mode-full-input');
-      const isPaste = mode !== 'full';
-      if (pasteCard && fullCard) {
-        pasteCard.classList.toggle('is-active', isPaste);
-        fullCard.classList.toggle('is-active', !isPaste);
+      const isFull = mode === 'full';
+      const isAsteroids = mode === 'asteroids';
+      if (asteroidsCard && fullCard) {
+        asteroidsCard.classList.toggle('is-active', isAsteroids);
+        fullCard.classList.toggle('is-active', isFull);
       }
-      if (pasteInput && fullInput) {
-        pasteInput.checked = isPaste;
-        fullInput.checked = !isPaste;
+      if (asteroidsInput && fullInput) {
+        asteroidsInput.checked = isAsteroids;
+        fullInput.checked = isFull;
       }
-      localStorage.setItem('chart-ai-output-mode', isPaste ? 'paste' : 'full');
-      if (isPaste) {
-        setText('yaml-preview', firstLines(SHARE_YAML, 16));
+      localStorage.setItem('chart-ai-output-mode', isFull ? 'full' : 'asteroids');
+      if (isAsteroids) {
+        setText('yaml-preview', ASTEROID_YAML ? firstLines(ASTEROID_YAML, 16) : '小惑星つき版を準備できませんでした。');
       } else {
-        setText('yaml-preview', fullYamlCache ? firstLines(fullYamlCache, 16) : '完全版YAMLは、完全版を使う時に読み込みます。');
+        setText('yaml-preview', fullYamlCache ? firstLines(fullYamlCache, 16) : '完全版は、使う時に読み込みます。');
       }
       updateSizeLabels();
-      if (isPaste || fullYamlCache || TXT_SHARE_TEST_MODE) {
-        prepareAiTextFile(isPaste ? 'paste' : 'full');
+      if (isAsteroids || fullYamlCache || TXT_SHARE_TEST_MODE) {
+        prepareAiTextFile(mode);
       } else {
         getFullYaml().catch(() => {});
       }
@@ -1043,6 +1230,17 @@
     async function copyFrom(id) {
       const el = document.getElementById(id);
       await writeClipboard(el.value);
+    }
+
+    function openFullVersionDetails() {
+      const detailBox = document.getElementById('detail-box');
+      if (detailBox) detailBox.open = true;
+      selectAiMode('asteroids');
+    }
+
+    function openHoroscopeDetails() {
+      const chartDetails = document.getElementById('chart-details');
+      if (chartDetails) chartDetails.open = true;
     }
 
     function canUseFileShare(file) {
@@ -1061,7 +1259,9 @@
         month: '2-digit',
         day: '2-digit',
       }).format(new Date()).replace(/-/g, '');
-      return mode === 'full' ? `nanami_ai_full_${today}.txt` : `nanami_ai_paste_${today}.txt`;
+      if (mode === 'full') return `nanami_ai_full_${today}.txt`;
+      if (mode === 'asteroids') return `nanami_ai_asteroids_${today}.txt`;
+      return `nanami_ai_paste_${today}.txt`;
     }
 
     function buildSmallTxtShareTest() {
@@ -1073,7 +1273,7 @@
     }
 
     function buildPreparedAiTextFile(mode = getSelectedAiMode()) {
-      const yaml = mode === 'full' ? fullYamlCache : SHARE_YAML;
+      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? ASTEROID_YAML : SHARE_YAML);
       if (!TXT_SHARE_TEST_MODE && !yaml) return null;
       const text = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : buildAiTextFromYaml(yaml);
       return new File([text], buildAiTextFileName(mode), { type: 'text/plain' });
@@ -1091,7 +1291,7 @@
 
     function getPreparedAiTextShareText(mode = getSelectedAiMode()) {
       if (TXT_SHARE_TEST_MODE) return buildSmallTxtShareTest();
-      const yaml = mode === 'full' ? fullYamlCache : SHARE_YAML;
+      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? ASTEROID_YAML : SHARE_YAML);
       return yaml ? buildAiTextFromYaml(yaml) : '';
     }
 
@@ -1127,9 +1327,10 @@
           if (e && e.name === 'AbortError') {
             return;
           }
+          openFallbackShare();
           const status = document.getElementById('copy-status');
           if (status) {
-            status.textContent = 'この端末では共有に対応していません。コピーまたはTXT保存をご利用ください。';
+            status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
             setTimeout(() => status.textContent = '', 4000);
           }
         });
@@ -1138,12 +1339,66 @@
         if (e && e.name === 'AbortError') {
           return;
         }
+        openFallbackShare();
         const status = document.getElementById('copy-status');
         if (status) {
-          status.textContent = 'この端末では共有に対応していません。コピーまたはTXT保存をご利用ください。';
+          status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
           setTimeout(() => status.textContent = '', 4000);
         }
         return;
+      }
+    }
+
+    function shareDefaultAiText() {
+      selectAiMode('paste');
+      const file = getPreparedAiTextFile('paste');
+      try {
+        if (!file) {
+          const error = new Error('txt_file_is_not_prepared');
+          error.name = 'NotReadyError';
+          throw error;
+        }
+        const canShareFiles = canUseFileShare(file);
+        if (!canShareFiles) {
+          const error = new Error('navigator.canShare({ files }) is false');
+          error.name = 'NotSupportedError';
+          throw error;
+        }
+        const sharePromise = navigator.share({
+          title: 'AI用TXTファイル',
+          text: getPreparedAiTextShareText('paste'),
+          files: [file],
+        });
+        sharePromise.catch((e) => {
+          if (e && e.name === 'AbortError') {
+            return;
+          }
+          openFallbackShare();
+          const status = document.getElementById('copy-status');
+          if (status) {
+            status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+            setTimeout(() => status.textContent = '', 4000);
+          }
+        });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') {
+          return;
+        }
+        openFallbackShare();
+        const status = document.getElementById('copy-status');
+        if (status) {
+          status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+          setTimeout(() => status.textContent = '', 4000);
+        }
+        return;
+      }
+    }
+
+    function openFallbackShare() {
+      const fallbackShare = document.getElementById('fallback-share');
+      if (fallbackShare) {
+        fallbackShare.open = true;
       }
     }
 
@@ -1195,6 +1450,11 @@
       downloadBlob(file.name, file);
     }
 
+    function downloadDefaultAiPasteTxt() {
+      selectAiMode('paste');
+      downloadAiPasteTxt();
+    }
+
     async function downloadFullArchiveZip() {
       await downloadZipFromUrl(FULL_ARCHIVE_ZIP_URL, buildFullArchiveZipFileName(), 'nanami-products ZIP');
     }
@@ -1227,11 +1487,16 @@
       await writeClipboard(await buildSelectedAiText(mode), `${getSelectedAiLabel(mode)}をコピーしました。必要なら「続きからコピー」で次の分を送れます。`);
     }
 
+    async function copyDefaultAiText() {
+      selectAiMode('paste');
+      await writeClipboard(await buildSelectedAiText('paste'), '通常版をコピーしました。必要なら「続きからコピー」で次の分を送れます。');
+    }
+
     async function copySelectedAiChunk() {
       const mode = getSelectedAiMode();
       const text = await buildSelectedAiText(mode);
       const chunks = splitText(text, 12000);
-      const key = mode === 'full' ? 'chart-copy-full' : 'chart-copy-paste';
+      const key = mode === 'full' ? 'chart-copy-full' : (mode === 'asteroids' ? 'chart-copy-asteroids' : 'chart-copy-paste');
       if (chunks.length <= 1) {
         await writeClipboard(text, `${getSelectedAiLabel(mode)}をコピーしました。`);
         return;

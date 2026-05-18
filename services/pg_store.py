@@ -708,6 +708,7 @@ def redeem_addon_order_and_save_transit_link(
     token: str,
     yaml_text: str,
     expires_at: datetime,
+    chart_payload: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any] | None]:
     """
     31日トランジットaddon用に、注文消込と期限付きYAML保存を同一トランザクションで行う。
@@ -758,6 +759,24 @@ def redeem_addon_order_and_save_transit_link(
                 """,
                 (token, yaml_text, expires_at),
             )
+            if chart_payload:
+                _insert_chart(
+                    cur,
+                    token=token,
+                    order_code=order_code,
+                    buyer_name=chart_payload.get("buyer_name"),
+                    birth_date=str(chart_payload["birth_date"]),
+                    birth_time=chart_payload.get("birth_time"),
+                    birth_place=chart_payload.get("birth_place"),
+                    options=dict(chart_payload["options"]),
+                    yaml_text=str(chart_payload["yaml_text"]),
+                    prompt_text=str(chart_payload["prompt_text"]),
+                    share_yaml_text=chart_payload.get("share_yaml_text"),
+                    horoscope_svg=chart_payload.get("horoscope_svg"),
+                    shichusuimei_svg=chart_payload.get("shichusuimei_svg"),
+                    expires_at=expires_at,
+                    on_conflict_do_nothing=False,
+                )
             return "ok", order
 
 

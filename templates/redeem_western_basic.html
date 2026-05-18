@@ -79,8 +79,8 @@
           </label>
         </div>
 
-        <div class="form-section">
-          <h2>出生地の詳細</h2>
+        <details class="form-section collapsible-section" id="birth-location-details" open>
+          <summary>出生地の詳細</summary>
           <label>出生地区分
             <select name="birth_place_kind" id="birth_place_kind" autocomplete="off">
               <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>国内</option>
@@ -94,12 +94,12 @@
                        value="{{ form.birth_place_overseas if form else '' }}"
                        placeholder="例：New York, USA">
               </label>
-              <label>緯度
+              <label class="coordinate-field">緯度
                 <input type="number" name="birth_lat" step="any"
                        value="{{ form.birth_lat if form else '' }}"
                        placeholder="例：40.7128">
               </label>
-              <label>経度
+              <label class="coordinate-field">経度
                 <input type="number" name="birth_lng" step="any"
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：-74.0060">
@@ -123,7 +123,7 @@
               </label>
             </div>
           </div>
-        </div>
+        </details>
 
         <div class="notice-box warn final-check">
           <p>最終確認</p>
@@ -146,10 +146,14 @@
       if (!mode || !box) return;
       const active = mode.value === 'overseas';
       const prefecture = document.querySelector('[name="prefecture"]');
+      const details = document.getElementById('birth-location-details');
       if (prefecture) {
         prefecture.required = !active;
         prefecture.disabled = active;
         if (active) prefecture.value = '';
+      }
+      if (details && (active || !prefecture?.value)) {
+        details.open = true;
       }
       box.classList.add('is-active');
       box.querySelectorAll('input, select').forEach((el) => {
@@ -176,6 +180,14 @@
     function confirmSubmit() {
       return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
     }
+    function collapseBirthDetailsWhenDomesticPrefectureSelected() {
+      const mode = document.getElementById('birth_place_kind');
+      const prefecture = document.querySelector('[name="prefecture"]');
+      const details = document.getElementById('birth-location-details');
+      if (details && mode?.value !== 'overseas' && prefecture?.value) {
+        details.open = false;
+      }
+    }
     function syncBirthTimeFields() {
       const mode = document.getElementById('birth_time_accuracy');
       const input = document.getElementById('birth_time');
@@ -189,8 +201,13 @@
     }
     document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
     document.addEventListener('DOMContentLoaded', syncBirthTimeFields);
+    document.addEventListener('DOMContentLoaded', collapseBirthDetailsWhenDomesticPrefectureSelected);
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
+      document.querySelector('[name="prefecture"]')?.addEventListener('change', (event) => {
+        collapseBirthDetailsWhenDomesticPrefectureSelected();
+        syncBirthPlaceFields();
+      });
       document.getElementById('birth_time_accuracy')?.addEventListener('change', syncBirthTimeFields);
       document.getElementById('birth_timezone_select')?.addEventListener('change', syncTimezoneFields);
       document.getElementById('birth_timezone_custom')?.addEventListener('input', syncTimezoneFields);

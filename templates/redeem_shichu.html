@@ -104,12 +104,12 @@
                        value="{{ form.birth_place_overseas if form else '' }}"
                        placeholder="例：New York, USA">
               </label>
-              <label>緯度
+              <label class="coordinate-field">緯度
                 <input type="number" name="birth_lat" step="any"
                        value="{{ form.birth_lat if form else '' }}"
                        placeholder="例：40.7128">
               </label>
-              <label>経度
+              <label class="coordinate-field">経度
                 <input type="number" name="birth_lng" step="any"
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：-74.0060">

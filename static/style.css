@@ -200,6 +200,24 @@ section { margin-top: 20px; }
   display: grid;
   gap: 16px;
 }
+.collapsible-section > summary {
+  cursor: pointer;
+  color: var(--gold-dim);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .18em;
+  list-style: none;
+  text-transform: uppercase;
+}
+.collapsible-section > summary::-webkit-details-marker { display: none; }
+.collapsible-section > summary::after {
+  content: '+';
+  float: right;
+  color: var(--gold);
+  font-size: 15px;
+  line-height: 1;
+}
+.collapsible-section[open] > summary::after { content: '-'; }
 .highlight-section { background: #f4f8ee; border-color: #ccddb0; }
 .overseas-fields { display: none; gap: 14px; }
 .overseas-fields.is-active { display: grid; }
@@ -210,6 +228,14 @@ section { margin-top: 20px; }
   align-items: start;
 }
 .location-grid .full-span { grid-column: 1 / -1; }
+.location-grid .coordinate-field {
+  min-width: 0;
+  grid-template-rows: auto minmax(42px, auto);
+  align-self: stretch;
+}
+.location-grid .coordinate-field input {
+  align-self: end;
+}
 .location-grid .coordinate-note {
   grid-column: 1 / -1;
   margin-top: -6px;
@@ -426,6 +452,10 @@ textarea {
   .wrap { padding: 24px 14px 48px; }
   .card { padding: 24px 18px; border-radius: 18px; }
   .form-section { padding: 16px; }
+  .location-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
   .action-area { display: grid; }
   .primary-link { text-align: center; }
   .submit-button, button { font-size: .86rem; }
