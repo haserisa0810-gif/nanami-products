@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import io
 import os
@@ -1802,8 +1803,12 @@ def chart_horoscope_svg(token: str):
     chart = _load_chart_or_404(token)
     svg = chart.get("horoscope_svg")
     if not svg:
-        options = chart.get("options") or {}
-        if _chart_product_type(options) in {"western_basic", "western_full"}:
+        try:
+            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+        except Exception:
+            chart_doc = None
+        if _chart_has_western_natal(chart, doc=chart_doc):
             try:
                 svg = build_horoscope_svg_from_yaml(chart["yaml_text"])
             except Exception:
@@ -1833,6 +1838,12 @@ def chart_download_zip(token: str):
     chart = _load_chart_or_404(token)
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
+    try:
+        loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+        chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+    except Exception:
+        chart_doc = None
+    full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
     share_yaml_text = _chart_share_yaml_text(chart)
     ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
     detail_yaml = share_yaml_text
@@ -1841,7 +1852,7 @@ def chart_download_zip(token: str):
         zf.writestr("full.yaml", chart["yaml_text"])
         zf.writestr("detail.yaml", detail_yaml)
         zf.writestr("ai_paste.txt", ai_paste_text)
-        if product_type == "western_full":
+        if full_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
             zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
             zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"]))
@@ -1873,9 +1884,20 @@ def chart_page(request: Request, token: str):
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
     is_transit_yaml = product_type == "transit_yaml"
-    can_continue_with_transit = product_type in {"western_basic", "western_full"}
-    has_yaml_mode_selector = product_type == "western_full"
-    horoscope_svg = chart.get("horoscope_svg") if product_type in {"western_basic", "western_full"} else None
+    chart_doc = None
+    if not is_transit_yaml:
+        try:
+            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+        except Exception:
+            chart_doc = None
+    has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
+    has_western_natal = _chart_has_western_natal(chart, doc=chart_doc)
+    has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
+    full_like_western = has_western_natal and has_31day_transit
+    can_continue_with_transit = full_like_western
+    has_yaml_mode_selector = full_like_western
+    horoscope_svg = chart.get("horoscope_svg") if has_western_natal else None
     shichusuimei_svg = chart.get("shichusuimei_svg") if product_type == "shichu" else None
     has_asteroids = False
     birth_time_notice = {"show": False}
@@ -1886,14 +1908,7 @@ def chart_page(request: Request, token: str):
             asteroid_yaml_text = build_detail_astrology_yaml(chart["yaml_text"])
         except Exception:
             asteroid_yaml_text = None
-    chart_doc = None
-    if has_yaml_mode_selector or not is_transit_yaml:
-        try:
-            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
-            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
-        except Exception:
-            chart_doc = None
-    if product_type in {"western_basic", "western_full"} and not horoscope_svg:
+    if has_western_natal and not horoscope_svg:
         try:
             horoscope_svg = build_horoscope_svg_from_yaml(chart["yaml_text"], doc=chart_doc)
         except Exception:
@@ -1925,6 +1940,8 @@ def chart_page(request: Request, token: str):
             "chart": chart,
             "is_transit_yaml": is_transit_yaml,
             "can_continue_with_transit": can_continue_with_transit,
+            "has_31day_transit": has_31day_transit,
+            "has_western_asteroids": has_western_asteroids,
             "has_yaml_mode_selector": has_yaml_mode_selector,
             "horoscope_svg": horoscope_svg,
             "shichusuimei_svg": shichusuimei_svg,
@@ -2331,34 +2348,68 @@ def _build_transit_addon_from_base(
     doc: dict,
     *,
     transit_start_date: datetime,
-) -> tuple[str, str, dict]:
+) -> tuple[str, str, dict, str, str, dict]:
     _validate_addon_base_doc(doc, "western_31days_transit_addon")
     args = _addon_args_from_base_doc(doc)
-    return build_31days_transit_addon_yaml(
+    addon_yaml_text, addon_prompt_text, addon_doc = build_31days_transit_addon_yaml(
         **args,
         transit_start_date=transit_start_date,
     )
+    has_asteroids = _doc_has_western_asteroids(doc)
+    _generated_yaml_text, chart_prompt_text, _generated_doc = build_product_yaml(
+        **args,
+        include_asteroids=has_asteroids,
+        include_shichusuimei=False,
+        include_transit=True,
+        transit_start_date=transit_start_date,
+        transit_days=31,
+    )
+    chart_doc = copy.deepcopy(doc)
+    systems = chart_doc.setdefault("systems", {})
+    western = systems.setdefault("western", {})
+    western["transit"] = (((addon_doc.get("systems") or {}).get("western") or {}).get("transit"))
+    product = chart_doc.setdefault("product", {})
+    product_options = product.setdefault("options", {})
+    product_options["transit"] = True
+    product_options["transit_days"] = 31
+    if "western_natal" not in product_options:
+        product_options["western_natal"] = True
+    if "asteroids" not in product_options:
+        product_options["asteroids"] = has_asteroids
+    chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
+    chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
+    return addon_yaml_text, addon_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
 
 
 def _transit_addon_chart_payload(
     *,
     yaml_text: str,
     prompt_text: str,
-    addon_doc: dict,
+    chart_doc: dict,
 ) -> dict[str, object]:
-    input_block = addon_doc.get("input") or {}
+    input_block = chart_doc.get("input") or {}
+    try:
+        share_yaml_text = build_light_astrology_yaml(yaml_text, doc=chart_doc)
+    except Exception:
+        share_yaml_text = yaml_text
     return {
         "buyer_name": str(input_block.get("title") or "").strip() or None,
         "birth_date": str(input_block.get("birth_date") or "").strip(),
         "birth_time": str(input_block.get("birth_time") or input_block.get("calculation_time") or "").strip() or None,
         "birth_place": str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip() or None,
-        "options": {**(addon_doc.get("product", {}).get("options", {}) or {}), "product_type": "western_31days_transit_addon"},
+        "options": {**(chart_doc.get("product", {}).get("options", {}) or {}), "product_type": "western_31days_transit_addon"},
         "yaml_text": yaml_text,
         "prompt_text": prompt_text,
-        "share_yaml_text": yaml_text,
+        "share_yaml_text": share_yaml_text,
         "horoscope_svg": None,
         "shichusuimei_svg": None,
     }
+
+
+def _doc_has_western_asteroids(doc: dict) -> bool:
+    western = ((doc.get("systems") or {}).get("western") or {})
+    asteroids = western.get("asteroids") or {}
+    return isinstance(asteroids, dict) and bool(asteroids)
 
 
 def _shift_years(value: date, years: int) -> date:
@@ -2421,7 +2472,9 @@ def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str) -> dic
 
 
 def _transit_addon_expires_at() -> datetime:
-    return datetime.now(timezone.utc) + timedelta(days=32)
+    # 31日トランジット addon も /chart/{token} の鑑定データページとして扱うため、
+    # 基本版・FULL版と同じ公開寿命にそろえる。
+    return _chart_expires_at()
 
 
 def _redeem_and_save_transit_addon_or_raise(
@@ -2563,7 +2616,14 @@ def addon_generate(
                 else _load_addon_base_doc_from_previous_chart_url(previous_chart_url)
             )
             start_dt = _parse_transit_start_date(transit_start_date)
-            result_yaml, prompt_text, addon_doc = _build_transit_addon_from_base(
+            (
+                result_yaml,
+                _addon_prompt_text,
+                _addon_doc,
+                chart_yaml_text,
+                chart_prompt_text,
+                chart_doc,
+            ) = _build_transit_addon_from_base(
                 doc,
                 transit_start_date=start_dt,
             )
@@ -2572,9 +2632,9 @@ def addon_generate(
                 addon_type,
                 result_yaml,
                 chart_payload=_transit_addon_chart_payload(
-                    yaml_text=result_yaml,
-                    prompt_text=prompt_text,
-                    addon_doc=addon_doc,
+                    yaml_text=chart_yaml_text,
+                    prompt_text=chart_prompt_text,
+                    chart_doc=chart_doc,
                 ),
             )
             return RedirectResponse(f"/chart/{token}", status_code=303)
@@ -2646,6 +2706,43 @@ def _chart_product_type(options: dict) -> str | None:
     return None
 
 
+def _chart_has_western_natal(chart: dict, *, doc: dict | None = None) -> bool:
+    options = chart.get("options") or {}
+    if bool(options.get("western_natal")):
+        return True
+    doc = doc if isinstance(doc, dict) else {}
+    western = ((doc.get("systems") or {}).get("western") or {})
+    return isinstance(western.get("natal"), dict) and bool(western.get("natal"))
+
+
+def _chart_has_31day_transit(chart: dict, *, doc: dict | None = None) -> bool:
+    options = chart.get("options") or {}
+    if options.get("transit_days") == 31 or bool(options.get("transit_31days_summary")):
+        return True
+    if bool(options.get("transit")) and options.get("product_type") == "western_31days_transit_addon":
+        return True
+    doc = doc if isinstance(doc, dict) else {}
+    western = ((doc.get("systems") or {}).get("western") or {})
+    transit = western.get("transit") or {}
+    if not isinstance(transit, dict):
+        return False
+    daily = transit.get("daily")
+    if isinstance(daily, list) and len(daily) >= 31:
+        return True
+    period = transit.get("period") or {}
+    return period.get("days") == 31
+
+
+def _chart_has_western_asteroids(chart: dict, *, doc: dict | None = None) -> bool:
+    options = chart.get("options") or {}
+    if bool(options.get("asteroids")):
+        return True
+    doc = doc if isinstance(doc, dict) else {}
+    western = ((doc.get("systems") or {}).get("western") or {})
+    asteroids = western.get("asteroids") or {}
+    return isinstance(asteroids, dict) and bool(asteroids)
+
+
 def _chart_expiry(chart: dict) -> datetime | None:
     expires_at = chart.get("expires_at")
     if isinstance(expires_at, datetime):
@@ -2684,8 +2781,13 @@ def _chart_zip_filename(token: str) -> str:
 
 def _chart_share_yaml_text(chart: dict) -> str:
     share_yaml_text = chart.get("share_yaml_text") or chart["yaml_text"]
-    options = chart.get("options") or {}
-    if _chart_product_type(options) == "western_full" and not chart.get("share_yaml_text"):
+    try:
+        loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+        chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+    except Exception:
+        chart_doc = None
+    full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
+    if full_like_western and not chart.get("share_yaml_text"):
         try:
             return build_light_astrology_yaml(chart["yaml_text"])
         except Exception:
@@ -2704,17 +2806,23 @@ def _chart_zip_readme(chart: dict) -> str:
     expires_label = _chart_expiry_label(_chart_expiry(chart))
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
+    try:
+        loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+        chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+    except Exception:
+        chart_doc = None
+    full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
     files: list[str] = [
         "ai_paste.txt: AIにそのまま貼るための推奨テキストです。ファイル名の末尾の日付はダウンロード当日です。迷ったらまずこれを使ってください。",
         "detail.yaml: AIに渡しやすい軽量版YAMLです。完全版より読みやすく、通常の鑑定向けです。",
         "full.yaml: 保存・検証用の完全版YAMLです。内容を細かく確認したいときに使います。",
         "prompt.txt: AIへの読み方を指定する文章です。ai_paste.txt の中にも同じ指示が含まれています。",
     ]
-    if product_type == "western_basic":
+    if product_type == "western_basic" and not full_like_western:
         files.extend([
             "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
         ])
-    elif product_type == "western_full":
+    elif full_like_western:
         files.extend([
             "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
             "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",

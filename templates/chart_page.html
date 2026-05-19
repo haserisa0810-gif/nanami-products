@@ -769,9 +769,15 @@
         <p class="helper-note">通常は、AIが読みやすい通常版のデータを使います。</p>
         {% if has_yaml_mode_selector %}
         <p class="full-version-note">
+          {% if has_western_asteroids %}
           FULL版には、小惑星を含む詳しいデータも入っています。<br>
           最初の鑑定後、もっと詳しく見たい時に使えます。<br>
           <a class="full-version-link" href="#full-version-details" onclick="openFullVersionDetails()">FULL版の小惑星データを見る</a>
+          {% else %}
+          このページには、31日分のトランジットを含む詳しいデータが入っています。<br>
+          今後の流れを詳しく見たい時に使えます。<br>
+          <a class="full-version-link" href="#full-version-details" onclick="openFullVersionDetails()">トランジット詳細データを見る</a>
+          {% endif %}
         </p>
         {% endif %}
         {% if horoscope_svg %}
@@ -939,9 +945,10 @@
 
           {% if has_yaml_mode_selector %}
           <div class="detail-section" id="full-version-details">
-            <h3>FULL版・小惑星ありデータを使う</h3>
-            <p class="hint">FULL版では、小惑星を含む読みやすい版と、31日分の詳細まで含む完全版を使えます。</p>
+            <h3>{% if has_western_asteroids %}FULL版・小惑星ありデータを使う{% else %}トランジット詳細データを使う{% endif %}</h3>
+            <p class="hint">{% if has_western_asteroids %}FULL版では、小惑星を含む読みやすい版と、31日分の詳細まで含む完全版を使えます。{% else %}このページでは、31日トランジットを含む詳しい版を使えます。{% endif %}</p>
             <div class="ai-mode-list" style="margin-top:12px">
+              {% if has_western_asteroids %}
               <label class="ai-mode-option" id="mode-asteroids-card" onclick="selectAiMode('asteroids')">
                 <input type="radio" name="ai-output-mode" value="asteroids" id="mode-asteroids-input">
                 <div class="ai-mode-copy">
@@ -952,6 +959,7 @@
                   <span class="mode-desc">主要惑星＋小惑星＋今日のトランジット＋31日の流れ。FULL版を詳しく読みたい時の標準です。</span>
                 </div>
               </label>
+              {% endif %}
               <label class="ai-mode-option" id="mode-full-card" onclick="selectAiMode('full')">
                 <input type="radio" name="ai-output-mode" value="full" id="mode-full-input">
                 <div class="ai-mode-copy">
@@ -959,7 +967,7 @@
                     <span class="mode-label">完全版</span>
                     <span class="mode-badge">全詳細</span>
                   </span>
-                  <span class="mode-desc">小惑星・31日全詳細データを含む完全版です。</span>
+                  <span class="mode-desc">{% if has_western_asteroids %}小惑星・31日全詳細データを含む完全版です。{% else %}31日分のトランジット詳細データを含む版です。{% endif %}</span>
                 </div>
               </label>
             </div>
@@ -1037,6 +1045,7 @@
     const SHARE_YAML = {{ share_yaml_text | tojson }};
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
+    const HAS_WESTERN_ASTEROIDS = {{ has_western_asteroids | tojson }};
     const FULL_YAML_URL = {{ yaml_url | tojson }};
     const FULL_ARCHIVE_ZIP_URL = {{ download_zip_url | tojson }};
     const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% else %}{{ chart.yaml_text | tojson }}{% endif %};
@@ -1171,14 +1180,22 @@
       const pasteLength = buildAiTextLengthFromYaml(SHARE_YAML).toLocaleString();
       if (HAS_YAML_MODE_SELECTOR && !fullYamlCache) {
         const asteroidLength = ASTEROID_YAML ? buildAiTextLengthFromYaml(ASTEROID_YAML).toLocaleString() : '未生成';
-        setText('combined-size', `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版は必要時に読み込みます。`);
-        setText('yaml-size', `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版は必要時に読み込みます。`);
+        setText('combined-size', HAS_WESTERN_ASTEROIDS
+          ? `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版は必要時に読み込みます。`
+          : `通常版.txt: ${pasteLength}文字。トランジット詳細版は必要時に読み込みます。`);
+        setText('yaml-size', HAS_WESTERN_ASTEROIDS
+          ? `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版は必要時に読み込みます。`
+          : `通常版: ${SHARE_YAML.length.toLocaleString()}文字。トランジット詳細版は必要時に読み込みます。`);
         return;
       }
       const fullLength = buildAiTextLengthFromYaml(fullYamlCache).toLocaleString();
       const asteroidLength = ASTEROID_YAML ? buildAiTextLengthFromYaml(ASTEROID_YAML).toLocaleString() : '未生成';
-      setText('combined-size', `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版: ${fullLength}文字。`);
-      setText('yaml-size', `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版: ${fullYamlCache.length.toLocaleString()}文字。`);
+      setText('combined-size', HAS_WESTERN_ASTEROIDS
+        ? `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版: ${fullLength}文字。`
+        : `通常版.txt: ${pasteLength}文字。トランジット詳細版: ${fullLength}文字。`);
+      setText('yaml-size', HAS_WESTERN_ASTEROIDS
+        ? `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版: ${fullYamlCache.length.toLocaleString()}文字。`
+        : `通常版: ${SHARE_YAML.length.toLocaleString()}文字。トランジット詳細版: ${fullYamlCache.length.toLocaleString()}文字。`);
     }
 
     function initCopyHelpers() {
@@ -1199,6 +1216,7 @@
     }
 
     function selectAiMode(mode) {
+      if (mode === 'asteroids' && !HAS_WESTERN_ASTEROIDS) mode = 'full';
       const asteroidsCard = document.getElementById('mode-asteroids-card');
       const fullCard = document.getElementById('mode-full-card');
       const asteroidsInput = document.getElementById('mode-asteroids-input');
@@ -1213,7 +1231,7 @@
         asteroidsInput.checked = isAsteroids;
         fullInput.checked = isFull;
       }
-      localStorage.setItem('chart-ai-output-mode', isFull ? 'full' : 'asteroids');
+      localStorage.setItem('chart-ai-output-mode', isFull ? 'full' : (isAsteroids ? 'asteroids' : 'paste'));
       if (isAsteroids) {
         setText('yaml-preview', ASTEROID_YAML ? firstLines(ASTEROID_YAML, 16) : '小惑星つき版を準備できませんでした。');
       } else {
@@ -1235,7 +1253,7 @@
     function openFullVersionDetails() {
       const detailBox = document.getElementById('detail-box');
       if (detailBox) detailBox.open = true;
-      selectAiMode('asteroids');
+      selectAiMode(HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full');
     }
 
     function openHoroscopeDetails() {
@@ -1250,6 +1268,10 @@
       } catch (e) {
         return false;
       }
+    }
+
+    function canUseTextShare() {
+      return Boolean(navigator.share);
     }
 
     function buildAiTextFileName(mode = getSelectedAiMode()) {
@@ -1306,6 +1328,7 @@
     function shareSelectedAiText() {
       const mode = getSelectedAiMode();
       const file = getPreparedAiTextFile(mode);
+      const shareText = getPreparedAiTextShareText(mode);
       try {
         if (!file) {
           const error = new Error('txt_file_is_not_prepared');
@@ -1314,13 +1337,28 @@
         }
         const canShareFiles = canUseFileShare(file);
         if (!canShareFiles) {
+          if (canUseTextShare() && shareText) {
+            navigator.share({
+              title: 'AI用テキスト',
+              text: shareText,
+            }).catch((e) => {
+              if (e && e.name === 'AbortError') return;
+              openFallbackShare();
+              const status = document.getElementById('copy-status');
+              if (status) {
+                status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+                setTimeout(() => status.textContent = '', 4000);
+              }
+            });
+            return;
+          }
           const error = new Error('navigator.canShare({ files }) is false');
           error.name = 'NotSupportedError';
           throw error;
         }
         const sharePromise = navigator.share({
           title: 'AI用TXTファイル',
-          text: getPreparedAiTextShareText(mode),
+          text: shareText,
           files: [file],
         });
         sharePromise.catch((e) => {
@@ -1352,6 +1390,7 @@
     function shareDefaultAiText() {
       selectAiMode('paste');
       const file = getPreparedAiTextFile('paste');
+      const shareText = getPreparedAiTextShareText('paste');
       try {
         if (!file) {
           const error = new Error('txt_file_is_not_prepared');
@@ -1360,13 +1399,28 @@
         }
         const canShareFiles = canUseFileShare(file);
         if (!canShareFiles) {
+          if (canUseTextShare() && shareText) {
+            navigator.share({
+              title: 'AI用テキスト',
+              text: shareText,
+            }).catch((e) => {
+              if (e && e.name === 'AbortError') return;
+              openFallbackShare();
+              const status = document.getElementById('copy-status');
+              if (status) {
+                status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+                setTimeout(() => status.textContent = '', 4000);
+              }
+            });
+            return;
+          }
           const error = new Error('navigator.canShare({ files }) is false');
           error.name = 'NotSupportedError';
           throw error;
         }
         const sharePromise = navigator.share({
           title: 'AI用TXTファイル',
-          text: getPreparedAiTextShareText('paste'),
+          text: shareText,
           files: [file],
         });
         sharePromise.catch((e) => {
