@@ -1008,13 +1008,18 @@ def _handle_calc_api(
                 {key: value for key, value in body.items() if key not in {"ok", "handoff_yaml"}}
             )
         except Exception as exc:
+            logger.exception(
+                "api_chart_snapshot_failed endpoint=%s api_key_id=%s error=%r",
+                endpoint,
+                api_key_id,
+                exc,
+            )
             pg_store.update_api_usage(
                 usage_id=usage_id,
                 credits_used=0,
-                status="error",
+                status="snapshot_unavailable",
                 error_code="API_CHART_SNAPSHOT_FAILED",
             )
-            return _api_error("API_CHART_SNAPSHOT_FAILED", f"chart snapshot creation failed: {exc}", 500)
 
     consumed = pg_store.consume_api_credits(api_key_id=api_key_id, credits=credits_required)
     if not consumed:
