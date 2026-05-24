@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import io
+import logging
 import os
 import re
 import secrets
@@ -52,6 +53,20 @@ from services.yaml_exporter import (
 app = FastAPI(title="nanami-products")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+logger = logging.getLogger("nanami.chart")
+
+
+def _raise_chart_yaml_generation_error(token: str, endpoint: str, exc: Exception) -> None:
+    logger.exception(
+        "chart_yaml_generation_failed token=%s endpoint=%s error=%r",
+        token,
+        endpoint,
+        exc,
+    )
+    raise HTTPException(
+        status_code=500,
+        detail="YAMLデータの生成に失敗しました。時間をおいて再試行してください。",
+    ) from exc
 
 
 def _resolve_asset_version() -> str:
@@ -1765,7 +1780,7 @@ def redeem_post(
 
 @app.get("/chart/{token}.yaml", response_class=PlainTextResponse)
 def chart_yaml(token: str):
-    chart = _load_chart_or_404(token)
+    chart = _load_chart_or_404(token, include_svgs=False)
     response = PlainTextResponse(chart["yaml_text"], media_type="text/yaml; charset=utf-8")
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
@@ -1773,8 +1788,12 @@ def chart_yaml(token: str):
 
 @app.get("/chart/{token}/natal.yaml", response_class=PlainTextResponse)
 def chart_natal_yaml(token: str):
-    chart = _load_chart_or_404(token)
-    response = PlainTextResponse(build_base_astrology_yaml(chart["yaml_text"]), media_type="text/yaml; charset=utf-8")
+    chart = _load_chart_or_404(token, include_svgs=False)
+    try:
+        yaml_text = build_base_astrology_yaml(chart["yaml_text"])
+    except Exception as exc:
+        _raise_chart_yaml_generation_error(token, "natal.yaml", exc)
+    response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
     response.headers["Content-Disposition"] = 'attachment; filename="nanami-natal.yaml"'
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
@@ -1782,8 +1801,12 @@ def chart_natal_yaml(token: str):
 
 @app.get("/chart/{token}/natal-asteroids.yaml", response_class=PlainTextResponse)
 def chart_natal_asteroids_yaml(token: str):
-    chart = _load_chart_or_404(token)
-    response = PlainTextResponse(build_natal_asteroids_yaml(chart["yaml_text"]), media_type="text/yaml; charset=utf-8")
+    chart = _load_chart_or_404(token, include_svgs=False)
+    try:
+        yaml_text = build_natal_asteroids_yaml(chart["yaml_text"])
+    except Exception as exc:
+        _raise_chart_yaml_generation_error(token, "natal-asteroids.yaml", exc)
+    response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
     response.headers["Content-Disposition"] = 'attachment; filename="nanami-natal-asteroids.yaml"'
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
@@ -1791,9 +1814,26 @@ def chart_natal_asteroids_yaml(token: str):
 
 @app.get("/chart/{token}/transit.yaml", response_class=PlainTextResponse)
 def chart_transit_yaml(token: str):
-    chart = _load_chart_or_404(token)
-    response = PlainTextResponse(build_transit_astrology_yaml(chart["yaml_text"]), media_type="text/yaml; charset=utf-8")
+    chart = _load_chart_or_404(token, include_svgs=False)
+    try:
+        yaml_text = build_transit_astrology_yaml(chart["yaml_text"])
+    except Exception as exc:
+        _raise_chart_yaml_generation_error(token, "transit.yaml", exc)
+    response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
     response.headers["Content-Disposition"] = 'attachment; filename="nanami-transit.yaml"'
+    _apply_public_chart_headers(response, chart, max_age=86400)
+    return response
+
+
+@app.get("/chart/{token}/detail.yaml", response_class=PlainTextResponse)
+def chart_detail_yaml(token: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    try:
+        yaml_text = build_detail_astrology_yaml(chart["yaml_text"])
+    except Exception as exc:
+        _raise_chart_yaml_generation_error(token, "detail.yaml", exc)
+    response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-detail.yaml"'
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
 
@@ -1872,7 +1912,7 @@ def chart_download_zip(token: str):
 
 @app.get("/chart/{token}/prompt.txt", response_class=PlainTextResponse)
 def chart_prompt(token: str):
-    chart = _load_chart_or_404(token)
+    chart = _load_chart_or_404(token, include_svgs=False)
     response = PlainTextResponse(chart["prompt_text"], media_type="text/plain; charset=utf-8")
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
@@ -2455,7 +2495,7 @@ def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str) -> dic
         raise ValueError("前回鑑定URLが不正です。鑑定結果ページのURLをそのまま貼り付けてください。")
 
     token = token_match.group(1)
-    chart = pg_store.get_chart(token)
+    chart = pg_store.get_chart(token, include_svgs=False)
     if not chart:
         raise ValueError("前回鑑定URLが見つかりません。90日以内の有効な鑑定結果URLを入力してください。")
 
@@ -2779,17 +2819,19 @@ def _chart_zip_filename(token: str) -> str:
     return f"nanami_chart_{safe_token}.zip"
 
 
-def _chart_share_yaml_text(chart: dict) -> str:
+def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
     share_yaml_text = chart.get("share_yaml_text") or chart["yaml_text"]
-    try:
-        loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
-        chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
-    except Exception:
-        chart_doc = None
+    chart_doc = doc if isinstance(doc, dict) else None
+    if chart_doc is None:
+        try:
+            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+        except Exception:
+            chart_doc = None
     full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
     if full_like_western and not chart.get("share_yaml_text"):
         try:
-            return build_light_astrology_yaml(chart["yaml_text"])
+            return build_light_astrology_yaml(chart["yaml_text"], doc=chart_doc)
         except Exception:
             return chart["yaml_text"]
     return share_yaml_text
@@ -2875,11 +2917,22 @@ def _public_base_url(request: Request) -> str:
     return base_url
 
 
-def _load_chart_or_404(token: str) -> dict:
-    chart = pg_store.get_chart(token)
+def _load_chart_or_404(token: str, *, include_svgs: bool = True) -> dict:
+    try:
+        chart = pg_store.get_chart(token, include_svgs=include_svgs)
+    except Exception as exc:
+        logger.exception(
+            "chart_load_failed token_prefix=%s include_svgs=%s error=%r",
+            token[:8],
+            include_svgs,
+            exc,
+        )
+        raise
     if not chart:
+        logger.info("chart_not_found token_prefix=%s include_svgs=%s", token[:8], include_svgs)
         raise HTTPException(status_code=404, detail="chart not found")
     expires_at = _chart_expiry(chart)
     if expires_at and datetime.now(timezone.utc) >= expires_at:
+        logger.info("chart_expired token_prefix=%s include_svgs=%s", token[:8], include_svgs)
         raise HTTPException(status_code=410, detail="chart expired")
     return chart
