@@ -574,11 +574,17 @@ def save_chart(
             )
 
 
-def get_chart(token: str) -> dict[str, Any] | None:
+def get_chart(token: str, *, include_svgs: bool = True) -> dict[str, Any] | None:
+    columns = "*"
+    if not include_svgs:
+        columns = """
+            token, order_code, buyer_name, birth_date, birth_time, birth_place,
+            options, yaml_text, prompt_text, share_yaml_text, expires_at, created_at
+        """
     with _conn() as con:
         with con.cursor() as cur:
             cur.execute(
-                f"SELECT * FROM {SCHEMA}.charts WHERE token = %s",
+                f"SELECT {columns} FROM {SCHEMA}.charts WHERE token = %s",
                 (token,),
             )
             row = cur.fetchone()
