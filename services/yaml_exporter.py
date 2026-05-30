@@ -724,6 +724,12 @@ def build_31days_transit_addon_yaml(
     return yaml_text, TRANSIT_31DAYS_ADDON_PROMPT.strip() + "\n", doc
 
 
+def refresh_dynamic_transit_yaml(full_yaml_text: str) -> str:
+    from services.light_yaml import build_transit_astrology_yaml
+
+    return build_transit_astrology_yaml(full_yaml_text)
+
+
 SHICHU_FORTUNE_CYCLES_ADDON_PROMPT = """あなたは四柱推命の鑑定者です。以下のYAMLは、四柱推命基本版に後から追加する大運・流年データです。
 
 重要ルール:
