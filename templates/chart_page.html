@@ -707,7 +707,11 @@
 <body>
   <main class="wrap wide">
     <div class="card buyer-card">
-      {% include "_language_switcher.html" %}
+      <div class="language-switcher" aria-label="Language switcher">
+        <span>{{ t.lang_label }}</span>
+        <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
+        <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+      </div>
       <p class="eyebrow">{% if is_transit_yaml %}{{ t.analysis_eyebrow }}{% else %}{{ t.chart_eyebrow }}{% endif %}</p>
       <div class="page-title-block">
         <h1>{% if is_transit_yaml %}{{ chart.buyer_name or t.transit_title_default }}{{ t.transit_title_suffix }}{% elif chart.buyer_name %}{{ chart.buyer_name }}{{ t.chart_title }}{% else %}{{ t.chart_title_default }}{% endif %}</h1>

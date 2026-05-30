@@ -11,7 +11,11 @@
 <body>
   <main class="wrap">
     <div class="card buyer-card product-western_full">
-      {% include "_language_switcher.html" %}
+      <div class="language-switcher" aria-label="Language switcher">
+        <span>{{ t.lang_label }}</span>
+        <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
+        <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+      </div>
       <p class="eyebrow">nanami-products</p>
       <div class="product-pill">{{ product.label }}</div>
       <h1>{{ product.label }}<br>{{ t.input_title_suffix }}</h1>
@@ -221,7 +225,41 @@
       </div>
     </div>
   </main>
-  {% include "_submit_guard.html" %}
+  <script>
+    (function () {
+      if (window.prepareGeneratingSubmit) return;
+
+      window.prepareGeneratingSubmit = function prepareGeneratingSubmit(form, options) {
+        if (!form) return;
+        if (form.dataset.submitGuardActive === '1') return;
+        form.dataset.submitGuardActive = '1';
+
+        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+        submitButtons.forEach((button) => {
+          button.disabled = true;
+          if (button.tagName === 'BUTTON') {
+            button.dataset.originalText = button.textContent || '';
+            if (options && options.buttonText) button.textContent = options.buttonText;
+          } else if (options && options.buttonText) {
+            button.dataset.originalValue = button.value || '';
+            button.value = options.buttonText;
+          }
+        });
+
+        const overlay = document.createElement('div');
+        overlay.className = 'submit-guard-overlay';
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.innerHTML = `
+          <div class="submit-guard-panel">
+            <strong>${(options && options.title) || '処理中です'}</strong>
+            <p>${(options && options.desc) || 'しばらくお待ちください。'}</p>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      };
+    }());
+  </script>
   <script>
     const form = document.getElementById('redeem-form');
     const confirmModal = document.getElementById('submit-confirm-modal');
