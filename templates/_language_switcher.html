@@ -1,0 +1,5 @@
+<div class="language-switcher" aria-label="Language switcher">
+  <span>{{ t.lang_label }}</span>
+  <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
+  <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+</div>

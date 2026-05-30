@@ -1,0 +1,35 @@
+<script>
+  (function () {
+    if (window.prepareGeneratingSubmit) return;
+
+    window.prepareGeneratingSubmit = function prepareGeneratingSubmit(form, options) {
+      if (!form) return;
+      if (form.dataset.submitGuardActive === '1') return;
+      form.dataset.submitGuardActive = '1';
+
+      const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+      submitButtons.forEach((button) => {
+        button.disabled = true;
+        if (button.tagName === 'BUTTON') {
+          button.dataset.originalText = button.textContent || '';
+          if (options && options.buttonText) button.textContent = options.buttonText;
+        } else if (options && options.buttonText) {
+          button.dataset.originalValue = button.value || '';
+          button.value = options.buttonText;
+        }
+      });
+
+      const overlay = document.createElement('div');
+      overlay.className = 'submit-guard-overlay';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.innerHTML = `
+        <div class="submit-guard-panel">
+          <strong>${(options && options.title) || '処理中です'}</strong>
+          <p>${(options && options.desc) || 'しばらくお待ちください。'}</p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    };
+  }());
+</script>
