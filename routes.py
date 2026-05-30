@@ -557,6 +557,54 @@ I18N = {
         "svg_loading": "図を読み込んでいます...",
         "svg_load_failed": "図を読み込めませんでした。時間をおいて再度お試しください。",
         "png_failed_svg_copied": "PNG保存に失敗したため、SVGをコピーしました",
+        "addon_title": "追加部品YAML生成",
+        "addon_lead": "STORESで購入した追加部品を、AIに渡せるYAMLとして生成するフォームです。",
+        "addon_usage_title": "使い方",
+        "addon_usage_items": [
+            "STORESの購入確認メールに記載された注文番号を入力してください。",
+            "小惑星追加は、基本版の出生データを土台に生成します。",
+            "31日トランジット追加では、基本版YAML または 90日以内の前回鑑定URLを入力してください。",
+            "生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。",
+            "YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。",
+            "貼り付けたYAMLは保存しません。",
+        ],
+        "addon_generate_section_title": "生成する追加部品",
+        "addon_type_label": "addon種別",
+        "order_code_label": "STORESオーダー番号",
+        "order_code_placeholder": "例：9824333454",
+        "order_code_hint": "購入確認メールの件名にある注文番号です。追加部品ごとに1回だけ使用できます。",
+        "base_data_title": "基本データ入力",
+        "base_data_hint_transit": "31日トランジット追加は、基本版の出生データを土台に生成します。",
+        "base_data_hint_standard": "基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。",
+        "previous_chart_url_label": "90日以内の前回鑑定URL",
+        "previous_chart_url_placeholder": "https://.../chart/...",
+        "previous_chart_url_hint": "前回の鑑定結果ページURLから、ネイタル情報を引き継げます。",
+        "base_yaml_label": "YAML貼り付け欄",
+        "base_yaml_placeholder": "ここに基本版YAMLを貼り付けてください",
+        "base_yaml_hint": "基本版YAMLの内容から出生情報を読み取り、addon生成に使用します。",
+        "transit_period_title": "トランジット期間",
+        "transit_period_hint": "期間は31日固定です。開始日は現在日から前後5年以内で指定できます。",
+        "transit_start_date_label": "開始日",
+        "transit_start_date_hint": "指定可能範囲: {min_date} 〜 {max_date}",
+        "generate_button": "追加部品YAMLを生成する",
+        "generated_transit_title": "31日トランジットデータを生成しました",
+        "generated_transit_lead": "以下のURLから32日間アクセスできます。",
+        "transit_url_label": "閲覧URL",
+        "transit_expires_hint": "有効期限: {label}",
+        "transit_url_hint": "AIに詳しく読ませたい場合は、ダウンロードしたYAMLファイルを添付してください。",
+        "copy_url_button": "URLをコピー",
+        "open_page_button": "ページを開く",
+        "download_yaml_button": "YAMLをダウンロード",
+        "result_yaml_title": "生成結果YAML",
+        "result_yaml_hint": "このaddon YAMLを基本版YAMLと一緒にAIへ貼り付けてください。",
+        "copy_button": "コピー",
+        "download_button": "ダウンロード",
+        "copy_no_yaml": "コピーするYAMLがありません。",
+        "copy_no_url": "コピーするURLがありません。",
+        "copy_no_download": "ダウンロードするYAMLがありません。",
+        "copy_done": "コピーしました。",
+        "url_copied_done": "URLをコピーしました。",
+        "download_started": "ダウンロードを開始しました。",
     },
     "en": {
         "lang_label": "Language",
@@ -839,6 +887,54 @@ I18N = {
         "svg_loading": "Loading chart...",
         "svg_load_failed": "Could not load the chart. Please try again later.",
         "png_failed_svg_copied": "PNG save failed, so the SVG was copied instead.",
+        "addon_title": "Add-on YAML generation",
+        "addon_lead": "This form generates YAML for purchased add-ons that can be passed to AI.",
+        "addon_usage_title": "How to use",
+        "addon_usage_items": [
+            "Enter the order number shown in the STORES purchase confirmation email.",
+            "The asteroid add-on is generated on top of the basic birth data.",
+            "For the 31-day transit add-on, enter either the basic YAML or a previous chart URL from the last 90 days.",
+            "The generated add-on YAML is used together with the basic YAML when sending it to AI.",
+            "You can use the YAML on its own or append it to a full AI-reading prompt.",
+            "The pasted YAML is not saved.",
+        ],
+        "addon_generate_section_title": "Add-on to generate",
+        "addon_type_label": "Add-on type",
+        "order_code_label": "STORES order number",
+        "order_code_placeholder": "Example: 9824333454",
+        "order_code_hint": "This is the order number shown in the purchase confirmation email. Each add-on can be used only once.",
+        "base_data_title": "Base data input",
+        "base_data_hint_transit": "The 31-day transit add-on is generated on top of the basic birth data.",
+        "base_data_hint_standard": "The basic YAML is parsed to read the birth data and generate only the add-on YAML.",
+        "previous_chart_url_label": "Previous chart URL within 90 days",
+        "previous_chart_url_placeholder": "https://.../chart/...",
+        "previous_chart_url_hint": "You can carry over natal information from the previous chart page URL.",
+        "base_yaml_label": "Paste YAML here",
+        "base_yaml_placeholder": "Paste the basic YAML here",
+        "base_yaml_hint": "The basic YAML is used to read the birth data for add-on generation.",
+        "transit_period_title": "Transit period",
+        "transit_period_hint": "The period is fixed to 31 days. The start date can be set within five years before or after today.",
+        "transit_start_date_label": "Start date",
+        "transit_start_date_hint": "Available range: {min_date} to {max_date}",
+        "generate_button": "Generate add-on YAML",
+        "generated_transit_title": "31-day transit data generated",
+        "generated_transit_lead": "You can access this page for 32 days from the URL below.",
+        "transit_url_label": "View URL",
+        "transit_expires_hint": "Expires: {label}",
+        "transit_url_hint": "If you want AI to read it in more detail, attach the downloaded YAML file.",
+        "copy_url_button": "Copy URL",
+        "open_page_button": "Open page",
+        "download_yaml_button": "Download YAML",
+        "result_yaml_title": "Generated YAML",
+        "result_yaml_hint": "Paste this add-on YAML together with the basic YAML when sending it to AI.",
+        "copy_button": "Copy",
+        "download_button": "Download",
+        "copy_no_yaml": "There is no YAML to copy.",
+        "copy_no_url": "There is no URL to copy.",
+        "copy_no_download": "There is no YAML to download.",
+        "copy_done": "Copied.",
+        "url_copied_done": "URL copied.",
+        "download_started": "Download started.",
     },
 }
 OVERSEAS_TIMEZONE_OPTIONS = [
@@ -3456,6 +3552,22 @@ ADDON_FORM_OPTIONS = [
 ]
 
 
+def _localized_addon_options(lang: str) -> list[dict[str, str]]:
+    if lang == "en":
+        labels = {
+            "western_asteroids_addon": "Asteroid add-on",
+            "western_31days_transit_addon": "31-day transit add-on",
+            "western_long_term_transits_addon": "Long-term transits add-on (1 year)",
+        }
+    else:
+        labels = {
+            "western_asteroids_addon": "小惑星追加",
+            "western_31days_transit_addon": "31日トランジット追加",
+            "western_long_term_transits_addon": "長期トランジット（1年）追加",
+        }
+    return [{"value": item["value"], "label": labels.get(item["value"], item["label"])} for item in ADDON_FORM_OPTIONS]
+
+
 def _addon_form_response(
     request: Request,
     *,
@@ -3468,11 +3580,13 @@ def _addon_form_response(
     status_code: int = 200,
 ) -> HTMLResponse:
     today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+    lang_ctx = _i18n_context(request)
     return templates.TemplateResponse(
         "addon_form.html",
         {
             "request": request,
-            "addon_options": ADDON_FORM_OPTIONS,
+            **lang_ctx,
+            "addon_options": _localized_addon_options(lang_ctx["lang"]),
             "form": form or {
                 "addon_type": "western_asteroids_addon",
                 "order_code": "",
