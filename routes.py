@@ -8,6 +8,7 @@ import os
 import re
 import secrets
 import subprocess
+import time
 import zipfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -36,17 +37,20 @@ from services.light_yaml import (
     build_natal_asteroids_yaml,
     build_transit_astrology_yaml,
 )
+from services.long_term_transit_yaml import build_long_term_transits_yaml, has_long_term_transits
 from services.post_chart import build_post_chart
 from services.shichu_chart import (
     build_shichusuimei_svg_from_yaml,
     is_shichusuimei_png_renderer_available,
     render_shichusuimei_png_from_svg,
 )
+from services.svg_optimize import optimize_svg
 from services.transit_yaml import build_transit_only_yaml
 from services.yaml_exporter import (
     build_31days_transit_addon_yaml,
     build_asteroid_addon_yaml,
     build_product_yaml,
+    refresh_dynamic_transit_yaml,
     build_shichu_fortune_cycles_addon_yaml,
 )
 
@@ -54,6 +58,37 @@ app = FastAPI(title="nanami-products")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 logger = logging.getLogger("nanami.chart")
+TRANSIENT_ERROR_MARKERS = (
+    "ssl connection has been closed unexpectedly",
+    "server closed the connection unexpectedly",
+    "connection already closed",
+    "connection not open",
+    "terminating connection",
+    "could not receive data from server",
+    "could not send data to server",
+    "timeout expired",
+    "too many connections",
+    "connection pool exhausted",
+)
+USER_TRANSIENT_ERROR_MESSAGE = (
+    "通信が一時的に不安定でした。少し時間をおいて再試行してください。"
+    "すでに生成が完了している場合は、同じ注文番号で再送信すると生成済みページへ戻ります。"
+)
+
+
+def _elapsed_ms(start: float) -> float:
+    return round((time.perf_counter() - start) * 1000, 2)
+
+
+def _is_transient_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(marker in message for marker in TRANSIENT_ERROR_MARKERS)
+
+
+def _public_error_message(exc: Exception, *, fallback: str = "処理に失敗しました。時間をおいて再試行してください。") -> str:
+    if _is_transient_error(exc):
+        return USER_TRANSIENT_ERROR_MESSAGE
+    return fallback
 
 
 def _raise_chart_yaml_generation_error(token: str, endpoint: str, exc: Exception) -> None:
@@ -104,9 +139,35 @@ def _asset_url(path: str) -> str:
 templates.env.globals.update(asset_version=ASSET_VERSION, asset_url=_asset_url)
 
 
+@app.get("/favicon.ico")
+def favicon():
+    return Response(status_code=204)
+
+
 @app.middleware("http")
 async def _asset_cache_control_middleware(request: Request, call_next):
-    response = await call_next(request)
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.exception(
+            "request_failed path=%s method=%s elapsed_ms=%s error_type=%s error=%r",
+            request.url.path,
+            request.method,
+            _elapsed_ms(start),
+            type(exc).__name__,
+            exc,
+        )
+        raise
+    elapsed_ms = _elapsed_ms(start)
+    if elapsed_ms >= float(os.getenv("SLOW_REQUEST_LOG_MS", "12000")):
+        logger.warning(
+            "slow_request path=%s method=%s status=%s elapsed_ms=%s",
+            request.url.path,
+            request.method,
+            response.status_code,
+            elapsed_ms,
+        )
     if request.url.path.startswith("/static/") and request.url.path.endswith((".css", ".js")):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
@@ -212,24 +273,614 @@ PRODUCT_SLUGS = {
 }
 PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
 CHART_EXPIRES_DAYS = 90
+SUPPORTED_LANGS = {"ja", "en"}
+
+I18N = {
+    "ja": {
+        "lang_label": "表示言語",
+        "lang_ja": "日本語",
+        "lang_en": "English",
+        "product_labels": {
+            "western_basic": "ホロスコープ基本版",
+            "western_full": "ホロスコープFULL版",
+            "western_asteroids_addon": "ホロスコープ：小惑星追加",
+            "shichu": "四柱推命鑑定",
+            "transit_yaml": "トランジットYAML版",
+        },
+        "product_leads": {
+            "western_basic": "注文番号と出生情報を入力してください。",
+            "western_full": "小惑星・トランジット（1ヶ月）を含む出生図データを作成します。<br>注文番号と出生情報を入力してください。",
+            "shichu": "四柱推命に必要な情報を入力してください。<br>日替わり境界は、標準の1時（丑の刻）または23時から選択できます。",
+        },
+        "start_title_suffix": "鑑定データ作成",
+        "start_notice_title": "登録前に必ず確認してください",
+        "start_notice_items": [
+            "<strong>注文番号は1回だけ使用できます。</strong>一度生成すると再生成できません。",
+            "<strong>送信後の入力変更はできません。</strong>生年月日・出生時刻・出生地をよく確認してください。",
+            "出生時刻が不明な場合は空欄のままで構いません（正午で計算します）。",
+            "生成後に表示されるURLは、必ず保存してください。",
+        ],
+        "start_button": "入力フォームへ進む",
+        "input_title_suffix": "鑑定データ入力",
+        "shichu_input_title_suffix": "データ入力",
+        "precheck": "入力前チェック",
+        "precheck_strong": "送信後は同じ注文番号で再生成できません。",
+        "precheck_note": "生年月日・出生時刻・出生地を確認してから送信してください。",
+        "order_info": "注文情報",
+        "order_provider": "購入元",
+        "provider_stores": "STORES",
+        "provider_gumroad": "Gumroad",
+        "provider_payhip": "Payhip",
+        "stores_order": "注文番号",
+        "payhip_email": "購入時のメールアドレス",
+        "payhip_product": "購入した商品",
+        "payhip_order_id": "Order ID / Invoice Number",
+        "payhip_order_id_optional": "Order ID / Invoice Number（任意）",
+        "payhip_order_hint": "Payhipの購入メールにOrder IDやInvoice Numberが表示されている場合のみ入力してください。",
+        "required": "必須",
+        "optional": "任意",
+        "not_entered": "未入力",
+        "order_help": "注文番号を入力してください。",
+        "order_mail_hint": "STORESから届く購入完了メールに記載されている注文番号を入力してください。例：#12345678 など",
+        "name": "お名前",
+        "birth_info": "出生情報",
+        "birth_date": "生年月日",
+        "birth_date_manual_hint": "数字だけ入力すると YYYY-MM-DD 形式で表示されます。例：1990-01-01",
+        "birth_date_required_error": "生年月日を入力してください。",
+        "birth_date_format_error": "生年月日は YYYY-MM-DD 形式になるよう8桁の数字で入力してください。例：1990-01-01",
+        "birth_date_invalid_error": "存在しない日付です。YYYY-MM-DD として解釈できる日付を入力してください。",
+        "birth_date_future_error": "未来日は指定できません。",
+        "birth_time_accuracy": "出生時刻の精度",
+        "time_exact": "正確な時刻あり",
+        "time_unknown": "不明",
+        "time_morning": "午前",
+        "time_afternoon": "午後",
+        "time_night": "夜",
+        "time_accuracy_help": "推定時刻の場合、ハウス・ASC・MCなどは参考値になります。",
+        "birth_time": "出生時刻",
+        "birth_time_help": "正確な出生時刻が分かる場合のみ入力してください。",
+        "prefecture": "出生都道府県",
+        "select_placeholder": "選択してください",
+        "place_details": "出生地の詳細",
+        "place_kind": "出生地区分",
+        "domestic": "国内",
+        "international": "海外",
+        "coordinates": "緯度・経度で入力",
+        "domestic_place_note": "都道府県単位で計算します。",
+        "domestic_coordinates_summary": "詳細座標を指定する（任意）",
+        "domestic_coordinates_note": "市区町村単位など、より細かく出生地を指定したい場合だけ入力してください。",
+        "overseas_place_note": "国名・都市名を入力し、必要な場合は座標とタイムゾーンも指定してください。",
+        "coordinates_place_note": "出生地を緯度・経度で指定したい場合はこちらを使ってください。",
+        "coordinates_range_note": "緯度は -90〜90、経度は -180〜180 の数値で入力してください。",
+        "birth_place_country_city": "国・都市",
+        "latitude": "緯度",
+        "longitude": "経度",
+        "coordinate_note": "空欄なら都道府県の代表座標を使います。市区町村単位など、より細かく指定したい場合だけ入力してください。",
+        "international_coordinate_help": "You can search coordinates using Google Maps.",
+        "timezone": "タイムゾーン",
+        "timezone_other": "その他（手入力）",
+        "timezone_custom_placeholder": "例：America/New_York",
+        "timezone_help": "出生地に近い地域を選んでください。リストにない場合だけ「その他」を使います。",
+        "gender": "性別",
+        "gender_unknown": "指定なし",
+        "gender_female": "女性",
+        "gender_male": "男性",
+        "gender_help": "四柱推命の大運計算に使用します。不明な場合は「指定なし」のまま送信できます。",
+        "shichu_settings": "四柱推命設定",
+        "day_change": "日替わり境界",
+        "standard_1am": "1時（丑の刻）— 標準",
+        "day_change_help": "23時切替の流派で見る場合のみ「23時」を選択してください。",
+        "final_check": "最終確認",
+        "final_check_hint": "送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。",
+        "final_agree": "入力内容を確認しました。送信後に変更できないことに同意します。",
+        "submit_generate": "AI鑑定データを生成する",
+        "submit_confirm": "この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？",
+        "confirm_title": "最終確認",
+        "confirm_lead": "作成前に入力内容を確認してください。",
+        "confirm_modify": "修正する",
+        "confirm_create": "この内容で作成する",
+        "confirm_order": "注文番号",
+        "confirm_name": "名前",
+        "confirm_birth_date": "生年月日",
+        "confirm_birth_time": "出生時刻",
+        "confirm_birth_place_mode": "出生地入力モード",
+        "confirm_birth_place": "出生地",
+        "confirm_coordinates": "緯度・経度",
+        "submit_loading_button": "生成中です...",
+        "submit_loading_title": "鑑定データを生成しています",
+        "submit_loading_desc": "通信状況や初回起動により時間がかかる場合があります。この画面のままお待ちください。",
+        "chart_eyebrow": "AI鑑定データ",
+        "analysis_eyebrow": "AI分析データ",
+        "chart_title": "さん専用の鑑定データ",
+        "chart_title_default": "あなたさん専用の鑑定データ",
+        "transit_title_default": "イベント",
+        "transit_title_suffix": "のトランジットYAML",
+        "chart_lead": "AI鑑定用に整理された基本データです。「AIに送る」からそのまま使えます。",
+        "transit_lead": "このデータをAIに貼るだけで、イベント時点の天体配置分析を始められます。<br>出生情報を使わない、トランジットのみのYAMLです。",
+        "birthday": "生年月日",
+        "date": "日付",
+        "time": "時刻",
+        "calc_time": "計算用時刻",
+        "birth_time_badge": "出生時刻",
+        "place": "場所",
+        "birth_place": "出生地",
+        "unknown": "不明",
+        "page_expiry": "このページはURLを知っている人が開けます。有効期限は{expires_label}（発行から90日間）です。",
+        "steps_title": "3ステップで鑑定をはじめる",
+        "step1_title": "データをAIに渡す",
+        "step1_desc": "下のボタンから、鑑定用データをAIへ送ります。",
+        "step2_title": "そのまま送信する",
+        "step2_desc": "ChatGPT / Claude / Gemini などで使えます。",
+        "step3_title": "鑑定を受け取る",
+        "step3_desc": "返ってきた内容に、そのまま続けて質問できます。",
+        "guide_link": "初めての方はこちら（使い方）",
+        "guide_desc": "初めての方は、画面を見ながら手順を確認できます。",
+        "page_url": "このページのURL",
+        "event_url": "このイベントデータのURL",
+        "copy_label": "コピー",
+        "page_url_hint": "あとで開き直したい場合や、別の端末で使いたい場合にコピーしてください。",
+        "send_to_ai": "AIへ渡す",
+        "send_ai_button": "AIに送る",
+        "fallback_summary": "うまくいかない場合",
+        "fallback_desc": "AIに直接送れない場合は、コピーまたはTXT保存をご利用ください。",
+        "copy_to_use": "コピーして使う",
+        "save_txt_to_use": "TXTを保存して使う",
+        "helper_note": "ChatGPT / Claude / Gemini など各種AIサービスに対応",
+        "full_asteroid_note": "FULL版には、小惑星を含む詳しいデータも入っています。<br>もっと深く鑑定したい時に使えます。<br>",
+        "full_asteroid_link": "FULL版の小惑星データを見る",
+        "transit_detail_note": "このページには、31日分のトランジットを含む詳しいデータが入っています。<br>もっと深く鑑定したい時に使えます。<br>",
+        "transit_detail_link": "トランジット詳細データを見る",
+        "chart_note": "ホロスコープ図も用意されています。鑑定を始めるだけなら見なくて大丈夫ですが、図で確認したい方はこちらから見られます。<br>",
+        "view_horoscope_chart": "ホロスコープ図を見る",
+        "time_accuracy_label": "出生時刻の扱い",
+        "birth_time_notice_unknown_short": "出生時刻不明のため、一部データは参考値です",
+        "birth_time_notice_approximate_short": "出生時刻が推定のため、一部データは参考値です",
+        "time_accuracy_intro": "出生時刻が不明、または推定時刻のため、ハウス・ASC・MCなどは参考値として扱ってください。",
+        "time_accuracy_variable": "出生時刻によって変わりやすいもの:",
+        "time_accuracy_stable": "比較的安定して使いやすいもの:",
+        "time_accuracy_items_variable": ["ハウス", "ASC（アセンダント）", "MC", "Vertex", "月の度数やサイン（一部の場合）"],
+        "time_accuracy_items_stable": ["太陽・水星・金星・火星などの天体サイン", "天体同士の主要アスペクト", "エレメント", "モード", "世代天体の配置"],
+        "time_accuracy_ai_note": "AIに貼る場合も、出生時刻の精度情報を一緒に渡してください。断定的なハウス解釈は避け、参考情報として扱うのがおすすめです。",
+        "ai_usage_title": "AIに貼ると、こう使えます",
+        "ai_usage_items": ["あなたの本質や傾向が、AIの言葉で整理されます。", "今気になるテーマをそのまま質問できます。", "仕事・恋愛・今月の注意日などを、あとから深掘りできます。"],
+        "ai_usage_transit_items": ["イベント時点の天体配置が、AIの言葉で整理されます。", "歴史イベント・満月・特定日時の象徴分析に使えます。", "日付や暦の前提を明示したまま、あとから深掘りできます。"],
+        "ai_usage_hint": "このページは鑑定結果を表示する場所ではなく、AIに渡すファイルを作る入口です。",
+        "followup_title": "鑑定のあとに聞けること",
+        "followup_items": ["「仕事の流れを詳しく知りたい」", "「恋愛面をもう少し深掘りしたい」", "「今月の注意日を教えてほしい」"],
+        "followup_hint": "鑑定文のあとに、そのままAIへ続けて質問できます。",
+        "download_event_yaml": "イベントYAML",
+        "download_natal": "ネイタル",
+        "download_natal_asteroids": "ネイタル＋小惑星",
+        "download_transit": "トランジット",
+        "download_long_term_transits": "長期トランジット",
+        "download_yaml_data": "YAMLデータ",
+        "download_horoscope_svg": "ホロスコープSVG",
+        "download_shichu_svg": "命式SVG",
+        "next_transit_title": "次のトランジットを作成",
+        "next_transit_desc": "前回の鑑定データを引き継いで、<br>次の31日トランジットを生成できます。",
+        "chart_details_summary_both": "ホロスコープ図・命式図を見る",
+        "chart_details_summary_horoscope": "ホロスコープ図を見る",
+        "chart_details_summary_shichu": "命式図を見る",
+        "chart_details_intro": "鑑定を始めるだけなら確認しなくて大丈夫です。図で見たい方だけご利用ください。",
+        "horoscope_chart_title": "ホロスコープ図",
+        "horoscope_chart_desc": "このホロスコープ図は、YAMLログと同じ計算済みデータから自動描画しています。AI生成画像ではありません。",
+        "horoscope_chart_time_hint": "この図は仮計算時刻を元に描画しています。ハウス・ASC・MCは参考値です。",
+        "horoscope_loading": "ホロスコープ図を読み込んでいます...",
+        "show_asteroids": "補助天体を表示",
+        "hide_houses": "ハウスなし表示",
+        "save_svg": "SVGを保存",
+        "horoscope_chart_footer": "AIに貼る基本データはYAMLログです。ホロスコープ図は必要な時だけ、別資料として保存・コピーできます。",
+        "shichu_chart_title": "四柱推命 命式図",
+        "shichu_chart_desc": "この命式図は、YAMLログ内の計算済み四柱推命データから自動描画しています。鑑定文ではなく、計算結果の可視化です。",
+        "shichu_loading": "命式図を読み込んでいます...",
+        "save_shichu_svg": "命式SVGを保存",
+        "save_shichu_png": "命式PNGを保存",
+        "shichu_chart_footer": "AIに貼る基本データはYAMLログです。命式図は商品ページや確認用の補助資料として使えます。",
+        "usage_limits": "本商品は個人利用向けのデータ商品です。ChatGPT等のAIサービスへの入力、個人範囲での利用は可能です。再配布、転載、販売、サービス組み込み等の商用利用は禁止します。商用利用・アプリ組み込み用途はAPI版をご利用ください。",
+        "save_data": "データを保存したい方へ",
+        "save_data_hint": "URLやZIPは、あとで使いたい方だけ保存してください。",
+        "save_zip": "ZIPを保存する",
+        "individual_files": "個別ファイルを見る",
+        "details": "詳細データ（FULL版）を使う",
+        "details_intro": "小惑星や詳しいトランジットを含む詳細データです。もっと深く鑑定したい場合に使えます。",
+        "full_details_title_asteroids": "詳細データ（FULL版）を使う",
+        "full_details_title_transit": "詳細データ（FULL版）を使う",
+        "full_details_hint_asteroids": "小惑星を含む詳細データです。もっと深く鑑定したい場合に使えます。",
+        "full_details_hint_transit": "31日トランジットを含む詳細データです。もっと深く鑑定したい場合に使えます。",
+        "asteroid_mode_label": "小惑星つき版",
+        "recommended_badge": "おすすめ",
+        "asteroid_mode_desc": "小惑星や31日トランジットを含む、より詳しいデータです。",
+        "full_mode_label": "完全版",
+        "all_details_badge": "全詳細",
+        "full_mode_desc_asteroids": "小惑星・31日全詳細データを含む完全版です。情報量が多いため、必要な場合だけご利用ください。",
+        "full_mode_desc_transit": "31日分のトランジット詳細データを含む版です。",
+        "send_selected_to_ai": "選んだ版をAIに送る",
+        "copy_selected": "選んだ版をコピー",
+        "data_preview_label": "YAMLとプロンプトを確認する",
+        "data_preview_title": "YAMLの一部",
+        "data_preview_desc": "必要な場合だけ、AIに渡されるYAMLや案内文の一部を確認できます。",
+        "analysis_label": "分析",
+        "reading_label": "鑑定",
+        "yaml_preview_label": "YAMLログの一部",
+        "data_preview_note": "AIが再計算せず、このデータを根拠として解釈します。保存したい場合はファイルとして残せます。",
+        "prompt_preview_title": "プロンプトの一部",
+        "prompt_preview_desc": "AIへの案内文の一部です。",
+        "prompt_preview_label": "プロンプトの一部",
+        "yaml_direct_link": "YAML直リンク",
+        "yaml_url_hint": "AIにURLとして渡す場合に使います。",
+        "prompt_direct_link": "プロンプト直リンク",
+        "prompt_full_title": "プロンプト全文",
+        "prompt_full_hint": "AIに「どう鑑定してほしいか」を伝える文章です。",
+        "copy_prompt_full": "プロンプト全文コピー",
+        "yaml_full_title": "YAML全文",
+        "yaml_complete_title": "完全版YAML",
+        "yaml_hint_transit": "イベント時点の天体配置データです。AIにはこの計算結果を変更せず、解釈だけさせてください。",
+        "yaml_hint_full": "完全版YAMLは、小惑星や31日分の詳細までじっくり読みたい時に使います。",
+        "yaml_hint_standard": "通常版YAMLです。AIにはこの計算結果を変更せず、解釈だけさせてください。",
+        "copy_yaml_full": "YAML全文コピー",
+        "copy_yaml_complete": "完全版YAMLコピー",
+        "copy_next_chunk": "続きからコピー",
+        "download_yaml": "YAMLを保存",
+        "download_yaml_complete": "完全版YAMLをダウンロード",
+        "show_yaml": "YAMLを表示",
+        "hide_yaml": "YAMLを閉じる ▲",
+        "transit_date_note": "歴史イベントの日付には諸説があり得ます。必要に応じて日付・暦種別の前提を確認してください。",
+        "notes": "注意事項",
+        "notes_items": [
+            "入力後のデータ変更はできません。ご不明点やお困りのことがある場合は、お問い合わせください。",
+            "AIの種類や設定によって、文章表現や鑑定の深さは変わります。",
+            "YAMLは計算済みデータです。AIには「計算をやり直さず、このYAMLを根拠に解釈する」よう指示してください。",
+        ],
+        "copied": "コピーしました",
+        "mode_full": "完全版",
+        "mode_asteroids": "小惑星つき版",
+        "mode_paste": "通常版",
+        "full_yaml_loading": "完全版YAMLを読み込んでいます...",
+        "full_yaml_load_failed": "完全版YAMLを読み込めませんでした。コピーまたはダウンロードを再度お試しください。",
+        "asteroid_yaml_loading": "小惑星つき版を読み込んでいます...",
+        "asteroid_yaml_load_failed": "小惑星つき版を読み込めませんでした。通常版または完全版をご利用ください。",
+        "yaml_data_intro": "以下がYAMLデータです。",
+        "load_on_demand": "必要時に読み込みます",
+        "char_unit": "文字",
+        "transit_detail_mode": "トランジット詳細版",
+        "full_yaml_load_on_demand": "完全版は、使う時に読み込みます。",
+        "asteroid_yaml_load_on_demand": "小惑星つき版は、使う時に読み込みます。",
+        "share_text_title": "AI用テキスト",
+        "share_txt_title": "AI用TXTファイル",
+        "share_unavailable": "この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。",
+        "zip_save_failed": "ZIPの保存に失敗しました。共有かコピーを試してください。",
+        "zip_preparing": "ZIPを準備しています...",
+        "zip_started": "ZIPの保存を開始しました。",
+        "selected_copied_more": "{label}をコピーしました。必要なら「続きからコピー」で次の分を送れます。",
+        "selected_copied": "{label}をコピーしました。",
+        "chunk_copied": "{label} {index}/{total} をコピーしました",
+        "svg_loading": "図を読み込んでいます...",
+        "svg_load_failed": "図を読み込めませんでした。時間をおいて再度お試しください。",
+        "png_failed_svg_copied": "PNG保存に失敗したため、SVGをコピーしました",
+    },
+    "en": {
+        "lang_label": "Language",
+        "lang_ja": "日本語",
+        "lang_en": "English",
+        "product_labels": {
+            "western_basic": "Basic horoscope",
+            "western_full": "Full horoscope",
+            "western_asteroids_addon": "Horoscope asteroid add-on",
+            "shichu": "Four Pillars data",
+            "transit_yaml": "Transit YAML",
+        },
+        "product_leads": {
+            "western_basic": "Enter your order number and birth information.",
+            "western_full": "Create birth chart data including asteroids and one-month transits.<br>Enter your order number and birth information.",
+            "shichu": "Enter the information needed to create Four Pillars data.<br>You can choose the day-change boundary: standard 1:00 AM or 11:00 PM.",
+        },
+        "start_title_suffix": "Create AI-readable astrology data",
+        "start_notice_title": "Please check before you start",
+        "start_notice_items": [
+            "<strong>The order number can be used only once.</strong>After generation, it cannot be used again.",
+            "<strong>You cannot change the input after submission.</strong>Please check the birth date, birth time, and place of birth carefully.",
+            "If the birth time is unknown, leave it blank. Noon will be used for calculation.",
+            "Please save the URL shown after generation.",
+        ],
+        "start_button": "Go to input form",
+        "input_title_suffix": "AI-readable astrology data input",
+        "shichu_input_title_suffix": "Data input",
+        "precheck": "Before you submit",
+        "precheck_strong": "You cannot generate the data again with the same order number after submission.",
+        "precheck_note": "Please check the birth date, birth time, and place of birth before submitting.",
+        "order_info": "Order information",
+        "order_provider": "Purchase provider",
+        "provider_stores": "STORES",
+        "provider_gumroad": "Gumroad",
+        "provider_payhip": "Payhip",
+        "stores_order": "Order number",
+        "payhip_email": "Email address used for purchase",
+        "payhip_product": "Purchased product",
+        "payhip_order_id": "Order ID / Invoice Number",
+        "payhip_order_id_optional": "Order ID / Invoice Number (optional)",
+        "payhip_order_hint": "Enter this only if the Payhip purchase email shows an Order ID or Invoice Number.",
+        "required": "Required",
+        "optional": "Optional",
+        "not_entered": "Not entered",
+        "order_help": "Enter your order number.",
+        "order_mail_hint": "Enter the order number shown in the purchase completion email from STORES. Example: #12345678.",
+        "name": "Name",
+        "birth_info": "Birth information",
+        "birth_date": "Date of birth",
+        "birth_date_manual_hint": "Type digits only and it will be shown as YYYY-MM-DD. Example: 1990-01-01.",
+        "birth_date_required_error": "Enter your date of birth.",
+        "birth_date_format_error": "Enter 8 digits so the date can be shown as YYYY-MM-DD. Example: 1990-01-01.",
+        "birth_date_invalid_error": "That date does not exist. Enter a date that can be interpreted as YYYY-MM-DD.",
+        "birth_date_future_error": "Future dates are not allowed.",
+        "birth_time_accuracy": "Birth time accuracy",
+        "time_exact": "Exact time known",
+        "time_unknown": "Unknown",
+        "time_morning": "Morning",
+        "time_afternoon": "Afternoon",
+        "time_night": "Night",
+        "time_accuracy_help": "If the time is estimated, houses, ASC, and MC should be treated as reference values.",
+        "birth_time": "Birth time",
+        "birth_time_help": "Enter this only if you know the exact birth time.",
+        "prefecture": "Prefecture of birth",
+        "select_placeholder": "Select",
+        "place_details": "Details of the place of birth",
+        "place_kind": "Place of birth type",
+        "domestic": "Domestic",
+        "international": "International",
+        "coordinates": "Use latitude / longitude",
+        "domestic_place_note": "Calculated at the prefecture level.",
+        "domestic_coordinates_summary": "Optional detailed coordinates",
+        "domestic_coordinates_note": "Enter this only if you want a more specific birth place such as a city or ward.",
+        "overseas_place_note": "Enter country/city, and add coordinates and timezone if needed.",
+        "coordinates_place_note": "Use this when you want to specify the birth place by latitude and longitude.",
+        "coordinates_range_note": "Latitude should be -90 to 90, and longitude should be -180 to 180.",
+        "birth_place_country_city": "Country / city",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "coordinate_note": "If left blank, the prefecture's reference coordinates are used. Enter them only when you want a more specific location.",
+        "international_coordinate_help": "You can search coordinates using Google Maps.",
+        "timezone": "Time zone",
+        "timezone_other": "Other / Manual timezone",
+        "timezone_custom_placeholder": "Example: America/New_York",
+        "timezone_help": "Choose the region closest to the place of birth. Use Other only if it is not listed.",
+        "gender": "Gender",
+        "gender_unknown": "Unspecified",
+        "gender_female": "Female",
+        "gender_male": "Male",
+        "gender_help": "Used for Four Pillars fortune-cycle calculation. If unknown, leave it as Unspecified.",
+        "shichu_settings": "Four Pillars settings",
+        "day_change": "Day-change boundary",
+        "standard_1am": "1:00 AM - standard",
+        "day_change_help": "Choose 11:00 PM only if you use that tradition.",
+        "final_check": "Final check",
+        "final_check_hint": "After submission, this order number cannot be used again. The buyer cannot change the data even if the input contains a mistake.",
+        "final_agree": "I have checked the input and agree that it cannot be changed after submission.",
+        "submit_generate": "Generate AI-readable astrology data",
+        "submit_confirm": "Generate AI-readable astrology data with this input? You cannot change or regenerate it after submission.",
+        "confirm_title": "Final review",
+        "confirm_lead": "Check your input before creating the data.",
+        "confirm_modify": "Edit",
+        "confirm_create": "Create with this data",
+        "confirm_order": "Order number",
+        "confirm_name": "Name",
+        "confirm_birth_date": "Date of birth",
+        "confirm_birth_time": "Birth time",
+        "confirm_birth_place_mode": "Birth place mode",
+        "confirm_birth_place": "Birth place",
+        "confirm_coordinates": "Latitude / longitude",
+        "submit_loading_button": "Generating...",
+        "submit_loading_title": "Generating your AI-readable astrology data",
+        "submit_loading_desc": "This can take a little longer on unstable networks or first startup. Please keep this screen open.",
+        "chart_eyebrow": "AI-readable astrology data",
+        "analysis_eyebrow": "AI analysis data",
+        "chart_title": "'s AI-readable astrology data",
+        "chart_title_default": "Your AI-readable astrology data",
+        "transit_title_default": "Event",
+        "transit_title_suffix": " transit YAML",
+        "chart_lead": "This is the AI-ready core data. Tap \"Send to AI\" to use it as-is.",
+        "transit_lead": "Paste this data into an AI tool to analyze the planetary positions at the event time.<br>This YAML contains transit-only data and does not use birth information.",
+        "birthday": "Date of birth",
+        "date": "Date",
+        "time": "Time",
+        "calc_time": "Calculation time",
+        "birth_time_badge": "Birth time",
+        "place": "Place",
+        "birth_place": "Place of birth",
+        "unknown": "Unknown",
+        "page_expiry": "Anyone with this URL can open the page. It expires on {expires_label} (90 days after issue).",
+        "steps_title": "Start in 3 steps",
+        "step1_title": "Send the data to AI",
+        "step1_desc": "Use the button below to send the AI-readable astrology data to an AI tool.",
+        "step2_title": "Submit as-is",
+        "step2_desc": "You can use it with ChatGPT, Claude, Gemini, and similar tools.",
+        "step3_title": "Receive the reading",
+        "step3_desc": "After receiving the response, you can ask follow-up questions in the same chat.",
+        "guide_link": "First-time here? How to use it",
+        "guide_desc": "First-time users can check the steps with screenshots.",
+        "page_url": "URL of this page",
+        "event_url": "URL of this event data",
+        "copy_label": "Copy",
+        "page_url_hint": "Copy this if you want to reopen the page later or use it on another device.",
+        "send_to_ai": "Send to AI",
+        "send_ai_button": "Send to AI",
+        "fallback_summary": "If sending does not work",
+        "fallback_desc": "If direct sharing does not work, copy the text or save it as a TXT file.",
+        "copy_to_use": "Copy and use",
+        "save_txt_to_use": "Save TXT and use",
+        "helper_note": "Compatible with ChatGPT / Claude / Gemini and other AI services.",
+        "full_asteroid_note": "The FULL version also includes detailed data such as asteroids.<br>Use it if you want a deeper reading.<br>",
+        "full_asteroid_link": "View FULL asteroid data",
+        "transit_detail_note": "This page also includes detailed data for 31 days of transits.<br>Use it if you want a deeper reading.<br>",
+        "transit_detail_link": "View detailed transit data",
+        "chart_note": "A horoscope chart is also available. You do not need to view it to start the reading, but you can check it here if you want to see the chart.<br>",
+        "view_horoscope_chart": "View horoscope chart",
+        "time_accuracy_label": "Birth time handling",
+        "birth_time_notice_unknown_short": "Because the birth time is unknown, some data should be treated as reference values.",
+        "birth_time_notice_approximate_short": "Because the birth time is approximate, some data should be treated as reference values.",
+        "time_accuracy_intro": "Because the birth time is unknown or estimated, houses, ASC, and MC should be treated as reference values.",
+        "time_accuracy_variable": "Items that can change depending on birth time:",
+        "time_accuracy_stable": "Items that are relatively stable and easier to use:",
+        "time_accuracy_items_variable": ["Houses", "ASC (Ascendant)", "MC", "Vertex", "Moon degree or sign in some cases"],
+        "time_accuracy_items_stable": ["Planetary signs such as Sun, Mercury, Venus, and Mars", "Major aspects between planets", "Elements", "Modes", "Generational planet placements"],
+        "time_accuracy_ai_note": "When sending this to AI, include the birth time accuracy information. Avoid definitive house interpretations and treat them as reference information.",
+        "ai_usage_title": "What you can do after sending it to AI",
+        "ai_usage_items": ["Your traits and tendencies can be organized in AI-generated language.", "You can ask follow-up questions about what you care about now.", "You can explore topics such as work, relationships, and key dates in more detail."],
+        "ai_usage_transit_items": ["The planetary positions at the event time can be organized in AI-generated language.", "You can use it for symbolic analysis of historical events, full moons, and specific dates or times.", "You can explore the topic further while keeping the date and calendar assumptions explicit."],
+        "ai_usage_hint": "This page is not the reading itself. It is the entry point for creating data to send to AI.",
+        "followup_title": "Follow-up questions after the reading",
+        "followup_items": ["“I want to know more about my work flow.”", "“I want to explore relationships more deeply.”", "“Please tell me the key dates to pay attention to this month.”"],
+        "followup_hint": "After the reading, you can continue asking questions in the same AI chat.",
+        "download_event_yaml": "Event YAML",
+        "download_natal": "Natal",
+        "download_natal_asteroids": "Natal + asteroids",
+        "download_transit": "Transit",
+        "download_long_term_transits": "Long-term transits",
+        "download_yaml_data": "YAML data",
+        "download_horoscope_svg": "Horoscope SVG",
+        "download_shichu_svg": "Four Pillars SVG",
+        "next_transit_title": "Create the next transit",
+        "next_transit_desc": "You can carry over the previous AI-readable astrology data<br>and generate the next 31-day transit.",
+        "chart_details_summary_both": "View horoscope and Four Pillars charts",
+        "chart_details_summary_horoscope": "View horoscope chart",
+        "chart_details_summary_shichu": "View Four Pillars chart",
+        "chart_details_intro": "You do not need to check this to start the reading. Use it only if you want to view the chart.",
+        "horoscope_chart_title": "Horoscope chart",
+        "horoscope_chart_desc": "This horoscope chart is automatically drawn from the same calculated data as the YAML log. It is not an AI-generated image.",
+        "horoscope_chart_time_hint": "This chart is drawn using the estimated calculation time. Houses, ASC, and MC are reference values.",
+        "horoscope_loading": "Loading horoscope chart...",
+        "show_asteroids": "Show auxiliary bodies",
+        "hide_houses": "Hide houses",
+        "save_svg": "Save SVG",
+        "horoscope_chart_footer": "The basic data to send to AI is the YAML log. Save or copy the horoscope chart only when you need it as a supplemental reference.",
+        "shichu_chart_title": "Four Pillars chart",
+        "shichu_chart_desc": "This chart is automatically drawn from the calculated Four Pillars data in the YAML log. It is a visualization of calculation results, not the reading text.",
+        "shichu_loading": "Loading Four Pillars chart...",
+        "save_shichu_svg": "Save Four Pillars SVG",
+        "save_shichu_png": "Save Four Pillars PNG",
+        "shichu_chart_footer": "The basic data to send to AI is the YAML log. Use the Four Pillars chart as supplemental material for product pages or review.",
+        "usage_limits": "This product is for personal use. You may input it into AI services such as ChatGPT and use it within a personal scope. Redistribution, reposting, resale, service integration, and other commercial use are prohibited. Use the API version for commercial or app integration use.",
+        "save_data": "For saving the data",
+        "save_data_hint": "Save the URL or ZIP only if you want to use it later.",
+        "save_zip": "Save ZIP",
+        "individual_files": "View individual files",
+        "details": "Use FULL data",
+        "details_intro": "This detailed data includes asteroids and richer transit information. Use it if you want a deeper reading.",
+        "full_details_title_asteroids": "Use detailed data (FULL version)",
+        "full_details_title_transit": "Use detailed data (FULL version)",
+        "full_details_hint_asteroids": "Detailed data with asteroids. Use it if you want a deeper reading.",
+        "full_details_hint_transit": "Detailed data including 31-day transits. Use it if you want a deeper reading.",
+        "asteroid_mode_label": "Asteroid version",
+        "recommended_badge": "Recommended",
+        "asteroid_mode_desc": "Detailed data including asteroids and the 31-day transit.",
+        "full_mode_label": "Complete version",
+        "all_details_badge": "All details",
+        "full_mode_desc_asteroids": "The complete version includes asteroids and all 31-day details. Use it only when you need the extra volume.",
+        "full_mode_desc_transit": "This version includes detailed transit data for 31 days.",
+        "send_selected_to_ai": "Send selected version to AI",
+        "copy_selected": "Copy selected version",
+        "data_preview_label": "Check YAML and prompt",
+        "data_preview_title": "YAML excerpt",
+        "data_preview_desc": "Inspect part of the YAML and prompt sent to AI only if needed.",
+        "analysis_label": "analysis",
+        "reading_label": "the reading",
+        "yaml_preview_label": "YAML log excerpt",
+        "data_preview_note": "AI interprets this data as the source without recalculating it. You can save it as a file if needed.",
+        "prompt_preview_title": "Prompt excerpt",
+        "prompt_preview_desc": "A partial view of the prompt that guides the AI.",
+        "prompt_preview_label": "Prompt excerpt",
+        "yaml_direct_link": "Direct YAML link",
+        "yaml_url_hint": "Use this when sending the YAML as a URL to AI.",
+        "prompt_direct_link": "Direct prompt link",
+        "prompt_full_title": "Full prompt",
+        "prompt_full_hint": "This text tells the AI how you want the reading to be written.",
+        "copy_prompt_full": "Copy full prompt",
+        "yaml_full_title": "Full YAML",
+        "yaml_complete_title": "Complete YAML",
+        "yaml_hint_transit": "This is planetary position data at the event time. Ask the AI to interpret the results without changing the calculation.",
+        "yaml_hint_full": "Use the complete YAML when you want to read asteroids and 31-day details in depth.",
+        "yaml_hint_standard": "This is the standard YAML. Ask the AI to interpret the results without recalculating them.",
+        "copy_yaml_full": "Copy full YAML",
+        "copy_yaml_complete": "Copy complete YAML",
+        "copy_next_chunk": "Copy next chunk",
+        "download_yaml": "Save YAML",
+        "download_yaml_complete": "Download complete YAML",
+        "show_yaml": "Show YAML",
+        "hide_yaml": "Hide YAML ▲",
+        "transit_date_note": "Historical event dates may have multiple interpretations. Check the date and calendar assumptions as needed.",
+        "notes": "Notes",
+        "notes_items": [
+            "The data cannot be changed after submission. Please contact support if you have questions or trouble.",
+            "The wording and depth of the reading may vary depending on the AI service and settings.",
+            "YAML is calculated data. Tell the AI to interpret this YAML as the source instead of recalculating it.",
+        ],
+        "copied": "Copied",
+        "mode_full": "Complete version",
+        "mode_asteroids": "Asteroid version",
+        "mode_paste": "Standard version",
+        "full_yaml_loading": "Loading complete YAML...",
+        "full_yaml_load_failed": "Could not load the complete YAML. Please try copying or downloading it again.",
+        "asteroid_yaml_loading": "Loading asteroid version...",
+        "asteroid_yaml_load_failed": "Could not load the asteroid version. Please use the standard or complete version.",
+        "yaml_data_intro": "Here is the YAML data.",
+        "load_on_demand": "Loaded when needed",
+        "char_unit": "characters",
+        "transit_detail_mode": "Detailed transit version",
+        "full_yaml_load_on_demand": "The complete version will load when you use it.",
+        "asteroid_yaml_load_on_demand": "The asteroid version will load when you use it.",
+        "share_text_title": "AI text",
+        "share_txt_title": "AI TXT file",
+        "share_unavailable": "Direct sharing is not available in this environment. Please use copy or TXT save below.",
+        "zip_save_failed": "Could not save the ZIP. Please try sharing or copying instead.",
+        "zip_preparing": "Preparing ZIP...",
+        "zip_started": "ZIP save has started.",
+        "selected_copied_more": "{label} copied. Use Copy next chunk if you need to send the next part.",
+        "selected_copied": "{label} copied.",
+        "chunk_copied": "{label} {index}/{total} copied",
+        "svg_loading": "Loading chart...",
+        "svg_load_failed": "Could not load the chart. Please try again later.",
+        "png_failed_svg_copied": "PNG save failed, so the SVG was copied instead.",
+    },
+}
 OVERSEAS_TIMEZONE_OPTIONS = [
-    {"value": "America/New_York", "label": "アメリカ東部（New York など）"},
-    {"value": "America/Chicago", "label": "アメリカ中部（Chicago など）"},
-    {"value": "America/Denver", "label": "アメリカ山岳部（Denver など）"},
-    {"value": "America/Los_Angeles", "label": "アメリカ西部（Los Angeles など）"},
-    {"value": "America/Honolulu", "label": "ハワイ（Honolulu）"},
-    {"value": "Europe/London", "label": "イギリス（London）"},
-    {"value": "Europe/Paris", "label": "フランス・中央ヨーロッパ（Paris など）"},
-    {"value": "Europe/Berlin", "label": "ドイツ（Berlin）"},
-    {"value": "Europe/Rome", "label": "イタリア（Rome）"},
-    {"value": "Asia/Seoul", "label": "韓国（Seoul）"},
-    {"value": "Asia/Shanghai", "label": "中国（Shanghai）"},
-    {"value": "Asia/Taipei", "label": "台湾（Taipei）"},
-    {"value": "Asia/Hong_Kong", "label": "香港（Hong Kong）"},
-    {"value": "Asia/Bangkok", "label": "タイ（Bangkok）"},
-    {"value": "Asia/Singapore", "label": "シンガポール（Singapore）"},
-    {"value": "Australia/Sydney", "label": "オーストラリア東部（Sydney）"},
+    {"value": "Asia/Tokyo", "label_ja": "日本（Tokyo）", "label_en": "Japan (Tokyo)"},
+    {"value": "Europe/London", "label_ja": "イギリス（London）", "label_en": "United Kingdom (London)"},
+    {"value": "Europe/Paris", "label_ja": "フランス・中央ヨーロッパ（Paris など）", "label_en": "France / Central Europe (Paris etc.)"},
+    {"value": "Europe/Berlin", "label_ja": "ドイツ（Berlin）", "label_en": "Germany / Central Europe (Berlin etc.)"},
+    {"value": "Europe/Rome", "label_ja": "イタリア（Rome）", "label_en": "Italy / Central Europe (Rome etc.)"},
+    {"value": "America/New_York", "label_ja": "アメリカ東部（New York など）", "label_en": "United States Eastern (New York etc.)"},
+    {"value": "America/Chicago", "label_ja": "アメリカ中部（Chicago など）", "label_en": "United States Central (Chicago etc.)"},
+    {"value": "America/Denver", "label_ja": "アメリカ山岳部（Denver など）", "label_en": "United States Mountain (Denver etc.)"},
+    {"value": "America/Los_Angeles", "label_ja": "アメリカ西部（Los Angeles など）", "label_en": "United States Pacific (Los Angeles etc.)"},
+    {"value": "America/Honolulu", "label_ja": "ハワイ（Honolulu）", "label_en": "Hawaii (Honolulu)"},
+    {"value": "Asia/Seoul", "label_ja": "韓国（Seoul）", "label_en": "South Korea (Seoul)"},
+    {"value": "Asia/Shanghai", "label_ja": "中国（Shanghai）", "label_en": "China (Shanghai)"},
+    {"value": "Asia/Taipei", "label_ja": "台湾（Taipei）", "label_en": "Taiwan (Taipei)"},
+    {"value": "Asia/Hong_Kong", "label_ja": "香港（Hong Kong）", "label_en": "Hong Kong"},
+    {"value": "Asia/Bangkok", "label_ja": "タイ（Bangkok）", "label_en": "Thailand (Bangkok)"},
+    {"value": "Asia/Singapore", "label_ja": "シンガポール（Singapore）", "label_en": "Singapore"},
+    {"value": "Australia/Sydney", "label_ja": "オーストラリア東部（Sydney）", "label_en": "Australia Eastern (Sydney)"},
 ]
+
+
+def _timezone_options(lang: str) -> list[dict[str, str]]:
+    label_key = "label_en" if lang == "en" else "label_ja"
+    return [
+        {"value": option["value"], "label": option[label_key]}
+        for option in OVERSEAS_TIMEZONE_OPTIONS
+    ]
+
+
+def _localized_birth_time_notice(notice: dict[str, Any], lang: str) -> dict[str, Any]:
+    localized = dict(notice or {"show": False})
+    if not localized.get("show"):
+        return localized
+    accuracy = str(localized.get("accuracy") or "").lower()
+    t = I18N.get(lang, I18N["ja"])
+    if accuracy == "unknown":
+        localized["short"] = t.get("birth_time_notice_unknown_short", localized.get("short", ""))
+    elif accuracy == "approximate":
+        localized["short"] = t.get("birth_time_notice_approximate_short", localized.get("short", ""))
+    return localized
 
 
 def _product_type_from_request(request: Request) -> str:
@@ -253,11 +904,39 @@ def _redeem_url(product_type: str) -> str:
     return f"/redeem/{PRODUCT_SLUGS.get(product_type, PRODUCT_SLUGS['western_basic'])}"
 
 
-def _product_context(product_type: str) -> dict:
+def _resolve_lang(request: Request) -> str:
+    lang = request.query_params.get("lang", "").strip().lower()
+    return lang if lang in SUPPORTED_LANGS else "ja"
+
+
+def _lang_urls(request: Request) -> dict[str, str]:
+    return {
+        "ja": str(request.url.include_query_params(lang="ja")),
+        "en": str(request.url.include_query_params(lang="en")),
+    }
+
+
+def _localized_product(product_type: str, lang: str) -> dict:
     config = PRODUCT_CONFIG.get(product_type, PRODUCT_CONFIG["western_basic"])
+    localized = dict(config)
+    product_i18n = I18N.get(lang, I18N["ja"])
+    localized["label"] = product_i18n["product_labels"].get(product_type, config["label"])
+    return localized
+
+
+def _i18n_context(request: Request) -> dict:
+    lang = _resolve_lang(request)
+    return {
+        "lang": lang,
+        "t": I18N.get(lang, I18N["ja"]),
+        "lang_urls": _lang_urls(request),
+    }
+
+
+def _product_context(product_type: str, lang: str = "ja") -> dict:
     return {
         "product_type": product_type,
-        "product": config,
+        "product": _localized_product(product_type, lang),
         "start_url": _start_url(product_type),
         "redeem_url": _redeem_url(product_type),
     }
@@ -283,12 +962,12 @@ def _build_chart_artifacts(
             share_yaml_text = yaml_text
     if product_type in {"western_basic", "western_full"}:
         try:
-            horoscope_svg = build_horoscope_svg_from_yaml(yaml_text, doc=doc)
+            horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=doc))
         except Exception:
             horoscope_svg = None
     if product_type == "shichu":
         try:
-            shichusuimei_svg = build_shichusuimei_svg_from_yaml(yaml_text, doc=doc)
+            shichusuimei_svg = optimize_svg(build_shichusuimei_svg_from_yaml(yaml_text, doc=doc))
         except Exception:
             shichusuimei_svg = None
     return {
@@ -310,8 +989,385 @@ def _truthy(value: str | None) -> bool:
     return str(value).strip().lower() in {"1", "true", "on", "yes", "23"}
 
 
+ORDER_CODE_RE = re.compile(r"[A-Za-z0-9=_-]+")
+ORDER_PROVIDERS = {"stores", "gumroad", "payhip"}
+ORDER_CHECK_POLICIES = {
+    "stores": {"strict": True},
+    # Temporary Gumroad relaxed mode. Set GUMROAD_ORDER_STRICT=1 to re-enable
+    # server-side email/order/product tag verification after the mail format is stable.
+    "gumroad": {"strict": False},
+    "payhip": {"strict": True},
+}
+PAYHIP_PRODUCTS = {
+    "NP-WB": {
+        "label": "NP-WB / AI-Readable Natal Data Core Pack",
+        "product_type": "western_basic",
+    },
+    "NP-WF": {
+        "label": "NP-WF / AI-Readable Astrology Data Full Version",
+        "product_type": "western_full",
+    },
+    "NP-AA": {
+        "label": "NP-AA / AI-Readable Asteroid Data Add-on",
+        "product_type": "western_asteroids_addon",
+    },
+    "NP-TA": {
+        "label": "NP-TA / AI-Readable Transit Data Add-on",
+        "product_type": "western_31days_transit_addon",
+    },
+}
+
+
 def _normalize_stores_order_no(value: str) -> str:
-    return re.sub(r"\D", "", value or "")
+    return (value or "").strip()
+
+
+def _is_valid_order_code(value: str) -> bool:
+    return bool(ORDER_CODE_RE.fullmatch(value))
+
+
+def _resolve_order_provider(order_code: str, provider: str | None = None) -> str | None:
+    explicit = (provider or "").strip().lower()
+    if explicit in ORDER_PROVIDERS:
+        return explicit
+    if re.fullmatch(r"\d{10}", order_code or ""):
+        return "stores"
+    if _is_valid_order_code(order_code or "") and not re.fullmatch(r"\d{10}", order_code or ""):
+        return "gumroad"
+    return None
+
+
+def _get_order_check_policy(provider: str | None) -> dict[str, bool]:
+    if provider == "gumroad":
+        return {"strict": _truthy(os.getenv("GUMROAD_ORDER_STRICT", "0"))}
+    return ORDER_CHECK_POLICIES.get(provider or "", {"strict": True})
+
+
+def _payhip_product_options() -> list[dict[str, str]]:
+    return [
+        {"code": code, "label": product["label"], "product_type": product["product_type"]}
+        for code, product in PAYHIP_PRODUCTS.items()
+    ]
+
+
+def _normalize_payhip_email(value: str) -> str:
+    return (value or "").strip().lower()
+
+
+def _payhip_metadata_from_form(
+    *,
+    payhip_email: str,
+    payhip_product_code: str,
+    payhip_order_id: str,
+    expected_product_type: str,
+) -> tuple[dict[str, str], str | None]:
+    email_clean = _normalize_payhip_email(payhip_email)
+    product_code_clean = (payhip_product_code or "").strip().upper()
+    optional_order_id = (payhip_order_id or "").strip()
+    if not email_clean:
+        return {}, "Payhipを選択した場合は、購入時のメールアドレスを入力してください。"
+    if "@" not in email_clean:
+        return {}, "Payhipの購入時メールアドレスを正しい形式で入力してください。"
+    product = PAYHIP_PRODUCTS.get(product_code_clean)
+    if not product:
+        return {}, "Payhipを選択した場合は、購入した商品を選択してください。"
+    selected_product_type = str(product["product_type"])
+    if selected_product_type != expected_product_type:
+        return {}, (
+            f"選択したPayhip商品は{_product_label(selected_product_type)}用です。"
+            f"{_product_label(expected_product_type)}の入力フォームでは使用できません。"
+        )
+    metadata = {
+        "provider": "payhip",
+        "purchaser_email": email_clean,
+        "selected_product_code": product_code_clean,
+        "selected_product_type": selected_product_type,
+        "optional_order_id": optional_order_id,
+    }
+    return metadata, None
+
+
+def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, dict | None, str | None, int]:
+    email_clean = metadata.get("purchaser_email") or ""
+    product_code = metadata.get("selected_product_code") or ""
+    if not os.environ.get("DATABASE_URL"):
+        return "", None, "Payhip購入履歴の照合に必要なDATABASE_URLが未設定です。", 503
+    try:
+        status, order_row = stores_mail_sync.verify_payhip_order(
+            purchaser_email=email_clean,
+            product_code=product_code,
+        )
+        if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+            _sync_stores_orders_for_lookup()
+            status, order_row = stores_mail_sync.verify_payhip_order(
+                purchaser_email=email_clean,
+                product_code=product_code,
+            )
+    except Exception as exc:
+        logger.exception(
+            "payhip_order_check_failed email=%s product_code=%s error_type=%s error=%r",
+            email_clean,
+            product_code,
+            type(exc).__name__,
+            exc,
+        )
+        return "", None, _public_error_message(exc, fallback="Payhip購入履歴の照合に失敗しました。時間をおいて再試行してください。"), 503
+    if status == "not_found":
+        return "", order_row, "Payhip購入履歴を確認できません。購入時メールアドレスと購入商品を確認してください。", 400
+    if status == "already_used":
+        return "", order_row, "このPayhip購入履歴はすでに使用済みです。", 409
+    if status == "cancelled":
+        return "", order_row, "このPayhip購入履歴はキャンセル扱いのため使用できません。", 409
+    order_code = str((order_row or {}).get("stores_order_no") or "").strip()
+    if not order_code:
+        return "", order_row, "Payhip購入履歴の注文IDを確認できません。管理者に連絡してください。", 400
+    return order_code, order_row, None, 200
+
+
+def _log_order_check(
+    *,
+    provider: str | None,
+    order_id: str,
+    strict_check: bool,
+    check_result: str,
+    reason: str,
+) -> None:
+    logger.info(
+        "order_check provider=%s order_id=%s strict_check=%s check_result=%s reason=%s",
+        provider or "unknown",
+        order_id,
+        strict_check,
+        check_result,
+        reason,
+    )
+
+
+def _existing_chart_redirect(order_code: str) -> RedirectResponse | None:
+    if not os.environ.get("DATABASE_URL"):
+        return None
+    try:
+        redemption = pg_store.get_redemption_by_order_code(order_code)
+        token = redemption.get("token") if redemption else None
+        if not token:
+            charts = pg_store.list_charts_by_order_code(order_code)
+            token = charts[0].get("token") if charts else None
+        if token:
+            logger.info("redirect_existing_chart order_id=%s token_prefix=%s", order_code, str(token)[:8])
+            return RedirectResponse(f"/chart/{token}", status_code=303)
+    except Exception as exc:
+        logger.exception(
+            "existing_chart_lookup_failed order_id=%s error_type=%s error=%r",
+            order_code,
+            type(exc).__name__,
+            exc,
+        )
+    return None
+
+
+def _verify_strict_stores_order(order_id: str) -> tuple[str, dict | None]:
+    status, order_row = stores_mail_sync.verify_order_no(order_id)
+    if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+        try:
+            submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
+        except ValueError:
+            submit_limit = 100
+        stores_mail_sync.sync(limit=submit_limit)
+        status, order_row = stores_mail_sync.verify_order_no(order_id)
+    return status, order_row
+
+
+def _gumroad_product_name_from_order(order_row: dict | None) -> str:
+    if not isinstance(order_row, dict):
+        return ""
+    candidates = [
+        order_row.get("product_name"),
+        order_row.get("product_title"),
+        order_row.get("product"),
+        order_row.get("item_name"),
+        order_row.get("name"),
+        order_row.get("mail_subject"),
+    ]
+    return "\n".join(str(value) for value in candidates if value)
+
+
+def _gumroad_product_type_from_name(product_name: str) -> str | None:
+    normalized = (product_name or "").upper()
+    has_basic = "[NP-WB]" in normalized
+    has_full = "[NP-WF]" in normalized
+    if has_basic == has_full:
+        return None
+    if has_full:
+        return "western_full"
+    return "western_basic"
+
+
+def _verify_gumroad_order_product(
+    *,
+    order_id: str,
+    order_row: dict | None,
+    product_type: str,
+    enforce_product_type: bool,
+) -> tuple[str | None, int]:
+    purchased_type = _gumroad_product_type_from_name(_gumroad_product_name_from_order(order_row))
+    if not purchased_type:
+        _log_order_check(
+            provider="gumroad",
+            order_id=order_id,
+            strict_check=True,
+            check_result="product_tag_missing",
+            reason="Gumroad product name does not contain [NP-WB] or [NP-WF]",
+        )
+        return "Gumroadの商品名タグを確認できません。購入商品を確認できないため、この注文番号は使用できません。", 400
+    if enforce_product_type and purchased_type != product_type:
+        _log_order_check(
+            provider="gumroad",
+            order_id=order_id,
+            strict_check=True,
+            check_result="product_mismatch",
+            reason=f"gumroad tag product_type={purchased_type} requested={product_type}",
+        )
+        return (
+            f"この注文番号は{_product_label(purchased_type)}用です。"
+            f"{_product_label(product_type)}の入力フォームでは使用できません。",
+            409,
+        )
+    return None, 200
+
+
+def _check_order_for_redeem(
+    *,
+    order_id: str,
+    provider: str | None,
+    product_type: str,
+    enforce_product_type: bool = True,
+    allow_gumroad_relaxed: bool = True,
+) -> tuple[str, dict | None, str | None, int]:
+    policy = _get_order_check_policy(provider)
+    strict_check = bool(policy["strict"])
+    if provider not in ORDER_PROVIDERS:
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=strict_check,
+            check_result="provider_unknown",
+            reason="provider could not be resolved",
+        )
+        return "not_found", None, f"注文番号（{order_id}）を確認できません。購入確認メールに記載の番号を確認してください。", 400
+
+    if provider == "gumroad" and not strict_check and allow_gumroad_relaxed:
+        order_row = {
+            "provider": "gumroad",
+            "stores_order_no": order_id,
+            "payment_status": "relaxed",
+            "product_type": product_type,
+        }
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=False,
+            check_result="accepted_relaxed",
+            reason="temporary Gumroad relaxed verification; order will be recorded in redemptions/charts on save",
+        )
+        return "ok", order_row, None, 200
+
+    if provider == "gumroad" and not strict_check:
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=False,
+            check_result="relaxed_not_allowed",
+            reason="temporary Gumroad relaxed verification is disabled for this flow",
+        )
+        return "not_found", None, "Gumroad注文はこのフォームでは使用できません。", 400
+
+    if not os.environ.get("DATABASE_URL"):
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=True,
+            check_result="skipped" if provider == "stores" else "error",
+            reason="DATABASE_URL is not configured",
+        )
+        if provider == "gumroad":
+            return "error", None, "Gumroad注文の確認に必要なDATABASE_URLが未設定です。", 503
+        return "ok", None, None, 200
+
+    try:
+        status, order_row = _verify_strict_stores_order(order_id)
+    except Exception as exc:
+        logger.exception(
+            "order_check_failed provider=%s order_id=%s product_type=%s error_type=%s error=%r",
+            provider,
+            order_id,
+            product_type,
+            type(exc).__name__,
+            exc,
+        )
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=True,
+            check_result="error",
+            reason=repr(exc),
+        )
+        return "error", None, _public_error_message(exc, fallback="注文番号の照合に失敗しました。時間をおいて再試行してください。"), 503
+
+    _log_order_check(
+        provider=provider,
+        order_id=order_id,
+        strict_check=True,
+        check_result=status,
+        reason="stores strict check",
+    )
+    if status == "not_found":
+        return "not_found", order_row, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
+    if status == "already_used":
+        return "already_used", order_row, f"この注文番号（{order_id}）はすでに使用済みです。", 409
+    if status == "cancelled":
+        return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
+
+    row_provider = str((order_row or {}).get("provider") or "").strip().lower()
+    if row_provider and row_provider != provider:
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=True,
+            check_result="provider_mismatch",
+            reason=f"order provider={row_provider} requested={provider}",
+        )
+        return "not_found", order_row, f"注文番号（{order_id}）を{_provider_label(provider)}の注文として確認できません。", 400
+
+    if provider == "gumroad":
+        product_error, product_error_status = _verify_gumroad_order_product(
+            order_id=order_id,
+            order_row=order_row,
+            product_type=product_type,
+            enforce_product_type=enforce_product_type,
+        )
+        if product_error:
+            return "product_mismatch", order_row, product_error, product_error_status
+        return status, order_row, None, 200
+
+    purchased_type = (order_row or {}).get("product_type")
+    if enforce_product_type and purchased_type and purchased_type != product_type:
+        return (
+            "product_mismatch",
+            order_row,
+            f"この注文番号は{_product_label(purchased_type)}用です。"
+            f"{_product_label(product_type)}の入力フォームでは使用できません。",
+            409,
+        )
+    return status, order_row, None, 200
+
+
+def _provider_label(provider: str | None) -> str:
+    if provider == "payhip":
+        return "Payhip"
+    if provider == "gumroad":
+        return "Gumroad"
+    if provider == "stores":
+        return "STORES"
+    return "購入元"
 
 
 def _product_label(product_type: str | None) -> str:
@@ -324,6 +1380,7 @@ def _product_label(product_type: str | None) -> str:
     addon_labels = {
         "western_asteroids_addon": "ホロスコープ：小惑星追加",
         "western_31days_transit_addon": "ホロスコープ：31日トランジット追加",
+        "western_long_term_transits_addon": "ホロスコープ：長期トランジット追加",
         "shichu_fortune_cycles_addon": "四柱推命：大運・流年追加",
     }
     if product_type in addon_labels:
@@ -366,6 +1423,31 @@ def _validate_lat_lon(lat: float, lon: float) -> None:
         raise ValueError("経度は -180 から 180 の範囲で入力してください。")
 
 
+def _validate_birth_date(value: str, lang: str = "ja") -> str:
+    raw = value.strip()
+    digits = re.sub(r"\D", "", raw)
+    if not digits:
+        raise ValueError("Enter your date of birth." if lang == "en" else "生年月日を入力してください。")
+    if len(digits) != 8:
+        raise ValueError(
+            "Enter 8 digits so the date can be interpreted as YYYY-MM-DD. Example: 1990-01-01"
+            if lang == "en"
+            else "生年月日は YYYY-MM-DD として解釈できる8桁の数字で入力してください。例: 1990-01-01"
+        )
+    try:
+        selected = date(int(digits[0:4]), int(digits[4:6]), int(digits[6:8]))
+    except ValueError as exc:
+        raise ValueError(
+            "That date does not exist. Enter a date that can be interpreted as YYYY-MM-DD."
+            if lang == "en"
+            else "存在しない日付です。YYYY-MM-DD として解釈できる日付を入力してください。"
+        ) from exc
+    today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+    if selected > today_jst:
+        raise ValueError("Future dates are not allowed." if lang == "en" else "生年月日は未来日を指定できません。")
+    return selected.isoformat()
+
+
 def _build_birth_location(
     *,
     prefecture: str,
@@ -402,6 +1484,25 @@ def _build_birth_location(
             "lng": lon,
             "tz_name": tz_name,
             "tz": tz,
+        }
+    if kind == "coordinates":
+        if prefecture.strip():
+            raise ValueError("緯度・経度で入力する場合は、出生都道府県を未選択にしてください。")
+        if birth_place_overseas.strip() or birth_timezone.strip():
+            raise ValueError("緯度・経度で入力する場合は、海外出生地名とタイムゾーン欄を空にしてください。")
+        lat = _parse_optional_float(birth_lat, "緯度")
+        lon = _parse_optional_float(birth_lng, "経度")
+        if lat is None or lon is None:
+            raise ValueError("緯度・経度で入力する場合は、緯度と経度の両方を入力してください。")
+        _validate_lat_lon(lat, lon)
+        return {
+            "kind": "coordinates",
+            "birth_place": "緯度・経度で入力",
+            "prefecture": "",
+            "lat": lat,
+            "lng": lon,
+            "tz_name": "Asia/Tokyo",
+            "tz": ZoneInfo("Asia/Tokyo"),
         }
 
     pref_name = prefecture.strip()
@@ -546,8 +1647,8 @@ def internal_lookup_api_key(request: Request, payload: dict[str, object] = Body(
     order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
     if not order_code_clean:
         return _api_error("INVALID_INPUT", "order_code is required", 400)
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        return _api_error("INVALID_INPUT", "order_code must be 10 digits", 400)
+    if not _is_valid_order_code(order_code_clean):
+        return _api_error("INVALID_INPUT", "order_code contains invalid characters", 400)
 
     row = pg_store.get_api_key_by_order_code(order_code_clean)
     if not row:
@@ -564,8 +1665,8 @@ def internal_reissue_api_key(request: Request, payload: dict[str, object] = Body
     order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
     if not order_code_clean:
         return _api_error("INVALID_INPUT", "order_code is required", 400)
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        return _api_error("INVALID_INPUT", "order_code must be 10 digits", 400)
+    if not _is_valid_order_code(order_code_clean):
+        return _api_error("INVALID_INPUT", "order_code contains invalid characters", 400)
 
     label = str(payload.get("label") or "").strip() or None
     owner_email = str(payload.get("email") or "").strip() or None
@@ -662,8 +1763,8 @@ def internal_lookup_redemption(request: Request, payload: dict[str, object] = Bo
     order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
     if not order_code_clean:
         return _api_error("INVALID_INPUT", "order_code is required", 400)
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        return _api_error("INVALID_INPUT", "order_code must be 10 digits", 400)
+    if not _is_valid_order_code(order_code_clean):
+        return _api_error("INVALID_INPUT", "order_code contains invalid characters", 400)
 
     try:
         sync_result = None
@@ -701,8 +1802,8 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
     order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
     if not order_code_clean:
         return _api_error("INVALID_INPUT", "order_code is required", 400)
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        return _api_error("INVALID_INPUT", "order_code must be 10 digits", 400)
+    if not _is_valid_order_code(order_code_clean):
+        return _api_error("INVALID_INPUT", "order_code contains invalid characters", 400)
     if str(payload.get("confirm") or "").strip() != order_code_clean:
         return _api_error("CONFIRMATION_REQUIRED", "confirm must match order_code", 400)
 
@@ -1008,18 +2109,25 @@ def _handle_calc_api(
                 {key: value for key, value in body.items() if key not in {"ok", "handoff_yaml"}}
             )
         except Exception as exc:
-            logger.exception(
-                "api_chart_snapshot_failed endpoint=%s api_key_id=%s error=%r",
+            logger.warning(
+                "api_chart_snapshot_unavailable endpoint=%s api_key_id=%s error_type=%s error=%r",
                 endpoint,
                 api_key_id,
+                type(exc).__name__,
                 exc,
             )
-            pg_store.update_api_usage(
-                usage_id=usage_id,
-                credits_used=0,
-                status="snapshot_unavailable",
-                error_code="API_CHART_SNAPSHOT_FAILED",
-            )
+            if isinstance(body.get("chart"), dict):
+                body["chart"].update({"svg_available": False, "chart_id": None, "svg_url": None})
+            if isinstance(body.get("shichusuimei_chart"), dict):
+                body["shichusuimei_chart"].update(
+                    {
+                        "svg_available": False,
+                        "png_available": False,
+                        "chart_id": None,
+                        "svg_url": None,
+                        "png_url": None,
+                    }
+                )
 
     consumed = pg_store.consume_api_credits(api_key_id=api_key_id, credits=credits_required)
     if not consumed:
@@ -1278,11 +2386,12 @@ def api_key_start_manual_legacy():
 def api_key_redeem(
     request: Request,
     order_code: str = Form(...),
+    order_provider: str = Form(""),
     email: str = Form(""),
     agree_final: str | None = Form(None),
 ):
     order_code_clean = _normalize_stores_order_no(order_code)
-    form = {"order_code": order_code, "email": email, "agree_final": bool(agree_final)}
+    form = {"order_code": order_code, "order_provider": order_provider, "email": email, "agree_final": bool(agree_final)}
 
     def _render_error(message: str, status_code: int = 400):
         return templates.TemplateResponse(
@@ -1299,9 +2408,10 @@ def api_key_redeem(
         )
 
     if not order_code_clean:
-        return _render_error("STORESオーダー番号を入力してください。")
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        return _render_error("STORESオーダー番号は10桁の数字で入力してください。")
+        return _render_error("注文番号を入力してください。")
+    if not _is_valid_order_code(order_code_clean):
+        return _render_error("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+    order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
     if not agree_final:
         return _render_error("APIキーは一度だけ表示されることを確認し、チェックを入れてください。")
     if not os.environ.get("DATABASE_URL"):
@@ -1320,40 +2430,29 @@ def api_key_redeem(
             status_code=409,
         )
 
-    try:
-        status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-        if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-            try:
-                submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
-            except ValueError:
-                submit_limit = 100
-            stores_mail_sync.sync(limit=submit_limit)
-            status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-    except Exception as exc:
-        return _render_error(f"注文番号の照合に失敗しました: {exc}", 500)
-
-    if status == "not_found":
-        return _render_error(
-            f"注文番号（{order_code_clean}）が見つかりません。STORESの購入確認メールに記載の番号を確認してください。"
-        )
-    if status == "cancelled":
-        return _render_error(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。", 409)
-    if status == "already_used":
-        return _render_error(f"この注文番号（{order_code_clean}）は鑑定データ発行に使用済みです。", 409)
+    status, order_row, order_error, order_error_status = _check_order_for_redeem(
+        order_id=order_code_clean,
+        provider=order_provider_clean,
+        product_type="api_key_trial",
+        enforce_product_type=False,
+        allow_gumroad_relaxed=False,
+    )
+    if order_error:
+        return _render_error(order_error, order_error_status)
 
     purchased_type = (order_row or {}).get("product_type")
-    if purchased_type and purchased_type not in API_KEY_PRODUCT_TYPES:
+    if order_provider_clean == "stores" and purchased_type and purchased_type not in API_KEY_PRODUCT_TYPES:
         return _render_error(
             f"この注文番号はAPIキー用の商品ではありません。購入商品: {_product_label(str(purchased_type))}",
             409,
         )
-    if not purchased_type and status != "reusable":
+    if order_provider_clean == "stores" and not purchased_type and status != "reusable":
         return _render_error("購入商品の判定ができません。APIキー用商品の注文番号か確認してください。", 409)
 
     issue_credits = _api_key_issue_credits(str(purchased_type) if purchased_type else None)
     try:
         record = pg_store.create_api_key(
-            label=f"stores_{order_code_clean}",
+            label=f"{order_provider_clean}_{order_code_clean}",
             credits=issue_credits,
             status="active",
             owner_email=email.strip() or None,
@@ -1411,20 +2510,22 @@ def internal_mail_sync(request: Request):
 @app.get("/start")
 def start(request: Request):
     product_type = _product_type_from_request(request)
+    lang = _resolve_lang(request)
     if "type" in request.query_params:
-        return RedirectResponse(_start_url(product_type), status_code=301)
+        return RedirectResponse(str(request.url.replace(path=_start_url(product_type)).include_query_params(lang=lang)), status_code=301)
     return templates.TemplateResponse(
         _buyer_template("start", product_type),
-        {"request": request, **_product_context(product_type)},
+        {"request": request, **_i18n_context(request), **_product_context(product_type, lang)},
     )
 
 
 @app.get("/start/{product_slug}")
 def start_by_slug(request: Request, product_slug: str):
     product_type = _product_type_from_slug(product_slug)
+    lang = _resolve_lang(request)
     return templates.TemplateResponse(
         _buyer_template("start", product_type),
-        {"request": request, **_product_context(product_type)},
+        {"request": request, **_i18n_context(request), **_product_context(product_type, lang)},
     )
 
 
@@ -1432,18 +2533,21 @@ def start_by_slug(request: Request, product_slug: str):
 @app.get("/redeem/{product_slug}", response_class=HTMLResponse)
 def redeem_get(request: Request, product_slug: str | None = None):
     product_type = _product_type_from_slug(product_slug) if product_slug else _product_type_from_request(request)
+    lang = _resolve_lang(request)
     if not product_slug and "type" in request.query_params and "order" not in request.query_params:
-        return RedirectResponse(_redeem_url(product_type), status_code=301)
+        return RedirectResponse(str(request.url.replace(path=_redeem_url(product_type)).include_query_params(lang=lang)), status_code=301)
     order_code = request.query_params.get("order", "").strip()
     return templates.TemplateResponse(
         _buyer_template("redeem", product_type),
         {
             "request": request,
+            **_i18n_context(request),
             "prefectures": PREFECTURE_OPTIONS,
-            "timezone_options": OVERSEAS_TIMEZONE_OPTIONS,
+            "timezone_options": _timezone_options(lang),
             "error": None,
             "form": {"order_code": order_code} if order_code else None,
-            **_product_context(product_type),
+            "payhip_products": _payhip_product_options(),
+            **_product_context(product_type, lang),
         },
     )
 
@@ -1453,7 +2557,11 @@ def redeem_get(request: Request, product_slug: str | None = None):
 def redeem_post(
     request: Request,
     product_slug: str | None = None,
-    order_code: str = Form(...),
+    order_code: str = Form(""),
+    order_provider: str = Form(""),
+    payhip_email: str = Form(""),
+    payhip_product_code: str = Form(""),
+    payhip_order_id: str = Form(""),
     buyer_name: str = Form(""),
     email: str = Form(""),
     birth_date: str = Form(""),
@@ -1485,6 +2593,7 @@ def redeem_post(
         product_type = request.query_params.get("type", product_type).strip() or "western_basic"
     if product_type not in PRODUCT_CONFIG:
         product_type = "western_basic"
+    lang = _resolve_lang(request)
     product = PRODUCT_CONFIG[product_type]
 
     include_asteroids = bool(product["include_asteroids"])
@@ -1501,11 +2610,16 @@ def redeem_post(
             _buyer_template("redeem", product_type),
             {
                 "request": request,
+                **_i18n_context(request),
                 "prefectures": PREFECTURE_OPTIONS,
-                "timezone_options": OVERSEAS_TIMEZONE_OPTIONS,
+                "timezone_options": _timezone_options(lang),
                 "error": msg,
                 "form": {
                     "order_code": order_code,
+                    "order_provider": order_provider,
+                    "payhip_email": payhip_email,
+                    "payhip_product_code": payhip_product_code,
+                    "payhip_order_id": payhip_order_id,
                     "buyer_name": buyer_name,
                     "email": email,
                     "birth_date": birth_date,
@@ -1531,16 +2645,34 @@ def redeem_post(
                     "calendar_note": calendar_note,
                     "agree_final": bool(agree_final),
                 },
-                **_product_context(product_type),
+                **_product_context(product_type, lang),
+                "payhip_products": _payhip_product_options(),
             },
             status_code=status,
         )
 
-    order_code_clean = _normalize_stores_order_no(order_code)
-    if not order_code_clean:
-        return _form_err("STORESオーダー番号を入力してください。")
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        return _form_err("STORESオーダー番号は10桁の数字で入力してください。")
+    requested_provider = (order_provider or "").strip().lower()
+    payhip_metadata: dict[str, str] = {}
+    if requested_provider == "payhip":
+        payhip_metadata, payhip_error = _payhip_metadata_from_form(
+            payhip_email=payhip_email,
+            payhip_product_code=payhip_product_code,
+            payhip_order_id=payhip_order_id,
+            expected_product_type=product_type,
+        )
+        if payhip_error:
+            return _form_err(payhip_error)
+        order_code_clean, _payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(payhip_metadata)
+        if payhip_order_error:
+            return _form_err(payhip_order_error, status=payhip_order_error_status)
+        order_provider_clean = "payhip"
+    else:
+        order_code_clean = _normalize_stores_order_no(order_code)
+        if not order_code_clean:
+            return _form_err("注文番号を入力してください。")
+        if not _is_valid_order_code(order_code_clean):
+            return _form_err("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+        order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
     if not agree_final:
         return _form_err("入力後は変更できないことを確認し、チェックを入れてください。")
 
@@ -1573,37 +2705,22 @@ def redeem_post(
         except Exception as e:
             return _form_err(str(e))
 
-        if os.environ.get("DATABASE_URL"):
-            try:
-                status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-                if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-                    try:
-                        submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
-                    except ValueError:
-                        submit_limit = 100
-                    stores_mail_sync.sync(limit=submit_limit)
-                    status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-            except Exception as e:
-                return _form_err(f"注文番号の照合に失敗しました: {e}", status=500)
-
-            if status == "not_found":
-                return _form_err(f"注文番号（{order_code_clean}）が見つかりません。STORESの購入確認メールに記載の番号を確認してください。")
-            if status == "already_used":
-                return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。", status=409)
-            if status == "cancelled":
-                return _form_err(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。", status=409)
-            purchased_type = (order_row or {}).get("product_type")
-            if purchased_type and purchased_type != product_type:
-                return _form_err(
-                    f"この注文番号は{_product_label(purchased_type)}用です。"
-                    f"{_product_label(product_type)}の入力フォームでは使用できません。",
-                    status=409,
-                )
-        else:
-            status = "ok"
+        status, _order_row, order_error, order_error_status = _check_order_for_redeem(
+            order_id=order_code_clean,
+            provider=order_provider_clean,
+            product_type=product_type,
+        )
+        if order_error:
+            return _form_err(order_error, status=order_error_status)
 
         token = secrets.token_urlsafe(18)
-        chart_options = {**doc.get("product", {}).get("options", {}), "product_type": product_type}
+        chart_options = {
+            **doc.get("product", {}).get("options", {}),
+            "product_type": product_type,
+            "order_provider": order_provider_clean,
+            "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+            **payhip_metadata,
+        }
         artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
         expires_at = _chart_expires_at()
         try:
@@ -1625,7 +2742,7 @@ def redeem_post(
             else:
                 ok = pg_store.redeem_and_save(
                     order_code=order_code_clean,
-                    email=email.strip() or None,
+                    email=payhip_metadata.get("purchaser_email") or email.strip() or None,
                     buyer_name=event_name.strip(),
                     token=token,
                     birth_date=doc["event"]["date"],
@@ -1636,17 +2753,41 @@ def redeem_post(
                     prompt_text=prompt_text,
                     **artifacts,
                     expires_at=expires_at,
+                    redemption_metadata=payhip_metadata or None,
                 )
         except Exception as e:
-            return _form_err(f"保存に失敗しました: {e}", status=500)
+            logger.exception(
+                "chart_save_failed product_type=%s provider=%s order_id=%s error_type=%s error=%r",
+                product_type,
+                order_provider_clean,
+                order_code_clean,
+                type(e).__name__,
+                e,
+            )
+            existing = _existing_chart_redirect(order_code_clean)
+            if existing:
+                return existing
+            return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
 
         if not ok:
+            existing = _existing_chart_redirect(order_code_clean)
+            if existing:
+                return existing
+            _log_order_check(
+                provider=order_provider_clean,
+                order_id=order_code_clean,
+                strict_check=_get_order_check_policy(order_provider_clean)["strict"],
+                check_result="already_used",
+                reason="redemption insert rejected duplicate order_id",
+            )
             return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。別の注文番号をご確認ください。", status=409)
 
         return RedirectResponse(f"/chart/{token}", status_code=303)
 
-    if not birth_date.strip():
-        return _form_err("生年月日を入力してください。")
+    try:
+        birth_date_clean = _validate_birth_date(birth_date, lang)
+    except Exception as e:
+        return _form_err(str(e))
 
     try:
         birth_time_info = resolve_birth_time_accuracy(
@@ -1672,43 +2813,18 @@ def redeem_post(
     except Exception as e:
         return _form_err(str(e))
 
-    # STORES注文番号の照合。DBがある場合のみ有効。
-    if os.environ.get("DATABASE_URL"):
-        try:
-            status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-                try:
-                    submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
-                except ValueError:
-                    submit_limit = 100
-                stores_mail_sync.sync(limit=submit_limit)
-                status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-        except Exception as e:
-            return _form_err(f"注文番号の照合に失敗しました: {e}", status=500)
-
-        if status == "not_found":
-            return _form_err(
-                f"注文番号（{order_code_clean}）が見つかりません。"
-                "STORESの購入確認メールに記載の番号を確認してください。"
-            )
-        if status == "already_used":
-            return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。", status=409)
-        if status == "cancelled":
-            return _form_err(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。", status=409)
-        purchased_type = (order_row or {}).get("product_type")
-        if purchased_type and purchased_type != product_type:
-            return _form_err(
-                f"この注文番号は{_product_label(purchased_type)}用です。"
-                f"{_product_label(product_type)}の入力フォームでは使用できません。",
-                status=409,
-            )
-    else:
-        status = "ok"
+    status, _order_row, order_error, order_error_status = _check_order_for_redeem(
+        order_id=order_code_clean,
+        provider=order_provider_clean,
+        product_type=product_type,
+    )
+    if order_error:
+        return _form_err(order_error, status=order_error_status)
 
     try:
         common_product_args = {
             "title": buyer_name.strip() or None,
-            "birth_date": birth_date.strip(),
+            "birth_date": birth_date_clean,
             "birth_time": birth_time_info["calculation_time"],
             "prefecture": prefecture.strip(),
             "birth_place_label": birth_place_label,
@@ -1734,7 +2850,13 @@ def redeem_post(
         return _form_err(str(e))
 
     token = secrets.token_urlsafe(18)
-    chart_options = {**doc.get("product", {}).get("options", {}), "product_type": product_type}
+    chart_options = {
+        **doc.get("product", {}).get("options", {}),
+        "product_type": product_type,
+        "order_provider": order_provider_clean,
+        "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+        **payhip_metadata,
+    }
     artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
     expires_at = _chart_expires_at()
     try:
@@ -1743,7 +2865,7 @@ def redeem_post(
                 token=token,
                 order_code=order_code_clean,
                 buyer_name=buyer_name.strip() or None,
-                birth_date=birth_date.strip(),
+                birth_date=birth_date_clean,
                 birth_time=birth_time_info["birth_time"] or birth_time_info["calculation_time"],
                 birth_place=birth_place_label,
                 options={**chart_options, "reusable_order": True},
@@ -1756,10 +2878,10 @@ def redeem_post(
         else:
             ok = pg_store.redeem_and_save(
                 order_code=order_code_clean,
-                email=email.strip() or None,
+                email=payhip_metadata.get("purchaser_email") or email.strip() or None,
                 buyer_name=buyer_name.strip() or None,
                 token=token,
-                birth_date=birth_date.strip(),
+                birth_date=birth_date_clean,
                 birth_time=birth_time_info["birth_time"] or birth_time_info["calculation_time"],
                 birth_place=birth_place_label,
                 options=chart_options,
@@ -1767,18 +2889,43 @@ def redeem_post(
                 prompt_text=prompt_text,
                 **artifacts,
                 expires_at=expires_at,
+                redemption_metadata=payhip_metadata or None,
             )
     except Exception as e:
-        return _form_err(f"保存に失敗しました: {e}", status=500)
+        logger.exception(
+            "chart_save_failed product_type=%s provider=%s order_id=%s error_type=%s error=%r",
+            product_type,
+            order_provider_clean,
+            order_code_clean,
+            type(e).__name__,
+            e,
+        )
+        existing = _existing_chart_redirect(order_code_clean)
+        if existing:
+            return existing
+        return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
 
     if not ok:
+        existing = _existing_chart_redirect(order_code_clean)
+        if existing:
+            return existing
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=_get_order_check_policy(order_provider_clean)["strict"],
+            check_result="already_used",
+            reason="redemption insert rejected duplicate order_id",
+        )
         return _form_err(
             f"この注文番号（{order_code_clean}）はすでに使用済みです。"
             "別の注文番号をご確認ください。",
             status=409,
         )
 
-    return RedirectResponse(f"/chart/{token}", status_code=303)
+    chart_redirect = f"/chart/{token}"
+    if lang != "ja":
+        chart_redirect = f"{chart_redirect}?lang={lang}"
+    return RedirectResponse(chart_redirect, status_code=303)
 
 
 # ─── チャートページ（ルート順に注意） ──────────────────────────────
@@ -1786,8 +2933,12 @@ def redeem_post(
 @app.get("/chart/{token}.yaml", response_class=PlainTextResponse)
 def chart_yaml(token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
-    response = PlainTextResponse(chart["yaml_text"], media_type="text/yaml; charset=utf-8")
-    _apply_public_chart_headers(response, chart, max_age=86400)
+    try:
+        yaml_text = refresh_dynamic_transit_yaml(chart["yaml_text"])
+    except Exception as exc:
+        _raise_chart_yaml_generation_error(token, "chart.yaml", exc)
+    response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
+    _apply_public_chart_headers(response, chart, max_age=0)
     return response
 
 
@@ -1826,7 +2977,22 @@ def chart_transit_yaml(token: str):
         _raise_chart_yaml_generation_error(token, "transit.yaml", exc)
     response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
     response.headers["Content-Disposition"] = 'attachment; filename="nanami-transit.yaml"'
-    _apply_public_chart_headers(response, chart, max_age=86400)
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return response
+
+
+@app.get("/chart/{token}/long-term-transits.yaml", response_class=PlainTextResponse)
+def chart_long_term_transits_yaml(token: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    try:
+        yaml_text = build_long_term_transits_yaml(chart["yaml_text"])
+    except Exception as exc:
+        _raise_chart_yaml_generation_error(token, "long-term-transits.yaml", exc)
+    if not yaml_text:
+        raise HTTPException(status_code=404, detail="long-term transits yaml not found")
+    response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-long-term-transits.yaml"'
+    _apply_public_chart_headers(response, chart, max_age=0)
     return response
 
 
@@ -1839,7 +3005,7 @@ def chart_detail_yaml(token: str):
         _raise_chart_yaml_generation_error(token, "detail.yaml", exc)
     response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
     response.headers["Content-Disposition"] = 'attachment; filename="nanami-detail.yaml"'
-    _apply_public_chart_headers(response, chart, max_age=86400)
+    _apply_public_chart_headers(response, chart, max_age=0)
     return response
 
 
@@ -1855,7 +3021,12 @@ def chart_horoscope_svg(token: str):
             chart_doc = None
         if _chart_has_western_natal(chart, doc=chart_doc):
             try:
-                svg = build_horoscope_svg_from_yaml(chart["yaml_text"])
+                svg = optimize_svg(build_horoscope_svg_from_yaml(chart["yaml_text"], doc=chart_doc))
+                if svg:
+                    try:
+                        pg_store.update_chart_svgs(token=token, horoscope_svg=svg)
+                    except Exception:
+                        pass
             except Exception:
                 svg = None
     if not svg:
@@ -1869,7 +3040,19 @@ def chart_horoscope_svg(token: str):
 @app.get("/chart/{token}/shichusuimei.svg")
 def chart_shichusuimei_svg(token: str):
     chart = _load_chart_or_404(token)
-    svg = chart.get("shichusuimei_svg")
+    svg = optimize_svg(chart.get("shichusuimei_svg"))
+    if not svg:
+        try:
+            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+            svg = optimize_svg(build_shichusuimei_svg_from_yaml(chart["yaml_text"], doc=chart_doc))
+            if svg:
+                try:
+                    pg_store.update_chart_svgs(token=token, shichusuimei_svg=svg)
+                except Exception:
+                    pass
+        except Exception:
+            svg = None
     if not svg:
         raise HTTPException(status_code=404, detail="shichusuimei svg not found")
     response = Response(content=svg, media_type="image/svg+xml; charset=utf-8")
@@ -1888,30 +3071,41 @@ def chart_download_zip(token: str):
         chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
     except Exception:
         chart_doc = None
-    full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
-    share_yaml_text = _chart_share_yaml_text(chart)
-    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
+    has_western_natal = _chart_has_western_natal(chart, doc=chart_doc)
+    has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
+    has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
+    full_like_western = has_western_natal and has_31day_transit
+    asteroid_like_western = has_western_natal and has_western_asteroids
+    long_term_transits_yaml = build_long_term_transits_yaml(chart["yaml_text"], doc=chart_doc) if has_long_term_transits(doc=chart_doc) else None
+    full_yaml_text = chart["yaml_text"]
+    share_yaml_text = chart.get("share_yaml_text") or full_yaml_text
     detail_yaml = share_yaml_text
+    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("full.yaml", chart["yaml_text"])
+        zf.writestr("full.yaml", full_yaml_text)
         zf.writestr("detail.yaml", detail_yaml)
         zf.writestr("ai_paste.txt", ai_paste_text)
         if full_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
             zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
-            zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"]))
+            zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"], refresh_dynamic=False))
+        elif asteroid_like_western:
+            zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
+            zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
         elif product_type == "western_basic":
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
+        if long_term_transits_yaml:
+            zf.writestr("long-term-transits.yaml", long_term_transits_yaml)
         if chart.get("horoscope_svg"):
-            zf.writestr("horoscope.svg", chart["horoscope_svg"])
+            zf.writestr("horoscope.svg", optimize_svg(chart["horoscope_svg"]) or "")
         if chart.get("shichusuimei_svg"):
-            zf.writestr("shichusuimei.svg", chart["shichusuimei_svg"])
+            zf.writestr("shichusuimei.svg", optimize_svg(chart["shichusuimei_svg"]) or "")
         zf.writestr("prompt.txt", chart["prompt_text"])
         zf.writestr("README.txt", _chart_zip_readme(chart))
     response = Response(content=buffer.getvalue(), media_type="application/zip")
     response.headers["Content-Disposition"] = f'attachment; filename="{_chart_zip_filename(token)}"'
-    _apply_public_chart_headers(response, chart, max_age=86400)
+    _apply_public_chart_headers(response, chart, max_age=0)
     return response
 
 
@@ -1925,92 +3119,131 @@ def chart_prompt(token: str):
 
 @app.get("/chart/{token}", response_class=HTMLResponse)
 def chart_page(request: Request, token: str):
-    chart = _load_chart_or_404(token)
-    options = chart.get("options") or {}
-    product_type = _chart_product_type(options)
-    is_transit_yaml = product_type == "transit_yaml"
-    chart_doc = None
-    if not is_transit_yaml:
-        try:
-            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
-            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
-        except Exception:
-            chart_doc = None
-    has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
-    has_western_natal = _chart_has_western_natal(chart, doc=chart_doc)
-    has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
-    full_like_western = has_western_natal and has_31day_transit
-    can_continue_with_transit = full_like_western
-    has_yaml_mode_selector = full_like_western
-    horoscope_svg = chart.get("horoscope_svg") if has_western_natal else None
-    shichusuimei_svg = chart.get("shichusuimei_svg") if product_type == "shichu" else None
-    has_asteroids = False
-    birth_time_notice = {"show": False}
-    share_yaml_text = _chart_share_yaml_text(chart)
-    asteroid_yaml_text = None
-    if has_yaml_mode_selector:
-        try:
-            asteroid_yaml_text = build_detail_astrology_yaml(chart["yaml_text"])
-        except Exception:
-            asteroid_yaml_text = None
-    if has_western_natal and not horoscope_svg:
-        try:
-            horoscope_svg = build_horoscope_svg_from_yaml(chart["yaml_text"], doc=chart_doc)
-        except Exception:
-            horoscope_svg = None
-    if horoscope_svg:
-        try:
-            has_asteroids = has_asteroid_svg_data(chart["yaml_text"], doc=chart_doc)
-        except Exception:
-            has_asteroids = False
-    if not is_transit_yaml:
-        try:
-            birth_time_notice = extract_birth_time_notice(chart["yaml_text"], doc=chart_doc)
-        except Exception:
-            birth_time_notice = {"show": False}
-    expires_at = _chart_expiry(chart)
-    expires_label = _chart_expiry_label(expires_at)
-    base_url = _public_base_url(request)
-    chart_url = f"{base_url}/chart/{token}"
-    next_transit_url = (
-        "/addon/new"
-        f"?addon_type=western_31days_transit_addon"
-        f"&previous_chart_url={quote(chart_url, safe='')}"
-    )
-    response = templates.TemplateResponse(
-        "chart_page.html",
-        {
-            "request": request,
-            "token": token,
-            "chart": chart,
-            "is_transit_yaml": is_transit_yaml,
-            "can_continue_with_transit": can_continue_with_transit,
-            "has_31day_transit": has_31day_transit,
-            "has_western_asteroids": has_western_asteroids,
-            "has_yaml_mode_selector": has_yaml_mode_selector,
-            "horoscope_svg": horoscope_svg,
-            "shichusuimei_svg": shichusuimei_svg,
-            "has_asteroid_svg_data": has_asteroids,
-            "birth_time_notice": birth_time_notice,
-            "share_yaml_text": share_yaml_text,
-            "asteroid_yaml_text": asteroid_yaml_text,
-            "chart_url": chart_url,
-            "yaml_url": f"{base_url}/chart/{token}.yaml",
-            "natal_yaml_url": f"{base_url}/chart/{token}/natal.yaml",
-            "natal_asteroids_yaml_url": f"{base_url}/chart/{token}/natal-asteroids.yaml",
-            "transit_yaml_url": f"{base_url}/chart/{token}/transit.yaml",
-            "horoscope_svg_url": f"{base_url}/chart/{token}/horoscope.svg",
-            "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
-            "download_zip_url": f"{base_url}/chart/{token}/download.zip",
-            "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
-            "usage_guide_url": "https://guide.nanami-astro.com/",
-            "next_transit_url": next_transit_url,
-            "expires_at": expires_at,
-            "expires_label": expires_label,
-        },
-    )
-    _apply_public_chart_headers(response, chart, max_age=300)
-    return response
+    total_start = time.perf_counter()
+    lang = _resolve_lang(request)
+    timings: dict[str, float] = {}
+    chart = None
+    product_type = None
+    yaml_bytes = 0
+    html_bytes = 0
+    try:
+        step_start = time.perf_counter()
+        chart = _load_chart_or_404(token, include_svgs=False)
+        timings["chart_fetch_ms"] = _elapsed_ms(step_start)
+        yaml_bytes = len((chart.get("yaml_text") or "").encode("utf-8"))
+
+        step_start = time.perf_counter()
+        options = chart.get("options") or {}
+        product_type = _chart_product_type(options)
+        is_transit_yaml = product_type == "transit_yaml"
+        chart_doc = None
+        if not is_transit_yaml:
+            try:
+                loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+                chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+            except Exception:
+                chart_doc = None
+        timings["yaml_parse_ms"] = _elapsed_ms(step_start)
+
+        step_start = time.perf_counter()
+        has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
+        has_western_natal = _chart_has_western_natal(chart, doc=chart_doc)
+        has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
+        has_long_term_transits_data = has_long_term_transits(doc=chart_doc)
+        full_like_western = has_western_natal and has_31day_transit
+        asteroid_like_western = has_western_natal and has_western_asteroids
+        can_continue_with_transit = full_like_western
+        has_yaml_mode_selector = full_like_western or asteroid_like_western
+        has_horoscope_svg = has_western_natal
+        has_shichusuimei_svg = product_type == "shichu"
+        timings["display判定_ms"] = _elapsed_ms(step_start)
+
+        has_asteroids = False
+        step_start = time.perf_counter()
+        if has_horoscope_svg:
+            try:
+                has_asteroids = has_asteroid_svg_data(chart["yaml_text"], doc=chart_doc)
+            except Exception:
+                has_asteroids = False
+        # /chart 初期HTMLではSVG本体を埋め込まない。ここはSVG関連の表示可否判定だけを測る。
+        timings["svg取得整形_ms"] = _elapsed_ms(step_start)
+
+        step_start = time.perf_counter()
+        birth_time_notice = {"show": False}
+        if not is_transit_yaml:
+            try:
+                birth_time_notice = extract_birth_time_notice(chart["yaml_text"], doc=chart_doc)
+                birth_time_notice = _localized_birth_time_notice(birth_time_notice, lang)
+            except Exception:
+                birth_time_notice = {"show": False}
+        share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
+        asteroid_yaml_text = None
+        expires_at = _chart_expiry(chart)
+        expires_label = _chart_expiry_label(expires_at)
+        base_url = _public_base_url(request)
+        canonical_chart_url = f"{base_url}/chart/{token}"
+        chart_url = canonical_chart_url if lang == "ja" else f"{canonical_chart_url}?lang={lang}"
+        next_transit_url = (
+            "/addon/new"
+            f"?addon_type=western_31days_transit_addon"
+            f"&previous_chart_url={quote(canonical_chart_url, safe='')}"
+        )
+        timings["zip個別ファイル準備_ms"] = _elapsed_ms(step_start)
+
+        step_start = time.perf_counter()
+        response = templates.TemplateResponse(
+            "chart_page.html",
+            {
+                "request": request,
+                **_i18n_context(request),
+                "token": token,
+                "chart": chart,
+                "is_transit_yaml": is_transit_yaml,
+                "can_continue_with_transit": can_continue_with_transit,
+                "has_31day_transit": has_31day_transit,
+                "has_western_asteroids": has_western_asteroids,
+                "has_long_term_transits": has_long_term_transits_data,
+                "has_yaml_mode_selector": has_yaml_mode_selector,
+                "has_horoscope_svg": has_horoscope_svg,
+                "has_shichusuimei_svg": has_shichusuimei_svg,
+                "has_asteroid_svg_data": has_asteroids,
+                "birth_time_notice": birth_time_notice,
+                "share_yaml_text": share_yaml_text,
+                "asteroid_yaml_text": asteroid_yaml_text,
+                "chart_url": chart_url,
+                "yaml_url": f"{base_url}/chart/{token}.yaml",
+                "natal_yaml_url": f"{base_url}/chart/{token}/natal.yaml",
+                "natal_asteroids_yaml_url": f"{base_url}/chart/{token}/natal-asteroids.yaml",
+                "transit_yaml_url": f"{base_url}/chart/{token}/transit.yaml",
+                "long_term_transits_yaml_url": f"{base_url}/chart/{token}/long-term-transits.yaml",
+                "detail_yaml_url": f"{base_url}/chart/{token}/detail.yaml",
+                "horoscope_svg_url": f"{base_url}/chart/{token}/horoscope.svg",
+                "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
+                "download_zip_url": f"{base_url}/chart/{token}/download.zip",
+                "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
+                "usage_guide_url": "https://guide.nanami-astro.com/",
+                "next_transit_url": next_transit_url,
+                "expires_at": expires_at,
+                "expires_label": expires_label,
+            },
+        )
+        html_bytes = len(response.body or b"")
+        timings["template描画_ms"] = _elapsed_ms(step_start)
+
+        step_start = time.perf_counter()
+        _apply_public_chart_headers(response, chart, max_age=300)
+        timings["headers_ms"] = _elapsed_ms(step_start)
+        return response
+    finally:
+        timings["合計_ms"] = _elapsed_ms(total_start)
+        logger.warning(
+            "chart_page_perf token_prefix=%s product_type=%s yaml_bytes=%s html_bytes=%s timings=%s",
+            token[:8],
+            product_type,
+            yaml_bytes,
+            html_bytes,
+            timings,
+        )
 
 
 # ─── 管理者フロー ────────────────────────────────────────────────
@@ -2021,6 +3254,11 @@ def index(request: Request):
         "index.html",
         {"request": request, "admin_test_site_path": ADMIN_TEST_SITE_PATH},
     )
+
+
+@app.get("/type")
+def type_redirect():
+    return RedirectResponse("/start/western-basic", status_code=302)
 
 
 @app.get("/test-site", response_class=HTMLResponse)
@@ -2170,12 +3408,17 @@ def yaml_generate(
             expires_at=expires_at,
         )
     except Exception as e:
+        logger.exception(
+            "admin_chart_save_failed error_type=%s error=%r",
+            type(e).__name__,
+            e,
+        )
         return templates.TemplateResponse(
             "yaml_form.html",
             {
                 "request": request,
                 "prefectures": PREFECTURE_OPTIONS,
-                "error": f"DB保存に失敗しました: {e}",
+                "error": _public_error_message(e, fallback="DB保存に失敗しました。時間をおいて再試行してください。"),
                 "form": {
                     "title": title,
                     "birth_date": birth_date,
@@ -2209,7 +3452,7 @@ def admin_yaml_result(request: Request, token: str):
 ADDON_FORM_OPTIONS = [
     {"value": "western_asteroids_addon", "label": "小惑星追加"},
     {"value": "western_31days_transit_addon", "label": "31日トランジット追加"},
-    {"value": "shichu_fortune_cycles_addon", "label": "四柱推命 大運・流年追加"},
+    {"value": "western_long_term_transits_addon", "label": "長期トランジット（1年）追加"},
 ]
 
 
@@ -2233,6 +3476,10 @@ def _addon_form_response(
             "form": form or {
                 "addon_type": "western_asteroids_addon",
                 "order_code": "",
+                "order_provider": "stores",
+                "payhip_email": "",
+                "payhip_product_code": "",
+                "payhip_order_id": "",
                 "base_yaml": "",
                 "previous_chart_url": "",
                 "transit_start_date": today_jst.isoformat(),
@@ -2243,6 +3490,7 @@ def _addon_form_response(
             "transit_expires_label": transit_expires_label,
             "error": error,
             "addon_form_action": "/addon/generate" if request.url.path.startswith("/addon/") else "/admin/addon/generate",
+            "payhip_products": _payhip_product_options(),
             "today_label": today_jst.isoformat(),
             "transit_min_date": _shift_years(today_jst, -5).isoformat(),
             "transit_max_date": _shift_years(today_jst, 5).isoformat(),
@@ -2263,6 +3511,10 @@ def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
     return {
         "addon_type": addon_type,
         "order_code": "",
+        "order_provider": "stores",
+        "payhip_email": "",
+        "payhip_product_code": "",
+        "payhip_order_id": "",
         "base_yaml": "",
         "previous_chart_url": previous_chart_url,
         "transit_start_date": today_jst,
@@ -2351,7 +3603,7 @@ def _validate_addon_base_doc(doc: dict, addon_type: str) -> None:
     western = systems.get("western") or {}
     shichu = systems.get("shichusuimei") or {}
 
-    if addon_type in {"western_asteroids_addon", "western_31days_transit_addon"}:
+    if addon_type in {"western_asteroids_addon", "western_31days_transit_addon", "western_long_term_transits_addon"}:
         if not isinstance(western, dict) or not isinstance(western.get("natal"), dict):
             raise ValueError("western addon には western の基本版YAMLが必要です。")
         return
@@ -2387,6 +3639,55 @@ def _build_addon_yaml_from_base(
     args["day_change_at_23"] = bool(assumptions.get("day_change_at_23"))
     yaml_text, _prompt_text, _addon_doc = build_shichu_fortune_cycles_addon_yaml(**args)
     return yaml_text
+
+
+ASTEROID_ADDON_CHART_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図に小惑星データを統合した鑑定用データです。
+
+重要ルール:
+- systems.western.natal と systems.western.asteroids の両方を根拠にしてください。
+- 小惑星位置・ハウス・度数の計算結果は変更しないでください。
+- 生年月日から再計算しないでください。
+- 小惑星は性格・テーマ・関係性の深掘りとして扱い、出生図全体と統合して読んでください。
+
+以下のYAMLを読み込んで、小惑星込みの出生図鑑定を行ってください。
+"""
+
+
+def _build_asteroid_addon_from_base(doc: dict) -> tuple[str, str, dict, str, str, dict]:
+    _validate_addon_base_doc(doc, "western_asteroids_addon")
+    args = _addon_args_from_base_doc(doc)
+    addon_yaml_text, addon_prompt_text, addon_doc = build_asteroid_addon_yaml(**args)
+
+    chart_doc = copy.deepcopy(doc)
+    systems = chart_doc.setdefault("systems", {})
+    western = systems.setdefault("western", {})
+    western["asteroids"] = (((addon_doc.get("systems") or {}).get("western") or {}).get("asteroids"))
+    western["transit"] = None
+
+    product = chart_doc.setdefault("product", {})
+    product["type"] = "western_asteroids_addon"
+    product["label"] = "ホロスコープ：小惑星追加"
+    product_options = product.setdefault("options", {})
+    product_options["western_natal"] = True
+    product_options["asteroids"] = True
+    product_options["transit"] = False
+    product_options["shichusuimei"] = False
+    product_options["product_type"] = "western_asteroids_addon"
+
+    meta = chart_doc.setdefault("meta", {})
+    meta["product_type"] = "western_asteroids_addon"
+    meta["data_role"] = "base_chart"
+    meta["addon_type"] = "western_asteroids"
+    chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
+
+    assets = chart_doc.setdefault("assets", {})
+    assets["yaml_natal_asteroids"] = {
+        "available": True,
+        "file_name": "natal-asteroids.yaml",
+    }
+    chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
+    chart_prompt_text = ASTEROID_ADDON_CHART_PROMPT.strip() + "\n"
+    return addon_yaml_text, addon_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
 
 
 def _build_transit_addon_from_base(
@@ -2426,6 +3727,65 @@ def _build_transit_addon_from_base(
     return addon_yaml_text, addon_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
 
 
+LONG_TERM_TRANSITS_ADDON_CHART_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図の最低限情報と年単位の長期トランジットをまとめた追加鑑定用データです。
+
+重要ルール:
+- このYAML内の出生図データと長期トランジットだけを根拠にしてください。
+- 生年月日から天体位置を再計算しないでください。
+- 31日トランジット、今日の運勢、短期的な日別予報として扱わないでください。
+- Saturn / Uranus / Neptune / Pluto / Jupiter などの長期的な流れを中心に、今後1年のテーマを読んでください。
+- 断定しすぎず、長期テーマ・変化の方向性・活かし方として解釈してください。
+
+以下のYAMLを読み込んで、年単位の長期トランジット鑑定を行ってください。
+"""
+
+
+def _build_long_term_transits_addon_from_base(
+    doc: dict,
+    *,
+    transit_start_date: datetime,
+) -> tuple[str, str, dict, str, str, dict]:
+    _validate_addon_base_doc(doc, "western_long_term_transits_addon")
+    args = _addon_args_from_base_doc(doc)
+    _full_yaml_text, _prompt_text, full_doc = build_product_yaml(
+        **args,
+        include_asteroids=False,
+        include_shichusuimei=False,
+        include_transit=False,
+        western_long_term_transits=True,
+        transit_start_date=transit_start_date,
+    )
+    addon_yaml_text = build_long_term_transits_yaml(doc=full_doc)
+    if not addon_yaml_text:
+        raise ValueError("長期トランジットAddon YAMLを生成できませんでした。出生図データを確認してください。")
+    addon_doc = yaml.safe_load(addon_yaml_text) or {}
+
+    chart_doc = copy.deepcopy(doc)
+    systems = chart_doc.setdefault("systems", {})
+    western = systems.setdefault("western", {})
+    western["transit"] = None
+    western["transit_long_term"] = (((addon_doc.get("systems") or {}).get("western") or {}).get("transit_long_term"))
+
+    product = chart_doc.setdefault("product", {})
+    product_options = product.setdefault("options", {})
+    product_options["western_natal"] = True
+    product_options["transit"] = False
+    product_options["western_long_term_transits"] = True
+    product_options["product_type"] = "western_long_term_transits_addon"
+    chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
+
+    assets = chart_doc.setdefault("assets", {})
+    assets["yaml_long_term_transits"] = {
+        "available": True,
+        "file_name": "long-term-transits.yaml",
+        "merge_path": "systems.western.transit_long_term",
+    }
+
+    chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
+    chart_prompt_text = LONG_TERM_TRANSITS_ADDON_CHART_PROMPT.strip() + "\n"
+    return addon_yaml_text, chart_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
+
+
 def _transit_addon_chart_payload(
     *,
     yaml_text: str,
@@ -2437,6 +3797,10 @@ def _transit_addon_chart_payload(
         share_yaml_text = build_light_astrology_yaml(yaml_text, doc=chart_doc)
     except Exception:
         share_yaml_text = yaml_text
+    try:
+        horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=chart_doc))
+    except Exception:
+        horoscope_svg = None
     return {
         "buyer_name": str(input_block.get("title") or "").strip() or None,
         "birth_date": str(input_block.get("birth_date") or "").strip(),
@@ -2446,7 +3810,65 @@ def _transit_addon_chart_payload(
         "yaml_text": yaml_text,
         "prompt_text": prompt_text,
         "share_yaml_text": share_yaml_text,
-        "horoscope_svg": None,
+        "horoscope_svg": horoscope_svg,
+        "shichusuimei_svg": None,
+    }
+
+
+def _asteroid_addon_chart_payload(
+    *,
+    yaml_text: str,
+    prompt_text: str,
+    chart_doc: dict,
+) -> dict[str, object]:
+    input_block = chart_doc.get("input") or {}
+    try:
+        share_yaml_text = build_natal_asteroids_yaml(yaml_text)
+    except Exception:
+        try:
+            share_yaml_text = build_detail_astrology_yaml(yaml_text)
+        except Exception:
+            share_yaml_text = yaml_text
+    try:
+        horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=chart_doc))
+    except Exception:
+        horoscope_svg = None
+    return {
+        "buyer_name": str(input_block.get("title") or "").strip() or None,
+        "birth_date": str(input_block.get("birth_date") or "").strip(),
+        "birth_time": str(input_block.get("birth_time") or input_block.get("calculation_time") or "").strip() or None,
+        "birth_place": str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip() or None,
+        "options": {**(chart_doc.get("product", {}).get("options", {}) or {}), "product_type": "western_asteroids_addon"},
+        "yaml_text": yaml_text,
+        "prompt_text": prompt_text,
+        "share_yaml_text": share_yaml_text,
+        "horoscope_svg": horoscope_svg,
+        "shichusuimei_svg": None,
+    }
+
+
+def _long_term_transits_addon_chart_payload(
+    *,
+    yaml_text: str,
+    prompt_text: str,
+    chart_doc: dict,
+) -> dict[str, object]:
+    input_block = chart_doc.get("input") or {}
+    share_yaml_text = build_long_term_transits_yaml(doc=chart_doc) or yaml_text
+    try:
+        horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=chart_doc))
+    except Exception:
+        horoscope_svg = None
+    return {
+        "buyer_name": str(input_block.get("title") or "").strip() or None,
+        "birth_date": str(input_block.get("birth_date") or "").strip(),
+        "birth_time": str(input_block.get("birth_time") or input_block.get("calculation_time") or "").strip() or None,
+        "birth_place": str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip() or None,
+        "options": {**(chart_doc.get("product", {}).get("options", {}) or {}), "product_type": "western_long_term_transits_addon"},
+        "yaml_text": yaml_text,
+        "prompt_text": prompt_text,
+        "share_yaml_text": share_yaml_text,
+        "horoscope_svg": horoscope_svg,
         "shichusuimei_svg": None,
     }
 
@@ -2485,7 +3907,7 @@ def _parse_transit_start_date(value: str) -> datetime:
     return datetime(selected.year, selected.month, selected.day, tzinfo=ZoneInfo("Asia/Tokyo"))
 
 
-def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str) -> dict:
+def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str, addon_type: str = "western_31days_transit_addon") -> dict:
     raw_url = (previous_chart_url or "").strip()
     try:
         parsed = urlparse(raw_url)
@@ -2510,9 +3932,9 @@ def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str) -> dic
 
     doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""))
     try:
-        _validate_addon_base_doc(doc, "western_31days_transit_addon")
+        _validate_addon_base_doc(doc, addon_type)
     except ValueError as exc:
-        raise ValueError("このURLにはトランジットaddonに使えるネイタル情報がありません。基本版ホロスコープのYAMLまたはURLを入力してください。") from exc
+        raise ValueError("このURLにはaddonに使えるネイタル情報がありません。基本版ホロスコープのYAMLまたはURLを入力してください。") from exc
     return doc
 
 
@@ -2524,34 +3946,47 @@ def _transit_addon_expires_at() -> datetime:
 
 def _redeem_and_save_transit_addon_or_raise(
     order_code: str,
+    order_provider: str,
     addon_type: str,
     yaml_text: str,
     *,
     chart_payload: dict[str, object] | None = None,
+    payhip_metadata: dict[str, str] | None = None,
 ) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
         raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
     order_code_clean = _normalize_stores_order_no(order_code)
     if not order_code_clean:
-        raise ValueError("STORESオーダー番号を入力してください。")
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        raise ValueError("STORESオーダー番号は10桁の数字で入力してください。")
+        raise ValueError("注文番号を入力してください。")
+    if not _is_valid_order_code(order_code_clean):
+        raise ValueError("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+    order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
+    policy = _get_order_check_policy(order_provider_clean)
+    if order_provider_clean not in ORDER_PROVIDERS:
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=bool(policy["strict"]),
+            check_result="provider_unknown",
+            reason="provider could not be resolved",
+        )
+        raise ValueError(f"注文番号（{order_code_clean}）を確認できません。購入確認メールに記載の番号を確認してください。")
+    if order_provider_clean == "gumroad":
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=True,
+            check_result="unsupported",
+            reason="gumroad product tags are only mapped for western_basic/western_full",
+        )
+        raise ValueError("Gumroad注文はこの追加商品では使用できません。対応商品タグを確認してください。")
 
     last_exc: Exception | None = None
     for _ in range(3):
         token = secrets.token_urlsafe(24)
         expires_at = _transit_addon_expires_at()
         try:
-            status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
-                order_code=order_code_clean,
-                addon_type=addon_type,
-                token=token,
-                yaml_text=yaml_text,
-                expires_at=expires_at,
-                chart_payload=chart_payload,
-            )
-            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-                _sync_stores_orders_for_lookup()
+            if policy["strict"]:
                 status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
                     order_code=order_code_clean,
                     addon_type=addon_type,
@@ -2560,14 +3995,52 @@ def _redeem_and_save_transit_addon_or_raise(
                     expires_at=expires_at,
                     chart_payload=chart_payload,
                 )
+                if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+                    _sync_stores_orders_for_lookup()
+                    status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
+                        order_code=order_code_clean,
+                        addon_type=addon_type,
+                        token=token,
+                        yaml_text=yaml_text,
+                        expires_at=expires_at,
+                        chart_payload=chart_payload,
+                    )
+            else:
+                status, order_row = pg_store.redeem_addon_order_and_save_transit_link_relaxed(
+                    order_code=order_code_clean,
+                    addon_type=addon_type,
+                    token=token,
+                    yaml_text=yaml_text,
+                    expires_at=expires_at,
+                    chart_payload=chart_payload,
+                    provider=order_provider_clean or "gumroad",
+                    metadata=payhip_metadata if order_provider_clean == "payhip" else None,
+                )
         except Exception as exc:
             last_exc = exc
+            logger.warning(
+                "transit_addon_save_transient_error order_id=%s addon_type=%s error_type=%s error=%r",
+                order_code_clean,
+                addon_type,
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
+            time.sleep(0.15)
             continue
+
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=bool(policy["strict"]),
+            check_result=status,
+            reason="stores strict check" if policy["strict"] else f"{_provider_label(order_provider_clean)} relaxed check",
+        )
 
         if status == "ok":
             return token, expires_at
         if status == "not_found":
-            raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。STORESの購入確認メールに記載の番号を確認してください。")
+            raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
         if status == "already_used":
             raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
         if status == "cancelled":
@@ -2580,30 +4053,194 @@ def _redeem_and_save_transit_addon_or_raise(
             )
         raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
 
-    raise ValueError(f"トランジットデータの一時保存に失敗しました: {last_exc}")
+    if last_exc:
+        raise ValueError(_public_error_message(last_exc, fallback="トランジットデータの一時保存に失敗しました。時間をおいて再試行してください。")) from last_exc
+    raise ValueError("トランジットデータの一時保存に失敗しました。時間をおいて再試行してください。")
 
 
-def _redeem_addon_order_or_raise(order_code: str, addon_type: str) -> str:
+def _redeem_and_save_chart_addon_or_raise(
+    order_code: str,
+    order_provider: str,
+    addon_type: str,
+    *,
+    chart_payload: dict[str, object],
+    payhip_metadata: dict[str, str] | None = None,
+) -> tuple[str, datetime]:
+    if not os.environ.get("DATABASE_URL"):
+        raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
     order_code_clean = _normalize_stores_order_no(order_code)
     if not order_code_clean:
-        raise ValueError("STORESオーダー番号を入力してください。")
-    if not re.fullmatch(r"\d{10}", order_code_clean):
-        raise ValueError("STORESオーダー番号は10桁の数字で入力してください。")
+        raise ValueError("注文番号を入力してください。")
+    if not _is_valid_order_code(order_code_clean):
+        raise ValueError("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+    order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
+    policy = _get_order_check_policy(order_provider_clean)
+    if order_provider_clean not in ORDER_PROVIDERS:
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=bool(policy["strict"]),
+            check_result="provider_unknown",
+            reason="provider could not be resolved",
+        )
+        raise ValueError(f"注文番号（{order_code_clean}）を確認できません。購入確認メールに記載の番号を確認してください。")
+    if order_provider_clean == "gumroad":
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=True,
+            check_result="unsupported",
+            reason="gumroad product tags are only mapped for western_basic/western_full",
+        )
+        raise ValueError("Gumroad注文はこの追加商品では使用できません。対応商品タグを確認してください。")
+
+    last_exc: Exception | None = None
+    for _ in range(3):
+        token = secrets.token_urlsafe(24)
+        expires_at = _chart_expires_at()
+        try:
+            if policy["strict"]:
+                status, order_row = pg_store.redeem_addon_order_and_save_chart(
+                    order_code=order_code_clean,
+                    addon_type=addon_type,
+                    token=token,
+                    expires_at=expires_at,
+                    chart_payload=chart_payload,
+                )
+                if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+                    _sync_stores_orders_for_lookup()
+                    status, order_row = pg_store.redeem_addon_order_and_save_chart(
+                        order_code=order_code_clean,
+                        addon_type=addon_type,
+                        token=token,
+                        expires_at=expires_at,
+                        chart_payload=chart_payload,
+                    )
+            else:
+                status, order_row = pg_store.redeem_addon_order_and_save_chart_relaxed(
+                    order_code=order_code_clean,
+                    addon_type=addon_type,
+                    token=token,
+                    expires_at=expires_at,
+                    chart_payload=chart_payload,
+                    provider=order_provider_clean or "gumroad",
+                    metadata=payhip_metadata if order_provider_clean == "payhip" else None,
+                )
+        except Exception as exc:
+            last_exc = exc
+            logger.warning(
+                "chart_addon_save_transient_error order_id=%s addon_type=%s error_type=%s error=%r",
+                order_code_clean,
+                addon_type,
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
+            time.sleep(0.15)
+            continue
+
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=bool(policy["strict"]),
+            check_result=status,
+            reason="stores strict check" if policy["strict"] else f"{_provider_label(order_provider_clean)} relaxed check",
+        )
+
+        if status == "ok":
+            return token, expires_at
+        if status == "not_found":
+            raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
+        if status == "already_used":
+            raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
+        if status == "cancelled":
+            raise ValueError(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。")
+        if status == "product_mismatch":
+            purchased_type = (order_row or {}).get("product_type")
+            raise ValueError(
+                f"この注文番号は{_product_label(purchased_type)}用です。"
+                f"{_product_label(addon_type)}の生成には使用できません。"
+            )
+        raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
+
+    if last_exc:
+        raise ValueError(_public_error_message(last_exc, fallback="追加データの保存に失敗しました。時間をおいて再試行してください。")) from last_exc
+    raise ValueError("追加データの保存に失敗しました。時間をおいて再試行してください。")
+
+
+def _redeem_addon_order_or_raise(
+    order_code: str,
+    order_provider: str,
+    addon_type: str,
+    *,
+    payhip_metadata: dict[str, str] | None = None,
+) -> str:
+    order_code_clean = _normalize_stores_order_no(order_code)
+    if not order_code_clean:
+        raise ValueError("注文番号を入力してください。")
+    if not _is_valid_order_code(order_code_clean):
+        raise ValueError("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+    order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
+    policy = _get_order_check_policy(order_provider_clean)
+    if order_provider_clean not in ORDER_PROVIDERS:
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=bool(policy["strict"]),
+            check_result="provider_unknown",
+            reason="provider could not be resolved",
+        )
+        raise ValueError(f"注文番号（{order_code_clean}）を確認できません。購入確認メールに記載の番号を確認してください。")
+    if order_provider_clean == "gumroad":
+        _log_order_check(
+            provider=order_provider_clean,
+            order_id=order_code_clean,
+            strict_check=True,
+            check_result="unsupported",
+            reason="gumroad product tags are only mapped for western_basic/western_full",
+        )
+        raise ValueError("Gumroad注文はこの追加商品では使用できません。対応商品タグを確認してください。")
     if not os.environ.get("DATABASE_URL"):
         raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
 
     try:
-        status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
-        if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-            _sync_stores_orders_for_lookup()
+        if policy["strict"]:
             status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+                _sync_stores_orders_for_lookup()
+                status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+        else:
+            if order_provider_clean == "payhip":
+                status, order_row = pg_store.redeem_addon_order_relaxed_with_metadata(
+                    order_code=order_code_clean,
+                    addon_type=addon_type,
+                    provider="payhip",
+                    metadata=payhip_metadata,
+                )
+            else:
+                status, order_row = pg_store.redeem_addon_order_relaxed(order_code=order_code_clean, addon_type=addon_type)
     except Exception as exc:
-        raise ValueError(f"注文番号の照合に失敗しました: {exc}") from exc
+        logger.exception(
+            "addon_order_check_failed order_id=%s addon_type=%s error_type=%s error=%r",
+            order_code_clean,
+            addon_type,
+            type(exc).__name__,
+            exc,
+        )
+        raise ValueError(_public_error_message(exc, fallback="注文番号の照合に失敗しました。時間をおいて再試行してください。")) from exc
+
+    _log_order_check(
+        provider=order_provider_clean,
+        order_id=order_code_clean,
+        strict_check=bool(policy["strict"]),
+        check_result=status,
+        reason="stores strict check" if policy["strict"] else f"{_provider_label(order_provider_clean)} relaxed check",
+    )
 
     if status == "ok":
         return order_code_clean
     if status == "not_found":
-        raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。STORESの購入確認メールに記載の番号を確認してください。")
+        raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
     if status == "already_used":
         raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
     if status == "cancelled":
@@ -2633,6 +4270,10 @@ def addon_generate(
     request: Request,
     addon_type: str = Form("western_asteroids_addon"),
     order_code: str = Form(""),
+    order_provider: str = Form(""),
+    payhip_email: str = Form(""),
+    payhip_product_code: str = Form(""),
+    payhip_order_id: str = Form(""),
     base_yaml: str = Form(""),
     previous_chart_url: str = Form(""),
     transit_start_date: str = Form(""),
@@ -2640,13 +4281,75 @@ def addon_generate(
     form = {
         "addon_type": addon_type,
         "order_code": order_code,
+        "order_provider": order_provider,
+        "payhip_email": payhip_email,
+        "payhip_product_code": payhip_product_code,
+        "payhip_order_id": payhip_order_id,
         "base_yaml": base_yaml,
         "previous_chart_url": previous_chart_url,
         "transit_start_date": transit_start_date,
     }
     if addon_type not in {item["value"] for item in ADDON_FORM_OPTIONS}:
         return _addon_form_response(request, form=form, error="addon種別が不正です。", status_code=400)
+    requested_provider = (order_provider or "").strip().lower()
+    payhip_metadata: dict[str, str] = {}
+    order_code_for_redeem = order_code
+    order_provider_for_redeem = order_provider
+    if requested_provider == "payhip":
+        payhip_metadata, payhip_error = _payhip_metadata_from_form(
+            payhip_email=payhip_email,
+            payhip_product_code=payhip_product_code,
+            payhip_order_id=payhip_order_id,
+            expected_product_type=addon_type,
+        )
+        if payhip_error:
+            return _addon_form_response(request, form=form, error=payhip_error, status_code=400)
+        order_code_for_redeem, _payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(payhip_metadata)
+        if payhip_order_error:
+            return _addon_form_response(request, form=form, error=payhip_order_error, status_code=payhip_order_error_status)
+        order_provider_for_redeem = "payhip"
     try:
+        if addon_type == "western_asteroids_addon":
+            if not base_yaml.strip() and not previous_chart_url.strip():
+                return _addon_form_response(
+                    request,
+                    form=form,
+                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    status_code=400,
+                )
+            doc = (
+                _load_addon_base_yaml(base_yaml)
+                if base_yaml.strip()
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+            )
+            (
+                _addon_yaml_text,
+                _addon_prompt_text,
+                _addon_doc,
+                chart_yaml_text,
+                chart_prompt_text,
+                chart_doc,
+            ) = _build_asteroid_addon_from_base(doc)
+            chart_payload = _asteroid_addon_chart_payload(
+                yaml_text=chart_yaml_text,
+                prompt_text=chart_prompt_text,
+                chart_doc=chart_doc,
+            )
+            order_provider_clean = _resolve_order_provider(_normalize_stores_order_no(order_code_for_redeem), order_provider_for_redeem)
+            chart_payload["options"] = {
+                **dict(chart_payload["options"]),
+                "order_provider": order_provider_clean,
+                "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+                **payhip_metadata,
+            }
+            token, _expires_at = _redeem_and_save_chart_addon_or_raise(
+                order_code_for_redeem,
+                order_provider_for_redeem,
+                addon_type,
+                chart_payload=chart_payload,
+                payhip_metadata=payhip_metadata or None,
+            )
+            return RedirectResponse(f"/chart/{token}", status_code=303)
         if addon_type == "western_31days_transit_addon":
             if not base_yaml.strip() and not previous_chart_url.strip():
                 return _addon_form_response(
@@ -2672,22 +4375,83 @@ def addon_generate(
                 doc,
                 transit_start_date=start_dt,
             )
+            chart_payload = _transit_addon_chart_payload(
+                yaml_text=chart_yaml_text,
+                prompt_text=chart_prompt_text,
+                chart_doc=chart_doc,
+            )
+            order_provider_clean = _resolve_order_provider(_normalize_stores_order_no(order_code_for_redeem), order_provider_for_redeem)
+            chart_payload["options"] = {
+                **dict(chart_payload["options"]),
+                "order_provider": order_provider_clean,
+                "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+                **payhip_metadata,
+            }
             token, _expires_at = _redeem_and_save_transit_addon_or_raise(
-                order_code,
+                order_code_for_redeem,
+                order_provider_for_redeem,
                 addon_type,
                 result_yaml,
-                chart_payload=_transit_addon_chart_payload(
-                    yaml_text=chart_yaml_text,
-                    prompt_text=chart_prompt_text,
-                    chart_doc=chart_doc,
-                ),
+                chart_payload=chart_payload,
+                payhip_metadata=payhip_metadata or None,
+            )
+            return RedirectResponse(f"/chart/{token}", status_code=303)
+        if addon_type == "western_long_term_transits_addon":
+            if not base_yaml.strip() and not previous_chart_url.strip():
+                return _addon_form_response(
+                    request,
+                    form=form,
+                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    status_code=400,
+                )
+            doc = (
+                _load_addon_base_yaml(base_yaml)
+                if base_yaml.strip()
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url)
+            )
+            start_dt = _parse_transit_start_date(transit_start_date)
+            (
+                result_yaml,
+                _addon_prompt_text,
+                _addon_doc,
+                chart_yaml_text,
+                chart_prompt_text,
+                chart_doc,
+            ) = _build_long_term_transits_addon_from_base(
+                doc,
+                transit_start_date=start_dt,
+            )
+            chart_payload = _long_term_transits_addon_chart_payload(
+                yaml_text=chart_yaml_text,
+                prompt_text=chart_prompt_text,
+                chart_doc=chart_doc,
+            )
+            order_provider_clean = _resolve_order_provider(_normalize_stores_order_no(order_code_for_redeem), order_provider_for_redeem)
+            chart_payload["options"] = {
+                **dict(chart_payload["options"]),
+                "order_provider": order_provider_clean,
+                "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+                **payhip_metadata,
+            }
+            token, _expires_at = _redeem_and_save_transit_addon_or_raise(
+                order_code_for_redeem,
+                order_provider_for_redeem,
+                addon_type,
+                result_yaml,
+                chart_payload=chart_payload,
+                payhip_metadata=payhip_metadata or None,
             )
             return RedirectResponse(f"/chart/{token}", status_code=303)
         if not base_yaml.strip():
             return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
         doc = _load_addon_base_yaml(base_yaml)
         result_yaml = _build_addon_yaml_from_base(doc, addon_type)
-        _redeem_addon_order_or_raise(order_code, addon_type)
+        _redeem_addon_order_or_raise(
+            order_code_for_redeem,
+            order_provider_for_redeem,
+            addon_type,
+            payhip_metadata=payhip_metadata or None,
+        )
     except Exception as exc:
         return _addon_form_response(request, form=form, error=str(exc), status_code=400)
     return _addon_form_response(request, form=form, result_yaml=result_yaml)
@@ -2729,6 +4493,37 @@ def transit_addon_page(request: Request, token: str):
             "yaml_text": "" if expired else str((link or {}).get("yaml_text") or ""),
             "expires_label": _chart_expiry_label(expires_at),
             "download_url": f"/addon/transit/{token}.yaml",
+        },
+        status_code=410 if expired else 200,
+    )
+
+
+@app.get("/addon/long-term-transits/{token}.yaml", response_class=PlainTextResponse)
+@app.get("/admin/addon/long-term-transits/{token}.yaml", response_class=PlainTextResponse)
+def long_term_transits_addon_yaml(token: str):
+    link, expired = _load_transit_addon_link(token)
+    if expired:
+        return PlainTextResponse("この長期トランジットデータの有効期限は終了しました。\n", status_code=410)
+    response = PlainTextResponse(str((link or {}).get("yaml_text") or ""), media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-long-term-transits-addon.yaml"'
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+@app.get("/addon/long-term-transits/{token}", response_class=HTMLResponse)
+@app.get("/admin/addon/long-term-transits/{token}", response_class=HTMLResponse)
+def long_term_transits_addon_page(request: Request, token: str):
+    link, expired = _load_transit_addon_link(token)
+    expires_at = _chart_expiry(link or {})
+    return templates.TemplateResponse(
+        "long_term_transits_addon_page.html",
+        {
+            "request": request,
+            "expired": expired,
+            "yaml_text": "" if expired else str((link or {}).get("yaml_text") or ""),
+            "expires_label": _chart_expiry_label(expires_at),
+            "download_url": f"/addon/long-term-transits/{token}.yaml",
+            "expired_message": "この長期トランジットデータの有効期限は終了しました。",
         },
         status_code=410 if expired else 200,
     )
@@ -2833,12 +4628,13 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
             chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
         except Exception:
             chart_doc = None
-    full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
-    if full_like_western and not chart.get("share_yaml_text"):
-        try:
-            return build_light_astrology_yaml(chart["yaml_text"], doc=chart_doc)
-        except Exception:
-            return chart["yaml_text"]
+    has_western_natal = _chart_has_western_natal(chart, doc=chart_doc)
+    has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
+    has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
+    full_like_western = has_western_natal and has_31day_transit
+    asteroid_like_western = has_western_natal and has_western_asteroids
+    if full_like_western:
+        return build_light_astrology_yaml(chart["yaml_text"], doc=chart_doc)
     return share_yaml_text
 
 
@@ -2858,7 +4654,11 @@ def _chart_zip_readme(chart: dict) -> str:
         chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
     except Exception:
         chart_doc = None
-    full_like_western = _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc)
+    has_western_natal = _chart_has_western_natal(chart, doc=chart_doc)
+    has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
+    has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
+    full_like_western = has_western_natal and has_31day_transit
+    asteroid_like_western = has_western_natal and has_western_asteroids
     files: list[str] = [
         "ai_paste.txt: AIにそのまま貼るための推奨テキストです。ファイル名の末尾の日付はダウンロード当日です。迷ったらまずこれを使ってください。",
         "detail.yaml: AIに渡しやすい軽量版YAMLです。完全版より読みやすく、通常の鑑定向けです。",
@@ -2875,6 +4675,13 @@ def _chart_zip_readme(chart: dict) -> str:
             "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",
             "transit.yaml: 31日分のトランジットデータです。今後の流れを詳しく見たいときに使います。",
         ])
+    elif asteroid_like_western:
+        files.extend([
+            "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
+            "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",
+        ])
+    if has_long_term_transits(doc=chart_doc):
+        files.append("long-term-transits.yaml: 年単位の長期トランジット専用YAMLです。31日トランジットとは別に使います。")
     if chart.get("horoscope_svg"):
         files.append("horoscope.svg: ホロスコープ図のSVGです。図として確認したいときに使います。")
     if chart.get("shichusuimei_svg"):

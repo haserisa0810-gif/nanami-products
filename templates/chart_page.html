@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ja">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ chart.buyer_name or "あなた" }}{% if is_transit_yaml %}のイベントデータ{% else %}さん専用の鑑定データ{% endif %}</title>
+  <title>{% if is_transit_yaml %}{{ chart.buyer_name or t.transit_title_default }}{{ t.transit_title_suffix }}{% elif chart.buyer_name %}{{ chart.buyer_name }}{{ t.chart_title }}{% else %}{{ t.chart_title_default }}{% endif %}</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <!-- asset_version: {{ asset_version }} -->
   <style>
@@ -78,6 +78,12 @@
       background: var(--card2);
       border-color: var(--border2);
       color: var(--text);
+    }
+    .key-actions .helper-note-inline {
+      margin: -2px 0 0;
+      color: var(--dim);
+      font-size: .84rem;
+      line-height: 1.7;
     }
     .fallback-share {
       margin-top: 12px;
@@ -290,6 +296,17 @@
       color: var(--dim);
       font-size: .84rem;
     }
+    .guide-inline-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      color: var(--gold);
+      font-size: .84rem;
+      text-decoration: none;
+    }
+    .guide-inline-link::after { content: '→'; }
+    .guide-inline-link:hover { text-decoration: underline; }
     .page-url-panel {
       margin-top: 16px;
       padding: 14px;
@@ -690,273 +707,80 @@
 <body>
   <main class="wrap wide">
     <div class="card buyer-card">
-      <p class="eyebrow">{% if is_transit_yaml %}AI分析データ{% else %}AI鑑定データ{% endif %}</p>
+      {% include "_language_switcher.html" %}
+      <p class="eyebrow">{% if is_transit_yaml %}{{ t.analysis_eyebrow }}{% else %}{{ t.chart_eyebrow }}{% endif %}</p>
       <div class="page-title-block">
-        <h1>{% if is_transit_yaml %}{{ chart.buyer_name or "イベント" }}のトランジットYAML{% else %}{{ chart.buyer_name or "あなた" }}さん専用の鑑定データ{% endif %}</h1>
-        <p class="lead">
-          {% if is_transit_yaml %}
-          このデータをAIに貼るだけで、イベント時点の天体配置分析を始められます。<br>
-          出生情報を使わない、トランジットのみのYAMLです。
-          {% else %}
-          このデータをAIに貼るだけで、あなた専用の鑑定がはじまります。<br>
-          難しい設定は必要ありません。
-          {% endif %}
-        </p>
+        <h1>{% if is_transit_yaml %}{{ chart.buyer_name or t.transit_title_default }}{{ t.transit_title_suffix }}{% elif chart.buyer_name %}{{ chart.buyer_name }}{{ t.chart_title }}{% else %}{{ t.chart_title_default }}{% endif %}</h1>
+        {% if is_transit_yaml %}
+        <p class="lead">{{ t.transit_lead | safe }}</p>
+        {% endif %}
         <div class="badge-row">
-          <span class="info-badge">{{ chart.buyer_name or "鑑定データ" }}</span>
-          <span class="info-badge">{% if is_transit_yaml %}日付{% else %}生年月日{% endif %}: {{ chart.birth_date }}</span>
-          {% if chart.birth_time %}<span class="info-badge">{% if is_transit_yaml %}時刻{% elif birth_time_notice.show %}計算用時刻{% else %}出生時刻{% endif %}: {{ chart.birth_time }}</span>{% endif %}
-          <span class="info-badge">{% if is_transit_yaml %}場所{% else %}出生地{% endif %}: {{ chart.birth_place or "不明" }}</span>
+          <span class="info-badge">{{ chart.buyer_name or t.chart_eyebrow }}</span>
+          <span class="info-badge">{% if is_transit_yaml %}{{ t.date }}{% else %}{{ t.birthday }}{% endif %}: {{ chart.birth_date }}</span>
+          {% if chart.birth_time %}<span class="info-badge">{% if is_transit_yaml %}{{ t.time }}{% elif birth_time_notice.show %}{{ t.calc_time }}{% else %}{{ t.birth_time_badge }}{% endif %}: {{ chart.birth_time }}</span>{% endif %}
+          <span class="info-badge">{% if is_transit_yaml %}{{ t.place }}{% else %}{{ t.birth_place }}{% endif %}: {{ chart.birth_place or t.unknown }}</span>
         </div>
         {% if birth_time_notice.show %}
         <section class="notice-box soft time-accuracy-card">
-          <p class="mini-label">出生時刻の扱い</p>
+          <p class="mini-label">{{ t["time_accuracy_label"] }}</p>
           <strong>{{ birth_time_notice.short }}</strong>
         </section>
         {% endif %}
-        <p class="hint">このページはURLを知っている人が開けます。有効期限は{{ expires_label }}（発行から90日間）です。</p>
-      </div>
-
-      <section>
-        <h2>3ステップで鑑定をはじめる</h2>
-        <div class="section-grid">
-          <div class="step-card">
-            <div class="step-num">1</div>
-            <h3>データをAIに渡す</h3>
-            <p>下のボタンから、鑑定用データをAIへ送ります。</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">2</div>
-            <h3>そのまま送信する</h3>
-            <p>ChatGPT / Claude / Gemini などで使えます。</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">3</div>
-            <h3>鑑定を受け取る</h3>
-            <p>返ってきた内容に、そのまま続けて質問できます。</p>
-          </div>
-        </div>
-        {% if usage_guide_url %}
-        <div class="guide-link-card">
-          <a href="{{ usage_guide_url }}">画像つきの使い方を見る</a>
-          <p>初めての方は、画面を見ながら手順を確認できます。</p>
-        </div>
-        {% endif %}
-      </section>
-
-      <div class="page-url-panel">
-        <h2>この{% if is_transit_yaml %}イベントデータ{% else %}ページ{% endif %}のURL</h2>
-        <div class="copyline">
-          <input id="chart-url" value="{{ chart_url }}" readonly>
-          <button onclick="copyFrom('chart-url')">コピー</button>
-        </div>
-        <p class="hint">あとで開き直したい場合や、別の端末で使いたい場合にコピーしてください。</p>
+        <p class="hint">{{ t.page_expiry.format(expires_label=expires_label) }}</p>
       </div>
 
       <section class="notice-box">
-        <h2>AIに渡す</h2>
+        <h2>{{ t.send_to_ai }}</h2>
+        <p class="helper-note">{{ t.chart_lead }}</p>
         <div class="key-actions">
-          <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">AIに送る</button>
+          <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
+          <p class="helper-note-inline">{{ t.helper_note }}</p>
         </div>
         <details class="fallback-share" id="fallback-share">
-          <summary>うまくいかない場合</summary>
-          <p class="fallback-lead">AIに直接送れない場合は、コピーまたはTXT保存をご利用ください。</p>
+          <summary>{{ t.fallback_summary }}</summary>
+          <p class="fallback-lead">{{ t.fallback_desc }}</p>
           <div class="fallback-actions">
-            <button class="secondary-action" onclick="copyDefaultAiText()">コピーして使う</button>
-            <button class="secondary-action" onclick="downloadDefaultAiPasteTxt()">TXTを保存して使う</button>
+            <button class="secondary-action" onclick="copyDefaultAiText()">{{ t.copy_to_use }}</button>
+            <button class="secondary-action" onclick="downloadDefaultAiPasteTxt()">{{ t.save_txt_to_use }}</button>
           </div>
         </details>
-        <p class="helper-note">通常は、AIが読みやすい通常版のデータを使います。</p>
-        {% if has_yaml_mode_selector %}
-        <p class="full-version-note">
-          {% if has_western_asteroids %}
-          FULL版には、小惑星を含む詳しいデータも入っています。<br>
-          最初の鑑定後、もっと詳しく見たい時に使えます。<br>
-          <a class="full-version-link" href="#full-version-details" onclick="openFullVersionDetails()">FULL版の小惑星データを見る</a>
-          {% else %}
-          このページには、31日分のトランジットを含む詳しいデータが入っています。<br>
-          今後の流れを詳しく見たい時に使えます。<br>
-          <a class="full-version-link" href="#full-version-details" onclick="openFullVersionDetails()">トランジット詳細データを見る</a>
-          {% endif %}
-        </p>
-        {% endif %}
-        {% if horoscope_svg %}
-        <p class="chart-note">
-          ホロスコープ図も用意されています。鑑定を始めるだけなら見なくて大丈夫ですが、図で確認したい方はこちらから見られます。<br>
-          <a class="chart-link" href="#horoscope-details" onclick="openHoroscopeDetails()">ホロスコープ図を見る</a>
-        </p>
-        {% endif %}
+        <a class="guide-inline-link" href="{{ usage_guide_url }}" target="_blank" rel="noopener">{{ t.guide_link }}</a>
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
       </section>
 
       {% if birth_time_notice.show %}
       <details class="time-accuracy-alert">
         <summary>{{ birth_time_notice.short }}</summary>
-        <p>出生時刻が不明、または推定時刻のため、ハウス・ASC・MCなどは参考値として扱ってください。</p>
-        <p>出生時刻によって変わりやすいもの:</p>
+        <p>{{ t["time_accuracy_intro"] }}</p>
+        <p>{{ t["time_accuracy_variable"] }}</p>
         <ul>
-          <li>ハウス</li>
-          <li>ASC（アセンダント）</li>
-          <li>MC</li>
-          <li>Vertex</li>
-          <li>月の度数やサイン（一部の場合）</li>
+          {% for item in t["time_accuracy_items_variable"] %}<li>{{ item }}</li>{% endfor %}
         </ul>
-        <p>比較的安定して使いやすいもの:</p>
+        <p>{{ t["time_accuracy_stable"] }}</p>
         <ul>
-          <li>太陽・水星・金星・火星などの天体サイン</li>
-          <li>天体同士の主要アスペクト</li>
-          <li>エレメント</li>
-          <li>モード</li>
-          <li>世代天体の配置</li>
+          {% for item in t["time_accuracy_items_stable"] %}<li>{{ item }}</li>{% endfor %}
         </ul>
-        <p>AIに貼る場合も、出生時刻の精度情報を一緒に渡してください。断定的なハウス解釈は避け、参考情報として扱うのがおすすめです。</p>
+        <p>{{ t["time_accuracy_ai_note"] }}</p>
       </details>
       {% endif %}
 
-      <section class="notice-box soft followup-box">
-        <h2>AIに貼ると、こう使えます</h2>
-        <ul class="plain-list">
-          {% if is_transit_yaml %}
-          <li>イベント時点の天体配置が、AIの言葉で整理されます。</li>
-          <li>歴史イベント・満月・特定日時の象徴分析に使えます。</li>
-          <li>日付や暦の前提を明示したまま、あとから深掘りできます。</li>
-          {% else %}
-          <li>あなたの本質や傾向が、AIの言葉で整理されます。</li>
-          <li>今気になるテーマをそのまま質問できます。</li>
-          <li>仕事・恋愛・今月の注意日などを、あとから深掘りできます。</li>
-          {% endif %}
-        </ul>
-        <p class="hint" style="margin-top:10px">このページは鑑定結果を表示する場所ではなく、AIに渡すファイルを作る入口です。</p>
-      </section>
-
-      <section class="notice-box soft followup-box">
-        <h2>鑑定のあとに聞けること</h2>
-        <ul class="plain-list">
-          <li>「仕事の流れを詳しく知りたい」</li>
-          <li>「恋愛面をもう少し深掘りしたい」</li>
-          <li>「今月の注意日を教えてほしい」</li>
-        </ul>
-        <p class="hint" style="margin-top:10px">鑑定文のあとに、そのままAIへ続けて質問できます。</p>
-      </section>
-
-      <div class="save-data-panel">
-        <h2>保存しておきたい場合</h2>
-        <p class="hint">このURLは90日後に開けなくなります。必要な場合だけ、データをまとめて保存してください。</p>
-        <button class="download-primary" onclick="downloadFullArchiveZip()">ZIPを保存する</button>
-        <details class="advanced-downloads">
-          <summary>個別ファイルを見る</summary>
-          <div class="download-grid">
-          {% if is_transit_yaml %}
-          <a class="download-link" href="{{ yaml_url }}" download="nanami-transit-event.yaml">イベントYAML</a>
-          {% elif horoscope_svg %}
-          <a class="download-link" href="{{ natal_yaml_url }}" download="nanami-natal.yaml">ネイタル</a>
-          {% if has_yaml_mode_selector %}
-          <a class="download-link" href="{{ natal_asteroids_yaml_url }}" download="nanami-natal-asteroids.yaml">ネイタル＋小惑星</a>
-          <a class="download-link" href="{{ transit_yaml_url }}" download="nanami-transit.yaml">トランジット</a>
-          {% endif %}
-          {% else %}
-          <a class="download-link" href="{{ yaml_url }}" download="nanami-chart.yaml">YAMLデータ</a>
-          {% endif %}
-          {% if horoscope_svg %}
-          <a class="download-link" href="{{ horoscope_svg_url }}" download="nanami-horoscope.svg">ホロスコープSVG</a>
-          {% endif %}
-          {% if shichusuimei_svg %}
-          <a class="download-link" href="{{ shichusuimei_svg_url }}" download="nanami-shichusuimei.svg">命式SVG</a>
-          {% endif %}
-          </div>
-        </details>
-      </div>
-
-      {% if can_continue_with_transit %}
-      <section class="notice-box soft next-transit-box">
-        <h2>次のトランジットを作成</h2>
-        <p>前回の鑑定データを引き継いで、<br>次の31日トランジットを生成できます。</p>
-        <a class="next-transit-action" href="{{ next_transit_url }}">次のトランジットを作成</a>
-      </section>
-      {% endif %}
-
-      {% if horoscope_svg or shichusuimei_svg %}
-      <details class="detail-box" id="chart-details">
-        <summary>{% if horoscope_svg and shichusuimei_svg %}ホロスコープ図・命式図を見る{% elif horoscope_svg %}ホロスコープ図を見る{% else %}命式図を見る{% endif %}</summary>
-        <div class="detail-body">
-          <p class="detail-intro">鑑定を始めるだけなら確認しなくて大丈夫です。図で見たい方だけご利用ください。</p>
-      {% endif %}
-      {% if horoscope_svg %}
-      <section class="horoscope-panel" id="horoscope-details" aria-label="SVGホロスコープ図">
-        <h2>ホロスコープ図</h2>
-        <p>このホロスコープ図は、YAMLログと同じ計算済みデータから自動描画しています。AI生成画像ではありません。</p>
-        {% if birth_time_notice.show %}
-        <p class="hint">この図は仮計算時刻を元に描画しています。ハウス・ASC・MCは参考値です。</p>
-        {% endif %}
-        <div class="horoscope-view" id="horoscope-view">
-          {{ horoscope_svg | safe }}
-        </div>
-        <div class="horoscope-actions">
-          {% if has_asteroid_svg_data %}
-          <label class="asteroid-toggle">
-            <input type="checkbox" id="asteroid-toggle" onchange="toggleAsteroids()">
-            補助天体を表示
-          </label>
-          {% endif %}
-          {% if birth_time_notice.show %}
-          <label class="asteroid-toggle">
-            <input type="checkbox" id="house-toggle" onchange="toggleHouses()">
-            ハウスなし表示
-          </label>
-          {% endif %}
-          <button class="secondary-action" onclick="downloadHoroscopeSvg()">SVGを保存</button>
-          <button class="secondary-action" onclick="shareHoroscopeTxt()">TXTで送る</button>
-        </div>
-        <p>AIに貼る基本データはYAMLログです。ホロスコープ図は必要な時だけ、別資料として保存・コピーできます。</p>
-      </section>
-      {% endif %}
-
-      {% if shichusuimei_svg %}
-      <section class="horoscope-panel" aria-label="四柱推命 命式図">
-        <h2>四柱推命 命式図</h2>
-        <p>この命式図は、YAMLログ内の計算済み四柱推命データから自動描画しています。鑑定文ではなく、計算結果の可視化です。</p>
-        <div class="shichu-view" id="shichu-view">
-          {{ shichusuimei_svg | safe }}
-        </div>
-        <div class="horoscope-actions">
-          <button class="secondary-action" onclick="downloadShichuSvg()">命式SVGを保存</button>
-          <button class="secondary-action" onclick="shareShichuTxt()">命式TXTで送る</button>
-          <button class="secondary-action" onclick="downloadShichuPng()">命式PNGを保存</button>
-        </div>
-        <p>AIに貼る基本データはYAMLログです。命式図は商品ページや確認用の補助資料として使えます。</p>
-      </section>
-      {% endif %}
-      {% if horoscope_svg or shichusuimei_svg %}
-        </div>
-      </details>
-      {% endif %}
-
-      <section class="usage-limits">
-        <p>本商品は個人利用向けのデータ商品です。ChatGPT等のAIサービスへの入力、個人範囲での利用は可能です。再配布、転載、販売、サービス組み込み等の商用利用は禁止します。商用利用・アプリ組み込み用途はAPI版をご利用ください。</p>
-      </section>
-
+      {% if has_yaml_mode_selector %}
       <details class="detail-box" id="detail-box">
-        <summary>詳細を確認する</summary>
+        <summary>{{ t.details }}</summary>
         <div class="detail-body">
-          <p class="detail-intro">
-            通常は上の操作だけで使えます。より詳しく見たい方だけ、完全版やYAMLの内容を確認してください。
-          </p>
-          <p class="hint" id="combined-size"></p>
-
-          {% if has_yaml_mode_selector %}
           <div class="detail-section" id="full-version-details">
-            <h3>{% if has_western_asteroids %}FULL版・小惑星ありデータを使う{% else %}トランジット詳細データを使う{% endif %}</h3>
-            <p class="hint">{% if has_western_asteroids %}FULL版では、小惑星を含む読みやすい版と、31日分の詳細まで含む完全版を使えます。{% else %}このページでは、31日トランジットを含む詳しい版を使えます。{% endif %}</p>
+            <h3>{% if has_western_asteroids %}{{ t["full_details_title_asteroids"] }}{% else %}{{ t["full_details_title_transit"] }}{% endif %}</h3>
+            <p class="hint">{% if has_western_asteroids %}{{ t["full_details_hint_asteroids"] }}{% else %}{{ t["full_details_hint_transit"] }}{% endif %}</p>
             <div class="ai-mode-list" style="margin-top:12px">
               {% if has_western_asteroids %}
               <label class="ai-mode-option" id="mode-asteroids-card" onclick="selectAiMode('asteroids')">
                 <input type="radio" name="ai-output-mode" value="asteroids" id="mode-asteroids-input">
                 <div class="ai-mode-copy">
                   <span class="ai-mode-title">
-                    <span class="mode-label">小惑星つき版</span>
-                    <span class="mode-badge">おすすめ</span>
+                    <span class="mode-label">{{ t["asteroid_mode_label"] }}</span>
+                    <span class="mode-badge">{{ t["recommended_badge"] }}</span>
                   </span>
-                  <span class="mode-desc">主要惑星＋小惑星＋今日のトランジット＋31日の流れ。FULL版を詳しく読みたい時の標準です。</span>
+                  <span class="mode-desc">{{ t["asteroid_mode_desc"] }}</span>
                 </div>
               </label>
               {% endif %}
@@ -964,78 +788,136 @@
                 <input type="radio" name="ai-output-mode" value="full" id="mode-full-input">
                 <div class="ai-mode-copy">
                   <span class="ai-mode-title">
-                    <span class="mode-label">完全版</span>
-                    <span class="mode-badge">全詳細</span>
+                    <span class="mode-label">{{ t["full_mode_label"] }}</span>
+                    <span class="mode-badge">{{ t["all_details_badge"] }}</span>
                   </span>
-                  <span class="mode-desc">{% if has_western_asteroids %}小惑星・31日全詳細データを含む完全版です。{% else %}31日分のトランジット詳細データを含む版です。{% endif %}</span>
+                  <span class="mode-desc">{% if has_western_asteroids %}{{ t["full_mode_desc_asteroids"] }}{% else %}{{ t["full_mode_desc_transit"] }}{% endif %}</span>
                 </div>
               </label>
             </div>
             <div class="detail-actions">
-              <button class="secondary-action" onclick="shareSelectedAiText()">選んだ版をAIに送る</button>
-              <button class="secondary-action" onclick="copySelectedAiText()">選んだ版をコピー</button>
+              <button class="secondary-action" onclick="shareSelectedAiText()">{{ t["send_selected_to_ai"] }}</button>
+              <button class="secondary-action" onclick="copySelectedAiText()">{{ t["copy_selected"] }}</button>
             </div>
           </div>
+        </div>
+      </details>
+      {% endif %}
+
+      {% if has_horoscope_svg or has_shichusuimei_svg %}
+      <details class="detail-box" id="chart-details">
+        <summary>{% if has_horoscope_svg and has_shichusuimei_svg %}{{ t["chart_details_summary_both"] }}{% elif has_horoscope_svg %}{{ t["chart_details_summary_horoscope"] }}{% else %}{{ t["chart_details_summary_shichu"] }}{% endif %}</summary>
+        <div class="detail-body">
+      {% endif %}
+      {% if has_horoscope_svg %}
+      <section class="horoscope-panel" id="horoscope-details" aria-label="{{ t["horoscope_chart_title"] }}">
+        <h2>{{ t["horoscope_chart_title"] }}</h2>
+        {% if birth_time_notice.show %}
+        <p class="hint">{{ t["horoscope_chart_time_hint"] }}</p>
+        {% endif %}
+        <div class="horoscope-view" id="horoscope-view">
+          <p class="hint" id="horoscope-loading">{{ t["horoscope_loading"] }}</p>
+        </div>
+        <div class="horoscope-actions">
+          {% if has_asteroid_svg_data %}
+          <label class="asteroid-toggle">
+            <input type="checkbox" id="asteroid-toggle" onchange="toggleAsteroids()">
+            {{ t["show_asteroids"] }}
+          </label>
           {% endif %}
+          {% if birth_time_notice.show %}
+          <label class="asteroid-toggle">
+            <input type="checkbox" id="house-toggle" onchange="toggleHouses()">
+            {{ t["hide_houses"] }}
+          </label>
+          {% endif %}
+          <button class="secondary-action" onclick="downloadHoroscopeSvg()">{{ t["save_svg"] }}</button>
+        </div>
+      </section>
+      {% endif %}
 
-          <section class="data-preview-grid" aria-label="AIに渡されるデータの一部">
-            <div class="data-preview-card">
-              <h2>AIに渡される計算済みデータ（一部）</h2>
-              <p>AIはこの計算済みデータをもとに{% if is_transit_yaml %}分析{% else %}鑑定{% endif %}を行います。</p>
-              <pre id="yaml-preview" aria-label="YAMLログの一部"></pre>
-              <p class="data-preview-note">AIが再計算せず、このデータを根拠として解釈します。保存したい場合はファイルとして残せます。</p>
-            </div>
-            <div class="data-preview-card">
-              <h2>AIに渡すプロンプト（一部）</h2>
-              <p>このプロンプトが、AIに「どう読むか」を伝えます。</p>
-              <pre id="prompt-preview" aria-label="プロンプトの一部"></pre>
-            </div>
-          </section>
+      {% if has_shichusuimei_svg %}
+      <section class="horoscope-panel" aria-label="{{ t["shichu_chart_title"] }}">
+        <h2>{{ t["shichu_chart_title"] }}</h2>
+        <div class="shichu-view" id="shichu-view">
+          <p class="hint" id="shichu-loading">{{ t["shichu_loading"] }}</p>
+        </div>
+        <div class="horoscope-actions">
+          <button class="secondary-action" onclick="downloadShichuSvg()">{{ t["save_shichu_svg"] }}</button>
+          <button class="secondary-action" onclick="downloadShichuPng()">{{ t["save_shichu_png"] }}</button>
+        </div>
+      </section>
+      {% endif %}
+      {% if has_horoscope_svg or has_shichusuimei_svg %}
+        </div>
+      </details>
+      {% endif %}
 
-          <div class="detail-section">
-            <h3>YAML直リンク</h3>
+      <details class="detail-box" id="save-data-box">
+        <summary>{{ t.save_data }}</summary>
+        <div class="detail-body">
+          <p class="detail-intro">{{ t.save_data_hint }}</p>
+          <div class="page-url-panel">
+            <h2>{% if is_transit_yaml %}{{ t.event_url }}{% else %}{% if lang == 'ja' %}保存用URL{% else %}Saved URL{% endif %}{% endif %}</h2>
             <div class="copyline">
-              <input id="yaml-url" value="{{ yaml_url }}" readonly>
-              <button onclick="copyFrom('yaml-url')">コピー</button>
+              <input id="chart-url" value="{{ chart_url }}" readonly>
+              <button onclick="copyFrom('chart-url')">{{ t["copy_label"] }}</button>
             </div>
-            <p class="hint" style="margin-top:8px">AIにURLとして渡す場合に使います。</p>
+            <p class="hint">{{ t.page_url_hint }}</p>
           </div>
-
-          <div class="detail-section">
-            <h3>プロンプト直リンク</h3>
-            <div class="copyline">
-              <input id="prompt-url" value="{{ prompt_url }}" readonly>
-              <button onclick="copyFrom('prompt-url')">コピー</button>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h3>プロンプト全文</h3>
-            <p class="hint">AIに「どう鑑定してほしいか」を伝える文章です。</p>
-            <textarea id="prompt" readonly>{{ chart.prompt_text }}</textarea>
-            <button onclick="copyFrom('prompt')" style="margin-top:10px">プロンプト全文コピー</button>
-          </div>
-
-          <div class="detail-section">
-            <h3>{% if has_yaml_mode_selector %}完全版YAML{% else %}YAML全文{% endif %}</h3>
-            <p class="hint">{% if is_transit_yaml %}イベント時点の天体配置データです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% elif has_yaml_mode_selector %}完全版YAMLは、小惑星や31日分の詳細までじっくり読みたい時に使います。{% else %}通常版YAMLです。AIにはこの計算結果を変更せず、解釈だけさせてください。{% endif %}</p>
-            <textarea id="yaml" readonly>{% if not has_yaml_mode_selector %}{{ chart.yaml_text }}{% endif %}</textarea>
-            <button onclick="copyYamlFull()" style="margin-top:10px">{% if has_yaml_mode_selector %}完全版YAMLコピー{% else %}YAML全文コピー{% endif %}</button>
-            <button class="secondary-action" onclick="copyYamlChunk()" style="margin-top:10px">続きからコピー</button>
-            <button class="secondary-action" onclick="downloadYamlOnly()" style="margin-top:10px">{% if has_yaml_mode_selector %}完全版YAMLをダウンロード{% else %}YAMLを保存{% endif %}</button>
-            <p class="hint" id="yaml-size"></p>
+          <div class="save-data-panel">
+            <button class="download-primary" id="zip-download-button" onclick="downloadFullArchiveZip()">{{ t.save_zip }}</button>
+            <details class="advanced-downloads">
+              <summary>{{ t.individual_files }}</summary>
+              <div class="download-grid">
+              {% if is_transit_yaml %}
+              <a class="download-link" href="{{ yaml_url }}" download="nanami-transit-event.yaml">{{ t["download_event_yaml"] }}</a>
+              {% elif has_horoscope_svg %}
+              <a class="download-link" href="{{ natal_yaml_url }}" download="nanami-natal.yaml">{{ t["download_natal"] }}</a>
+              {% if has_western_asteroids %}
+              <a class="download-link" href="{{ natal_asteroids_yaml_url }}" download="nanami-natal-asteroids.yaml">{{ t["download_natal_asteroids"] }}</a>
+              {% endif %}
+              {% if has_31day_transit %}
+              <a class="download-link" href="{{ transit_yaml_url }}" download="nanami-transit.yaml">{{ t["download_transit"] }}</a>
+              {% endif %}
+              {% if has_long_term_transits %}
+              <a class="download-link" href="{{ long_term_transits_yaml_url }}" download="nanami-long-term-transits.yaml">{{ t["download_long_term_transits"] }}</a>
+              {% endif %}
+              {% else %}
+              <a class="download-link" href="{{ yaml_url }}" download="nanami-chart.yaml">{{ t["download_yaml_data"] }}</a>
+              {% endif %}
+              {% if has_horoscope_svg %}
+              <a class="download-link" href="{{ horoscope_svg_url }}" download="nanami-horoscope.svg">{{ t["download_horoscope_svg"] }}</a>
+              {% endif %}
+              {% if has_shichusuimei_svg %}
+              <a class="download-link" href="{{ shichusuimei_svg_url }}" download="nanami-shichusuimei.svg">{{ t["download_shichu_svg"] }}</a>
+              {% endif %}
+              </div>
+            </details>
           </div>
         </div>
       </details>
 
+      {% if can_continue_with_transit %}
+      <details class="detail-box" id="next-transit-box">
+        <summary>{{ t["next_transit_title"] }}</summary>
+        <div class="detail-body">
+          <p class="detail-intro">{{ t["next_transit_desc"] | safe }}</p>
+          <a class="next-transit-action" href="{{ next_transit_url }}">{{ t["next_transit_title"] }}</a>
+        </div>
+      </details>
+      {% endif %}
+
       <section class="notice-box soft">
-        <h2>注意事項</h2>
+        <h2>{{ t.notes }}</h2>
         <ul class="plain-list">
-          <li>入力後のデータ変更はできません。ご不明点やお困りのことがある場合は、お問い合わせください。</li>
-          <li>AIの種類や設定によって、文章表現や鑑定の深さは変わります。</li>
-          <li>YAMLは計算済みデータです。AIには「計算をやり直さず、このYAMLを根拠に解釈する」よう指示してください。</li>
-          {% if is_transit_yaml %}<li>歴史イベントの日付には諸説があり得ます。必要に応じて日付・暦種別の前提を確認してください。</li>{% endif %}
+          {% for item in t.notes_items %}<li>{{ item }}</li>{% endfor %}
+          {% if is_transit_yaml %}<li>{{ t["transit_date_note"] }}</li>{% endif %}
         </ul>
+      </section>
+
+      <section class="usage-limits">
+        <p>{{ t["usage_limits"] }}</p>
       </section>
     </div>
   </main>
@@ -1047,9 +929,44 @@
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
     const HAS_WESTERN_ASTEROIDS = {{ has_western_asteroids | tojson }};
     const FULL_YAML_URL = {{ yaml_url | tojson }};
+    const DETAIL_YAML_URL = {{ detail_yaml_url | tojson }};
     const FULL_ARCHIVE_ZIP_URL = {{ download_zip_url | tojson }};
+    const HOROSCOPE_SVG_URL = {{ horoscope_svg_url | tojson }};
+    const SHICHU_SVG_URL = {{ shichusuimei_svg_url | tojson }};
     const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% else %}{{ chart.yaml_text | tojson }}{% endif %};
+    const UI_TEXT = {
+      copied: {{ t.copied | tojson }},
+      saveZip: {{ t.save_zip | tojson }},
+      modeFull: {{ t["mode_full"] | tojson }},
+      modeAsteroids: {{ t["mode_asteroids"] | tojson }},
+      modePaste: {{ t["mode_paste"] | tojson }},
+      fullYamlLoading: {{ t["full_yaml_loading"] | tojson }},
+      fullYamlLoadFailed: {{ t["full_yaml_load_failed"] | tojson }},
+      showYaml: {{ t["show_yaml"] | tojson }},
+      hideYaml: {{ t["hide_yaml"] | tojson }},
+      asteroidYamlLoading: {{ t["asteroid_yaml_loading"] | tojson }},
+      asteroidYamlLoadFailed: {{ t["asteroid_yaml_load_failed"] | tojson }},
+      yamlDataIntro: {{ t["yaml_data_intro"] | tojson }},
+      loadOnDemand: {{ t["load_on_demand"] | tojson }},
+      charUnit: {{ t["char_unit"] | tojson }},
+      transitDetailMode: {{ t["transit_detail_mode"] | tojson }},
+      fullYamlLoadOnDemand: {{ t["full_yaml_load_on_demand"] | tojson }},
+      asteroidYamlLoadOnDemand: {{ t["asteroid_yaml_load_on_demand"] | tojson }},
+      shareTextTitle: {{ t["share_text_title"] | tojson }},
+      shareTxtTitle: {{ t["share_txt_title"] | tojson }},
+      shareUnavailable: {{ t["share_unavailable"] | tojson }},
+      zipSaveFailed: {{ t["zip_save_failed"] | tojson }},
+      zipPreparing: {{ t["zip_preparing"] | tojson }},
+      zipStarted: {{ t["zip_started"] | tojson }},
+      selectedCopiedMore: {{ t["selected_copied_more"] | tojson }},
+      selectedCopied: {{ t["selected_copied"] | tojson }},
+      chunkCopied: {{ t["chunk_copied"] | tojson }},
+      svgLoading: {{ t["svg_loading"] | tojson }},
+      svgLoadFailed: {{ t["svg_load_failed"] | tojson }},
+      pngFailedSvgCopied: {{ t["png_failed_svg_copied"] | tojson }},
+    };
     let fullYamlCache = FULL_YAML_INLINE;
+    let asteroidYamlCache = ASTEROID_YAML || '';
     const TXT_SHARE_TEST_MODE = new URLSearchParams(window.location.search).get('txtShareTest') === 'small';
     const preparedAiTextFiles = { paste: null, asteroids: null, full: null };
     const copyState = {
@@ -1059,7 +976,7 @@
       yaml: Number(localStorage.getItem('chart-copy-yaml') || '0'),
     };
 
-    async function writeClipboard(text, message = 'コピーしました') {
+    async function writeClipboard(text, message = UI_TEXT.copied) {
       try {
         await navigator.clipboard.writeText(text);
       } catch (e) {
@@ -1088,37 +1005,119 @@
     }
 
     function getSelectedAiLabel(mode = getSelectedAiMode()) {
-      if (mode === 'full') return '完全版';
-      if (mode === 'asteroids') return '小惑星つき版';
-      return '通常版';
+      if (mode === 'full') return UI_TEXT.modeFull;
+      if (mode === 'asteroids') return UI_TEXT.modeAsteroids;
+      return UI_TEXT.modePaste;
     }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function shouldRetryFetch(response) {
+      return response && [408, 429, 500, 502, 503, 504].includes(response.status);
+    }
+
+    async function fetchWithRetry(url, options = {}, retryOptions = {}) {
+      const attempts = retryOptions.attempts || 3;
+      const timeoutMs = retryOptions.timeoutMs || 30000;
+      let lastError = null;
+      for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+          });
+          if (!shouldRetryFetch(response) || attempt === attempts) return response;
+          lastError = new Error(`retryable_http_${response.status}`);
+        } catch (error) {
+          lastError = error;
+          if (attempt === attempts) throw error;
+        } finally {
+          clearTimeout(timer);
+        }
+        await sleep(250 * attempt);
+      }
+      if (lastError) throw lastError;
+      throw new Error('fetch_failed');
+    }
+
+    let yamlViewerOpen = false;
 
     function setYamlTextarea(text) {
       const el = document.getElementById('yaml');
       if (el) el.value = text;
     }
 
+    function ensureYamlTextarea() {
+      const viewer = document.getElementById('yaml-viewer');
+      if (!viewer) return null;
+      let el = document.getElementById('yaml');
+      if (!el) {
+        el = document.createElement('textarea');
+        el.id = 'yaml';
+        el.readOnly = true;
+        el.spellcheck = false;
+        viewer.appendChild(el);
+      }
+      return el;
+    }
+
+    function setYamlToggleLabel(isOpen) {
+      const toggle = document.getElementById('yaml-toggle');
+      if (!toggle) return;
+      toggle.textContent = isOpen ? UI_TEXT.hideYaml : `${UI_TEXT.showYaml} ▼`;
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    async function toggleYamlViewer() {
+      const viewer = document.getElementById('yaml-viewer');
+      if (!viewer) return;
+      yamlViewerOpen = !yamlViewerOpen;
+      viewer.hidden = !yamlViewerOpen;
+      setYamlToggleLabel(yamlViewerOpen);
+      if (!yamlViewerOpen) return;
+      const el = ensureYamlTextarea();
+      if (!el) return;
+      try {
+        const fullYaml = await getFullYaml();
+        el.value = fullYaml || UI_TEXT.fullYamlLoadFailed;
+      } catch (e) {
+        el.value = UI_TEXT.fullYamlLoadFailed;
+      }
+    }
+
     async function getFullYaml() {
       if (fullYamlCache) return fullYamlCache;
-      setYamlTextarea('完全版YAMLを読み込んでいます...');
-      const response = await fetch(FULL_YAML_URL, { credentials: 'same-origin' });
+      if (yamlViewerOpen) setYamlTextarea(UI_TEXT.fullYamlLoading);
+      const response = await fetchWithRetry(FULL_YAML_URL, { credentials: 'same-origin' });
       if (!response.ok) {
-        setYamlTextarea('');
+        if (yamlViewerOpen) setYamlTextarea(UI_TEXT.fullYamlLoadFailed);
         throw new Error('full_yaml_load_failed');
       }
       fullYamlCache = await response.text();
-      setYamlTextarea(fullYamlCache);
+      if (yamlViewerOpen) setYamlTextarea(fullYamlCache);
       prepareAiTextFile('full');
-      if (getSelectedAiMode() === 'full') {
-        setText('yaml-preview', firstLines(fullYamlCache, 16));
-      }
-      updateSizeLabels();
       return fullYamlCache;
+    }
+
+    async function getAsteroidYaml() {
+      if (asteroidYamlCache) return asteroidYamlCache;
+      if (!DETAIL_YAML_URL) return '';
+      const response = await fetchWithRetry(DETAIL_YAML_URL, { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error('detail_yaml_load_failed');
+      }
+      asteroidYamlCache = await response.text();
+      prepareAiTextFile('asteroids');
+      return asteroidYamlCache;
     }
 
     async function getSelectedYaml(mode = getSelectedAiMode()) {
       if (mode === 'full') return await getFullYaml();
-      if (mode === 'asteroids' && ASTEROID_YAML) return ASTEROID_YAML;
+      if (mode === 'asteroids') return await getAsteroidYaml();
       return SHARE_YAML;
     }
 
@@ -1128,7 +1127,7 @@
         '',
         '---',
         '',
-        '以下がYAMLデータです。',
+        UI_TEXT.yamlDataIntro,
         '',
         '```yaml',
         yaml,
@@ -1172,47 +1171,11 @@
       if (el) el.textContent = text;
     }
 
-    function buildAiTextLengthFromYaml(yaml) {
-      return COMBINED_PROMPT.length + yaml.length + 31;
-    }
-
-    function updateSizeLabels() {
-      const pasteLength = buildAiTextLengthFromYaml(SHARE_YAML).toLocaleString();
-      if (HAS_YAML_MODE_SELECTOR && !fullYamlCache) {
-        const asteroidLength = ASTEROID_YAML ? buildAiTextLengthFromYaml(ASTEROID_YAML).toLocaleString() : '未生成';
-        setText('combined-size', HAS_WESTERN_ASTEROIDS
-          ? `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版は必要時に読み込みます。`
-          : `通常版.txt: ${pasteLength}文字。トランジット詳細版は必要時に読み込みます。`);
-        setText('yaml-size', HAS_WESTERN_ASTEROIDS
-          ? `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版は必要時に読み込みます。`
-          : `通常版: ${SHARE_YAML.length.toLocaleString()}文字。トランジット詳細版は必要時に読み込みます。`);
-        return;
-      }
-      const fullLength = buildAiTextLengthFromYaml(fullYamlCache).toLocaleString();
-      const asteroidLength = ASTEROID_YAML ? buildAiTextLengthFromYaml(ASTEROID_YAML).toLocaleString() : '未生成';
-      setText('combined-size', HAS_WESTERN_ASTEROIDS
-        ? `通常版.txt: ${pasteLength}文字。小惑星つき版: ${asteroidLength}文字。完全版: ${fullLength}文字。`
-        : `通常版.txt: ${pasteLength}文字。トランジット詳細版: ${fullLength}文字。`);
-      setText('yaml-size', HAS_WESTERN_ASTEROIDS
-        ? `通常版: ${SHARE_YAML.length.toLocaleString()}文字。小惑星つき版: ${ASTEROID_YAML ? ASTEROID_YAML.length.toLocaleString() : '未生成'}文字。完全版: ${fullYamlCache.length.toLocaleString()}文字。`
-        : `通常版: ${SHARE_YAML.length.toLocaleString()}文字。トランジット詳細版: ${fullYamlCache.length.toLocaleString()}文字。`);
-    }
-
     function initCopyHelpers() {
-      if (fullYamlCache) setYamlTextarea(fullYamlCache);
-      updateSizeLabels();
+      setYamlToggleLabel(false);
       prepareAiTextFile('paste');
-      if (ASTEROID_YAML) prepareAiTextFile('asteroids');
+      if (asteroidYamlCache) prepareAiTextFile('asteroids');
       if (fullYamlCache) prepareAiTextFile('full');
-    }
-
-    function firstLines(text, count) {
-      return text.split(/\r?\n/).slice(0, count).join('\n');
-    }
-
-    function initDataPreviews() {
-      setText('yaml-preview', firstLines(SHARE_YAML, 16));
-      setText('prompt-preview', firstLines(COMBINED_PROMPT, 6));
     }
 
     function selectAiMode(mode) {
@@ -1233,15 +1196,19 @@
       }
       localStorage.setItem('chart-ai-output-mode', isFull ? 'full' : (isAsteroids ? 'asteroids' : 'paste'));
       if (isAsteroids) {
-        setText('yaml-preview', ASTEROID_YAML ? firstLines(ASTEROID_YAML, 16) : '小惑星つき版を準備できませんでした。');
+        if (asteroidYamlCache) {
+          prepareAiTextFile(mode);
+        } else {
+          getAsteroidYaml().catch(() => {});
+        }
+      } else if (isFull) {
+        if (fullYamlCache || TXT_SHARE_TEST_MODE) {
+          prepareAiTextFile(mode);
+        } else {
+          getFullYaml().catch(() => {});
+        }
       } else {
-        setText('yaml-preview', fullYamlCache ? firstLines(fullYamlCache, 16) : '完全版は、使う時に読み込みます。');
-      }
-      updateSizeLabels();
-      if (isAsteroids || fullYamlCache || TXT_SHARE_TEST_MODE) {
-        prepareAiTextFile(mode);
-      } else {
-        getFullYaml().catch(() => {});
+        prepareAiTextFile('paste');
       }
     }
 
@@ -1295,7 +1262,7 @@
     }
 
     function buildPreparedAiTextFile(mode = getSelectedAiMode()) {
-      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? ASTEROID_YAML : SHARE_YAML);
+      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : SHARE_YAML);
       if (!TXT_SHARE_TEST_MODE && !yaml) return null;
       const text = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : buildAiTextFromYaml(yaml);
       return new File([text], buildAiTextFileName(mode), { type: 'text/plain' });
@@ -1313,23 +1280,24 @@
 
     function getPreparedAiTextShareText(mode = getSelectedAiMode()) {
       if (TXT_SHARE_TEST_MODE) return buildSmallTxtShareTest();
-      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? ASTEROID_YAML : SHARE_YAML);
+      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : SHARE_YAML);
       return yaml ? buildAiTextFromYaml(yaml) : '';
     }
 
     async function fetchZipBlob(url) {
-      const response = await fetch(url, { credentials: 'same-origin' });
+      const response = await fetchWithRetry(url, { credentials: 'same-origin' }, { attempts: 2, timeoutMs: 60000 });
       if (!response.ok) {
         throw new Error('zip_fetch_failed');
       }
       return await response.blob();
     }
 
-    function shareSelectedAiText() {
+    async function shareSelectedAiText() {
       const mode = getSelectedAiMode();
-      const file = getPreparedAiTextFile(mode);
-      const shareText = getPreparedAiTextShareText(mode);
       try {
+        const shareText = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : await buildSelectedAiText(mode);
+        const file = new File([shareText], buildAiTextFileName(mode), { type: 'text/plain' });
+        preparedAiTextFiles[mode] = file;
         if (!file) {
           const error = new Error('txt_file_is_not_prepared');
           error.name = 'NotReadyError';
@@ -1339,14 +1307,14 @@
         if (!canShareFiles) {
           if (canUseTextShare() && shareText) {
             navigator.share({
-              title: 'AI用テキスト',
+              title: UI_TEXT.shareTextTitle,
               text: shareText,
             }).catch((e) => {
               if (e && e.name === 'AbortError') return;
               openFallbackShare();
               const status = document.getElementById('copy-status');
               if (status) {
-                status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+                status.textContent = UI_TEXT.shareUnavailable;
                 setTimeout(() => status.textContent = '', 4000);
               }
             });
@@ -1357,7 +1325,7 @@
           throw error;
         }
         const sharePromise = navigator.share({
-          title: 'AI用TXTファイル',
+          title: UI_TEXT.shareTxtTitle,
           text: shareText,
           files: [file],
         });
@@ -1368,7 +1336,7 @@
           openFallbackShare();
           const status = document.getElementById('copy-status');
           if (status) {
-            status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+            status.textContent = UI_TEXT.shareUnavailable;
             setTimeout(() => status.textContent = '', 4000);
           }
         });
@@ -1380,7 +1348,7 @@
         openFallbackShare();
         const status = document.getElementById('copy-status');
         if (status) {
-          status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+          status.textContent = UI_TEXT.shareUnavailable;
           setTimeout(() => status.textContent = '', 4000);
         }
         return;
@@ -1401,14 +1369,14 @@
         if (!canShareFiles) {
           if (canUseTextShare() && shareText) {
             navigator.share({
-              title: 'AI用テキスト',
+              title: UI_TEXT.shareTextTitle,
               text: shareText,
             }).catch((e) => {
               if (e && e.name === 'AbortError') return;
               openFallbackShare();
               const status = document.getElementById('copy-status');
               if (status) {
-                status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+                status.textContent = UI_TEXT.shareUnavailable;
                 setTimeout(() => status.textContent = '', 4000);
               }
             });
@@ -1419,7 +1387,7 @@
           throw error;
         }
         const sharePromise = navigator.share({
-          title: 'AI用TXTファイル',
+          title: UI_TEXT.shareTxtTitle,
           text: shareText,
           files: [file],
         });
@@ -1430,7 +1398,7 @@
           openFallbackShare();
           const status = document.getElementById('copy-status');
           if (status) {
-            status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+            status.textContent = UI_TEXT.shareUnavailable;
             setTimeout(() => status.textContent = '', 4000);
           }
         });
@@ -1442,7 +1410,7 @@
         openFallbackShare();
         const status = document.getElementById('copy-status');
         if (status) {
-          status.textContent = 'この環境では直接送れないため、下のコピーまたはTXT保存をご利用ください。';
+          status.textContent = UI_TEXT.shareUnavailable;
           setTimeout(() => status.textContent = '', 4000);
         }
         return;
@@ -1492,7 +1460,7 @@
       } catch (e) {
         const status = document.getElementById('copy-status');
         if (status) {
-          status.textContent = 'ZIPの保存に失敗しました。共有かコピーを試してください。';
+          status.textContent = UI_TEXT.zipSaveFailed;
           setTimeout(() => status.textContent = '', 2600);
         }
       }
@@ -1510,7 +1478,26 @@
     }
 
     async function downloadFullArchiveZip() {
-      await downloadZipFromUrl(FULL_ARCHIVE_ZIP_URL, buildFullArchiveZipFileName(), 'nanami-products ZIP');
+      const button = document.getElementById('zip-download-button');
+      const status = document.getElementById('copy-status');
+      const originalText = button ? button.textContent : '';
+      if (button) {
+        button.disabled = true;
+        button.textContent = UI_TEXT.zipPreparing;
+      }
+      if (status) status.textContent = UI_TEXT.zipPreparing;
+      try {
+        await downloadZipFromUrl(FULL_ARCHIVE_ZIP_URL, buildFullArchiveZipFileName(), 'nanami-products ZIP');
+        if (status) {
+          status.textContent = UI_TEXT.zipStarted;
+          setTimeout(() => status.textContent = '', 2200);
+        }
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText || UI_TEXT.saveZip;
+        }
+      }
     }
 
     function downloadText(filename, content, mimeType) {
@@ -1538,12 +1525,12 @@
 
     async function copySelectedAiText() {
       const mode = getSelectedAiMode();
-      await writeClipboard(await buildSelectedAiText(mode), `${getSelectedAiLabel(mode)}をコピーしました。必要なら「続きからコピー」で次の分を送れます。`);
+      await writeClipboard(await buildSelectedAiText(mode), UI_TEXT.selectedCopiedMore.replace('{label}', getSelectedAiLabel(mode)));
     }
 
     async function copyDefaultAiText() {
       selectAiMode('paste');
-      await writeClipboard(await buildSelectedAiText('paste'), '通常版をコピーしました。必要なら「続きからコピー」で次の分を送れます。');
+      await writeClipboard(await buildSelectedAiText('paste'), UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modePaste));
     }
 
     async function copySelectedAiChunk() {
@@ -1552,12 +1539,15 @@
       const chunks = splitText(text, 12000);
       const key = mode === 'full' ? 'chart-copy-full' : (mode === 'asteroids' ? 'chart-copy-asteroids' : 'chart-copy-paste');
       if (chunks.length <= 1) {
-        await writeClipboard(text, `${getSelectedAiLabel(mode)}をコピーしました。`);
+        await writeClipboard(text, UI_TEXT.selectedCopied.replace('{label}', getSelectedAiLabel(mode)));
         return;
       }
       const index = Number(localStorage.getItem(key) || '0') % chunks.length;
       localStorage.setItem(key, String(index + 1));
-      await writeClipboard(chunks[index], `${getSelectedAiLabel(mode)} ${index + 1}/${chunks.length} をコピーしました`);
+      await writeClipboard(chunks[index], UI_TEXT.chunkCopied
+        .replace('{label}', getSelectedAiLabel(mode))
+        .replace('{index}', String(index + 1))
+        .replace('{total}', String(chunks.length)));
     }
 
     function currentHoroscopeSvg() {
@@ -1565,24 +1555,43 @@
       return svg ? new XMLSerializer().serializeToString(svg) : '';
     }
 
-    async function shareHoroscopeTxt() {
-      const text = currentHoroscopeSvg();
-      if (!text) return;
-      try {
-        await shareTextFile(text, 'nanami-astro-horoscope.txt', 'AI鑑定用ホロスコープ図');
-      } catch (e) {
-        if (e && e.name === 'AbortError') return;
-        downloadText('nanami-astro-horoscope.txt', text, 'text/plain;charset=utf-8');
-        const status = document.getElementById('copy-status');
-        if (status) {
-          status.textContent = 'この端末では直接共有できません。TXTファイルとして保存してAIにアップロードしてください。';
-          setTimeout(() => status.textContent = '', 2600);
-        }
+    async function loadInlineSvg(containerId, url, loadingId) {
+      const container = document.getElementById(containerId);
+      if (!container) return '';
+      const existing = container.querySelector('svg');
+      if (existing) return new XMLSerializer().serializeToString(existing);
+      const loading = loadingId ? document.getElementById(loadingId) : null;
+      if (loading) loading.textContent = UI_TEXT.svgLoading;
+      const response = await fetchWithRetry(url, { credentials: 'same-origin' }, { attempts: 2, timeoutMs: 60000 });
+      if (!response.ok) {
+        if (loading) loading.textContent = UI_TEXT.svgLoadFailed;
+        return '';
       }
+      const svgText = await response.text();
+      container.innerHTML = svgText;
+      return svgText;
     }
 
-    function downloadHoroscopeSvg() {
-      const text = currentHoroscopeSvg();
+    async function loadHoroscopeSvg() {
+      return await loadInlineSvg('horoscope-view', HOROSCOPE_SVG_URL, 'horoscope-loading');
+    }
+
+    async function loadShichuSvg() {
+      return await loadInlineSvg('shichu-view', SHICHU_SVG_URL, 'shichu-loading');
+    }
+
+    async function ensureChartVisualsLoaded() {
+      const jobs = [];
+      if (HOROSCOPE_SVG_URL) jobs.push(loadHoroscopeSvg());
+      if (SHICHU_SVG_URL) jobs.push(loadShichuSvg());
+      if (!jobs.length) return;
+      await Promise.allSettled(jobs);
+      toggleAsteroids();
+      toggleHouses();
+    }
+
+    async function downloadHoroscopeSvg() {
+      const text = currentHoroscopeSvg() || await loadHoroscopeSvg();
       if (!text) return;
       downloadText('nanami-astro-horoscope.svg', text, 'image/svg+xml;charset=utf-8');
     }
@@ -1592,54 +1601,41 @@
       return svg ? new XMLSerializer().serializeToString(svg) : '';
     }
 
-    async function shareShichuTxt() {
-      const text = currentShichuSvg();
-      if (!text) return;
-      try {
-        await shareTextFile(text, 'nanami-shichusuimei-chart.txt', 'AI鑑定用命式図');
-      } catch (e) {
-        if (e && e.name === 'AbortError') return;
-        downloadText('nanami-shichusuimei-chart.txt', text, 'text/plain;charset=utf-8');
-        const status = document.getElementById('copy-status');
-        if (status) {
-          status.textContent = 'この端末では直接共有できません。TXTファイルとして保存してAIにアップロードしてください。';
-          setTimeout(() => status.textContent = '', 2600);
-        }
-      }
-    }
-
     async function copyYamlFull() {
       const fullYaml = await getFullYaml();
       copyState.yaml = 1;
       localStorage.setItem('chart-copy-yaml', '1');
-      await writeClipboard(fullYaml, '完全版YAMLをコピーしました。必要なら「続きからコピー」で次の分を送れます。');
+      await writeClipboard(fullYaml, UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modeFull));
     }
 
     async function copyYamlChunk() {
       const fullYaml = await getFullYaml();
       const chunks = splitText(fullYaml, 12000);
       if (chunks.length <= 1) {
-        await writeClipboard(fullYaml, '完全版YAMLをコピーしました。');
+        await writeClipboard(fullYaml, UI_TEXT.selectedCopied.replace('{label}', UI_TEXT.modeFull));
         return;
       }
       const index = copyState.yaml % chunks.length;
       copyState.yaml += 1;
       localStorage.setItem('chart-copy-yaml', String(copyState.yaml));
-      await writeClipboard(chunks[index], `完全版YAML ${index + 1}/${chunks.length} をコピーしました`);
+      await writeClipboard(chunks[index], UI_TEXT.chunkCopied
+        .replace('{label}', UI_TEXT.modeFull)
+        .replace('{index}', String(index + 1))
+        .replace('{total}', String(chunks.length)));
     }
 
     async function downloadYamlOnly() {
       downloadText('nanami-astro-chart-full.yaml', await getFullYaml(), 'text/yaml;charset=utf-8');
     }
 
-    function downloadShichuSvg() {
-      const text = currentShichuSvg();
+    async function downloadShichuSvg() {
+      const text = currentShichuSvg() || await loadShichuSvg();
       if (!text) return;
       downloadText('nanami-shichusuimei-chart.svg', text, 'image/svg+xml;charset=utf-8');
     }
 
     async function downloadShichuPng() {
-      const svgText = currentShichuSvg();
+      const svgText = currentShichuSvg() || await loadShichuSvg();
       if (!svgText) return;
       const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(svgBlob);
@@ -1660,7 +1656,7 @@
       };
       image.onerror = () => {
         URL.revokeObjectURL(url);
-        writeClipboard(svgText, 'PNG保存に失敗したため、SVGをコピーしました');
+        writeClipboard(svgText, UI_TEXT.pngFailedSvgCopied);
       };
       image.src = url;
     }
@@ -1678,17 +1674,34 @@
     }
 
     function initLazyFullYaml() {
-      const detailBox = document.querySelector('details.detail-box');
+      const detailBox = document.getElementById('detail-box');
       if (!detailBox) return;
       detailBox.addEventListener('toggle', () => {
-        if (detailBox.open) getFullYaml().catch(() => {});
+        if (!detailBox.open) return;
+        if (HAS_YAML_MODE_SELECTOR) {
+          const preferredMode = localStorage.getItem('chart-ai-output-mode') || (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full');
+          selectAiMode(preferredMode === 'paste' ? (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full') : preferredMode);
+        } else {
+          getFullYaml().catch(() => {});
+        }
       }, { once: true });
     }
 
+    function initLazyCharts() {
+      const chartDetails = document.getElementById('chart-details');
+      if (!chartDetails) return;
+      const loadNow = () => {
+        if (!chartDetails.open) return;
+        ensureChartVisualsLoaded().catch(() => {});
+      };
+      chartDetails.addEventListener('toggle', loadNow);
+      loadNow();
+    }
+
     initCopyHelpers();
-    initDataPreviews();
     initLazyFullYaml();
-    selectAiMode(localStorage.getItem('chart-ai-output-mode') || 'paste');
+    initLazyCharts();
+    selectAiMode('paste');
 
   </script>
 </body>
