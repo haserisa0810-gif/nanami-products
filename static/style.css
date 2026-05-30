@@ -837,6 +837,40 @@ textarea {
   margin-bottom: 16px;
   overflow: hidden;
 }
+.api-admin-token {
+  margin-bottom: 16px;
+}
+.api-admin-token-body {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.api-admin-token-label {
+  color: #425466;
+  display: block;
+  font-size: .84rem;
+}
+.api-admin-token-label input {
+  margin-top: 6px;
+  background-color: #f9fbfd;
+  border-color: #cfd9e3;
+}
+.api-admin-token-save {
+  align-items: center;
+  color: #425466;
+  display: inline-flex;
+  font-size: .84rem;
+  gap: 8px;
+}
+.api-admin-token-save input {
+  margin: 0;
+}
+.api-admin-token .hint {
+  margin-top: -2px;
+}
+.api-admin-token .api-test-status {
+  margin-top: 2px;
+}
 .api-key-issuer-grid {
   display: grid;
   grid-template-columns: minmax(220px, 1.2fr) minmax(160px, .8fr) minmax(120px, .5fr) minmax(120px, .5fr);

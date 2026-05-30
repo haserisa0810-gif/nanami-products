@@ -18,6 +18,30 @@
   </header>
 
   <main class="api-test-shell">
+    <section class="api-key-issuer api-admin-token">
+      <div class="api-test-panel-head">
+        <div>
+          <p class="api-test-kicker">Admin</p>
+          <h2>管理トークン</h2>
+        </div>
+        <div class="api-test-actions">
+          <button type="button" id="clearAdminTokenButton">保存したトークンを削除</button>
+        </div>
+      </div>
+      <div class="api-admin-token-body">
+        <label class="api-admin-token-label">
+          管理トークン（必須）
+          <input id="adminTokenInput" type="password" placeholder="管理用トークンを入力" autocomplete="off">
+        </label>
+        <label class="api-admin-token-save">
+          <input id="adminTokenRememberInput" type="checkbox">
+          この端末に保存する
+        </label>
+        <p class="hint">検索・未登録に戻す・削除実行には管理トークンが必要です。</p>
+        <div class="api-test-status is-error" id="adminTokenStatus" hidden></div>
+      </div>
+    </section>
+
     <section class="api-key-issuer">
       <div class="api-test-panel-head">
         <div>
@@ -27,10 +51,6 @@
         <button type="button" id="issueApiKeyButton">発行</button>
       </div>
       <div class="api-key-issuer-grid">
-        <label>
-          管理トークン
-          <input id="adminTokenInput" type="password" placeholder="API_KEY_ADMIN_TOKEN または STORES_MAIL_SYNC_TOKEN">
-        </label>
         <label>
           ラベル
           <input id="apiKeyLabelInput" type="text" value="test-site">
@@ -291,6 +311,8 @@
     const natalChartStatus = document.getElementById("natalChartStatus");
     const natalChartContent = document.getElementById("natalChartContent");
     const adminTokenInput = document.getElementById("adminTokenInput");
+    const adminTokenRememberInput = document.getElementById("adminTokenRememberInput");
+    const adminTokenStatus = document.getElementById("adminTokenStatus");
     const apiKeyLabelInput = document.getElementById("apiKeyLabelInput");
     const apiKeyCreditsInput = document.getElementById("apiKeyCreditsInput");
     const apiKeyStatusInput = document.getElementById("apiKeyStatusInput");
@@ -311,9 +333,81 @@
     const cleanupConfirmInput = document.getElementById("cleanupConfirmInput");
     const cleanupStatus = document.getElementById("cleanupStatus");
     const cleanupRecordBody = document.getElementById("cleanupRecordBody");
+    const clearAdminTokenButton = document.getElementById("clearAdminTokenButton");
+
+    const ADMIN_TOKEN_STORAGE_KEY = "nanami_products_admin_token";
+    const ADMIN_TOKEN_REMEMBER_KEY = "nanami_products_admin_token_remember";
 
     function stringify(value) {
       return JSON.stringify(value, null, 2);
+    }
+
+    function showAdminTokenError(message) {
+      adminTokenStatus.textContent = message;
+      adminTokenStatus.hidden = false;
+      adminTokenStatus.className = "api-test-status is-error";
+    }
+
+    function clearAdminTokenError() {
+      adminTokenStatus.textContent = "";
+      adminTokenStatus.hidden = true;
+      adminTokenStatus.className = "api-test-status";
+    }
+
+    function loadSavedAdminToken() {
+      try {
+        const remember = localStorage.getItem(ADMIN_TOKEN_REMEMBER_KEY) === "1";
+        const token = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || "";
+        if (remember && token) {
+          adminTokenInput.value = token;
+          adminTokenRememberInput.checked = true;
+        }
+      } catch (error) {
+        // localStorage is optional on this admin-only page.
+      }
+    }
+
+    function readStoredAdminToken() {
+      try {
+        return localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function persistAdminTokenIfEnabled() {
+      const token = adminTokenInput.value.trim();
+      if (!adminTokenRememberInput.checked || !token) return;
+      try {
+        localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+        localStorage.setItem(ADMIN_TOKEN_REMEMBER_KEY, "1");
+      } catch (error) {
+        // Ignore storage failures silently.
+      }
+    }
+
+    function clearSavedAdminToken() {
+      try {
+        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+        localStorage.removeItem(ADMIN_TOKEN_REMEMBER_KEY);
+      } catch (error) {
+        // Ignore storage failures silently.
+      }
+      adminTokenInput.value = "";
+      adminTokenRememberInput.checked = false;
+      clearAdminTokenError();
+    }
+
+    function requireAdminToken() {
+      const token = adminTokenInput.value.trim();
+      if (!token) {
+        showAdminTokenError("管理トークンを入力してください。");
+        adminTokenInput.focus();
+        return null;
+      }
+      clearAdminTokenError();
+      persistAdminTokenIfEnabled();
+      return token;
     }
 
     async function parseResponseBody(response) {
@@ -567,6 +661,8 @@
     }
 
     async function issueApiKey() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       apiKeyIssueStatus.textContent = "発行中";
       apiKeyIssueStatus.className = "api-test-status is-loading";
       issuedApiKeyOutput.value = "";
@@ -575,7 +671,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             label: apiKeyLabelInput.value.trim() || "test-site",
@@ -600,6 +696,8 @@
     }
 
     async function lookupReissueKey() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       reissueStatus.textContent = "検索中";
       reissueStatus.className = "api-test-status is-loading";
       reissuedApiKeyOutput.value = "";
@@ -609,7 +707,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             order_code: reissueOrderCodeInput.value.trim()
@@ -635,6 +733,8 @@
     }
 
     async function reissueApiKey() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       reissueStatus.textContent = "再発行中";
       reissueStatus.className = "api-test-status is-loading";
       reissuedApiKeyOutput.value = "";
@@ -644,7 +744,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             order_code: reissueOrderCodeInput.value.trim(),
@@ -675,6 +775,8 @@
     }
 
     async function lookupRedemption() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       redemptionStatus.textContent = "検索中";
       redemptionStatus.className = "api-test-status is-loading";
       redemptionRecordBody.textContent = "{}";
@@ -683,7 +785,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             order_code: redemptionOrderCodeInput.value.trim()
@@ -706,6 +808,8 @@
     }
 
     async function resetRedemption() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       const orderCode = redemptionOrderCodeInput.value.trim();
       if (!orderCode || redemptionConfirmInput.value.trim() !== orderCode) {
         redemptionStatus.textContent = "確認入力に同じ注文番号を入れてください";
@@ -722,7 +826,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             order_code: orderCode,
@@ -748,6 +852,8 @@
     }
 
     async function lookupExpiredCharts() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       cleanupStatus.textContent = "確認中";
       cleanupStatus.className = "api-test-status is-loading";
       cleanupRecordBody.textContent = "{}";
@@ -756,7 +862,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             grace_days: Number(cleanupGraceDaysInput.value || 0)
@@ -779,6 +885,8 @@
     }
 
     async function cleanupExpiredCharts() {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
       if (cleanupConfirmInput.value.trim() !== "DELETE_EXPIRED_CHARTS") {
         cleanupStatus.textContent = "確認入力に DELETE_EXPIRED_CHARTS を入れてください";
         cleanupStatus.className = "api-test-status is-error";
@@ -794,7 +902,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Token": adminTokenInput.value.trim()
+            "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
             grace_days: Number(cleanupGraceDaysInput.value || 0),
@@ -836,7 +944,30 @@
     });
     document.getElementById("copyRequestButton").addEventListener("click", (event) => copyText(requestBody, event.currentTarget));
     document.getElementById("copyResponseButton").addEventListener("click", (event) => copyText(responseBody, event.currentTarget));
+    adminTokenInput.addEventListener("input", () => {
+      clearAdminTokenError();
+      if (adminTokenRememberInput.checked) {
+        persistAdminTokenIfEnabled();
+      }
+    });
+    adminTokenRememberInput.addEventListener("change", () => {
+      clearAdminTokenError();
+      if (adminTokenRememberInput.checked) {
+        if (!adminTokenInput.value.trim()) {
+          adminTokenInput.value = readStoredAdminToken();
+        }
+        persistAdminTokenIfEnabled();
+      } else {
+        try {
+          localStorage.removeItem(ADMIN_TOKEN_REMEMBER_KEY);
+        } catch (error) {
+          // Ignore storage failures silently.
+        }
+      }
+    });
+    clearAdminTokenButton.addEventListener("click", clearSavedAdminToken);
 
+    loadSavedAdminToken();
     loadSample();
   </script>
 </body>
