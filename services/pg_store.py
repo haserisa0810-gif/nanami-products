@@ -894,6 +894,7 @@ def redeem_and_save(
     horoscope_svg: str | None = None,
     shichusuimei_svg: str | None = None,
     expires_at: datetime | None = None,
+    redemption_metadata: dict[str, Any] | None = None,
 ) -> bool:
     """
     redemptions と charts を同一トランザクションで挿入する。
@@ -901,6 +902,9 @@ def redeem_and_save(
     """
     with _conn() as con:
         with con.cursor() as cur:
+            chart_options = dict(options)
+            if redemption_metadata:
+                chart_options["redemption_metadata"] = redemption_metadata
             cur.execute(
                 f"""
                 INSERT INTO {SCHEMA}.redemptions
@@ -934,7 +938,7 @@ def redeem_and_save(
                 birth_date=birth_date,
                 birth_time=birth_time,
                 birth_place=birth_place,
-                options=options,
+                options=chart_options,
                 yaml_text=yaml_text,
                 prompt_text=prompt_text,
                 share_yaml_text=share_yaml_text,
