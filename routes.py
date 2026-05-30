@@ -91,6 +91,13 @@ def _public_error_message(exc: Exception, *, fallback: str = "処理に失敗し
     return fallback
 
 
+def _mark_no_store(response: Response) -> Response:
+    response.headers["Cache-Control"] = "no-store, max-age=0, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 def _raise_chart_yaml_generation_error(token: str, endpoint: str, exc: Exception) -> None:
     logger.exception(
         "chart_yaml_generation_failed token=%s endpoint=%s error=%r",
@@ -2573,7 +2580,7 @@ def api_key_redeem(
     form = {"order_code": order_code, "order_provider": order_provider, "email": email, "agree_final": bool(agree_final)}
 
     def _render_error(message: str, status_code: int = 400):
-        return templates.TemplateResponse(
+        return _mark_no_store(templates.TemplateResponse(
             "api_key_start.html",
             {
                 "request": request,
@@ -2584,7 +2591,7 @@ def api_key_redeem(
                 "standard_credits": _api_key_issue_credits("api_key_standard"),
             },
             status_code=status_code,
-        )
+        ))
 
     if not order_code_clean:
         return _render_error("注文番号を入力してください。")
@@ -2785,7 +2792,7 @@ def redeem_post(
     day_change_at_23_bool = _truthy(day_change_at_23) if product_type == "shichu" else False
 
     def _form_err(msg: str, status: int = 400):
-        return templates.TemplateResponse(
+        return _mark_no_store(templates.TemplateResponse(
             _buyer_template("redeem", product_type),
             {
                 "request": request,
@@ -2828,7 +2835,7 @@ def redeem_post(
                 "payhip_products": _payhip_product_options(),
             },
             status_code=status,
-        )
+        ))
 
     requested_provider = (order_provider or "").strip().lower()
     payhip_metadata: dict[str, str] = {}
@@ -3664,7 +3671,7 @@ def _addon_form_response(
 ) -> HTMLResponse:
     today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     lang_ctx = _i18n_context(request)
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "addon_form.html",
         {
             "request": request,
@@ -3694,6 +3701,9 @@ def _addon_form_response(
         },
         status_code=status_code,
     )
+    if error or status_code >= 400:
+        return _mark_no_store(response)
+    return response
 
 
 def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
