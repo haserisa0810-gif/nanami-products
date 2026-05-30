@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ホロスコープFULL版 | AI鑑定データ作成</title>
+  <title>{{ product.label }} | {{ t.start_title_suffix }}</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
@@ -12,20 +12,35 @@
   <main class="wrap">
     <div class="card buyer-card product-western_full">
       <p class="eyebrow">nanami-products</p>
-      <div class="product-pill">ホロスコープFULL版</div>
-      <h1>ホロスコープFULL版<br>鑑定データ作成</h1>
-      <p class="lead">小惑星・トランジット（1ヶ月）を含む、FULL版の出生図データを作成します。<br>注文番号と出生情報を入力してください。</p>
+      <div class="language-switcher" aria-label="{{ t.lang_label }}">
+        <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
+        <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+      </div>
+      <div class="product-pill">{{ product.label }}</div>
+      <h1>{{ product.label }}<br>{{ t.start_title_suffix }}</h1>
+      <p class="lead">{{ product.description }}<br>{{ t.start_input_hint }}</p>
+      <section class="notice-box soft product-summary">
+        <h2>{{ t.product_summary_title }}</h2>
+        <p class="product-title">{{ product.label }}</p>
+        <p class="hint">{{ product.description }}</p>
+        {% if product.features %}
+        <ul class="feature-list">
+          {% for feature in product.features %}
+            <li>{{ feature }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </section>
       <section class="notice-box warn">
-        <h2>登録前に必ず確認してください</h2>
+        <h2>{{ t.start_notice_title }}</h2>
         <ul class="plain-list">
-          <li><strong>注文番号は1回だけ使用できます。</strong>一度生成すると再生成できません。</li>
-          <li><strong>送信後の入力変更はできません。</strong>生年月日・出生時刻・出生地をよく確認してください。</li>
-          <li>出生時刻が不明な場合は空欄のままで構いません（正午で計算します）。</li>
-          <li>生成後に表示されるURLは、必ず保存してください。</li>
+          {% for item in t.start_notice_items %}
+            <li>{{ item | safe }}</li>
+          {% endfor %}
         </ul>
       </section>
       <div class="action-area">
-        <a href="{{ redeem_url }}" class="primary-link">入力フォームへ進む</a>
+        <a href="{{ redeem_url }}?lang={{ lang }}" class="primary-link">{{ t.start_button }}</a>
       </div>
     </div>
   </main>

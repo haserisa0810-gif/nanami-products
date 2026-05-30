@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ product.label }} | AI鑑定データ作成</title>
+  <title>{{ product.label }} | {{ t.start_title_suffix }}</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
@@ -12,15 +12,15 @@
   <main class="wrap">
     <div class="card buyer-card product-transit_yaml">
       <p class="eyebrow">nanami-products</p>
+      <div class="language-switcher" aria-label="{{ t.lang_label }}">
+        <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
+        <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+      </div>
       <div class="product-pill">{{ product.label }}</div>
-      <h1>トランジットYAML<br>データ作成</h1>
-      <p class="lead">
-        歴史イベント・特定日時・特定場所の、その瞬間の天体配置だけをYAML化します。<br>
-        出生情報は使いません。
-      </p>
-
+      <h1>{{ product.label }}<br>{{ t.start_title_suffix }}</h1>
+      <p class="lead">{{ product.description }}<br>{{ t.start_input_hint }}</p>
       <section class="notice-box soft product-summary">
-        <h2>購入商品</h2>
+        <h2>{{ t.product_summary_title }}</h2>
         <p class="product-title">{{ product.label }}</p>
         <p class="hint">{{ product.description }}</p>
         {% if product.features %}
@@ -33,41 +33,35 @@
       </section>
 
       <section class="notice-box">
-        <h2>入力する内容</h2>
+        <h2>{{ t.input_contents_title }}</h2>
         <ul class="plain-list">
-          <li>注文番号</li>
-          <li>メールアドレス（任意）</li>
-          <li>イベント名</li>
-          <li>日付・時刻・タイムゾーン</li>
-          <li>場所名・緯度・経度</li>
-          <li>Julian / Gregorian の暦種別</li>
+          {% for item in t.start_transit_input_items %}
+            <li>{{ item }}</li>
+          {% endfor %}
         </ul>
       </section>
 
       <section class="notice-box warn">
-        <h2>登録前に必ず確認してください</h2>
+        <h2>{{ t.start_notice_title }}</h2>
         <ul class="plain-list">
-          <li><strong>注文番号は1回だけ使用できます。</strong>一度生成すると再生成できません。</li>
-          <li><strong>送信後の入力変更はできません。</strong>日時・場所・暦種別をよく確認してください。</li>
-          <li>歴史イベントの日付は諸説があり得ます。必要に応じて入力日付を事前に検証してください。</li>
-          <li>生成後に表示されるURLは、必ず保存してください。</li>
+          {% for item in t.start_notice_items %}
+            <li>{{ item | safe }}</li>
+          {% endfor %}
         </ul>
       </section>
 
       <section>
-        <h2>作成の流れ</h2>
+        <h2>{{ t.start_flow_title }}</h2>
         <ol class="steps timeline">
-          <li><span>1</span>STORESの注文番号を入力します。</li>
-          <li><span>2</span>イベント日時と場所を入力します。</li>
-          <li><span>3</span>暦種別を選択します。</li>
-          <li><span>4</span>確認チェックを入れて送信します。</li>
-          <li><span>5</span>AI分析用のYAMLデータが表示されます。</li>
+          {% for item in t.start_transit_flow_items %}
+            <li><span>{{ loop.index }}</span>{{ item }}</li>
+          {% endfor %}
         </ol>
       </section>
 
       <div class="action-area">
-        <a href="{{ redeem_url }}" class="primary-link">入力フォームへ進む</a>
-        <p class="hint" style="margin:0">商品タイプ：{{ product_type }}</p>
+        <a href="{{ redeem_url }}?lang={{ lang }}" class="primary-link">{{ t.start_button }}</a>
+        <p class="hint" style="margin:0">{{ t.product_type_label }}：{{ product.label }}</p>
       </div>
     </div>
   </main>

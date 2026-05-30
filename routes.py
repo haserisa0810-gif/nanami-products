@@ -300,7 +300,27 @@ I18N = {
             "出生時刻が不明な場合は空欄のままで構いません（正午で計算します）。",
             "生成後に表示されるURLは、必ず保存してください。",
         ],
+        "product_summary_title": "購入商品",
+        "input_contents_title": "入力する内容",
+        "start_transit_input_items": [
+            "注文番号",
+            "メールアドレス（任意）",
+            "イベント名",
+            "日付・時刻・タイムゾーン",
+            "場所名・緯度・経度",
+            "Julian / Gregorian の暦種別",
+        ],
+        "start_flow_title": "作成の流れ",
+        "start_transit_flow_items": [
+            "STORESの注文番号を入力します。",
+            "イベント日時と場所を入力します。",
+            "暦種別を選択します。",
+            "確認チェックを入れて送信します。",
+            "AI分析用のYAMLデータが表示されます。",
+        ],
+        "product_type_label": "商品タイプ",
         "start_button": "入力フォームへ進む",
+        "start_input_hint": "注文番号と出生情報を入力してください。",
         "input_title_suffix": "鑑定データ入力",
         "shichu_input_title_suffix": "データ入力",
         "precheck": "入力前チェック",
@@ -621,6 +641,7 @@ I18N = {
             "western_basic": "Enter your order number and birth information.",
             "western_full": "Create birth chart data including asteroids and one-month transits.<br>Enter your order number and birth information.",
             "shichu": "Enter the information needed to create Four Pillars data.<br>You can choose the day-change boundary: standard 1:00 AM or 11:00 PM.",
+            "transit_yaml": "Create YAML for the planetary positions at a specific event, date, and place.<br>Birth information is not used.",
         },
         "start_title_suffix": "Create AI-readable astrology data",
         "start_notice_title": "Please check before you start",
@@ -630,7 +651,27 @@ I18N = {
             "If the birth time is unknown, leave it blank. Noon will be used for calculation.",
             "Please save the URL shown after generation.",
         ],
+        "product_summary_title": "Selected product",
+        "input_contents_title": "What to enter",
+        "start_transit_input_items": [
+            "Order number",
+            "Email address (optional)",
+            "Event name",
+            "Date, time, and time zone",
+            "Place name, latitude, and longitude",
+            "Julian / Gregorian calendar type",
+        ],
+        "start_flow_title": "How it works",
+        "start_transit_flow_items": [
+            "Enter your STORES order number.",
+            "Enter the event date, time, and place.",
+            "Choose the calendar type.",
+            "Check the confirmation box and submit.",
+            "The AI analysis YAML data will be displayed.",
+        ],
+        "product_type_label": "Product type",
         "start_button": "Go to input form",
+        "start_input_hint": "Enter your order number and birth information.",
         "input_title_suffix": "AI-readable astrology data input",
         "shichu_input_title_suffix": "Data input",
         "precheck": "Before you submit",
@@ -1017,6 +1058,48 @@ def _localized_product(product_type: str, lang: str) -> dict:
     localized = dict(config)
     product_i18n = I18N.get(lang, I18N["ja"])
     localized["label"] = product_i18n["product_labels"].get(product_type, config["label"])
+    if lang == "en":
+        english_descriptions = {
+            "western_basic": "Creates core birth chart data for Western astrology. No asteroids, Four Pillars, or day-boundary options are shown.",
+            "western_full": "Includes asteroids and a 31-day transit set. No selection is required from the buyer.",
+            "western_asteroids_addon": "Creates the asteroid add-on YAML to use with the basic version.",
+            "shichu": "Creates Four Pillars data. The day-change boundary can be set to the standard 1:00 AM or 11:00 PM.",
+            "transit_yaml": "Creates YAML for the planetary positions at a specific event, date, and place. Birth information is not used.",
+        }
+        english_features = {
+            "western_basic": [
+                "Western astrology birth chart data",
+                "No asteroid options",
+                "No Four Pillars data",
+                "No transit data",
+            ],
+            "western_full": [
+                "Western astrology birth chart data",
+                "Includes asteroids",
+                "Includes 31-day transits",
+                "No Four Pillars data",
+            ],
+            "western_asteroids_addon": [
+                "Ceres / Pallas / Juno / Vesta / Chiron / Lilith / Vertex",
+                "Add-on data to use with the basic horoscope",
+                "No transit data",
+                "No Four Pillars data",
+            ],
+            "shichu": [
+                "Four Pillars data",
+                "Selectable day-change boundary",
+                "Standard 1:00 AM option",
+                "No asteroid or transit data",
+            ],
+            "transit_yaml": [
+                "Planetary positions for an event, date, and place",
+                "No birth information required",
+                "Julian / Gregorian calendar selection",
+                "Moon phases and major aspects included",
+            ],
+        }
+        localized["description"] = english_descriptions.get(product_type, config["description"])
+        localized["features"] = english_features.get(product_type, list(config.get("features") or []))
     return localized
 
 
