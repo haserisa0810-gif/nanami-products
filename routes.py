@@ -3264,8 +3264,11 @@ def chart_download_zip(token: str):
     asteroid_like_western = has_western_natal and has_western_asteroids
     long_term_transits_yaml = build_long_term_transits_yaml(chart["yaml_text"], doc=chart_doc) if has_long_term_transits(doc=chart_doc) else None
     full_yaml_text = chart["yaml_text"]
-    share_yaml_text = chart.get("share_yaml_text") or full_yaml_text
-    detail_yaml = share_yaml_text
+    share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
+    try:
+        detail_yaml = build_detail_astrology_yaml(full_yaml_text)
+    except Exception:
+        detail_yaml = share_yaml_text
     ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -3275,7 +3278,7 @@ def chart_download_zip(token: str):
         if full_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
             zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
-            zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"], refresh_dynamic=False))
+            zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"]))
         elif asteroid_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
             zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
