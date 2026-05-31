@@ -214,6 +214,7 @@ def build_light_astrology_yaml(
     western = ((doc.get("systems") or {}).get("western") or {})
     natal = western.get("natal") or {}
     transit = western.get("transit") or {}
+    long_term_transit = western.get("transit_long_term") or None
     daily = transit.get("daily") or []
     today, selected_date, selection_status = _select_today_entry(daily, doc, today=current_date)
 
@@ -254,6 +255,7 @@ def build_light_astrology_yaml(
                 "asteroids": bool(asteroids),
                 "transit_today": bool(today),
                 "transit_31days_summary": bool(daily),
+                "western_long_term_transits": bool(long_term_transit),
             },
         },
         "usage_note": {
@@ -295,6 +297,7 @@ def build_light_astrology_yaml(
                     } if today else None,
                     "next_31_days_summary": {} if daily else None,
                 } if transit else None,
+                "transit_long_term": long_term_transit,
             },
             "shichusuimei": None,
         },

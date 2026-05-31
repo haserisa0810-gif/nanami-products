@@ -3279,7 +3279,7 @@ def chart_download_zip(token: str):
         elif asteroid_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
             zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
-        elif product_type == "western_basic":
+        elif product_type == "western_basic" or (has_western_natal and has_long_term_transits(doc=chart_doc)):
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
         if long_term_transits_yaml:
             zf.writestr("long-term-transits.yaml", long_term_transits_yaml)
@@ -3338,8 +3338,9 @@ def chart_page(request: Request, token: str):
         has_long_term_transits_data = has_long_term_transits(doc=chart_doc)
         full_like_western = has_western_natal and has_31day_transit
         asteroid_like_western = has_western_natal and has_western_asteroids
+        long_term_like_western = has_western_natal and has_long_term_transits_data
         can_continue_with_transit = full_like_western
-        has_yaml_mode_selector = full_like_western or asteroid_like_western
+        has_yaml_mode_selector = full_like_western or asteroid_like_western or long_term_like_western
         has_horoscope_svg = has_western_natal
         has_shichusuimei_svg = product_type == "shichu"
         timings["display判定_ms"] = _elapsed_ms(step_start)
@@ -3958,10 +3959,16 @@ def _build_long_term_transits_addon_from_base(
         **args,
         include_asteroids=False,
         include_shichusuimei=False,
-        include_transit=False,
-        western_long_term_transits=True,
+        include_transit=True,
+        transit_days=365,
         transit_start_date=transit_start_date,
     )
+    generated_western = ((full_doc.get("systems") or {}).get("western") or {})
+    generated_western["transit_long_term"] = generated_western.get("transit")
+    generated_western["transit"] = None
+    product_options = ((full_doc.get("product") or {}).get("options") or {})
+    product_options["transit"] = False
+    product_options["western_long_term_transits"] = True
     addon_yaml_text = build_long_term_transits_yaml(doc=full_doc)
     if not addon_yaml_text:
         raise ValueError("長期トランジットAddon YAMLを生成できませんでした。出生図データを確認してください。")
@@ -3970,15 +3977,22 @@ def _build_long_term_transits_addon_from_base(
     chart_doc = copy.deepcopy(doc)
     systems = chart_doc.setdefault("systems", {})
     western = systems.setdefault("western", {})
-    western["transit"] = None
     western["transit_long_term"] = (((addon_doc.get("systems") or {}).get("western") or {}).get("transit_long_term"))
 
     product = chart_doc.setdefault("product", {})
+    product["type"] = "western_long_term_transits_addon"
+    product["label"] = "ホロスコープ：長期トランジット追加"
     product_options = product.setdefault("options", {})
+    existing_transit = western.get("transit")
     product_options["western_natal"] = True
-    product_options["transit"] = False
+    product_options["transit"] = bool(existing_transit)
     product_options["western_long_term_transits"] = True
     product_options["product_type"] = "western_long_term_transits_addon"
+
+    meta = chart_doc.setdefault("meta", {})
+    meta["product_type"] = "western_long_term_transits_addon"
+    meta["data_role"] = "base_chart"
+    meta["addon_type"] = "western_long_term_transits"
     chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
 
     assets = chart_doc.setdefault("assets", {})
@@ -4061,7 +4075,14 @@ def _long_term_transits_addon_chart_payload(
     chart_doc: dict,
 ) -> dict[str, object]:
     input_block = chart_doc.get("input") or {}
-    share_yaml_text = build_long_term_transits_yaml(doc=chart_doc) or yaml_text
+    try:
+        share_yaml_text = build_light_astrology_yaml(
+            yaml_text,
+            doc=chart_doc,
+            include_asteroids=_doc_has_western_asteroids(chart_doc),
+        )
+    except Exception:
+        share_yaml_text = yaml_text
     try:
         horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=chart_doc))
     except Exception:
@@ -4721,6 +4742,11 @@ def long_term_transits_addon_yaml(token: str):
 @app.get("/admin/addon/long-term-transits/{token}", response_class=HTMLResponse)
 def long_term_transits_addon_page(request: Request, token: str):
     link, expired = _load_transit_addon_link(token)
+    chart = pg_store.get_chart(token, include_svgs=False)
+    if chart and not expired:
+        chart_expires_at = _chart_expiry(chart)
+        if not chart_expires_at or datetime.now(timezone.utc) < chart_expires_at:
+            return RedirectResponse(f"/chart/{token}", status_code=303)
     expires_at = _chart_expiry(link or {})
     return templates.TemplateResponse(
         "long_term_transits_addon_page.html",
@@ -4839,9 +4865,14 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
     has_western_asteroids = _chart_has_western_asteroids(chart, doc=chart_doc)
     has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
     full_like_western = has_western_natal and has_31day_transit
+    long_term_like_western = has_western_natal and has_long_term_transits(doc=chart_doc)
     asteroid_like_western = has_western_natal and has_western_asteroids
-    if full_like_western:
-        return build_light_astrology_yaml(chart["yaml_text"], doc=chart_doc)
+    if full_like_western or long_term_like_western:
+        return build_light_astrology_yaml(
+            chart["yaml_text"],
+            doc=chart_doc,
+            include_asteroids=long_term_like_western and has_western_asteroids,
+        )
     return share_yaml_text
 
 
@@ -4872,7 +4903,7 @@ def _chart_zip_readme(chart: dict) -> str:
         "full.yaml: 保存・検証用の完全版YAMLです。内容を細かく確認したいときに使います。",
         "prompt.txt: AIへの読み方を指定する文章です。ai_paste.txt の中にも同じ指示が含まれています。",
     ]
-    if product_type == "western_basic" and not full_like_western:
+    if (product_type == "western_basic" or (has_western_natal and has_long_term_transits(doc=chart_doc))) and not full_like_western and not asteroid_like_western:
         files.extend([
             "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
         ])
