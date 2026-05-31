@@ -27,7 +27,15 @@ def _base_doc(*, include_transit: bool = False, include_asteroids: bool = False)
     if include_transit:
         western["transit"] = {
             "period": {"start_date": "2026-05-01", "days": 31},
-            "daily": [{"date": "2026-05-01", "natal_aspects": []} for _ in range(31)],
+            "daily": [
+                {
+                    "date": "2026-05-01",
+                    "natal_aspects": [
+                        {"transit_body": "Mars", "natal_body": "Sun", "aspect": "trine", "orb": 0.4}
+                    ],
+                }
+                for _ in range(31)
+            ],
         }
     if include_asteroids:
         western["asteroids"] = {"Ceres": {"sign": "Taurus", "degree": 5}}

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+import logging
 from typing import Any
 from zoneinfo import ZoneInfo
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 KEY_BODY_NAMES = {"Sun", "Moon", "ASC", "MC", "Saturn", "Uranus", "Neptune", "Pluto"}
 POSITIVE_ASPECTS = {"trine", "sextile", "conjunction"}
@@ -163,6 +166,123 @@ def _active_periods(key_aspects: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return periods[:8]
 
 
+def _date_range_from_daily(daily: list[dict[str, Any]]) -> tuple[str | None, str | None]:
+    dates = sorted(
+        str(item.get("date"))
+        for item in daily
+        if isinstance(item, dict) and _parse_date(item.get("date"))
+    )
+    if not dates:
+        return None, None
+    return dates[0], dates[-1]
+
+
+def _overall_theme(key_aspects: list[dict[str, Any]], daily: list[dict[str, Any]]) -> str:
+    if not key_aspects:
+        return "期間全体では、主要アスペクトが比較的少なく、日々の月の動きや基本的な生活リズムを整えやすい流れです。"
+    easy_count = sum(1 for item in key_aspects if item.get("aspect") in POSITIVE_ASPECTS)
+    caution_count = sum(1 for item in key_aspects if item.get("aspect") in CAUTION_ASPECTS)
+    active_dates = len({str(item.get("date")) for item in key_aspects if item.get("date")})
+    base = f"31日中{active_dates}日ほど、主要天体と出生図のタイトな接点が目立ちます。"
+    if caution_count > easy_count:
+        return base + "調整・見直し・境界線の整理を意識すると流れを扱いやすくなります。"
+    if easy_count > caution_count:
+        return base + "動きやすい配置が多く、意思表示や行動に移すタイミングを拾いやすい期間です。"
+    return base + "動きやすさと調整テーマが混在するため、日ごとの強弱を見ながら進める期間です。"
+
+
+def _key_dates(key_aspects: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+    by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in key_aspects:
+        if item.get("date"):
+            by_date[str(item["date"])].append(item)
+
+    out: list[dict[str, Any]] = []
+    for date_key, aspects in sorted(by_date.items()):
+        sorted_aspects = sorted(aspects, key=lambda item: float(item.get("orb") or 99))
+        tight = [item for item in sorted_aspects if float(item.get("orb") or 99) <= 0.5]
+        source = tight or sorted_aspects[:2]
+        out.append({
+            "date": date_key,
+            "theme": _meaning_hint(source[0]),
+            "reason": "タイトな主要アスペクト" if tight else "主要アスペクトが重なる日",
+            "source_aspects": source[:3],
+        })
+    return sorted(out, key=lambda item: (str(item["date"]), len(item["source_aspects"])))[:limit]
+
+
+def _recent_days(daily: list[dict[str, Any]], selected_date: date, *, limit: int = 5) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for day in daily:
+        day_date = _parse_date(day.get("date")) if isinstance(day, dict) else None
+        if not day_date or day_date < selected_date:
+            continue
+        aspects = [
+            _compact_aspect(item, include_date=day_date.isoformat())
+            for item in day.get("natal_aspects", [])
+            if isinstance(item, dict) and _is_key_aspect(item)
+        ][:3]
+        out.append({
+            "date": day_date.isoformat(),
+            "theme": _meaning_hint(aspects[0]) if aspects else "大きな切り替わりは少なめ",
+            "source_aspects": sorted(aspects, key=lambda item: float(item.get("orb") or 99)),
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _action_hints(easy_days: list[dict[str, Any]], caution_days: list[dict[str, Any]]) -> list[str]:
+    hints = []
+    if easy_days:
+        hints.append("動きやすい日は、連絡・相談・意思表示・予定を前に進める日に使いやすいです。")
+    if caution_days:
+        hints.append("注意日には、即断よりも確認・調整・境界線の見直しを優先してください。")
+    hints.append("当日分の詳細を主根拠にし、31日サマリーは流れの強弱を読む補助として使ってください。")
+    return hints
+
+
+def _build_31day_summary(
+    *,
+    transit: dict[str, Any],
+    daily: list[dict[str, Any]],
+    key_aspects: list[dict[str, Any]],
+    easy_days: list[dict[str, Any]],
+    caution_days: list[dict[str, Any]],
+    selected_date: date,
+    max_key_aspects: int,
+    max_easy_days: int,
+    max_caution_days: int,
+    max_active_periods: int,
+) -> dict[str, Any]:
+    period = dict(transit.get("period") or {})
+    start_date, end_date = _date_range_from_daily(daily)
+    if start_date:
+        period.setdefault("start_date", start_date)
+    if end_date:
+        period.setdefault("end_date", end_date)
+    if daily:
+        period.setdefault("days", len(daily))
+
+    active_periods = _active_periods(key_aspects)[:max_active_periods]
+    key_dates = _key_dates(key_aspects, limit=max_easy_days + max_caution_days)
+    summary = {
+        "period": period,
+        "overall_theme": _overall_theme(key_aspects, daily),
+        "key_periods": active_periods,
+        "key_dates": key_dates,
+        "caution_dates": caution_days[:max_caution_days],
+        "easy_to_move_days": easy_days[:max_easy_days],
+        "next_few_days": _recent_days(daily, selected_date),
+        "action_hints": _action_hints(easy_days, caution_days),
+        "key_aspects": key_aspects[:max_key_aspects],
+        "active_periods": active_periods,
+    }
+    if daily and not key_aspects:
+        logger.warning("transit_31days_summary_has_daily_but_no_key_aspects days=%s", len(daily))
+    return summary
+
+
 def _parse_date(value: Any) -> date | None:
     try:
         return date.fromisoformat(str(value))
@@ -303,11 +423,19 @@ def build_light_astrology_yaml(
         },
     }
     summary = light["systems"]["western"]["transit"]["next_31_days_summary"] if transit and daily else None
-    if summary:
-        summary["key_aspects"] = key_aspects[:max_key_aspects]
-        summary["active_periods"] = _active_periods(key_aspects)[:max_active_periods]
-        summary["easy_to_move_days"] = easy_days[:max_easy_days]
-        summary["caution_days"] = caution_days[:max_caution_days]
+    if summary is not None:
+        light["systems"]["western"]["transit"]["next_31_days_summary"] = _build_31day_summary(
+            transit=transit,
+            daily=daily,
+            key_aspects=key_aspects,
+            easy_days=easy_days,
+            caution_days=caution_days,
+            selected_date=selected_date,
+            max_key_aspects=max_key_aspects,
+            max_easy_days=max_easy_days,
+            max_caution_days=max_caution_days,
+            max_active_periods=max_active_periods,
+        )
     return yaml.safe_dump(light, allow_unicode=True, sort_keys=False, width=120)
 
 
