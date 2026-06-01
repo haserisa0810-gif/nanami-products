@@ -145,7 +145,28 @@ def _day_score(aspects: list[dict[str, Any]]) -> tuple[int, int]:
     return easy, caution
 
 
-def _active_periods(key_aspects: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _aspect_date_key(item: dict[str, Any]) -> tuple[str, float]:
+    return str(item.get("date") or ""), float(item.get("orb") or 99)
+
+
+def _representative_aspects(items: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+    if limit <= 0:
+        return []
+    sorted_items = sorted(items, key=_aspect_date_key)
+    if len(sorted_items) <= limit:
+        return sorted_items
+
+    representatives = [sorted_items[0]]
+    if limit >= 2:
+        tightest = min(sorted_items, key=lambda item: float(item.get("orb") or 99))
+        if tightest not in representatives:
+            representatives.append(tightest)
+    if limit >= 3 and sorted_items[-1] not in representatives:
+        representatives.append(sorted_items[-1])
+    return representatives[:limit]
+
+
+def _active_periods(key_aspects: list[dict[str, Any]], *, source_limit: int = 2) -> list[dict[str, Any]]:
     grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for item in key_aspects:
         grouped[(str(item.get("transit_body")), str(item.get("natal_body")), str(item.get("aspect")))].append(item)
@@ -157,12 +178,11 @@ def _active_periods(key_aspects: list[dict[str, Any]]) -> list[dict[str, Any]]:
         dates = sorted(str(item.get("date")) for item in items if item.get("date"))
         if not dates:
             continue
-        source = items[:3]
         periods.append({
             "start_date": dates[0],
             "end_date": dates[-1],
             "theme": _meaning_hint(items[0]),
-            "source_aspects": source,
+            "source_aspects": _representative_aspects(items, limit=source_limit),
         })
     return periods[:8]
 
@@ -183,16 +203,14 @@ def _overall_theme(key_aspects: list[dict[str, Any]], daily: list[dict[str, Any]
         return "期間全体では、主要アスペクトが比較的少なく、日々の月の動きや基本的な生活リズムを整えやすい流れです。"
     easy_count = sum(1 for item in key_aspects if item.get("aspect") in POSITIVE_ASPECTS)
     caution_count = sum(1 for item in key_aspects if item.get("aspect") in CAUTION_ASPECTS)
-    active_dates = len({str(item.get("date")) for item in key_aspects if item.get("date")})
-    base = f"31日中{active_dates}日ほど、主要天体と出生図のタイトな接点が目立ちます。"
     if caution_count > easy_count:
-        return base + "調整・見直し・境界線の整理を意識すると流れを扱いやすくなります。"
+        return "この31日間は、調整・見直し・境界線の整理が継続しやすい時期です。短期的な勢いより、違和感を確かめながら進めると扱いやすくなります。"
     if easy_count > caution_count:
-        return base + "動きやすい配置が多く、意思表示や行動に移すタイミングを拾いやすい期間です。"
-    return base + "動きやすさと調整テーマが混在するため、日ごとの強弱を見ながら進める期間です。"
+        return "この31日間は、意思表示や行動に移すきっかけを拾いやすい流れです。勢いだけで進めず、日ごとの強弱を見ながら予定を組むと使いやすくなります。"
+    return "この31日間は、動きが出やすい日と調整が必要な日が混在します。焦って結論を出すより、流れの強弱を見ながら進めると扱いやすい時期です。"
 
 
-def _key_dates(key_aspects: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+def _key_dates(key_aspects: list[dict[str, Any]], *, limit: int, source_limit: int) -> list[dict[str, Any]]:
     by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in key_aspects:
         if item.get("date"):
@@ -202,31 +220,31 @@ def _key_dates(key_aspects: list[dict[str, Any]], *, limit: int) -> list[dict[st
     for date_key, aspects in sorted(by_date.items()):
         sorted_aspects = sorted(aspects, key=lambda item: float(item.get("orb") or 99))
         tight = [item for item in sorted_aspects if float(item.get("orb") or 99) <= 0.5]
-        source = tight or sorted_aspects[:2]
+        source = (tight or sorted_aspects)[:source_limit]
         out.append({
             "date": date_key,
             "theme": _meaning_hint(source[0]),
             "reason": "タイトな主要アスペクト" if tight else "主要アスペクトが重なる日",
-            "source_aspects": source[:3],
+            "source_aspects": source,
         })
     return sorted(out, key=lambda item: (str(item["date"]), len(item["source_aspects"])))[:limit]
 
 
-def _recent_days(daily: list[dict[str, Any]], selected_date: date, *, limit: int = 5) -> list[dict[str, Any]]:
+def _recent_days(daily: list[dict[str, Any]], selected_date: date, *, limit: int = 5, source_limit: int = 1) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for day in daily:
         day_date = _parse_date(day.get("date")) if isinstance(day, dict) else None
         if not day_date or day_date < selected_date:
             continue
-        aspects = [
+        aspects = sorted([
             _compact_aspect(item, include_date=day_date.isoformat())
             for item in day.get("natal_aspects", [])
             if isinstance(item, dict) and _is_key_aspect(item)
-        ][:3]
+        ], key=lambda item: float(item.get("orb") or 99))[:source_limit]
         out.append({
             "date": day_date.isoformat(),
             "theme": _meaning_hint(aspects[0]) if aspects else "大きな切り替わりは少なめ",
-            "source_aspects": sorted(aspects, key=lambda item: float(item.get("orb") or 99)),
+            "source_aspects": aspects,
         })
         if len(out) >= limit:
             break
@@ -236,11 +254,22 @@ def _recent_days(daily: list[dict[str, Any]], selected_date: date, *, limit: int
 def _action_hints(easy_days: list[dict[str, Any]], caution_days: list[dict[str, Any]]) -> list[str]:
     hints = []
     if easy_days:
-        hints.append("動きやすい日は、連絡・相談・意思表示・予定を前に進める日に使いやすいです。")
+        hints.append("動きが出やすい日は、連絡・相談・意思表示などを前に進める候補日として使えます。")
     if caution_days:
         hints.append("注意日には、即断よりも確認・調整・境界線の見直しを優先してください。")
     hints.append("当日分の詳細を主根拠にし、31日サマリーは流れの強弱を読む補助として使ってください。")
     return hints
+
+
+def _summary_key_aspects(key_aspects: list[dict[str, Any]], *, limit: int, source_limit: int) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for item in key_aspects:
+        grouped[(str(item.get("transit_body")), str(item.get("natal_body")), str(item.get("aspect")))].append(item)
+
+    out: list[dict[str, Any]] = []
+    for (_transit, _natal, _aspect), items in grouped.items():
+        out.extend(_representative_aspects(items, limit=source_limit))
+    return sorted(out, key=_aspect_date_key)[:limit]
 
 
 def _build_31day_summary(
@@ -252,9 +281,11 @@ def _build_31day_summary(
     caution_days: list[dict[str, Any]],
     selected_date: date,
     max_key_aspects: int,
+    max_key_dates: int,
     max_easy_days: int,
     max_caution_days: int,
     max_active_periods: int,
+    source_aspect_limit: int,
 ) -> dict[str, Any]:
     period = dict(transit.get("period") or {})
     start_date, end_date = _date_range_from_daily(daily)
@@ -265,8 +296,8 @@ def _build_31day_summary(
     if daily:
         period.setdefault("days", len(daily))
 
-    active_periods = _active_periods(key_aspects)[:max_active_periods]
-    key_dates = _key_dates(key_aspects, limit=max_easy_days + max_caution_days)
+    active_periods = _active_periods(key_aspects, source_limit=source_aspect_limit)[:max_active_periods]
+    key_dates = _key_dates(key_aspects, limit=max_key_dates, source_limit=source_aspect_limit)
     summary = {
         "period": period,
         "overall_theme": _overall_theme(key_aspects, daily),
@@ -274,9 +305,13 @@ def _build_31day_summary(
         "key_dates": key_dates,
         "caution_dates": caution_days[:max_caution_days],
         "easy_to_move_days": easy_days[:max_easy_days],
-        "next_few_days": _recent_days(daily, selected_date),
+        "next_few_days": _recent_days(daily, selected_date, source_limit=source_aspect_limit),
         "action_hints": _action_hints(easy_days, caution_days),
-        "key_aspects": key_aspects[:max_key_aspects],
+        "key_aspects": _summary_key_aspects(
+            key_aspects,
+            limit=max_key_aspects,
+            source_limit=source_aspect_limit,
+        ),
         "active_periods": active_periods,
     }
     if daily and not key_aspects:
@@ -338,11 +373,13 @@ def build_light_astrology_yaml(
     *,
     doc: dict[str, Any] | None = None,
     include_asteroids: bool = False,
-    max_key_aspects: int = 40,
-    max_daily_aspects: int = 3,
+    max_key_aspects: int = 12,
+    max_key_dates: int = 8,
+    max_daily_aspects: int = 2,
     max_easy_days: int = 5,
     max_caution_days: int = 5,
     max_active_periods: int = 5,
+    source_aspect_limit: int = 1,
     version: str = "nanami-products-yaml-light-v1",
     product_type: str = "personal_ai_astrology_yaml_light",
     current_date: date | None = None,
@@ -373,9 +410,12 @@ def build_light_astrology_yaml(
         if aspects:
             easy, caution = _day_score(aspects)
             if easy >= caution:
-                easy_days.append({"date": date, "reason": "動きやすい配置が多い日", "source_aspects": aspects[:3]})
+                easy_reason = "動きが出やすい配置がある日"
+                if caution > 0:
+                    easy_reason = "動きが出やすい一方で、調整も必要な日"
+                easy_days.append({"date": date, "reason": easy_reason, "source_aspects": aspects[:source_aspect_limit]})
             if caution > 0:
-                caution_days.append({"date": date, "reason": "調整が必要な配置がある日", "source_aspects": aspects[:3]})
+                caution_days.append({"date": date, "reason": "調整が必要な配置がある日", "source_aspects": aspects[:source_aspect_limit]})
 
     asteroids = western.get("asteroids") if include_asteroids else None
     light = {
@@ -449,9 +489,11 @@ def build_light_astrology_yaml(
             caution_days=caution_days,
             selected_date=selected_date,
             max_key_aspects=max_key_aspects,
+            max_key_dates=max_key_dates,
             max_easy_days=max_easy_days,
             max_caution_days=max_caution_days,
             max_active_periods=max_active_periods,
+            source_aspect_limit=source_aspect_limit,
         )
     final_summary = None
     if light["systems"]["western"].get("transit"):
@@ -475,11 +517,13 @@ def build_detail_astrology_yaml(full_yaml_text: str, *, current_date: date | Non
     return build_light_astrology_yaml(
         full_yaml_text,
         include_asteroids=True,
-        max_key_aspects=120,
-        max_daily_aspects=5,
-        max_easy_days=10,
-        max_caution_days=10,
+        max_key_aspects=24,
+        max_key_dates=10,
+        max_daily_aspects=3,
+        max_easy_days=5,
+        max_caution_days=5,
         max_active_periods=8,
+        source_aspect_limit=2,
         version="nanami-products-yaml-detail-v1",
         product_type="personal_ai_astrology_yaml_detail",
         current_date=current_date,
