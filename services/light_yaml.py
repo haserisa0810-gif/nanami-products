@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 import logging
+import os
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -283,6 +284,22 @@ def _build_31day_summary(
     return summary
 
 
+def _summary_log_shape(summary: Any) -> dict[str, Any]:
+    if not isinstance(summary, dict):
+        return {"type": type(summary).__name__, "truthy": bool(summary)}
+    return {
+        "type": "dict",
+        "truthy": bool(summary),
+        "keys": sorted(str(key) for key in summary.keys()),
+        "period": bool(summary.get("period")),
+        "key_periods": len(summary.get("key_periods") or []),
+        "key_dates": len(summary.get("key_dates") or []),
+        "caution_dates": len(summary.get("caution_dates") or []),
+        "easy_to_move_days": len(summary.get("easy_to_move_days") or []),
+        "key_aspects": len(summary.get("key_aspects") or []),
+    }
+
+
 def _parse_date(value: Any) -> date | None:
     try:
         return date.fromisoformat(str(value))
@@ -436,6 +453,21 @@ def build_light_astrology_yaml(
             max_caution_days=max_caution_days,
             max_active_periods=max_active_periods,
         )
+    final_summary = None
+    if light["systems"]["western"].get("transit"):
+        final_summary = light["systems"]["western"]["transit"].get("next_31_days_summary")
+    logger.warning(
+        "light_yaml_31day_summary_result code_version=%s chart_id=%s product_type=%s version=%s daily_count=%s "
+        "today_present=%s transit_31days_summary=%s summary_shape=%s",
+        os.getenv("ASSET_VERSION") or os.getenv("K_REVISION") or "local",
+        (((doc.get("meta") or {}).get("chart_id")) or ""),
+        product_type,
+        version,
+        len(daily),
+        bool(today),
+        bool(light["product"]["options"].get("transit_31days_summary")),
+        _summary_log_shape(final_summary),
+    )
     return yaml.safe_dump(light, allow_unicode=True, sort_keys=False, width=120)
 
 
