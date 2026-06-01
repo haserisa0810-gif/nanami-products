@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import unittest
 from datetime import date, timedelta
 
@@ -104,6 +105,42 @@ def _dense_full_doc() -> dict:
     return doc
 
 
+def _asteroid_dense_full_doc() -> dict:
+    doc = deepcopy(_dense_full_doc())
+    asteroid_names = [
+        "Ceres", "Pallas", "Juno", "Vesta", "Chiron", "Lilith",
+        "Eros", "Psyche", "Pholus", "Nessus", "Hygiea", "Astraea",
+    ]
+    western = doc["systems"]["western"]
+    western["asteroids"] = {
+        name: {
+            "sign": "Taurus",
+            "degree": index + 1,
+            "absolute_longitude": 30.0 + index,
+            "house": (index % 12) + 1,
+        }
+        for index, name in enumerate(asteroid_names)
+    }
+    for day in western["transit"]["daily"]:
+        day["natal_aspects"].extend([
+            {
+                "transit_body": "Mars",
+                "natal_body": name,
+                "aspect": "square" if index % 2 == 0 else "trine",
+                "orb": 0.7 + index * 0.02,
+                "transit_longitude": 20.0 + index,
+                "natal_longitude": 120.0 + index,
+            }
+            for index, name in enumerate(asteroid_names)
+        ])
+    doc["product"]["options"]["asteroids"] = True
+    return doc
+
+
+def _summary_yaml_len(summary: dict) -> int:
+    return len(yaml.safe_dump(summary, allow_unicode=True, sort_keys=False, width=120))
+
+
 class LightYamlTransitSummaryTest(unittest.TestCase):
     def test_light_yaml_has_non_empty_31day_summary_when_flag_true(self) -> None:
         doc = _full_doc()
@@ -135,11 +172,14 @@ class LightYamlTransitSummaryTest(unittest.TestCase):
         summary = light["systems"]["western"]["transit"]["next_31_days_summary"]
 
         self.assertLess(len(light_yaml), 18000)
-        self.assertLessEqual(len(summary["key_dates"]), 8)
-        self.assertLessEqual(len(summary["caution_dates"]), 5)
-        self.assertLessEqual(len(summary["easy_to_move_days"]), 5)
-        self.assertLessEqual(len(summary["key_aspects"]), 12)
+        self.assertLess(_summary_yaml_len(summary), 2600)
+        self.assertLessEqual(len(summary["key_dates"]), 6)
+        self.assertLessEqual(len(summary["caution_dates"]), 3)
+        self.assertLessEqual(len(summary["easy_to_move_days"]), 3)
+        self.assertLessEqual(len(summary["next_few_days"]), 3)
+        self.assertLessEqual(len(summary["key_aspects"]), 5)
         self.assertEqual(len(summary["key_periods"]), 2)
+        self.assertNotIn("active_periods", summary)
 
         for collection_name in ("key_periods", "key_dates", "caution_dates", "easy_to_move_days", "next_few_days"):
             for item in summary[collection_name]:
@@ -152,6 +192,29 @@ class LightYamlTransitSummaryTest(unittest.TestCase):
         self.assertEqual(len(uranus_periods), 1)
         self.assertEqual(uranus_periods[0]["start_date"], "2026-05-06")
         self.assertEqual(uranus_periods[0]["end_date"], "2026-06-05")
+
+    def test_asteroid_summaries_do_not_expand_source_aspects(self) -> None:
+        doc = _asteroid_dense_full_doc()
+        light = yaml.safe_load(build_light_astrology_yaml(doc=doc, include_asteroids=True, current_date=date(2026, 5, 6)))
+        detail = yaml.safe_load(
+            build_detail_astrology_yaml(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False), current_date=date(2026, 5, 6))
+        )
+
+        for data, summary_limit in ((light, 2600), (detail, 2900)):
+            summary = data["systems"]["western"]["transit"]["next_31_days_summary"]
+            self.assertTrue(data["systems"]["western"]["asteroids"])
+            self.assertTrue(summary)
+            self.assertLess(_summary_yaml_len(summary), summary_limit)
+            self.assertLessEqual(len(summary["key_dates"]), 7)
+            self.assertLessEqual(len(summary["caution_dates"]), 5)
+            self.assertLessEqual(len(summary["easy_to_move_days"]), 5)
+            self.assertLessEqual(len(summary["next_few_days"]), 3)
+            self.assertLessEqual(len(summary["key_aspects"]), 5)
+            self.assertLessEqual(len(summary["key_periods"]), 5)
+            self.assertNotIn("active_periods", summary)
+            for collection_name in ("key_periods", "key_dates", "caution_dates", "easy_to_move_days", "next_few_days"):
+                for item in summary[collection_name]:
+                    self.assertLessEqual(len(item.get("source_aspects") or []), 1, collection_name)
 
 
 if __name__ == "__main__":
