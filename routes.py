@@ -373,13 +373,14 @@ I18N = {
         "domestic": "国内",
         "international": "海外",
         "coordinates": "緯度・経度で入力",
-        "domestic_place_note": "都道府県単位で計算します。",
+        "domestic_place_note": "都道府県のみでも利用可能です。緯度・経度を入力した場合はそちらを優先して使用します。",
         "domestic_coordinates_summary": "詳細座標を指定する（任意）",
-        "domestic_coordinates_note": "市区町村単位など、より細かく出生地を指定したい場合だけ入力してください。",
-        "overseas_place_note": "国名・都市名を入力し、必要な場合は座標とタイムゾーンも指定してください。",
+        "domestic_coordinates_note": "市区町村単位など、より細かく出生地を指定したい場合は緯度・経度も入力してください。",
+        "overseas_place_note": "海外出生地は、国・都市に加えて緯度・経度・タイムゾーンの入力が必要です。",
         "coordinates_place_note": "出生地を緯度・経度で指定したい場合はこちらを使ってください。",
         "coordinates_range_note": "緯度は -90〜90、経度は -180〜180 の数値で入力してください。",
         "birth_place_country_city": "国・都市",
+        "birth_place_city": "市区町村",
         "latitude": "緯度",
         "longitude": "経度",
         "coordinate_note": "空欄なら都道府県の代表座標を使います。市区町村単位など、より細かく指定したい場合だけ入力してください。",
@@ -724,13 +725,14 @@ I18N = {
         "domestic": "Domestic",
         "international": "International",
         "coordinates": "Use latitude / longitude",
-        "domestic_place_note": "Calculated at the prefecture level.",
+        "domestic_place_note": "A prefecture is enough. If latitude and longitude are entered, those coordinates are used instead.",
         "domestic_coordinates_summary": "Optional detailed coordinates",
-        "domestic_coordinates_note": "Enter this only if you want a more specific birth place such as a city or ward.",
-        "overseas_place_note": "Enter country/city, and add coordinates and timezone if needed.",
+        "domestic_coordinates_note": "If you want to specify a city or ward more precisely, enter latitude and longitude too.",
+        "overseas_place_note": "For international birth places, country/city, latitude, longitude, and time zone are required.",
         "coordinates_place_note": "Use this when you want to specify the birth place by latitude and longitude.",
         "coordinates_range_note": "Latitude should be -90 to 90, and longitude should be -180 to 180.",
         "birth_place_country_city": "Country / city",
+        "birth_place_city": "City / ward",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "coordinate_note": "If left blank, the prefecture's reference coordinates are used. Enter them only when you want a more specific location.",
@@ -1639,6 +1641,7 @@ def _build_birth_location(
     prefecture: str,
     birth_place_kind: str,
     birth_place_overseas: str,
+    birth_place_city: str,
     birth_lat: str,
     birth_lng: str,
     birth_timezone: str,
@@ -1671,26 +1674,6 @@ def _build_birth_location(
             "tz_name": tz_name,
             "tz": tz,
         }
-    if kind == "coordinates":
-        if prefecture.strip():
-            raise ValueError("緯度・経度で入力する場合は、出生都道府県を未選択にしてください。")
-        if birth_place_overseas.strip() or birth_timezone.strip():
-            raise ValueError("緯度・経度で入力する場合は、海外出生地名とタイムゾーン欄を空にしてください。")
-        lat = _parse_optional_float(birth_lat, "緯度")
-        lon = _parse_optional_float(birth_lng, "経度")
-        if lat is None or lon is None:
-            raise ValueError("緯度・経度で入力する場合は、緯度と経度の両方を入力してください。")
-        _validate_lat_lon(lat, lon)
-        return {
-            "kind": "coordinates",
-            "birth_place": "緯度・経度で入力",
-            "prefecture": "",
-            "lat": lat,
-            "lng": lon,
-            "tz_name": "Asia/Tokyo",
-            "tz": ZoneInfo("Asia/Tokyo"),
-        }
-
     pref_name = prefecture.strip()
     if not pref_name:
         raise ValueError("出生都道府県を選択してください。")
@@ -1702,9 +1685,11 @@ def _build_birth_location(
         raise ValueError("緯度・経度を指定する場合は、両方入力してください。")
     if lat is not None and lon is not None:
         _validate_lat_lon(lat, lon)
+    city_name = birth_place_city.strip()
+    place_label = f"{pref_name} {city_name}" if city_name else pref_name
     return {
         "kind": "domestic",
-        "birth_place": pref_name,
+        "birth_place": place_label,
         "prefecture": pref_name,
         "lat": lat,
         "lng": lon,
@@ -2756,6 +2741,7 @@ def redeem_post(
     prefecture: str = Form(""),
     birth_place_kind: str = Form("domestic"),
     birth_place_overseas: str = Form(""),
+    birth_place_city: str = Form(""),
     birth_lat: str = Form(""),
     birth_lng: str = Form(""),
     birth_timezone: str = Form(""),
@@ -2814,6 +2800,7 @@ def redeem_post(
                     "prefecture": prefecture,
                     "birth_place_kind": birth_place_kind,
                     "birth_place_overseas": birth_place_overseas,
+                    "birth_place_city": birth_place_city,
                     "birth_lat": birth_lat,
                     "birth_lng": birth_lng,
                     "birth_timezone": birth_timezone,
@@ -2988,6 +2975,7 @@ def redeem_post(
             prefecture=prefecture,
             birth_place_kind=birth_place_kind,
             birth_place_overseas=birth_place_overseas,
+            birth_place_city=birth_place_city,
             birth_lat=birth_lat,
             birth_lng=birth_lng,
             birth_timezone=birth_timezone,

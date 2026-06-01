@@ -99,6 +99,11 @@
               {% endfor %}
             </select>
           </label>
+          <label>市区町村<span class="optional">任意</span>
+            <input type="text" name="birth_place_city"
+                   value="{{ form.birth_place_city if form else '' }}"
+                   placeholder="例：新宿区">
+          </label>
 
           {# 性別：四柱推命のみ表示（大運計算に必要） #}
           {% if product_type == 'shichu' %}
@@ -134,17 +139,17 @@
                        value="{{ form.birth_place_overseas if form else '' }}"
                        placeholder="例：New York, USA">
               </label>
-              <label class="coordinate-field">緯度
-                <input type="number" name="birth_lat" step="any"
+              <label class="coordinate-field">緯度<span class="optional" id="birth-lat-optional">任意</span><span class="required" id="birth-lat-required" hidden>必須</span>
+                <input type="number" name="birth_lat" step="any" min="-90" max="90"
                        value="{{ form.birth_lat if form else '' }}"
                        placeholder="例：40.7128">
               </label>
-              <label class="coordinate-field">経度
-                <input type="number" name="birth_lng" step="any"
+              <label class="coordinate-field">経度<span class="optional" id="birth-lng-optional">任意</span><span class="required" id="birth-lng-required" hidden>必須</span>
+                <input type="number" name="birth_lng" step="any" min="-180" max="180"
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：-74.0060">
               </label>
-              <small class="coordinate-note">国内は空欄なら都道府県の代表座標を使います。市区町村まで指定したい場合だけ入力してください。</small>
+              <small class="coordinate-note" id="coordinate-mode-note">国内は都道府県のみでも利用可能です。緯度・経度を入力した場合はそちらを優先して使用します。</small>
               <label class="full-span">タイムゾーン
                 {% set current_timezone = form.birth_timezone if form and form.birth_timezone else '' %}
                 {% set timezone_values = timezone_options | map(attribute='value') | list %}
@@ -221,10 +226,16 @@
       if (!mode || !box) return;
       const active = mode.value === 'overseas';
       const prefecture = document.querySelector('[name="prefecture"]');
+      const city = document.querySelector('[name="birth_place_city"]');
       if (prefecture) {
         prefecture.required = !active;
         prefecture.disabled = active;
         if (active) prefecture.value = '';
+      }
+      if (city) {
+        city.required = false;
+        city.disabled = active;
+        if (active) city.value = '';
       }
       box.classList.add('is-active');
       box.querySelectorAll('input, select').forEach((el) => {
@@ -232,6 +243,16 @@
         el.disabled = !active && !isCoordinate;
         el.required = active && el.dataset.required !== 'false';
       });
+      document.getElementById('birth-lat-optional')?.toggleAttribute('hidden', active);
+      document.getElementById('birth-lat-required')?.toggleAttribute('hidden', !active);
+      document.getElementById('birth-lng-optional')?.toggleAttribute('hidden', active);
+      document.getElementById('birth-lng-required')?.toggleAttribute('hidden', !active);
+      const note = document.getElementById('coordinate-mode-note');
+      if (note) {
+        note.textContent = active
+          ? '海外出生地は、国・都市に加えて緯度・経度・タイムゾーンの入力が必要です。'
+          : '国内は都道府県のみでも利用可能です。緯度・経度を入力した場合はそちらを優先して使用します。';
+      }
       syncTimezoneFields();
     }
 

@@ -116,7 +116,7 @@
         <div class="form-section">
           <h2>{{ t.place_details }}</h2>
           <label>{{ t.place_kind }}</label>
-          <div class="mode-switch mode-switch-three" id="birth-place-switch">
+          <div class="mode-switch" id="birth-place-switch">
             {% set birth_place_kind = form.birth_place_kind if form and form.birth_place_kind else 'domestic' %}
             <label class="mode-pill {% if birth_place_kind != 'overseas' %}is-active{% endif %}">
               <input type="radio" name="birth_place_kind" value="domestic" {% if birth_place_kind != 'overseas' %}checked{% endif %}>
@@ -125,10 +125,6 @@
             <label class="mode-pill {% if birth_place_kind == 'overseas' %}is-active{% endif %}">
               <input type="radio" name="birth_place_kind" value="overseas" {% if birth_place_kind == 'overseas' %}checked{% endif %}>
               <span>{{ t.international }}</span>
-            </label>
-            <label class="mode-pill {% if birth_place_kind == 'coordinates' %}is-active{% endif %}">
-              <input type="radio" name="birth_place_kind" value="coordinates" {% if birth_place_kind == 'coordinates' %}checked{% endif %}>
-              <span>{{ t.coordinates }}</span>
             </label>
           </div>
 
@@ -141,6 +137,11 @@
                     {% if form and form.prefecture == pref %}selected{% endif %}>{{ pref }}</option>
                 {% endfor %}
               </select>
+            </label>
+            <label>{{ t.birth_place_city }}<span class="optional">{{ t.optional }}</span>
+              <input type="text" name="birth_place_city" id="birth_place_city"
+                     value="{{ form.birth_place_city if form else '' }}"
+                     placeholder="例：新宿区">
             </label>
             <p class="place-note is-accent">{{ t.domestic_place_note }}</p>
           </div>
@@ -170,15 +171,15 @@
             </label>
           </div>
 
-          <div class="place-panel" id="coordinates-place-panel" {% if birth_place_kind != 'coordinates' %}hidden{% endif %}>
-            <p class="place-note is-accent">{{ t.coordinates_place_note }}</p>
+          <div class="place-panel" id="coordinates-place-panel">
+            <p class="place-note is-accent" id="coordinate-mode-note">{{ t.domestic_coordinates_note }}</p>
             <div class="location-grid">
-              <label class="coordinate-field">{{ t.latitude }}<span class="required">{{ t.required }}</span>
+              <label class="coordinate-field">{{ t.latitude }}<span class="optional" id="birth-lat-optional">{{ t.optional }}</span><span class="required" id="birth-lat-required" hidden>{{ t.required }}</span>
                 <input type="number" name="birth_lat" step="any" min="-90" max="90"
                        value="{{ form.birth_lat if form else '' }}"
                        placeholder="例：35.6895">
               </label>
-              <label class="coordinate-field">{{ t.longitude }}<span class="required">{{ t.required }}</span>
+              <label class="coordinate-field">{{ t.longitude }}<span class="optional" id="birth-lng-optional">{{ t.optional }}</span><span class="required" id="birth-lng-required" hidden>{{ t.required }}</span>
                 <input type="number" name="birth_lng" step="any" min="-180" max="180"
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：139.6917">
@@ -365,23 +366,28 @@
       const mode = getCheckedBirthMode();
       const domestic = mode === 'domestic';
       const overseas = mode === 'overseas';
-      const coordinates = mode === 'coordinates';
       const domesticPanel = document.getElementById('domestic-place-panel');
       const overseasPanel = document.getElementById('overseas-place-panel');
       const coordinatesPanelEl = document.getElementById('coordinates-place-panel');
       const prefecture = document.getElementById('prefecture-select');
+      const city = document.getElementById('birth_place_city');
       const overseasPlace = document.getElementById('birth_place_overseas');
       const lat = document.querySelector('[name="birth_lat"]');
       const lng = document.querySelector('[name="birth_lng"]');
       const timezoneSelect = document.getElementById('birth_timezone_select');
       const timezoneCustom = document.getElementById('birth_timezone_custom');
+      const coordinateNote = document.getElementById('coordinate-mode-note');
 
       if (domesticPanel) domesticPanel.hidden = !domestic;
       if (overseasPanel) overseasPanel.hidden = !overseas;
-      if (coordinatesPanelEl) coordinatesPanelEl.hidden = !coordinates;
+      if (coordinatesPanelEl) coordinatesPanelEl.hidden = false;
       if (prefecture) {
         prefecture.required = domestic;
         prefecture.disabled = !domestic;
+      }
+      if (city) {
+        city.required = false;
+        city.disabled = !domestic;
       }
       if (overseasPlace) {
         overseasPlace.required = overseas;
@@ -396,10 +402,19 @@
         timezoneCustom.disabled = !overseas || timezoneSelect?.value !== '__custom__';
       }
       if (lat) {
-        lat.required = coordinates;
+        lat.required = overseas;
       }
       if (lng) {
-        lng.required = coordinates;
+        lng.required = overseas;
+      }
+      document.getElementById('birth-lat-optional')?.toggleAttribute('hidden', overseas);
+      document.getElementById('birth-lat-required')?.toggleAttribute('hidden', !overseas);
+      document.getElementById('birth-lng-optional')?.toggleAttribute('hidden', overseas);
+      document.getElementById('birth-lng-required')?.toggleAttribute('hidden', !overseas);
+      if (coordinateNote) {
+        coordinateNote.textContent = overseas
+          ? {{ t.overseas_place_note | tojson }}
+          : {{ t.domestic_coordinates_note | tojson }};
       }
       document.querySelectorAll('.mode-pill').forEach((pill) => {
         const input = pill.querySelector('input[name="birth_place_kind"]');
@@ -448,11 +463,11 @@
       document.getElementById('confirm-birth-time-accuracy').textContent = buildConfirmValue(timeAccuracy?.selectedOptions?.[0]?.textContent);
       document.getElementById('confirm-birth-place-mode').textContent = mode === 'overseas'
         ? {{ t.international | tojson }}
-        : (mode === 'coordinates' ? {{ t.coordinates | tojson }} : {{ t.domestic | tojson }});
+        : {{ t.domestic | tojson }};
       document.getElementById('confirm-birth-place').textContent = buildConfirmValue(
-        mode === 'overseas' ? overseasPlace : (mode === 'coordinates' ? {{ t.coordinates | tojson }} : prefecture)
+        mode === 'overseas' ? overseasPlace : prefecture
       );
-      const coordinateValue = (mode === 'coordinates' || mode === 'overseas') && lat && lng ? `${lat}, ${lng}` : '';
+      const coordinateValue = lat && lng ? `${lat}, ${lng}` : '';
       const coordinateWrap = document.getElementById('confirm-coordinates-wrap');
       if (coordinateWrap) coordinateWrap.hidden = !coordinateValue;
       if (coordinateValue) document.getElementById('confirm-coordinates').textContent = coordinateValue;
