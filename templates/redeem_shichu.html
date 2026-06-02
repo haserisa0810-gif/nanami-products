@@ -119,7 +119,7 @@
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：-74.0060">
               </label>
-              <small class="coordinate-note" id="coordinate-mode-note">国内は都道府県のみでも利用可能です。緯度・経度を入力した場合はそちらを優先して使用します。</small>
+              <small class="coordinate-note" id="coordinate-mode-note">市区町村に対応する座標があれば使用します。緯度・経度を入力した場合はそちらを最優先で使用します。</small>
               <label class="full-span">タイムゾーン
                 {% set current_timezone = form.birth_timezone if form and form.birth_timezone else '' %}
                 {% set timezone_values = timezone_options | map(attribute='value') | list %}
@@ -197,7 +197,7 @@
       if (note) {
         note.textContent = active
           ? '海外出生地は、国・都市に加えて緯度・経度・タイムゾーンの入力が必要です。'
-          : '国内は都道府県のみでも利用可能です。緯度・経度を入力した場合はそちらを優先して使用します。';
+          : '市区町村に対応する座標があれば使用します。緯度・経度を入力した場合はそちらを最優先で使用します。';
       }
       syncTimezoneFields();
     }

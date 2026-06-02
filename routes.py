@@ -29,7 +29,7 @@ from services.api_demo import build_demo_response, build_demo_shichu_svg, build_
 from services.birth_time import extract_birth_time_notice, resolve_birth_time_accuracy
 from services.chart_svg import build_horoscope_svg_from_yaml, has_asteroid_svg_data
 from services.api_yaml import build_handoff_yaml
-from services.location import PREFECTURE_OPTIONS
+from services.location import PREFECTURE_OPTIONS, resolve_municipality, resolve_prefecture
 from services.light_yaml import (
     build_base_astrology_yaml,
     build_detail_astrology_yaml,
@@ -373,9 +373,9 @@ I18N = {
         "domestic": "国内",
         "international": "海外",
         "coordinates": "緯度・経度で入力",
-        "domestic_place_note": "都道府県のみでも利用可能です。緯度・経度を入力した場合はそちらを優先して使用します。",
+        "domestic_place_note": "都道府県は必須です。市区町村は任意です。対応する座標があれば市区町村を使用し、緯度・経度を入力した場合はそちらを最優先で使用します。",
         "domestic_coordinates_summary": "詳細座標を指定する（任意）",
-        "domestic_coordinates_note": "市区町村単位など、より細かく出生地を指定したい場合は緯度・経度も入力してください。",
+        "domestic_coordinates_note": "緯度・経度を入力した場合は、市区町村や都道府県の代表座標より優先して使用します。",
         "overseas_place_note": "海外出生地は、国・都市に加えて緯度・経度・タイムゾーンの入力が必要です。",
         "coordinates_place_note": "出生地を緯度・経度で指定したい場合はこちらを使ってください。",
         "coordinates_range_note": "緯度は -90〜90、経度は -180〜180 の数値で入力してください。",
@@ -725,9 +725,9 @@ I18N = {
         "domestic": "Domestic",
         "international": "International",
         "coordinates": "Use latitude / longitude",
-        "domestic_place_note": "A prefecture is enough. If latitude and longitude are entered, those coordinates are used instead.",
+        "domestic_place_note": "Prefecture is required and city/ward is optional. If matching coordinates exist, the city/ward coordinates are used. Entered latitude and longitude are always used first.",
         "domestic_coordinates_summary": "Optional detailed coordinates",
-        "domestic_coordinates_note": "If you want to specify a city or ward more precisely, enter latitude and longitude too.",
+        "domestic_coordinates_note": "If latitude and longitude are entered, they are used before city/ward or prefecture reference coordinates.",
         "overseas_place_note": "For international birth places, country/city, latitude, longitude, and time zone are required.",
         "coordinates_place_note": "Use this when you want to specify the birth place by latitude and longitude.",
         "coordinates_range_note": "Latitude should be -90 to 90, and longitude should be -180 to 180.",
@@ -1687,6 +1687,13 @@ def _build_birth_location(
         _validate_lat_lon(lat, lon)
     city_name = birth_place_city.strip()
     place_label = f"{pref_name} {city_name}" if city_name else pref_name
+    if lat is None and lon is None and city_name:
+        municipality = resolve_municipality(pref_name, city_name)
+        if municipality:
+            _prefecture, resolved_city, lat, lon = municipality
+            place_label = f"{pref_name} {resolved_city}"
+    if lat is None and lon is None:
+        _prefecture, lat, lon = resolve_prefecture(pref_name)
     return {
         "kind": "domestic",
         "birth_place": place_label,

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import csv
+from functools import lru_cache
+from pathlib import Path
+
 PREFECTURE_COORDS: dict[str, tuple[float, float]] = {
     "北海道": (43.06417, 141.34694), "青森": (40.82444, 140.74000), "岩手": (39.70361, 141.15250),
     "宮城": (38.26889, 140.87194), "秋田": (39.71861, 140.10250), "山形": (38.24056, 140.36333),
@@ -31,6 +35,7 @@ FULL_NAME_TO_BASE = {p: p.rstrip("都道府県") for p in PREFECTURE_OPTIONS}
 FULL_NAME_TO_BASE.update({"東京都": "東京", "京都府": "京都", "大阪府": "大阪", "北海道": "北海道"})
 
 ALIASES = {"tokyo": "東京", "osaka": "大阪", "kyoto": "京都", "hokkaido": "北海道", "kanagawa": "神奈川"}
+MUNICIPALITY_COORDS_PATH = Path(__file__).resolve().parent.parent / "data" / "location" / "generated" / "municipality_coords.csv"
 
 def normalize_prefecture_name(value: str | None) -> str:
     if not value:
@@ -43,6 +48,45 @@ def normalize_prefecture_name(value: str | None) -> str:
     if v.endswith(("都", "府", "県")):
         v = v[:-1]
     return v
+
+def normalize_city_name(value: str | None) -> str:
+    if not value:
+        return ""
+    return "".join(str(value).strip().split())
+
+def prefecture_full_name(value: str | None) -> str:
+    name = normalize_prefecture_name(value)
+    for full_name, base_name in FULL_NAME_TO_BASE.items():
+        if base_name == name:
+            return full_name
+    return value.strip() if value else ""
+
+@lru_cache(maxsize=1)
+def load_municipality_coords() -> dict[tuple[str, str], tuple[float, float]]:
+    if not MUNICIPALITY_COORDS_PATH.exists():
+        return {}
+    coords: dict[tuple[str, str], tuple[float, float]] = {}
+    with MUNICIPALITY_COORDS_PATH.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            prefecture = prefecture_full_name(row.get("prefecture"))
+            city = normalize_city_name(row.get("city"))
+            if not prefecture or not city:
+                continue
+            try:
+                coords[(prefecture, city)] = (float(row["lat"]), float(row["lon"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+    return coords
+
+def resolve_municipality(prefecture: str | None, city: str | None) -> tuple[str, str, float, float] | None:
+    full_prefecture = prefecture_full_name(prefecture)
+    city_name = normalize_city_name(city)
+    if not full_prefecture or not city_name:
+        return None
+    coords = load_municipality_coords().get((full_prefecture, city_name))
+    if not coords:
+        return None
+    return full_prefecture, city_name, coords[0], coords[1]
 
 def resolve_prefecture(prefecture: str | None) -> tuple[str, float, float]:
     name = normalize_prefecture_name(prefecture)
