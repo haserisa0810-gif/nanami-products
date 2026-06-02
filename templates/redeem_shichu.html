@@ -151,11 +151,11 @@
           </label>
         </div>
 
-        <div class="notice-box warn final-check">
+        <div class="notice-box warn final-check" id="final-check">
           <p>最終確認</p>
           <p class="hint">送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。</p>
           <label class="checkbox-line">
-            <input type="checkbox" name="agree_final" value="1" required
+            <input type="checkbox" name="agree_final" id="agree_final" value="1" required
                    {% if form and form.agree_final %}checked{% endif %}>
             <span>入力内容を確認しました。送信後に変更できないことに同意します。</span>
           </label>
@@ -210,6 +210,17 @@
           : '市区町村に対応する座標があれば使用します。緯度・経度を入力した場合はそちらを最優先で使用します。';
       }
       syncTimezoneFields();
+      syncFinalCheck();
+    }
+
+    function syncFinalCheck() {
+      const finalCheck = document.getElementById('final-check');
+      const agree = document.getElementById('agree_final');
+      if (finalCheck) finalCheck.hidden = false;
+      if (agree) {
+        agree.disabled = false;
+        agree.required = true;
+      }
     }
 
     function syncTimezoneFields() {
@@ -226,6 +237,7 @@
     }
 
     function confirmSubmit() {
+      syncFinalCheck();
       return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
     }
     function syncBirthTimeFields() {
@@ -241,6 +253,7 @@
     }
     document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
     document.addEventListener('DOMContentLoaded', syncBirthTimeFields);
+    document.addEventListener('DOMContentLoaded', syncFinalCheck);
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
       document.getElementById('birth_time_accuracy')?.addEventListener('change', syncBirthTimeFields);
