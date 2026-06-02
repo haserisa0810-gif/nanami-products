@@ -174,12 +174,12 @@
           <div class="place-panel" id="coordinates-place-panel">
             <p class="place-note is-accent" id="coordinate-mode-note">{{ t.domestic_coordinates_note }}</p>
             <div class="location-grid">
-              <label class="coordinate-field">{{ t.latitude }}<span class="optional" id="birth-lat-optional">{{ t.optional }}</span><span class="required" id="birth-lat-required" hidden>{{ t.required }}</span>
+              <label class="coordinate-field">{{ t.latitude }}<span class="{% if birth_place_kind == 'overseas' %}required{% else %}optional{% endif %}" id="birth-lat-badge">{% if birth_place_kind == 'overseas' %}{{ t.required }}{% else %}{{ t.optional }}{% endif %}</span>
                 <input type="number" name="birth_lat" step="any" min="-90" max="90"
                        value="{{ form.birth_lat if form else '' }}"
                        placeholder="例：35.6895">
               </label>
-              <label class="coordinate-field">{{ t.longitude }}<span class="optional" id="birth-lng-optional">{{ t.optional }}</span><span class="required" id="birth-lng-required" hidden>{{ t.required }}</span>
+              <label class="coordinate-field">{{ t.longitude }}<span class="{% if birth_place_kind == 'overseas' %}required{% else %}optional{% endif %}" id="birth-lng-badge">{% if birth_place_kind == 'overseas' %}{{ t.required }}{% else %}{{ t.optional }}{% endif %}</span>
                 <input type="number" name="birth_lng" step="any" min="-180" max="180"
                        value="{{ form.birth_lng if form else '' }}"
                        placeholder="例：139.6917">
@@ -407,10 +407,14 @@
       if (lng) {
         lng.required = overseas;
       }
-      document.getElementById('birth-lat-optional')?.toggleAttribute('hidden', overseas);
-      document.getElementById('birth-lat-required')?.toggleAttribute('hidden', !overseas);
-      document.getElementById('birth-lng-optional')?.toggleAttribute('hidden', overseas);
-      document.getElementById('birth-lng-required')?.toggleAttribute('hidden', !overseas);
+      [
+        document.getElementById('birth-lat-badge'),
+        document.getElementById('birth-lng-badge'),
+      ].forEach((badge) => {
+        if (!badge) return;
+        badge.className = overseas ? 'required' : 'optional';
+        badge.textContent = overseas ? {{ t.required | tojson }} : {{ t.optional | tojson }};
+      });
       if (coordinateNote) {
         coordinateNote.textContent = overseas
           ? {{ t.overseas_place_note | tojson }}

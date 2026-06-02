@@ -20,6 +20,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 
 body {
   background: linear-gradient(160deg, #f9f3ea 0%, #fdf8f2 50%, #f5ede0 100%);
