@@ -24,7 +24,7 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="{{ redeem_url }}" class="form" onsubmit="return confirmSubmit()">
+      <form method="post" action="{{ redeem_url }}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
         <input type="hidden" name="product_type" value="shichu">
 
         <div class="form-section">
@@ -163,9 +163,71 @@
 
         <button type="submit" class="submit-button">AI鑑定データを生成する</button>
       </form>
+
+      <div class="confirm-modal" id="submit-confirm-modal" hidden>
+        <div class="confirm-backdrop" data-confirm-close></div>
+        <div class="confirm-panel" role="dialog" aria-modal="true" aria-labelledby="submit-confirm-title">
+          <h2 id="submit-confirm-title">最終確認</h2>
+          <p class="confirm-lead">送信前に入力内容を確認してください。送信後は変更・再生成できません。</p>
+          <dl class="confirm-list">
+            <div class="confirm-item"><dt>STORESオーダー番号</dt><dd id="confirm-order-code"></dd></div>
+            <div class="confirm-item"><dt>お名前</dt><dd id="confirm-name"></dd></div>
+            <div class="confirm-item"><dt>生年月日</dt><dd id="confirm-birth-date"></dd></div>
+            <div class="confirm-item"><dt>出生時刻</dt><dd id="confirm-birth-time"></dd></div>
+            <div class="confirm-item"><dt>出生時刻の精度</dt><dd id="confirm-birth-time-accuracy"></dd></div>
+            <div class="confirm-item"><dt>出生地区分</dt><dd id="confirm-birth-place-mode"></dd></div>
+            <div class="confirm-item"><dt>出生地</dt><dd id="confirm-birth-place"></dd></div>
+            <div class="confirm-item" id="confirm-coordinates-wrap" hidden><dt>緯度・経度</dt><dd id="confirm-coordinates"></dd></div>
+            <div class="confirm-item" id="confirm-timezone-wrap" hidden><dt>タイムゾーン</dt><dd id="confirm-timezone"></dd></div>
+            <div class="confirm-item"><dt>性別</dt><dd id="confirm-gender"></dd></div>
+            <div class="confirm-item"><dt>日替わり境界</dt><dd id="confirm-day-change"></dd></div>
+          </dl>
+          <div class="confirm-actions">
+            <button type="button" class="secondary-action" id="confirm-edit">修正する</button>
+            <button type="button" class="submit-button" id="confirm-create">この内容で作成する</button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
   <script>
+    (function () {
+      if (window.prepareGeneratingSubmit) return;
+
+      window.prepareGeneratingSubmit = function prepareGeneratingSubmit(form, options) {
+        if (!form) return;
+        if (form.dataset.submitGuardActive === '1') return;
+        form.dataset.submitGuardActive = '1';
+
+        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+        submitButtons.forEach((button) => {
+          button.disabled = true;
+          if (button.tagName === 'BUTTON') {
+            button.dataset.originalText = button.textContent || '';
+            if (options && options.buttonText) button.textContent = options.buttonText;
+          } else if (options && options.buttonText) {
+            button.dataset.originalValue = button.value || '';
+            button.value = options.buttonText;
+          }
+        });
+
+        const overlay = document.createElement('div');
+        overlay.className = 'submit-guard-overlay';
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.innerHTML = `
+          <div class="submit-guard-panel">
+            <strong>${(options && options.title) || '処理中です'}</strong>
+            <p>${(options && options.desc) || 'しばらくお待ちください。'}</p>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      };
+    }());
+
+    const form = document.getElementById('redeem-form');
+    const confirmModal = document.getElementById('submit-confirm-modal');
+
     function syncBirthPlaceFields() {
       const mode = document.getElementById('birth_place_kind');
       const box = document.getElementById('overseas-fields');
@@ -236,10 +298,77 @@
       hidden.value = customActive ? custom.value.trim() : select.value;
     }
 
-    function confirmSubmit() {
-      syncFinalCheck();
-      return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
+    function buildConfirmValue(value, fallback = '未入力') {
+      const text = (value || '').trim();
+      return text || fallback;
     }
+
+    function formatBirthDateForDisplay(value) {
+      const digits = (value || '').trim().replace(/\D/g, '');
+      if (digits.length === 8) {
+        return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+      }
+      return buildConfirmValue(value);
+    }
+
+    function openSubmitConfirm(event) {
+      if (event) event.preventDefault();
+      syncFinalCheck();
+      syncTimezoneFields();
+      if (!form) return false;
+      if (!form.reportValidity()) return false;
+      if (!confirmModal) return true;
+
+      const active = document.getElementById('birth_place_kind')?.value === 'overseas';
+      const timeAccuracy = document.getElementById('birth_time_accuracy');
+      const birthTime = document.getElementById('birth_time');
+      const prefecture = document.querySelector('[name="prefecture"]')?.value || '';
+      const city = document.querySelector('[name="birth_place_city"]')?.value || '';
+      const overseasPlace = document.querySelector('[name="birth_place_overseas"]')?.value || '';
+      const lat = document.querySelector('[name="birth_lat"]')?.value || '';
+      const lng = document.querySelector('[name="birth_lng"]')?.value || '';
+      const timezone = document.getElementById('birth_timezone')?.value || '';
+      const gender = document.querySelector('[name="gender"]');
+      const dayChange = document.querySelector('[name="day_change_at_23"]');
+      const domesticPlace = [prefecture, city].filter(Boolean).join(' ');
+      const coordinateValue = lat && lng ? `${lat}, ${lng}` : '';
+      const coordinateWrap = document.getElementById('confirm-coordinates-wrap');
+      const timezoneWrap = document.getElementById('confirm-timezone-wrap');
+
+      document.getElementById('confirm-order-code').textContent = buildConfirmValue(document.querySelector('[name="order_code"]')?.value || '');
+      document.getElementById('confirm-name').textContent = buildConfirmValue(document.querySelector('[name="buyer_name"]')?.value || '');
+      document.getElementById('confirm-birth-date').textContent = formatBirthDateForDisplay(document.querySelector('[name="birth_date"]')?.value || '');
+      document.getElementById('confirm-birth-time').textContent = buildConfirmValue(birthTime?.value || (timeAccuracy?.value === 'unknown' ? '不明' : ''));
+      document.getElementById('confirm-birth-time-accuracy').textContent = buildConfirmValue(timeAccuracy?.selectedOptions?.[0]?.textContent);
+      document.getElementById('confirm-birth-place-mode').textContent = active ? '海外' : '国内';
+      document.getElementById('confirm-birth-place').textContent = buildConfirmValue(active ? overseasPlace : domesticPlace);
+      if (coordinateWrap) coordinateWrap.hidden = !coordinateValue;
+      if (coordinateValue) document.getElementById('confirm-coordinates').textContent = coordinateValue;
+      if (timezoneWrap) timezoneWrap.hidden = !active;
+      if (active) document.getElementById('confirm-timezone').textContent = buildConfirmValue(timezone);
+      document.getElementById('confirm-gender').textContent = buildConfirmValue(gender?.selectedOptions?.[0]?.textContent);
+      document.getElementById('confirm-day-change').textContent = buildConfirmValue(dayChange?.selectedOptions?.[0]?.textContent);
+
+      confirmModal.hidden = false;
+      document.getElementById('confirm-create')?.focus();
+      return false;
+    }
+
+    function closeConfirmModal() {
+      if (confirmModal) confirmModal.hidden = true;
+    }
+
+    function submitConfirmedForm() {
+      if (!form) return;
+      syncTimezoneFields();
+      window.prepareGeneratingSubmit(form, {
+        buttonText: '生成中...',
+        title: 'AI鑑定データを生成しています',
+        desc: '完了までしばらくお待ちください。',
+      });
+      form.submit();
+    }
+
     function syncBirthTimeFields() {
       const mode = document.getElementById('birth_time_accuracy');
       const input = document.getElementById('birth_time');
@@ -259,6 +388,14 @@
       document.getElementById('birth_time_accuracy')?.addEventListener('change', syncBirthTimeFields);
       document.getElementById('birth_timezone_select')?.addEventListener('change', syncTimezoneFields);
       document.getElementById('birth_timezone_custom')?.addEventListener('input', syncTimezoneFields);
+      document.getElementById('confirm-edit')?.addEventListener('click', closeConfirmModal);
+      document.getElementById('confirm-create')?.addEventListener('click', submitConfirmedForm);
+      document.querySelector('[data-confirm-close]')?.addEventListener('click', closeConfirmModal);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && confirmModal && !confirmModal.hidden) {
+          closeConfirmModal();
+        }
+      });
     });
   </script>
 </body>
