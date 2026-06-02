@@ -255,11 +255,7 @@ section { margin-top: 20px; }
 .location-grid .full-span { grid-column: 1 / -1; }
 .location-grid .coordinate-field {
   min-width: 0;
-  grid-template-rows: auto minmax(42px, auto);
   align-self: stretch;
-}
-.location-grid .coordinate-field input {
-  align-self: end;
 }
 .location-grid .coordinate-note {
   grid-column: 1 / -1;
@@ -471,15 +467,6 @@ label { display: grid; gap: 6px; font-size: .86rem; font-weight: 500; color: var
 }
 .required { background: rgba(143,45,35,.12); color: var(--danger); border: 1px solid rgba(143,45,35,.25); }
 .optional { background: transparent; color: var(--dim); border: 1px solid var(--border2); }
-.coordinate-field .required,
-.coordinate-field .optional {
-  display: inline-block;
-  padding: 1px 5px;
-  font-size: .62rem;
-  line-height: 1.35;
-  width: auto;
-  min-width: 0;
-}
 
 input, select, textarea {
   width: 100%;
