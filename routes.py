@@ -3265,7 +3265,7 @@ def chart_download_zip(token: str):
         detail_yaml = build_detail_astrology_yaml(full_yaml_text)
     except Exception:
         detail_yaml = share_yaml_text
-    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
+    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text, doc=chart_doc)
     prompt_text = _chart_prompt_text(chart, doc=chart_doc)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -4877,8 +4877,8 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
     return share_yaml_text
 
 
-def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None) -> str:
-    prompt_text = _chart_prompt_text(chart).rstrip()
+def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None, *, doc: dict | None = None) -> str:
+    prompt_text = _chart_prompt_text(chart, doc=doc).rstrip()
     yaml_text = share_yaml_text or chart.get("share_yaml_text") or chart.get("yaml_text") or ""
     parts = [prompt_text, "", "---", "", "以下がYAMLデータです。", "", "```yaml", str(yaml_text), "```"]
     return "\n".join(parts).rstrip() + "\n"
@@ -4886,6 +4886,9 @@ def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None) -> str
 
 def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
     prompt_text = str(chart.get("prompt_text") or "")
+    guided_prompt = ensure_transit_date_guidance(prompt_text)
+    if guided_prompt == prompt_text:
+        return prompt_text
     chart_doc = doc if isinstance(doc, dict) else None
     if chart_doc is None:
         try:
@@ -4894,7 +4897,7 @@ def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
         except Exception:
             chart_doc = {}
     if _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc):
-        return ensure_transit_date_guidance(prompt_text)
+        return guided_prompt
     return prompt_text
 
 

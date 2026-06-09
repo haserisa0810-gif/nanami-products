@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import yaml
 
-from routes import _chart_prompt_text
+from routes import _chart_ai_paste_text, _chart_prompt_text
 from services.prompt_builder import TRANSIT_DATE_GUIDANCE, WESTERN_FULL_PROMPT, ensure_transit_date_guidance
 from services.yaml_exporter import TRANSIT_31DAYS_ADDON_PROMPT
 
@@ -55,6 +55,35 @@ class TransitPromptDateGuidanceTest(unittest.TestCase):
 
         for line in TRANSIT_DATE_GUIDANCE:
             self.assertEqual(updated.count(line), 1)
+
+    def test_current_full_prompt_does_not_parse_yaml_again(self):
+        chart = {
+            "options": {"western_natal": True, "transit": True, "product_type": "western_full"},
+            "yaml_text": "invalid: [",
+            "prompt_text": WESTERN_FULL_PROMPT,
+        }
+
+        self.assertEqual(_chart_prompt_text(chart), WESTERN_FULL_PROMPT)
+
+    def test_ai_paste_reuses_parsed_doc_for_old_full_prompt(self):
+        doc = {
+            "systems": {
+                "western": {
+                    "natal": {"bodies": {"Sun": {}}},
+                    "transit": {"period": {"days": 31}, "daily": [{}] * 31},
+                }
+            }
+        }
+        chart = {
+            "options": {"western_natal": True, "transit": True, "product_type": "western_full"},
+            "yaml_text": "invalid: [",
+            "prompt_text": "重要ルール:\n- 古いルール\n\n以下のYAMLを読み込んで鑑定してください。",
+        }
+
+        ai_paste = _chart_ai_paste_text(chart, "share yaml", doc=doc)
+
+        self.assertIn(TRANSIT_DATE_GUIDANCE[0], ai_paste)
+        self.assertIn("share yaml", ai_paste)
 
 
 if __name__ == "__main__":
