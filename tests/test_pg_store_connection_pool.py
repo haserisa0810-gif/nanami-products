@@ -80,6 +80,48 @@ class PgStoreConnectionPoolTest(unittest.TestCase):
 
         pool.putconn.assert_called_once_with(con, close=True)
 
+    def test_get_chart_retries_once_after_stale_pooled_connection(self) -> None:
+        row = {"token": "tok"}
+        stale_cursor = Mock()
+        stale_cursor.__enter__ = Mock(return_value=stale_cursor)
+        stale_cursor.__exit__ = Mock(return_value=False)
+        stale_cursor.execute.side_effect = psycopg2.OperationalError("SSL connection has been closed unexpectedly")
+        stale_con = Mock()
+        stale_con.__enter__ = Mock(return_value=stale_con)
+        stale_con.__exit__ = Mock(return_value=False)
+        stale_con.cursor.return_value = stale_cursor
+
+        healthy_cursor = Mock()
+        healthy_cursor.__enter__ = Mock(return_value=healthy_cursor)
+        healthy_cursor.__exit__ = Mock(return_value=False)
+        healthy_cursor.fetchone.return_value = row
+        healthy_con = Mock()
+        healthy_con.__enter__ = Mock(return_value=healthy_con)
+        healthy_con.__exit__ = Mock(return_value=False)
+        healthy_con.cursor.return_value = healthy_cursor
+
+        with patch.object(pg_store, "_conn", side_effect=[stale_con, healthy_con]) as conn:
+            self.assertEqual(pg_store.get_chart("tok", include_svgs=False), row)
+
+        self.assertEqual(conn.call_count, 2)
+        healthy_cursor.execute.assert_called_once()
+
+    def test_get_chart_does_not_retry_non_connection_errors(self) -> None:
+        cursor = Mock()
+        cursor.__enter__ = Mock(return_value=cursor)
+        cursor.__exit__ = Mock(return_value=False)
+        cursor.execute.side_effect = ValueError("bad query")
+        con = Mock()
+        con.__enter__ = Mock(return_value=con)
+        con.__exit__ = Mock(return_value=False)
+        con.cursor.return_value = cursor
+
+        with patch.object(pg_store, "_conn", return_value=con) as conn:
+            with self.assertRaises(ValueError):
+                pg_store.get_chart("tok")
+
+        conn.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()
