@@ -3,14 +3,19 @@ from __future__ import annotations
 import os
 import hashlib
 import secrets
+import threading
 from datetime import datetime
 from contextlib import contextmanager
 from typing import Any, Generator
 
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
+from psycopg2.pool import ThreadedConnectionPool
 
 SCHEMA = "nanami_products"
+_pool: ThreadedConnectionPool | None = None
+_pool_url: str | None = None
+_pool_lock = threading.Lock()
 
 
 def _get_url() -> str:
@@ -23,17 +28,53 @@ def _get_url() -> str:
     return url
 
 
+def _pool_size(name: str, default: int) -> int:
+    try:
+        return max(1, int(os.getenv(name, str(default))))
+    except ValueError:
+        return default
+
+
+def _get_pool() -> ThreadedConnectionPool:
+    global _pool, _pool_url
+    url = _get_url()
+    with _pool_lock:
+        if _pool is not None and _pool_url == url:
+            return _pool
+        if _pool is not None:
+            _pool.closeall()
+        minconn = _pool_size("DB_POOL_MINCONN", 1)
+        maxconn = max(minconn, _pool_size("DB_POOL_MAXCONN", 10))
+        _pool = ThreadedConnectionPool(
+            minconn,
+            maxconn,
+            dsn=url,
+            cursor_factory=RealDictCursor,
+            connect_timeout=5,
+        )
+        _pool_url = url
+        return _pool
+
+
 @contextmanager
 def _conn() -> Generator:
-    con = psycopg2.connect(_get_url(), cursor_factory=RealDictCursor)
+    pool = _get_pool()
+    con = pool.getconn()
+    discard = bool(con.closed)
     try:
+        if discard:
+            raise psycopg2.InterfaceError("connection pool returned a closed connection")
         yield con
         con.commit()
-    except Exception:
-        con.rollback()
+    except Exception as exc:
+        discard = discard or isinstance(exc, (psycopg2.InterfaceError, psycopg2.OperationalError))
+        try:
+            con.rollback()
+        except Exception:
+            discard = True
         raise
     finally:
-        con.close()
+        pool.putconn(con, close=discard)
 
 
 def init_db() -> None:
