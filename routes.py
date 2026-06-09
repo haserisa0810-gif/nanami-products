@@ -39,6 +39,7 @@ from services.light_yaml import (
 )
 from services.long_term_transit_yaml import build_long_term_transits_yaml, has_long_term_transits
 from services.post_chart import build_post_chart
+from services.prompt_builder import ensure_transit_date_guidance
 from services.shichu_chart import (
     build_shichusuimei_svg_from_yaml,
     is_shichusuimei_png_renderer_available,
@@ -3265,6 +3266,7 @@ def chart_download_zip(token: str):
     except Exception:
         detail_yaml = share_yaml_text
     ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text)
+    prompt_text = _chart_prompt_text(chart, doc=chart_doc)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("full.yaml", full_yaml_text)
@@ -3285,7 +3287,7 @@ def chart_download_zip(token: str):
             zf.writestr("horoscope.svg", optimize_svg(chart["horoscope_svg"]) or "")
         if chart.get("shichusuimei_svg"):
             zf.writestr("shichusuimei.svg", optimize_svg(chart["shichusuimei_svg"]) or "")
-        zf.writestr("prompt.txt", chart["prompt_text"])
+        zf.writestr("prompt.txt", prompt_text)
         zf.writestr("README.txt", _chart_zip_readme(chart))
     response = Response(content=buffer.getvalue(), media_type="application/zip")
     response.headers["Content-Disposition"] = f'attachment; filename="{_chart_zip_filename(token)}"'
@@ -3296,7 +3298,7 @@ def chart_download_zip(token: str):
 @app.get("/chart/{token}/prompt.txt", response_class=PlainTextResponse)
 def chart_prompt(token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
-    response = PlainTextResponse(chart["prompt_text"], media_type="text/plain; charset=utf-8")
+    response = PlainTextResponse(_chart_prompt_text(chart), media_type="text/plain; charset=utf-8")
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
 
@@ -3342,6 +3344,7 @@ def chart_page(request: Request, token: str):
         has_horoscope_svg = has_western_natal
         has_shichusuimei_svg = product_type == "shichu"
         timings["display判定_ms"] = _elapsed_ms(step_start)
+        chart["prompt_text"] = _chart_prompt_text(chart, doc=chart_doc)
 
         has_asteroids = False
         step_start = time.perf_counter()
@@ -4875,10 +4878,24 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
 
 
 def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None) -> str:
-    prompt_text = str(chart.get("prompt_text") or "").rstrip()
+    prompt_text = _chart_prompt_text(chart).rstrip()
     yaml_text = share_yaml_text or chart.get("share_yaml_text") or chart.get("yaml_text") or ""
     parts = [prompt_text, "", "---", "", "以下がYAMLデータです。", "", "```yaml", str(yaml_text), "```"]
     return "\n".join(parts).rstrip() + "\n"
+
+
+def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
+    prompt_text = str(chart.get("prompt_text") or "")
+    chart_doc = doc if isinstance(doc, dict) else None
+    if chart_doc is None:
+        try:
+            loaded_doc = yaml.safe_load(chart.get("yaml_text") or "") or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+        except Exception:
+            chart_doc = {}
+    if _chart_has_western_natal(chart, doc=chart_doc) and _chart_has_31day_transit(chart, doc=chart_doc):
+        return ensure_transit_date_guidance(prompt_text)
+    return prompt_text
 
 
 def _chart_zip_readme(chart: dict) -> str:

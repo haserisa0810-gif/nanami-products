@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from services.birth_time import BIRTH_TIME_ACCURACY_NOTE
 
+TRANSIT_DATE_GUIDANCE = (
+    '- today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。',
+    '- 「動きやすい日」「注意したい日」には、today.selected_date 以降の日付を優先して出力してください。',
+    '- next_31_days_summary に過去日しか存在しない場合は、過去日を無理に未来の予定として書かず、「この期間に出た違和感や発想は今後の参考になる」などの振り返り表現にしてください。',
+    '- 当日以降の判断は today と next_few_days を優先し、next_31_days_summary は補助として使ってください。',
+)
+
 WESTERN_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、天体計算済みの出生図データです。
 
 重要ルール:
@@ -85,6 +92,17 @@ SHICHUSUIMEI_PROMPT = """あなたは四柱推命の鑑定者です。以下のY
 
 以下のYAMLを読み込んで鑑定してください。
 """
+
+
+def ensure_transit_date_guidance(prompt: str) -> str:
+    if all(line in prompt for line in TRANSIT_DATE_GUIDANCE):
+        return prompt
+    guidance = "\n".join(line for line in TRANSIT_DATE_GUIDANCE if line not in prompt)
+    for marker in ("\n出力してほしい内容:", "\n以下のYAMLを読み込んで"):
+        if marker in prompt:
+            return prompt.replace(marker, f"\n{guidance}\n{marker}", 1)
+    return prompt.rstrip() + "\n" + guidance + "\n"
+
 
 def build_prompt(
     *,
