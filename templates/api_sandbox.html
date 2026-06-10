@@ -4,127 +4,145 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>占術データ作成デモ | nanami products</title>
+  <title>AI占術データ生成 | nanami products</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
 <body class="api-demo-page">
   <header class="api-demo-header">
     <a class="api-demo-brand" href="/">
-      <span>nanami products API</span>
-      <strong>占術データ作成デモ</strong>
+      <span class="api-demo-logo-mark">N</span>
+      <span><strong>nanami products</strong><small>AI Astrology Data</small></span>
     </a>
     <nav>
-      <a href="/manual/api">API仕様を見る</a>
-      <a href="/api-key/start">APIキーを発行する</a>
+      <a href="#generator">データを生成</a>
+      <a href="/manual/api">API仕様書</a>
+      <a class="api-demo-nav-cta" href="/api-key/start">API販売・キー発行</a>
     </nav>
   </header>
 
   <main class="api-demo-shell">
     <section class="api-demo-hero">
-      <div>
-        <p class="api-demo-eyebrow">CALCULATED ASTROLOGY DATA</p>
-        <h1>計算済みの占術データを作り、<br>そのままAIへ。</h1>
-        <p class="api-demo-lead">
-          このデモアプリは、nanami-products APIで計算済みの占術データを生成し、
-          AIに渡しやすい形式で表示します。
-        </p>
+      <div class="api-demo-hero-copy">
+        <p class="api-demo-eyebrow"><span></span> AIに渡せる占術データを3分で作る</p>
+        <h1>計算済みの占術データを作り、<br><em>そのままAIへ渡せます</em></h1>
+        <p class="api-demo-lead">AIに天体計算や命式計算をさせず、計算済みデータを渡して解釈だけを行わせます。</p>
+        <div class="api-demo-hero-actions">
+          <a class="api-demo-button is-primary" href="#generator">無料サンプルを試す</a>
+          <a class="api-demo-button" href="/manual/api">API仕様書を見る</a>
+          <a class="api-demo-button" href="/api-key/start">API販売ページへ</a>
+        </div>
       </div>
-      <aside>
-        <strong>ハルシネーションを減らすために</strong>
-        <p>AIには天体位置や命式を計算させず、APIの計算済みデータだけをもとに解釈させます。</p>
-      </aside>
+      <div class="api-demo-value-card">
+        <span class="api-demo-value-badge">FOR AI INTERPRETATION</span>
+        <div class="api-demo-value-orbit"><span>AI</span></div>
+        <ul>
+          <li><strong>正確な計算</strong><span>天体位置・命式をAPIで計算</span></li>
+          <li><strong>すぐに使える</strong><span>JSON・YAML・プロンプトを出力</span></li>
+          <li><strong>推測を減らす</strong><span>AIは解釈だけに集中</span></li>
+        </ul>
+      </div>
     </section>
 
-    <section class="api-demo-workspace">
-      <form id="dataForm" class="api-demo-form">
-        <div class="api-demo-section-head">
-          <div>
-            <span>STEP 1</span>
-            <h2>作成するデータを選ぶ</h2>
-          </div>
-          <p>無料サンプルはAPIキー不要です。</p>
-        </div>
+    <section id="generator" class="api-demo-generator">
+      <div class="api-demo-generator-head">
+        <p class="api-demo-eyebrow"><span></span> DATA GENERATOR</p>
+        <h2>占術データを生成する</h2>
+        <p>画面に沿って選ぶだけで、AIへ渡せる計算済みデータを作成できます。</p>
+      </div>
 
+      <form id="dataForm" class="api-demo-form">
+        <section class="api-demo-step">
+          <div class="api-demo-step-head"><span>1</span><div><h3>利用方法を選択</h3><p>まずは無料サンプルで出力形式を確認できます。</p></div></div>
         <fieldset class="api-demo-mode">
           <legend>利用モード</legend>
           <label>
             <input type="radio" name="mode" value="demo" checked>
-            <span><strong>無料サンプル</strong><small>固定データで表示を確認</small></span>
+            <span>
+              <b class="api-demo-card-icon">FREE</b>
+              <strong>無料サンプル版</strong>
+              <small>APIキー不要。固定データで出力形式とAIへの渡し方を確認できます。</small>
+              <i>今すぐ試す</i>
+            </span>
           </label>
           <label>
             <input type="radio" name="mode" value="live">
-            <span><strong>APIキー版</strong><small>入力内容から実際に計算</small></span>
+            <span>
+              <b class="api-demo-card-icon is-live">API</b>
+              <strong>APIキー実計算版</strong>
+              <small>入力した出生情報を使い、リアルタイムで占術データを計算します。</small>
+              <i>有料クレジットを使用</i>
+            </span>
           </label>
         </fieldset>
 
         <div id="apiKeyField" class="api-demo-key-field" hidden>
-          <label for="apiKey">APIキー</label>
-          <div class="api-demo-secret">
-            <input id="apiKey" type="password" autocomplete="off" placeholder="np_...">
-            <button type="button" id="toggleKey">表示</button>
+          <div class="api-demo-key-guide">
+            <div>
+              <span>API KEY GUIDE</span>
+              <h4>有料版を利用するには</h4>
+            </div>
+            <ol>
+              <li><b>1</b><span>APIクレジットを購入</span></li>
+              <li><b>2</b><span>発行ページで注文番号を入力</span></li>
+              <li><b>3</b><span>APIキーを取得</span></li>
+              <li><b>4</b><span>この画面へ貼り付け</span></li>
+            </ol>
+            <a href="/api-key/start">API販売・キー発行ページへ</a>
           </div>
-          <small>入力したキーはブラウザに保存しません。このリクエストの送信時だけ使用します。</small>
+          <label for="apiKey">取得したAPIキー</label>
+          <div class="api-demo-secret"><input id="apiKey" type="password" autocomplete="off" placeholder="np_..."><button type="button" id="toggleKey">表示</button></div>
+          <small>APIキーはブラウザに保存されず、このリクエストの送信時だけ使用します。</small>
         </div>
+        </section>
 
-        <fieldset class="api-demo-types">
-          <legend>API種別</legend>
-          <label><input type="radio" name="apiType" value="western"><span><strong>西洋占星術</strong><small>western</small></span></label>
-          <label><input type="radio" name="apiType" value="shichu"><span><strong>四柱推命</strong><small>shichusuimei</small></span></label>
-          <label><input type="radio" name="apiType" value="transit"><span><strong>トランジット</strong><small>transit</small></span></label>
-          <label><input type="radio" name="apiType" value="combined" checked><span><strong>統合データ</strong><small>combined</small></span></label>
-        </fieldset>
-
-        <div class="api-demo-section-head api-demo-input-head">
-          <div>
-            <span>STEP 2</span>
-            <h2>出生情報を入力する</h2>
+        <section class="api-demo-step">
+          <div class="api-demo-step-head"><span>2</span><div><h3>出生情報を入力</h3><p>入力内容は選択したAPIへ送信されます。</p></div><button type="button" id="fillSample">入力例を使う</button></div>
+          <div class="api-demo-fields">
+            <label>お名前 <small>任意</small><input id="name" type="text" value="テスト太郎" autocomplete="name"></label>
+            <label>生年月日 <input id="birthDate" type="date" value="1990-01-01" required></label>
+            <label>出生時間 <small>不明なら空欄</small><input id="birthTime" type="time" value="12:00"></label>
+            <label>出生地 <input id="birthPlace" type="text" value="東京都" placeholder="例: 東京都" required></label>
+            <label class="api-demo-field-wide">Timezone <small>例: Asia/Tokyo</small><input id="timezone" type="text" value="Asia/Tokyo" placeholder="例: Asia/Tokyo" required></label>
+            <label id="targetDateField">基準日 <input id="targetDate" type="date"></label>
+            <label id="periodField">期間<select id="period"><option value="day">1日</option><option value="month">31日</option></select></label>
+            <label id="genderField">性別<select id="gender"><option value="unknown">指定なし</option><option value="female">女性</option><option value="male">男性</option></select></label>
           </div>
-          <button type="button" id="fillSample">入力例を使う</button>
-        </div>
+        </section>
 
-        <div class="api-demo-fields">
-          <label>お名前 <small>任意</small><input id="name" type="text" value="テスト太郎" autocomplete="name"></label>
-          <label>生年月日 <input id="birthDate" type="date" value="1990-01-01" required></label>
-          <label>出生時間 <small>不明なら空欄</small><input id="birthTime" type="time" value="12:00"></label>
-          <label>出生地 <input id="birthPlace" type="text" value="東京都" placeholder="例: 東京都" required></label>
-          <label>Timezone <input id="timezone" type="text" value="Asia/Tokyo" placeholder="例: Asia/Tokyo" required></label>
-          <label id="targetDateField">基準日 <input id="targetDate" type="date"></label>
-          <label id="periodField">期間
-            <select id="period"><option value="day">1日</option><option value="month">31日</option></select>
-          </label>
-          <label id="genderField">性別
-            <select id="gender"><option value="unknown">指定なし</option><option value="female">女性</option><option value="male">男性</option></select>
-          </label>
-        </div>
+        <section class="api-demo-step">
+          <div class="api-demo-step-head"><span>3</span><div><h3>作成する占術データを選択</h3><p>目的に合うデータセットを選んでください。</p></div></div>
+          <fieldset class="api-demo-types">
+            <legend>API種別</legend>
+            <label><input type="radio" name="apiType" value="western"><span><b class="api-demo-type-icon">☉</b><strong>西洋占星術</strong><small>出生図・天体・ハウス</small><i>western</i></span></label>
+            <label><input type="radio" name="apiType" value="shichu"><span><b class="api-demo-type-icon">命</b><strong>四柱推命</strong><small>命式・五行・通変星</small><i>shichusuimei</i></span></label>
+            <label><input type="radio" name="apiType" value="transit"><span><b class="api-demo-type-icon">↗</b><strong>トランジット</strong><small>現在・未来の天体運行</small><i>transit</i></span></label>
+            <label><input type="radio" name="apiType" value="combined" checked><span><b class="api-demo-type-icon">✦</b><strong>統合分析</strong><small>西洋・四柱推命・運勢</small><i>combined</i></span></label>
+          </fieldset>
+        </section>
 
         <div id="errorBox" class="api-demo-error" role="alert" hidden></div>
-        <button class="api-demo-submit" id="submitButton" type="submit">
-          <span>占術データを作成する</span>
-          <small id="submitNote">無料サンプル・APIキー不要</small>
-        </button>
+        <section class="api-demo-run">
+          <div class="api-demo-step-head"><span>4</span><div><h3>占術データを生成</h3><p>生成後、JSON・YAML・AI用テキストをコピーできます。</p></div></div>
+          <button class="api-demo-submit" id="submitButton" type="submit"><span>占術データを生成する</span><small id="submitNote">無料サンプル・APIキー不要</small></button>
+        </section>
       </form>
 
       <section class="api-demo-results" aria-live="polite">
-        <div class="api-demo-section-head">
-          <div>
-            <span>STEP 3</span>
-            <h2>結果を確認・コピーする</h2>
-          </div>
-          <p id="statusLine">入力してデータを作成してください</p>
-        </div>
+        <div class="api-demo-step-head"><span>5</span><div><h3>結果を確認・コピー</h3><p id="statusLine">入力してデータを生成してください</p></div></div>
 
         <div id="emptyState" class="api-demo-empty">
-          <strong>AIに貼り付けられるデータがここに表示されます</strong>
-          <p>結果は JSON・YAML・AI用プロンプトで確認できます。</p>
+          <span>OUTPUT PREVIEW</span>
+          <strong>生成結果がここに表示されます</strong>
+          <p>JSON・YAML・AI貼り付け用テキスト・プロンプトをワンクリックでコピーできます。</p>
         </div>
 
         <div id="resultContent" hidden>
           <div class="api-demo-tabs" role="tablist">
-            <button type="button" data-tab="prompt" class="is-active">AIに貼るプロンプト</button>
             <button type="button" data-tab="json">JSON</button>
             <button type="button" data-tab="yaml">YAML</button>
-            <button type="button" data-tab="copy">コピー用テキスト</button>
+            <button type="button" data-tab="copy">AI貼り付け用</button>
+            <button type="button" data-tab="prompt" class="is-active">プロンプト</button>
           </div>
           <div class="api-demo-tab-panel" data-panel="prompt">
             <div class="api-demo-copy-head">
@@ -150,9 +168,9 @@
     </section>
 
     <section class="api-demo-guide">
-      <article><span>01</span><h2>無料で表示を確認</h2><p>まずは無料サンプルで、レスポンス形式とAIへの渡し方を確認できます。</p></article>
-      <article><span>02</span><h2>APIキーで実計算</h2><p>APIキー版に切り替えると、入力した出生情報をもとに計算します。</p></article>
-      <article><span>03</span><h2>AIで解釈</h2><p>生成されたプロンプトをコピーし、ChatGPTやClaudeへ貼り付けます。</p></article>
+      <article><span>01</span><h2>計算はAPIに任せる</h2><p>専門的な天体位置や命式を、既存の計算エンジンが構造化データにします。</p></article>
+      <article><span>02</span><h2>好きなAIへ渡す</h2><p>ChatGPT・Claudeなど、普段使っているAIへそのまま貼り付けられます。</p></article>
+      <article><span>03</span><h2>解釈に集中する</h2><p>AIに再計算させないことで、計算の推測を減らし解釈に集中させます。</p></article>
     </section>
   </main>
 
