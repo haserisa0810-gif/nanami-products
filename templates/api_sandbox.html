@@ -4,230 +4,315 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>APIリクエスト確認 | nanami products</title>
+  <title>占術データ作成デモ | nanami products</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
-<body class="api-test-page">
-  <header class="api-test-header">
-    <div>
-      <p class="api-test-kicker">nanami products API</p>
-      <h1>APIリクエスト確認</h1>
-    </div>
-    <a href="/">トップへ</a>
+<body class="api-demo-page">
+  <header class="api-demo-header">
+    <a class="api-demo-brand" href="/">
+      <span>nanami products API</span>
+      <strong>占術データ作成デモ</strong>
+    </a>
+    <nav>
+      <a href="/manual/api">API仕様を見る</a>
+      <a href="/api-key/start">APIキーを発行する</a>
+    </nav>
   </header>
 
-  <main class="api-test-shell">
-    <section class="api-test-toolbar" aria-label="APIリクエスト確認設定">
-      <label>
-        Endpoint
-        <select id="endpointSelect">
-          <option value="/api/demo/western">POST /api/demo/western</option>
-          <option value="/api/demo/shichu">POST /api/demo/shichu</option>
-          <option value="/api/demo/transit">POST /api/demo/transit</option>
-          <option value="/api/demo/combined" selected>POST /api/demo/combined</option>
-        </select>
-      </label>
-      <div class="api-test-actions">
-        <button type="button" id="loadSampleButton">サンプル読込</button>
-        <button type="button" id="formatRequestButton">整形</button>
-        <button type="button" id="checkButton" class="api-test-primary">デモAPIに送信</button>
+  <main class="api-demo-shell">
+    <section class="api-demo-hero">
+      <div>
+        <p class="api-demo-eyebrow">CALCULATED ASTROLOGY DATA</p>
+        <h1>計算済みの占術データを作り、<br>そのままAIへ。</h1>
+        <p class="api-demo-lead">
+          このデモアプリは、nanami-products APIで計算済みの占術データを生成し、
+          AIに渡しやすい形式で表示します。
+        </p>
       </div>
+      <aside>
+        <strong>ハルシネーションを減らすために</strong>
+        <p>AIには天体位置や命式を計算させず、APIの計算済みデータだけをもとに解釈させます。</p>
+      </aside>
     </section>
 
-    <section class="api-test-grid">
-      <article class="api-test-panel">
-        <div class="api-test-panel-head">
+    <section class="api-demo-workspace">
+      <form id="dataForm" class="api-demo-form">
+        <div class="api-demo-section-head">
           <div>
-            <p class="api-test-kicker">Request</p>
-            <h2>送信JSON</h2>
+            <span>STEP 1</span>
+            <h2>作成するデータを選ぶ</h2>
           </div>
-          <button type="button" id="copyRequestButton">コピー</button>
+          <p>無料サンプルはAPIキー不要です。</p>
         </div>
-        <textarea id="requestBody" spellcheck="false"></textarea>
-      </article>
 
-      <article class="api-test-panel">
-        <div class="api-test-panel-head">
-          <div>
-            <p class="api-test-kicker">Mock Response</p>
-            <h2>固定レスポンス</h2>
+        <fieldset class="api-demo-mode">
+          <legend>利用モード</legend>
+          <label>
+            <input type="radio" name="mode" value="demo" checked>
+            <span><strong>無料サンプル</strong><small>固定データで表示を確認</small></span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="live">
+            <span><strong>APIキー版</strong><small>入力内容から実際に計算</small></span>
+          </label>
+        </fieldset>
+
+        <div id="apiKeyField" class="api-demo-key-field" hidden>
+          <label for="apiKey">APIキー</label>
+          <div class="api-demo-secret">
+            <input id="apiKey" type="password" autocomplete="off" placeholder="np_...">
+            <button type="button" id="toggleKey">表示</button>
           </div>
-          <button type="button" id="copyResponseButton">コピー</button>
+          <small>入力したキーはブラウザに保存しません。このリクエストの送信時だけ使用します。</small>
         </div>
-        <div class="api-test-status" id="statusLine">未チェック</div>
-        <pre id="responseBody">{}</pre>
-      </article>
+
+        <fieldset class="api-demo-types">
+          <legend>API種別</legend>
+          <label><input type="radio" name="apiType" value="western"><span><strong>西洋占星術</strong><small>western</small></span></label>
+          <label><input type="radio" name="apiType" value="shichu"><span><strong>四柱推命</strong><small>shichusuimei</small></span></label>
+          <label><input type="radio" name="apiType" value="transit"><span><strong>トランジット</strong><small>transit</small></span></label>
+          <label><input type="radio" name="apiType" value="combined" checked><span><strong>統合データ</strong><small>combined</small></span></label>
+        </fieldset>
+
+        <div class="api-demo-section-head api-demo-input-head">
+          <div>
+            <span>STEP 2</span>
+            <h2>出生情報を入力する</h2>
+          </div>
+          <button type="button" id="fillSample">入力例を使う</button>
+        </div>
+
+        <div class="api-demo-fields">
+          <label>お名前 <small>任意</small><input id="name" type="text" value="テスト太郎" autocomplete="name"></label>
+          <label>生年月日 <input id="birthDate" type="date" value="1990-01-01" required></label>
+          <label>出生時間 <small>不明なら空欄</small><input id="birthTime" type="time" value="12:00"></label>
+          <label>出生地 <input id="birthPlace" type="text" value="東京都" placeholder="例: 東京都" required></label>
+          <label>Timezone <input id="timezone" type="text" value="Asia/Tokyo" placeholder="例: Asia/Tokyo" required></label>
+          <label id="targetDateField">基準日 <input id="targetDate" type="date"></label>
+          <label id="periodField">期間
+            <select id="period"><option value="day">1日</option><option value="month">31日</option></select>
+          </label>
+          <label id="genderField">性別
+            <select id="gender"><option value="unknown">指定なし</option><option value="female">女性</option><option value="male">男性</option></select>
+          </label>
+        </div>
+
+        <div id="errorBox" class="api-demo-error" role="alert" hidden></div>
+        <button class="api-demo-submit" id="submitButton" type="submit">
+          <span>占術データを作成する</span>
+          <small id="submitNote">無料サンプル・APIキー不要</small>
+        </button>
+      </form>
+
+      <section class="api-demo-results" aria-live="polite">
+        <div class="api-demo-section-head">
+          <div>
+            <span>STEP 3</span>
+            <h2>結果を確認・コピーする</h2>
+          </div>
+          <p id="statusLine">入力してデータを作成してください</p>
+        </div>
+
+        <div id="emptyState" class="api-demo-empty">
+          <strong>AIに貼り付けられるデータがここに表示されます</strong>
+          <p>結果は JSON・YAML・AI用プロンプトで確認できます。</p>
+        </div>
+
+        <div id="resultContent" hidden>
+          <div class="api-demo-tabs" role="tablist">
+            <button type="button" data-tab="prompt" class="is-active">AIに貼るプロンプト</button>
+            <button type="button" data-tab="json">JSON</button>
+            <button type="button" data-tab="yaml">YAML</button>
+            <button type="button" data-tab="copy">コピー用テキスト</button>
+          </div>
+          <div class="api-demo-tab-panel" data-panel="prompt">
+            <div class="api-demo-copy-head">
+              <p><strong>おすすめ</strong> このままChatGPT / Claudeへ貼り付けてください。</p>
+              <button type="button" data-copy="promptText">プロンプトをコピー</button>
+            </div>
+            <textarea id="promptText" readonly></textarea>
+          </div>
+          <div class="api-demo-tab-panel" data-panel="json" hidden>
+            <div class="api-demo-copy-head"><p>APIレスポンスの生データです。</p><button type="button" data-copy="jsonText">JSONをコピー</button></div>
+            <textarea id="jsonText" readonly></textarea>
+          </div>
+          <div class="api-demo-tab-panel" data-panel="yaml" hidden>
+            <div class="api-demo-copy-head"><p>AIが読み取りやすいYAML形式です。</p><button type="button" data-copy="yamlText">YAMLをコピー</button></div>
+            <textarea id="yamlText" readonly></textarea>
+          </div>
+          <div class="api-demo-tab-panel" data-panel="copy" hidden>
+            <div class="api-demo-copy-head"><p>用途を問わず使える、説明付きのテキストです。</p><button type="button" data-copy="copyText">全文をコピー</button></div>
+            <textarea id="copyText" readonly></textarea>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <section class="api-test-notes">
-      <h2>この画面について</h2>
-      <ul>
-        <li>公開デモAPIへ実際にPOSTします。APIキーもクレジットも使いません。</li>
-        <li>本番計算は行わず、必須項目チェック後に実API形式に近い固定レスポンスを返します。</li>
-        <li>西洋占星術データを含むデモでは <code>chart.svg_url</code>、四柱推命データを含むデモでは <code>shichusuimei_chart.svg_url</code> を確認できます。</li>
-        <li>購入前にHTTP接続・JSON送信・レスポンス処理を確認できます。</li>
-      </ul>
+    <section class="api-demo-guide">
+      <article><span>01</span><h2>無料で表示を確認</h2><p>まずは無料サンプルで、レスポンス形式とAIへの渡し方を確認できます。</p></article>
+      <article><span>02</span><h2>APIキーで実計算</h2><p>APIキー版に切り替えると、入力した出生情報をもとに計算します。</p></article>
+      <article><span>03</span><h2>AIで解釈</h2><p>生成されたプロンプトをコピーし、ChatGPTやClaudeへ貼り付けます。</p></article>
     </section>
   </main>
 
   <script>
-    const samples = {
-      "/api/demo/western": {
-        name: "テスト太郎",
-        birth_date: "1990-01-01",
-        birth_time: "12:00",
-        birth_place: "東京都",
-        lat: 35.6812,
-        lon: 139.7671,
-        writing: {
-          tone: { sharpness: 40, warmth: 80, mystical: 30 },
-          focus_areas: ["career", "love"]
-        }
-      },
-      "/api/demo/shichu": {
-        name: "テスト太郎",
-        birth_date: "1990-01-01",
-        birth_time: "12:00",
-        birth_place: "東京都",
-        gender: "female",
-        day_boundary: "23:00",
-        writing: {
-          tone: { sharpness: 40, warmth: 80, mystical: 20 },
-          focus_areas: ["career", "money"]
-        }
-      },
-      "/api/demo/transit": {
-        name: "テスト太郎",
-        birth_date: "1990-01-01",
-        birth_time: "12:00",
-        birth_place: "東京都",
-        lat: 35.6812,
-        lon: 139.7671,
-        target_date: "2026-05-01",
-        period: "day",
-        writing: {
-          tone: { sharpness: 30, warmth: 80, mystical: 30 },
-          focus_areas: ["career", "love"]
-        }
-      },
-      "/api/demo/combined": {
-        name: "テスト太郎",
-        birth_date: "1990-01-01",
-        birth_time: "12:00",
-        birth_place: "東京都",
-        lat: 35.6812,
-        lon: 139.7671,
-        gender: "female",
-        day_boundary: "23:00",
-        target_date: "2026-05-01",
-        period: "day",
-        writing: {
-          tone: { sharpness: 40, warmth: 80, mystical: 30 },
-          focus_areas: ["career", "love", "money"]
-        }
-      }
-    };
-
-    const requiredFields = {
-      "/api/demo/western": ["birth_date", "birth_place"],
-      "/api/demo/shichu": ["birth_date", "birth_place"],
-      "/api/demo/transit": ["birth_date", "birth_place", "target_date"],
-      "/api/demo/combined": ["birth_date", "birth_place", "target_date"]
-    };
-
-    const endpointSelect = document.getElementById("endpointSelect");
-    const requestBody = document.getElementById("requestBody");
-    const responseBody = document.getElementById("responseBody");
+    const form = document.getElementById("dataForm");
+    const apiKeyField = document.getElementById("apiKeyField");
+    const apiKey = document.getElementById("apiKey");
+    const submitButton = document.getElementById("submitButton");
+    const submitNote = document.getElementById("submitNote");
     const statusLine = document.getElementById("statusLine");
+    const errorBox = document.getElementById("errorBox");
+    const emptyState = document.getElementById("emptyState");
+    const resultContent = document.getElementById("resultContent");
+    const targetDateField = document.getElementById("targetDateField");
+    const periodField = document.getElementById("periodField");
+    const genderField = document.getElementById("genderField");
+    let latestResponse = null;
 
-    function stringify(value) {
-      return JSON.stringify(value, null, 2);
+    const errorMessages = {
+      MISSING_API_KEY: "APIキーを入力してください。",
+      INVALID_API_KEY: "APIキーを確認してください。正しいキーを入力して、もう一度お試しください。",
+      API_KEY_INACTIVE: "このAPIキーは現在利用できません。",
+      INSUFFICIENT_CREDITS: "APIクレジットが不足しています。",
+      RATE_LIMIT_EXCEEDED: "短時間に多くのリクエストが送信されました。少し待ってからお試しください。",
+      INVALID_INPUT: "入力内容を確認してください。",
+      INVALID_TIMEZONE: "Timezoneを確認してください。例: Asia/Tokyo",
+      NETWORK_ERROR: "通信できませんでした。ネットワーク接続を確認して、もう一度お試しください。"
+    };
+
+    function selected(name) {
+      return form.querySelector(`input[name="${name}"]:checked`).value;
     }
 
-    function loadSample() {
-      requestBody.value = stringify(samples[endpointSelect.value]);
-      responseBody.textContent = "{}";
-      statusLine.textContent = "サンプルを読み込みました";
-      statusLine.className = "api-test-status";
+    function updateForm() {
+      const live = selected("mode") === "live";
+      const type = selected("apiType");
+      apiKeyField.hidden = !live;
+      targetDateField.hidden = !["transit", "combined"].includes(type);
+      periodField.hidden = !["transit", "combined"].includes(type);
+      genderField.hidden = !["shichu", "combined"].includes(type);
+      submitNote.textContent = live ? "APIクレジットを使用して実際に計算" : "無料サンプル・APIキー不要";
     }
 
-    function parseRequest() {
-      try {
-        return JSON.parse(requestBody.value);
-      } catch (error) {
-        statusLine.textContent = `JSONエラー: ${error.message}`;
-        statusLine.className = "api-test-status is-error";
-        responseBody.textContent = stringify({ ok: false, error: { code: "INVALID_JSON", message: error.message } });
-        return null;
+    function payload() {
+      const type = selected("apiType");
+      const data = {
+        name: document.getElementById("name").value.trim(),
+        birth_date: document.getElementById("birthDate").value,
+        birth_time: document.getElementById("birthTime").value || null,
+        birth_place: document.getElementById("birthPlace").value.trim(),
+        timezone: document.getElementById("timezone").value.trim(),
+        writing: { tone: { sharpness: 40, warmth: 80, mystical: 30 }, focus_areas: [] }
+      };
+      if (["shichu", "combined"].includes(type)) data.gender = document.getElementById("gender").value;
+      if (["transit", "combined"].includes(type)) {
+        data.target_date = document.getElementById("targetDate").value;
+        data.period = document.getElementById("period").value;
       }
+      return data;
     }
 
-    function formatRequest() {
-      const parsed = parseRequest();
-      if (!parsed) return;
-      requestBody.value = stringify(parsed);
-      statusLine.textContent = "リクエストJSONを整形しました";
-      statusLine.className = "api-test-status";
+    function makePrompt(response) {
+      const data = JSON.stringify(response, null, 2);
+      return `以下はnanami-products APIで計算済みの占術データです。
+
+【必ず守ること】
+- 生年月日や出生情報から、天体位置・命式・トランジットを再計算しないでください。
+- APIレスポンス内の計算済みデータだけを根拠にしてください。
+- レスポンスにない情報は推測せず、「データに含まれていない」と明記してください。
+- 西洋占星術・四柱推命・トランジットは、レスポンスに含まれる範囲だけを解釈してください。
+- 運命を断定せず、傾向・使い方・活かし方として表現してください。
+- 不安を煽らず、実生活で活かせる視点を示してください。
+
+【依頼】
+計算済みデータの重要な特徴を整理し、強み、注意点、今後の活かし方を分かりやすく解釈してください。複数の占術データがある場合は、共通点と違いも示してください。
+
+【計算済みAPIレスポンス】
+${data}`;
     }
 
-    async function checkRequest() {
-      const payload = parseRequest();
-      if (!payload) return;
-      const endpoint = endpointSelect.value;
-      const missing = requiredFields[endpoint].filter((field) => {
-        const value = payload[field];
-        return value === undefined || value === null || String(value).trim() === "";
-      });
-      if (missing.length) {
-        statusLine.textContent = `不足項目: ${missing.join(", ")}`;
-        statusLine.className = "api-test-status is-error";
-        responseBody.textContent = stringify({
-          ok: false,
-          error: {
-            code: "INVALID_INPUT",
-            message: `Required fields are missing: ${missing.join(", ")}`
-          }
-        });
+    function showError(code, detail) {
+      errorBox.textContent = errorMessages[code] || detail || "データを作成できませんでした。時間をおいて、もう一度お試しください。";
+      errorBox.hidden = false;
+      statusLine.textContent = "作成できませんでした";
+    }
+
+    function showResult(response, elapsed) {
+      latestResponse = response;
+      const json = JSON.stringify(response, null, 2);
+      const yaml = response.handoff_yaml || "YAMLデータはこのレスポンスに含まれていません。\n\n" + json;
+      const prompt = makePrompt(response);
+      document.getElementById("jsonText").value = json;
+      document.getElementById("yamlText").value = yaml;
+      document.getElementById("promptText").value = prompt;
+      document.getElementById("copyText").value = `nanami-products API 計算済み占術データ\n\n${yaml}\n\n--- AIへの依頼 ---\n${prompt}`;
+      emptyState.hidden = true;
+      resultContent.hidden = false;
+      statusLine.textContent = `作成完了 / ${elapsed}ms / ${response.meta?.endpoint || selected("apiType")}`;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.hidden = true;
+      const mode = selected("mode");
+      const type = selected("apiType");
+      if (mode === "live" && !apiKey.value.trim()) {
+        showError("MISSING_API_KEY");
+        apiKey.focus();
         return;
       }
-      statusLine.textContent = `送信中: POST ${endpoint}`;
-      statusLine.className = "api-test-status is-loading";
-      responseBody.textContent = "";
-      const startedAt = performance.now();
+      submitButton.disabled = true;
+      statusLine.textContent = "占術データを作成しています...";
+      const started = performance.now();
       try {
-        const response = await fetch(endpoint, {
+        const headers = { "Content-Type": "application/json" };
+        if (mode === "live") headers["X-API-Key"] = apiKey.value.trim();
+        const response = await fetch(`/api/${mode === "live" ? "calc" : "demo"}/${type}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          headers,
+          body: JSON.stringify(payload())
         });
-        const elapsed = Math.round(performance.now() - startedAt);
-        const body = await response.json();
-        responseBody.textContent = stringify(body);
-        statusLine.textContent = `${response.status} ${response.statusText} / ${elapsed}ms / 固定レスポンス`;
-        statusLine.className = response.ok ? "api-test-status is-ok" : "api-test-status is-error";
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.ok) {
+          showError(body.error?.code, body.error?.message);
+          return;
+        }
+        showResult(body, Math.round(performance.now() - started));
       } catch (error) {
-        statusLine.textContent = `通信エラー: ${error.message}`;
-        statusLine.className = "api-test-status is-error";
-        responseBody.textContent = stringify({ ok: false, error: { code: "NETWORK_ERROR", message: error.message } });
+        showError("NETWORK_ERROR", error.message);
+      } finally {
+        submitButton.disabled = false;
       }
-    }
+    });
 
-    async function copyText(source, button) {
-      await navigator.clipboard.writeText(source.textContent || source.value);
+    form.querySelectorAll('input[name="mode"], input[name="apiType"]').forEach((input) => input.addEventListener("change", updateForm));
+    document.getElementById("toggleKey").addEventListener("click", (event) => {
+      apiKey.type = apiKey.type === "password" ? "text" : "password";
+      event.currentTarget.textContent = apiKey.type === "password" ? "表示" : "隠す";
+    });
+    document.getElementById("fillSample").addEventListener("click", () => {
+      document.getElementById("name").value = "テスト太郎";
+      document.getElementById("birthDate").value = "1990-01-01";
+      document.getElementById("birthTime").value = "12:00";
+      document.getElementById("birthPlace").value = "東京都";
+      document.getElementById("timezone").value = "Asia/Tokyo";
+      document.getElementById("targetDate").value = new Date().toISOString().slice(0, 10);
+    });
+    document.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => {
+      document.querySelectorAll("[data-tab]").forEach((item) => item.classList.toggle("is-active", item === button));
+      document.querySelectorAll("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== button.dataset.tab; });
+    }));
+    document.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(document.getElementById(button.dataset.copy).value);
       const original = button.textContent;
-      button.textContent = "コピー済み";
-      setTimeout(() => { button.textContent = original; }, 1100);
-    }
+      button.textContent = "コピーしました";
+      setTimeout(() => { button.textContent = original; }, 1400);
+    }));
 
-    endpointSelect.addEventListener("change", loadSample);
-    document.getElementById("loadSampleButton").addEventListener("click", loadSample);
-    document.getElementById("formatRequestButton").addEventListener("click", formatRequest);
-    document.getElementById("checkButton").addEventListener("click", checkRequest);
-    document.getElementById("copyRequestButton").addEventListener("click", (event) => copyText(requestBody, event.currentTarget));
-    document.getElementById("copyResponseButton").addEventListener("click", (event) => copyText(responseBody, event.currentTarget));
-
-    loadSample();
+    document.getElementById("targetDate").value = new Date().toISOString().slice(0, 10);
+    updateForm();
   </script>
 </body>
 </html>
