@@ -137,11 +137,20 @@ def _resolve_asset_version() -> str:
 
 
 ASSET_VERSION = _resolve_asset_version()
+_ASSET_CONTENT_VERSIONS: dict[str, str] = {}
 
 
 def _asset_url(path: str) -> str:
     clean_path = path.lstrip("/")
-    return f"/static/{clean_path}?v={ASSET_VERSION}"
+    version = _ASSET_CONTENT_VERSIONS.get(clean_path)
+    if version is None:
+        try:
+            asset_path = Path(__file__).resolve().parent / "static" / clean_path
+            version = hashlib.sha256(asset_path.read_bytes()).hexdigest()[:12]
+        except Exception:
+            version = ASSET_VERSION
+        _ASSET_CONTENT_VERSIONS[clean_path] = version
+    return f"/static/{clean_path}?v={version}"
 
 
 templates.env.globals.update(asset_version=ASSET_VERSION, asset_url=_asset_url)

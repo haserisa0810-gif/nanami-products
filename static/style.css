@@ -1423,10 +1423,11 @@ textarea {
   margin: 20px 0 22px;
   color: var(--demo-ink);
   font-family: inherit;
-  font-size: clamp(43px, 5vw, 70px);
+  font-size: clamp(43px, 4.4vw, 62px);
   font-weight: 720;
   line-height: 1.14;
   letter-spacing: -.065em;
+  word-break: keep-all;
 }
 .api-demo-hero h1 em { color: var(--demo-accent); font-style: normal; }
 .api-demo-lead { max-width: 700px; color: var(--demo-muted); font-size: 16px; line-height: 1.9; }

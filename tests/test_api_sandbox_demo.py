@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -13,6 +14,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ApiSandboxDemoTest(unittest.TestCase):
+    def test_style_asset_url_uses_content_hash_not_fixed_deploy_version(self) -> None:
+        routes._ASSET_CONTENT_VERSIONS.clear()
+        expected = hashlib.sha256((ROOT / "static" / "style.css").read_bytes()).hexdigest()[:12]
+
+        self.assertEqual(routes._asset_url("style.css"), f"/static/style.css?v={expected}")
+
     def test_api_sandbox_contains_data_creation_ui(self) -> None:
         html = (ROOT / "templates" / "api_sandbox.html").read_text(encoding="utf-8")
 
