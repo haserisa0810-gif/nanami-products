@@ -1550,7 +1550,9 @@ textarea {
 .api-demo-key-guide ol { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .api-demo-key-guide li { display: flex; align-items: center; gap: 6px; color: #5f6575; font-size: 9px; line-height: 1.45; }
 .api-demo-key-guide li b { display: grid; flex: 0 0 20px; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: #e6e3ff; color: var(--demo-accent); font-size: 8px; }
-.api-demo-key-guide a { border-radius: 8px; background: var(--demo-accent); color: #fff; font-size: 9px; font-weight: 700; padding: 10px 12px; text-decoration: none; white-space: nowrap; }
+.api-demo-key-actions { display: grid; gap: 6px; }
+.api-demo-key-guide a { border-radius: 8px; background: var(--demo-accent); color: #fff; font-size: 9px; font-weight: 700; padding: 10px 12px; text-align: center; text-decoration: none; white-space: nowrap; }
+.api-demo-key-guide a.is-secondary { border: 1px solid #d8d5f5; background: #fff; color: var(--demo-accent); }
 .api-demo-key-field > label { color: #484e5d; }
 .api-demo-secret button { border-color: #d8d5f5; background: #fff; }
 .api-demo-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
@@ -1605,7 +1607,7 @@ textarea {
   .api-demo-types, .api-demo-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .api-demo-key-guide { grid-template-columns: 1fr; }
   .api-demo-key-guide ol { grid-template-columns: repeat(2, 1fr); }
-  .api-demo-key-guide a { justify-self: start; }
+  .api-demo-key-actions { justify-self: start; }
 }
 @media (max-width: 760px) {
   .api-demo-header { padding: 12px 14px; }
