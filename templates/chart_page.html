@@ -127,7 +127,7 @@
       background: var(--card2);
     }
     .yaml-only-panel {
-      margin-top: 14px;
+      margin-top: 16px;
       border-top: 1px solid var(--border2);
       padding-top: 14px;
     }
@@ -763,11 +763,6 @@
             <button class="secondary-action" onclick="downloadDefaultAiPasteTxt()">{{ t.save_txt_to_use }}</button>
           </div>
         </details>
-        <section class="yaml-only-panel" aria-labelledby="yaml-only-title">
-          <h3 id="yaml-only-title">{{ t.yaml_only_title }}</h3>
-          <p class="fallback-lead">{{ t.copy_yaml_only_hint }}</p>
-          <button class="secondary-action" onclick="copyYamlOnly()">{{ t.copy_yaml_only }}</button>
-        </section>
         <a class="guide-inline-link" href="{{ usage_guide_url }}" target="_blank" rel="noopener">{{ t.guide_link }}</a>
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
       </section>
@@ -831,6 +826,11 @@
               <button class="secondary-action" onclick="shareSelectedAiText()">{{ t["send_selected_to_ai"] }}</button>
               <button class="secondary-action" onclick="copySelectedAiText()">{{ t["copy_selected"] }}</button>
             </div>
+            <section class="yaml-only-panel" aria-labelledby="yaml-only-title">
+              <h3 id="yaml-only-title">{{ t.yaml_only_title }}</h3>
+              <p class="hint">{{ t.copy_yaml_only_hint }}</p>
+              <button class="secondary-action" onclick="copyYamlOnly()">{{ t.copy_yaml_only }}</button>
+            </section>
           </div>
         </div>
       </details>

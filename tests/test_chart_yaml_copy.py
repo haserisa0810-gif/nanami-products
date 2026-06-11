@@ -18,6 +18,8 @@ class ChartYamlCopyTest(unittest.TestCase):
     def test_yaml_only_copy_has_japanese_and_english_labels(self) -> None:
         self.assertEqual(I18N["ja"]["yaml_only_title"], "AI活用向けYAML")
         self.assertEqual(I18N["en"]["yaml_only_title"], "YAML for AI use")
+        self.assertEqual(I18N["ja"]["copy_yaml_only"], "選んだ版のYAMLをコピー")
+        self.assertEqual(I18N["en"]["copy_yaml_only"], "Copy selected version YAML")
         self.assertIn("占いプロンプトを含まない", I18N["ja"]["copy_yaml_only_hint"])
         self.assertIn("without the astrology reading prompt", I18N["en"]["copy_yaml_only_hint"])
 
@@ -41,11 +43,15 @@ class ChartYamlCopyTest(unittest.TestCase):
             self.template,
         )
 
-    def test_yaml_only_button_is_independent_from_fallback_actions(self) -> None:
+    def test_yaml_only_button_is_inside_detail_data_not_send_to_ai(self) -> None:
+        send_to_ai = self.template.split('<section class="notice-box">', 1)[1].split("</section>", 1)[0]
         fallback = self.template.split('<details class="fallback-share"', 1)[1].split("</details>", 1)[0]
+        detail_box = self.template.split('<details class="detail-box" id="detail-box">', 1)[1].split("</details>", 1)[0]
         yaml_panel = self.template.split('<section class="yaml-only-panel"', 1)[1].split("</section>", 1)[0]
 
+        self.assertNotIn('onclick="copyYamlOnly()"', send_to_ai)
         self.assertNotIn('onclick="copyYamlOnly()"', fallback)
+        self.assertIn('<section class="yaml-only-panel"', detail_box)
         self.assertIn('onclick="copyYamlOnly()"', yaml_panel)
         self.assertIn(".yaml-only-panel .secondary-action {\n      width: 100%;", self.template)
 
