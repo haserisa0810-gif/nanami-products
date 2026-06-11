@@ -126,6 +126,21 @@
     .fallback-share .fallback-actions .secondary-action.secondary-emphasis {
       background: var(--card2);
     }
+    .yaml-only-panel {
+      margin-top: 14px;
+      border-top: 1px solid var(--border2);
+      padding-top: 14px;
+    }
+    .yaml-only-panel h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: .92rem;
+      font-weight: 600;
+    }
+    .yaml-only-panel .secondary-action {
+      width: 100%;
+      margin-top: 10px;
+    }
     .ai-data-box {
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -746,10 +761,13 @@
           <div class="fallback-actions">
             <button class="secondary-action" onclick="copyDefaultAiText()">{{ t.copy_to_use }}</button>
             <button class="secondary-action" onclick="downloadDefaultAiPasteTxt()">{{ t.save_txt_to_use }}</button>
-            <button class="secondary-action" onclick="copyYamlOnly()">{{ t.copy_yaml_only }}</button>
           </div>
-          <p class="fallback-lead">{{ t.copy_yaml_only_hint }}</p>
         </details>
+        <section class="yaml-only-panel" aria-labelledby="yaml-only-title">
+          <h3 id="yaml-only-title">{{ t.yaml_only_title }}</h3>
+          <p class="fallback-lead">{{ t.copy_yaml_only_hint }}</p>
+          <button class="secondary-action" onclick="copyYamlOnly()">{{ t.copy_yaml_only }}</button>
+        </section>
         <a class="guide-inline-link" href="{{ usage_guide_url }}" target="_blank" rel="noopener">{{ t.guide_link }}</a>
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
       </section>
@@ -770,14 +788,21 @@
       </details>
       {% endif %}
 
-      {% if has_yaml_mode_selector %}
       <details class="detail-box" id="detail-box">
         <summary>{{ t.details }}</summary>
         <div class="detail-body">
           <div class="detail-section" id="full-version-details">
             <h3>{% if has_western_asteroids %}{{ t["full_details_title_asteroids"] }}{% else %}{{ t["full_details_title_transit"] }}{% endif %}</h3>
-            <p class="hint">{% if has_western_asteroids %}{{ t["full_details_hint_asteroids"] }}{% else %}{{ t["full_details_hint_transit"] }}{% endif %}</p>
+            <p class="hint">{{ t.details_intro }}</p>
             <div class="ai-mode-list" style="margin-top:12px">
+              <label class="ai-mode-option" id="mode-paste-card" onclick="selectAiMode('paste')">
+                <input type="radio" name="ai-output-mode" value="paste" id="mode-paste-input">
+                <div class="ai-mode-copy">
+                  <span class="ai-mode-title"><span class="mode-label">{{ t["mode_paste"] }}</span></span>
+                  <span class="mode-desc">{{ t["standard_mode_desc"] }}</span>
+                </div>
+              </label>
+              {% if has_yaml_mode_selector %}
               {% if has_western_asteroids %}
               <label class="ai-mode-option" id="mode-asteroids-card" onclick="selectAiMode('asteroids')">
                 <input type="radio" name="ai-output-mode" value="asteroids" id="mode-asteroids-input">
@@ -800,6 +825,7 @@
                   <span class="mode-desc">{% if has_western_asteroids %}{{ t["full_mode_desc_asteroids"] }}{% else %}{{ t["full_mode_desc_transit"] }}{% endif %}</span>
                 </div>
               </label>
+              {% endif %}
             </div>
             <div class="detail-actions">
               <button class="secondary-action" onclick="shareSelectedAiText()">{{ t["send_selected_to_ai"] }}</button>
@@ -808,7 +834,6 @@
           </div>
         </div>
       </details>
-      {% endif %}
 
       {% if has_horoscope_svg or has_shichusuimei_svg %}
       <details class="detail-box" id="chart-details">
@@ -1188,20 +1213,22 @@
 
     function selectAiMode(mode) {
       if (mode === 'asteroids' && !HAS_WESTERN_ASTEROIDS) mode = 'full';
+      if ((mode === 'asteroids' || mode === 'full') && !HAS_YAML_MODE_SELECTOR) mode = 'paste';
+      const pasteCard = document.getElementById('mode-paste-card');
       const asteroidsCard = document.getElementById('mode-asteroids-card');
       const fullCard = document.getElementById('mode-full-card');
+      const pasteInput = document.getElementById('mode-paste-input');
       const asteroidsInput = document.getElementById('mode-asteroids-input');
       const fullInput = document.getElementById('mode-full-input');
       const isFull = mode === 'full';
       const isAsteroids = mode === 'asteroids';
-      if (asteroidsCard && fullCard) {
-        asteroidsCard.classList.toggle('is-active', isAsteroids);
-        fullCard.classList.toggle('is-active', isFull);
-      }
-      if (asteroidsInput && fullInput) {
-        asteroidsInput.checked = isAsteroids;
-        fullInput.checked = isFull;
-      }
+      const isPaste = !isFull && !isAsteroids;
+      if (pasteCard) pasteCard.classList.toggle('is-active', isPaste);
+      if (asteroidsCard) asteroidsCard.classList.toggle('is-active', isAsteroids);
+      if (fullCard) fullCard.classList.toggle('is-active', isFull);
+      if (pasteInput) pasteInput.checked = isPaste;
+      if (asteroidsInput) asteroidsInput.checked = isAsteroids;
+      if (fullInput) fullInput.checked = isFull;
       localStorage.setItem('chart-ai-output-mode', isFull ? 'full' : (isAsteroids ? 'asteroids' : 'paste'));
       if (isAsteroids) {
         if (asteroidYamlCache) {
@@ -1543,7 +1570,7 @@
 
     async function copyYamlOnly() {
       try {
-        const yaml = HAS_YAML_MODE_SELECTOR ? await getFullYaml() : (FULL_YAML_INLINE || SHARE_YAML);
+        const yaml = await getSelectedYaml();
         await writeClipboard(yaml, UI_TEXT.yamlOnlyCopied);
       } catch (e) {
         const status = document.getElementById('copy-status');
@@ -1724,7 +1751,7 @@
     initCopyHelpers();
     initLazyFullYaml();
     initLazyCharts();
-    selectAiMode('paste');
+    selectAiMode(HAS_YAML_MODE_SELECTOR ? (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full') : 'paste');
 
   </script>
 </body>
