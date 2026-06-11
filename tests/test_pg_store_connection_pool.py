@@ -12,10 +12,12 @@ class PgStoreConnectionPoolTest(unittest.TestCase):
     def setUp(self) -> None:
         pg_store._pool = None
         pg_store._pool_url = None
+        pg_store._seen_connection_ids.clear()
 
     def tearDown(self) -> None:
         pg_store._pool = None
         pg_store._pool_url = None
+        pg_store._seen_connection_ids.clear()
 
     def test_pool_is_lazily_created_once_with_thread_safe_defaults(self) -> None:
         pool = Mock()
@@ -40,6 +42,7 @@ class PgStoreConnectionPoolTest(unittest.TestCase):
 
         con.commit.assert_called_once_with()
         con.rollback.assert_not_called()
+        con.cursor.return_value.execute.assert_called_once_with(pg_store.CONNECTION_HEALTHCHECK_SQL)
         pool.putconn.assert_called_once_with(con, close=False)
 
     def test_connection_is_rolled_back_and_returned_for_application_error(self) -> None:
@@ -66,6 +69,39 @@ class PgStoreConnectionPoolTest(unittest.TestCase):
                     raise psycopg2.OperationalError("connection lost")
 
         pool.putconn.assert_called_once_with(con, close=True)
+
+    def test_stale_connection_is_discarded_during_healthcheck_and_replaced(self) -> None:
+        stale_con = Mock(closed=0)
+        stale_con.cursor.return_value.execute.side_effect = psycopg2.OperationalError(
+            "SSL connection has been closed unexpectedly"
+        )
+        healthy_con = Mock(closed=0)
+        pool = Mock()
+        pool.getconn.side_effect = [stale_con, healthy_con]
+
+        with patch.object(pg_store, "_get_pool", return_value=pool):
+            with pg_store._conn(operation="test", sql="SELECT test") as acquired:
+                self.assertIs(acquired, healthy_con)
+
+        self.assertEqual(pool.getconn.call_count, 2)
+        pool.putconn.assert_any_call(stale_con, close=True)
+        pool.putconn.assert_any_call(healthy_con, close=False)
+
+    def test_healthcheck_failure_twice_discards_both_connections(self) -> None:
+        connections = [Mock(closed=0), Mock(closed=0)]
+        for con in connections:
+            con.cursor.return_value.execute.side_effect = psycopg2.OperationalError("connection lost")
+        pool = Mock()
+        pool.getconn.side_effect = connections
+
+        with patch.object(pg_store, "_get_pool", return_value=pool):
+            with self.assertRaises(psycopg2.OperationalError):
+                with pg_store._conn():
+                    self.fail("a broken connection must not be yielded")
+
+        self.assertEqual(pool.putconn.call_count, 2)
+        pool.putconn.assert_any_call(connections[0], close=True)
+        pool.putconn.assert_any_call(connections[1], close=True)
 
     def test_connection_is_discarded_when_rollback_fails(self) -> None:
         con = Mock(closed=0)
@@ -121,6 +157,34 @@ class PgStoreConnectionPoolTest(unittest.TestCase):
                 pg_store.get_chart("tok")
 
         conn.assert_called_once_with()
+
+    def test_api_key_auth_retries_once_after_operational_error(self) -> None:
+        row = {"id": 1, "status": "active", "credits_remaining": 10}
+        stale_cursor = Mock()
+        stale_cursor.__enter__ = Mock(return_value=stale_cursor)
+        stale_cursor.__exit__ = Mock(return_value=False)
+        stale_cursor.execute.side_effect = psycopg2.OperationalError("SSL connection has been closed unexpectedly")
+        stale_con = Mock()
+        stale_con.__enter__ = Mock(return_value=stale_con)
+        stale_con.__exit__ = Mock(return_value=False)
+        stale_con.cursor.return_value = stale_cursor
+
+        healthy_cursor = Mock()
+        healthy_cursor.__enter__ = Mock(return_value=healthy_cursor)
+        healthy_cursor.__exit__ = Mock(return_value=False)
+        healthy_cursor.fetchone.return_value = row
+        healthy_con = Mock()
+        healthy_con.__enter__ = Mock(return_value=healthy_con)
+        healthy_con.__exit__ = Mock(return_value=False)
+        healthy_con.cursor.return_value = healthy_cursor
+
+        with patch.object(pg_store, "_conn", side_effect=[stale_con, healthy_con]) as conn:
+            self.assertEqual(pg_store.get_api_key_for_auth("np_test"), row)
+
+        self.assertEqual(conn.call_count, 2)
+        for call in conn.call_args_list:
+            self.assertEqual(call.kwargs["operation"], "api_key_auth")
+            self.assertEqual(call.kwargs["sql"], pg_store.API_KEY_AUTH_SQL)
 
 
 if __name__ == "__main__":

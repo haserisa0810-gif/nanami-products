@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import hashlib
+import logging
 import secrets
 import threading
 from datetime import datetime
@@ -16,6 +17,16 @@ SCHEMA = "nanami_products"
 _pool: ThreadedConnectionPool | None = None
 _pool_url: str | None = None
 _pool_lock = threading.Lock()
+_seen_connection_ids: set[int] = set()
+_seen_connections_lock = threading.Lock()
+logger = logging.getLogger("nanami.pg_store")
+
+CONNECTION_HEALTHCHECK_SQL = "SELECT 1"
+API_KEY_AUTH_SQL = f"""
+    SELECT id, key_prefix, label, status, credits_remaining
+    FROM {SCHEMA}.api_keys
+    WHERE key_hash = %s
+"""
 
 
 def _get_url() -> str:
@@ -43,6 +54,8 @@ def _get_pool() -> ThreadedConnectionPool:
             return _pool
         if _pool is not None:
             _pool.closeall()
+        with _seen_connections_lock:
+            _seen_connection_ids.clear()
         minconn = _pool_size("DB_POOL_MINCONN", 1)
         maxconn = max(minconn, _pool_size("DB_POOL_MAXCONN", 10))
         _pool = ThreadedConnectionPool(
@@ -56,22 +69,82 @@ def _get_pool() -> ThreadedConnectionPool:
         return _pool
 
 
+def _mark_connection_seen(con: Any) -> bool:
+    connection_id = id(con)
+    with _seen_connections_lock:
+        seen_before = connection_id in _seen_connection_ids
+        _seen_connection_ids.add(connection_id)
+    return seen_before
+
+
+def _acquire_healthy_connection(pool: ThreadedConnectionPool) -> tuple[Any, bool]:
+    for attempt in range(2):
+        con = None
+        seen_before = False
+        try:
+            con = pool.getconn()
+            seen_before = _mark_connection_seen(con)
+            if con.closed:
+                raise psycopg2.InterfaceError("connection pool returned a closed connection")
+            cur = con.cursor()
+            try:
+                cur.execute(CONNECTION_HEALTHCHECK_SQL)
+                cur.fetchone()
+            finally:
+                cur.close()
+            logger.debug(
+                "db_connection_healthcheck_ok attempt=%s pool_checkout=true connection_seen_before=%s sql=%r",
+                attempt + 1,
+                seen_before,
+                CONNECTION_HEALTHCHECK_SQL,
+            )
+            return con, seen_before
+        except (psycopg2.InterfaceError, psycopg2.OperationalError):
+            logger.exception(
+                "db_connection_healthcheck_failed attempt=%s pool_checkout=true connection_seen_before=%s sql=%r",
+                attempt + 1,
+                seen_before,
+                CONNECTION_HEALTHCHECK_SQL,
+            )
+            if con is not None:
+                try:
+                    pool.putconn(con, close=True)
+                except Exception:
+                    logger.exception("db_broken_connection_discard_failed")
+            if attempt:
+                raise
+    raise AssertionError("unreachable")
+
+
 @contextmanager
-def _conn() -> Generator:
+def _conn(*, operation: str = "unspecified", sql: str = "caller-managed") -> Generator:
     pool = _get_pool()
-    con = pool.getconn()
-    discard = bool(con.closed)
+    con, seen_before = _acquire_healthy_connection(pool)
+    discard = False
     try:
-        if discard:
-            raise psycopg2.InterfaceError("connection pool returned a closed connection")
         yield con
         con.commit()
     except Exception as exc:
         discard = discard or isinstance(exc, (psycopg2.InterfaceError, psycopg2.OperationalError))
+        if discard:
+            logger.exception(
+                "db_connection_operation_failed operation=%s pool_checkout=true connection_seen_before=%s "
+                "discard=true sql=%r",
+                operation,
+                seen_before,
+                sql,
+            )
         try:
             con.rollback()
         except Exception:
             discard = True
+            logger.exception(
+                "db_connection_rollback_failed operation=%s pool_checkout=true connection_seen_before=%s "
+                "discard=true sql=%r",
+                operation,
+                seen_before,
+                sql,
+            )
         raise
     finally:
         pool.putconn(con, close=discard)
@@ -440,17 +513,22 @@ def get_api_key_by_order_code(order_code: str) -> dict[str, Any] | None:
 
 def get_api_key_for_auth(api_key: str) -> dict[str, Any] | None:
     key_hash = hash_api_key(api_key)
-    with _conn() as con:
-        with con.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT id, key_prefix, label, status, credits_remaining
-                FROM {SCHEMA}.api_keys
-                WHERE key_hash = %s
-                """,
-                (key_hash,),
+    for attempt in range(2):
+        try:
+            with _conn(operation="api_key_auth", sql=API_KEY_AUTH_SQL) as con:
+                with con.cursor() as cur:
+                    cur.execute(API_KEY_AUTH_SQL, (key_hash,))
+                    row = cur.fetchone()
+            break
+        except (psycopg2.InterfaceError, psycopg2.OperationalError):
+            logger.exception(
+                "api_key_auth_connection_error attempt=%s retry=%s sql=%r",
+                attempt + 1,
+                attempt == 0,
+                API_KEY_AUTH_SQL,
             )
-            row = cur.fetchone()
+            if attempt:
+                raise
     return dict(row) if row else None
 
 

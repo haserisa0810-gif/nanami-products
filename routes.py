@@ -2185,6 +2185,7 @@ def _handle_calc_api(
     try:
         key_row = pg_store.get_api_key_for_auth(api_key)
     except Exception as exc:
+        logger.exception("api_key_auth_failed endpoint=%s", endpoint)
         return _api_error("API_AUTH_UNAVAILABLE", f"API authentication failed: {exc}", 500)
 
     if not key_row:
@@ -2342,6 +2343,7 @@ def _authenticate_api_key_for_read(api_key: str | None) -> tuple[dict | None, JS
     try:
         key_row = pg_store.get_api_key_for_auth(api_key)
     except Exception as exc:
+        logger.exception("api_key_auth_failed endpoint=chart_read")
         return None, _api_error("API_AUTH_UNAVAILABLE", f"API authentication failed: {exc}", 500)
     if not key_row:
         return None, _api_error("INVALID_API_KEY", "API key is invalid", 401)
