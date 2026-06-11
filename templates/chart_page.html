@@ -746,7 +746,9 @@
           <div class="fallback-actions">
             <button class="secondary-action" onclick="copyDefaultAiText()">{{ t.copy_to_use }}</button>
             <button class="secondary-action" onclick="downloadDefaultAiPasteTxt()">{{ t.save_txt_to_use }}</button>
+            <button class="secondary-action" onclick="copyYamlOnly()">{{ t.copy_yaml_only }}</button>
           </div>
+          <p class="fallback-lead">{{ t.copy_yaml_only_hint }}</p>
         </details>
         <a class="guide-inline-link" href="{{ usage_guide_url }}" target="_blank" rel="noopener">{{ t.guide_link }}</a>
         <span id="copy-status" class="copy-status" aria-live="polite"></span>
@@ -968,6 +970,8 @@
       svgLoading: {{ t["svg_loading"] | tojson }},
       svgLoadFailed: {{ t["svg_load_failed"] | tojson }},
       pngFailedSvgCopied: {{ t["png_failed_svg_copied"] | tojson }},
+      yamlOnlyCopied: {{ t["yaml_only_copied"] | tojson }},
+      yamlOnlyCopyFailed: {{ t["yaml_only_copy_failed"] | tojson }},
     };
     let fullYamlCache = FULL_YAML_INLINE;
     let asteroidYamlCache = ASTEROID_YAML || '';
@@ -1535,6 +1539,21 @@
     async function copyDefaultAiText() {
       selectAiMode('paste');
       await writeClipboard(await buildSelectedAiText('paste'), UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modePaste));
+    }
+
+    async function copyYamlOnly() {
+      try {
+        const yaml = HAS_YAML_MODE_SELECTOR ? await getFullYaml() : (FULL_YAML_INLINE || SHARE_YAML);
+        await writeClipboard(yaml, UI_TEXT.yamlOnlyCopied);
+      } catch (e) {
+        const status = document.getElementById('copy-status');
+        if (status) {
+          status.textContent = UI_TEXT.yamlOnlyCopyFailed;
+          setTimeout(() => status.textContent = '', 3000);
+        } else {
+          alert(UI_TEXT.yamlOnlyCopyFailed);
+        }
+      }
     }
 
     async function copySelectedAiChunk() {
