@@ -607,7 +607,7 @@ I18N = {
         "addon_usage_items": [
             "STORESの購入確認メールに記載された注文番号を入力してください。",
             "小惑星追加は、基本版の出生データを土台に生成します。",
-            "31日トランジット追加では、基本版YAML または 90日以内の前回鑑定URLを入力してください。",
+            "トランジット追加では、基本版YAML または 90日以内の前回鑑定URLを入力してください。",
             "生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。",
             "YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。",
             "貼り付けたYAMLは保存しません。",
@@ -618,7 +618,7 @@ I18N = {
         "order_code_placeholder": "例：9824333454",
         "order_code_hint": "購入確認メールの件名にある注文番号です。追加部品ごとに1回だけ使用できます。",
         "base_data_title": "基本データ入力",
-        "base_data_hint_transit": "31日トランジット追加は、基本版の出生データを土台に生成します。",
+        "base_data_hint_transit": "トランジット追加は、基本版の出生データを土台に生成します。",
         "base_data_hint_standard": "基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。",
         "previous_chart_url_label": "90日以内の前回鑑定URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
@@ -627,7 +627,7 @@ I18N = {
         "base_yaml_placeholder": "ここに基本版YAMLを貼り付けてください",
         "base_yaml_hint": "基本版YAMLの内容から出生情報を読み取り、addon生成に使用します。",
         "transit_period_title": "トランジット期間",
-        "transit_period_hint": "期間は31日固定です。開始日は現在日から前後5年以内で指定できます。",
+        "transit_period_hint": "31日トランジットは31日間、長期トランジットは1年間です。開始日は現在日から前後5年以内で指定できます。",
         "transit_start_date_label": "開始日",
         "transit_start_date_hint": "指定可能範囲: {min_date} 〜 {max_date}",
         "generate_button": "追加部品YAMLを生成する",
@@ -965,7 +965,7 @@ I18N = {
         "addon_usage_items": [
             "Enter the order number shown in the STORES purchase confirmation email.",
             "The asteroid add-on is generated on top of the basic birth data.",
-            "For the 31-day transit add-on, enter either the basic YAML or a previous chart URL from the last 90 days.",
+            "For transit add-ons, enter either the basic YAML or a previous chart URL from the last 90 days.",
             "The generated add-on YAML is used together with the basic YAML when sending it to AI.",
             "You can use the YAML on its own or append it to a full AI-reading prompt.",
             "The pasted YAML is not saved.",
@@ -976,7 +976,7 @@ I18N = {
         "order_code_placeholder": "Example: 9824333454",
         "order_code_hint": "This is the order number shown in the purchase confirmation email. Each add-on can be used only once.",
         "base_data_title": "Base data input",
-        "base_data_hint_transit": "The 31-day transit add-on is generated on top of the basic birth data.",
+        "base_data_hint_transit": "Transit add-ons are generated on top of the basic birth data.",
         "base_data_hint_standard": "The basic YAML is parsed to read the birth data and generate only the add-on YAML.",
         "previous_chart_url_label": "Previous chart URL within 90 days",
         "previous_chart_url_placeholder": "https://.../chart/...",
@@ -985,7 +985,7 @@ I18N = {
         "base_yaml_placeholder": "Paste the basic YAML here",
         "base_yaml_hint": "The basic YAML is used to read the birth data for add-on generation.",
         "transit_period_title": "Transit period",
-        "transit_period_hint": "The period is fixed to 31 days. The start date can be set within five years before or after today.",
+        "transit_period_hint": "The 31-day transit covers 31 days, and the long-term transit covers one year. The start date can be set within five years before or after today.",
         "transit_start_date_label": "Start date",
         "transit_start_date_hint": "Available range: {min_date} to {max_date}",
         "generate_button": "Generate add-on YAML",
@@ -4613,7 +4613,7 @@ def addon_generate(
             doc = (
                 _load_addon_base_yaml(base_yaml)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
             )
             start_dt = _parse_transit_start_date(transit_start_date)
             (
@@ -4659,7 +4659,7 @@ def addon_generate(
             doc = (
                 _load_addon_base_yaml(base_yaml)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
             )
             start_dt = _parse_transit_start_date(transit_start_date)
             (

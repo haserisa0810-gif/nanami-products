@@ -167,7 +167,10 @@
     }
 
     function syncAddonFields() {
-      const isTransit = addonType && addonType.value === 'western_31days_transit_addon';
+      const isTransit = addonType && [
+        'western_31days_transit_addon',
+        'western_long_term_transits_addon',
+      ].includes(addonType.value);
       if (previousChartUrlWrap) previousChartUrlWrap.hidden = !isTransit;
       if (transitPeriodSection) transitPeriodSection.hidden = !isTransit;
       if (baseYaml) baseYaml.required = !isTransit;
