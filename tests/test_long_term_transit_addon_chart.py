@@ -7,12 +7,19 @@ from unittest.mock import patch
 import yaml
 
 from routes import (
+    LONG_TERM_TRANSITS_ADDON_CHART_PROMPT,
     _build_long_term_transits_addon_from_base,
     _chart_has_31day_transit,
     _chart_has_western_asteroids,
     _chart_share_yaml_text,
 )
 from services.long_term_transit_yaml import has_long_term_transits
+from services.yaml_exporter import (
+    LONG_TERM_TRANSIT_AUXILIARY_BODIES,
+    LONG_TERM_TRANSIT_PRIMARY_BODIES,
+    _build_long_term_transit_block,
+    _build_transit_block,
+)
 
 
 def _base_doc(*, include_transit: bool = False, include_asteroids: bool = False) -> dict:
@@ -76,12 +83,74 @@ def _generated_long_term_doc() -> dict:
 
 
 class LongTermTransitAddonChartTest(unittest.TestCase):
+    @patch("services.yaml_exporter.calc_western_from_payload")
+    def test_long_term_block_uses_weekly_outer_planet_samples_without_moon_timepoints(self, calc_western) -> None:
+        calc_western.return_value = {
+            "planets": [
+                {"name": "Moon", "sign": "Ari", "degree": 1, "lon": 1},
+                {"name": "Jupiter", "sign": "Can", "degree": 2, "lon": 92},
+                {"name": "Saturn", "sign": "Ari", "degree": 3, "lon": 3},
+                {"name": "Chiron", "sign": "Ari", "degree": 4, "lon": 4},
+                {"name": "North Node", "sign": "Pis", "degree": 5, "lon": 335},
+            ]
+        }
+
+        block = _build_long_term_transit_block(
+            start_date=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            days=365,
+            lat=35.0,
+            lng=139.0,
+            pref_name="東京都",
+            tz_name="Asia/Tokyo",
+            natal_bodies={"Sun": {"absolute_longitude": 92}},
+        )
+
+        self.assertEqual(len(block["samples"]), 53)
+        self.assertEqual(calc_western.call_count, 53)
+        self.assertEqual(block["period"]["sample_interval_days"], 7)
+        self.assertEqual(block["period"]["primary_bodies"], LONG_TERM_TRANSIT_PRIMARY_BODIES)
+        self.assertEqual(block["period"]["auxiliary_bodies"], LONG_TERM_TRANSIT_AUXILIARY_BODIES)
+        self.assertNotIn("daily", block)
+        self.assertNotIn("moon_timepoints", block["period"])
+        self.assertNotIn("Moon", block["samples"][0]["transiting_bodies"])
+        self.assertIn("Jupiter", block["samples"][0]["transiting_bodies"])
+        self.assertIn("Chiron", block["samples"][0]["transiting_bodies"])
+
+    @patch("services.yaml_exporter.calc_western_from_payload")
+    def test_standard_31day_block_keeps_daily_moon_timepoints(self, calc_western) -> None:
+        calc_western.return_value = {
+            "planets": [
+                {"name": "Moon", "sign": "Ari", "degree": 1, "lon": 1},
+                {"name": "Jupiter", "sign": "Can", "degree": 2, "lon": 92},
+            ]
+        }
+
+        block = _build_transit_block(
+            start_date=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            days=31,
+            lat=35.0,
+            lng=139.0,
+            pref_name="東京都",
+            tz_name="Asia/Tokyo",
+            natal_bodies={"Sun": {"absolute_longitude": 92}},
+        )
+
+        self.assertEqual(len(block["daily"]), 31)
+        self.assertEqual(calc_western.call_count, 124)
+        self.assertEqual(len(block["daily"][0]["moon_timepoints"]), 3)
+
+    def test_prompt_explains_weekly_samples_and_body_priority(self) -> None:
+        self.assertIn("約7日間隔", LONG_TERM_TRANSITS_ADDON_CHART_PROMPT)
+        self.assertIn("Jupiter", LONG_TERM_TRANSITS_ADDON_CHART_PROMPT)
+        self.assertIn("Chiron", LONG_TERM_TRANSITS_ADDON_CHART_PROMPT)
+
     def test_basic_source_builds_integrated_chart_for_normal_chart_page(self) -> None:
-        with patch("routes.build_product_yaml", return_value=("", "", _generated_long_term_doc())):
+        with patch("routes.build_product_yaml", return_value=("", "", _generated_long_term_doc())) as build_product_yaml:
             _, _, _, chart_yaml_text, _, chart_doc = _build_long_term_transits_addon_from_base(
                 _base_doc(),
                 transit_start_date=datetime(2026, 5, 1, tzinfo=timezone.utc),
             )
+        self.assertEqual(build_product_yaml.call_args.kwargs["transit_profile"], "long_term")
         chart = {
             "options": chart_doc["product"]["options"],
             "yaml_text": chart_yaml_text,

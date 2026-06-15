@@ -30,6 +30,9 @@ MODE_BY_SIGN = {
 CORE_BODIES = {"Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"}
 ASTEROID_BODIES = {"Chiron", "Lilith", "Ceres", "Pallas", "Juno", "Vesta", "Vertex"}
 TRANSIT_BODIES = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+LONG_TERM_TRANSIT_PRIMARY_BODIES = ["Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+LONG_TERM_TRANSIT_AUXILIARY_BODIES = ["Chiron", "North Node", "South Node"]
+LONG_TERM_TRANSIT_SAMPLE_INTERVAL_DAYS = 7
 TRANSIT_ASPECTS = {
     "conjunction": 0,
     "sextile": 60,
@@ -48,6 +51,9 @@ TRANSIT_ORB = {
     "Uranus": 1.5,
     "Neptune": 1.5,
     "Pluto": 1.5,
+    "Chiron": 1.2,
+    "North Node": 1.2,
+    "South Node": 1.2,
 }
 MOON_TIMEPOINTS = [
     ("morning", 6),
@@ -233,6 +239,92 @@ def _build_transit_block(
         "daily": daily,
     }
 
+def _build_long_term_transit_block(
+    *,
+    start_date: datetime,
+    days: int,
+    lat: float,
+    lng: float,
+    pref_name: str,
+    tz_name: str,
+    natal_bodies: dict[str, Any],
+) -> dict[str, Any]:
+    samples: list[dict[str, Any]] = []
+    tz = ZoneInfo(tz_name)
+    start_day = start_date.astimezone(tz).date()
+    selected_bodies = set(LONG_TERM_TRANSIT_PRIMARY_BODIES + LONG_TERM_TRANSIT_AUXILIARY_BODIES)
+    for offset in range(0, days, LONG_TERM_TRANSIT_SAMPLE_INTERVAL_DAYS):
+        target_day = start_day + timedelta(days=offset)
+        local_noon = datetime(target_day.year, target_day.month, target_day.day, 12, 0, tzinfo=tz)
+        tz_offset = local_noon.utcoffset()
+        tz_offset_hours = tz_offset.total_seconds() / 3600 if tz_offset is not None else 9
+        raw = calc_western_from_payload({
+            "year": target_day.year,
+            "month": target_day.month,
+            "day": target_day.day,
+            "hour": 12,
+            "minute": 0,
+            "lat": lat,
+            "lng": lng,
+            "city": pref_name,
+            "tz_offset_hours": tz_offset_hours,
+            "house_system": "P",
+            "include_asteroids": False,
+            "include_chiron": True,
+            "include_lilith": False,
+            "include_vertex": False,
+        })
+        transiting = {
+            p["name"]: _format_body(p)
+            for p in raw.get("planets", [])
+            if p.get("name") in selected_bodies
+        }
+        samples.append({
+            "date": target_day.isoformat(),
+            "transiting_bodies": transiting,
+            "natal_aspects": _transit_aspects(transiting, natal_bodies),
+        })
+    return {
+        "period": {
+            "start_date": start_day.isoformat(),
+            "end_date": (start_day + timedelta(days=max(days, 1) - 1)).isoformat(),
+            "days": days,
+            "timezone": tz_name,
+            "sample_time": "12:00",
+            "sample_interval_days": LONG_TERM_TRANSIT_SAMPLE_INTERVAL_DAYS,
+            "primary_bodies": LONG_TERM_TRANSIT_PRIMARY_BODIES,
+            "auxiliary_bodies": LONG_TERM_TRANSIT_AUXILIARY_BODIES,
+        },
+        "samples": samples,
+    }
+
+def _build_transit_for_profile(
+    *,
+    profile: str,
+    start_date: datetime,
+    days: int,
+    lat: float,
+    lng: float,
+    pref_name: str,
+    tz_name: str,
+    natal_bodies: dict[str, Any],
+) -> dict[str, Any]:
+    builder = {
+        "standard": _build_transit_block,
+        "long_term": _build_long_term_transit_block,
+    }.get(profile)
+    if builder is None:
+        raise ValueError(f"Unsupported transit profile: {profile}")
+    return builder(
+        start_date=start_date,
+        days=days,
+        lat=lat,
+        lng=lng,
+        pref_name=pref_name,
+        tz_name=tz_name,
+        natal_bodies=natal_bodies,
+    )
+
 def _summaries(planets: list[dict[str, Any]]) -> dict[str, Any]:
     elements = {"fire": 0, "earth": 0, "air": 0, "water": 0}
     modes = {"cardinal": 0, "fixed": 0, "mutable": 0}
@@ -270,6 +362,7 @@ def build_product_yaml(
     include_transit: bool = False,
     transit_start_date: datetime | None = None,
     transit_days: int = 31,
+    transit_profile: str = "standard",
     day_change_at_23: bool = False,
     birth_time_accuracy: str = "auto",
     birth_time_range: dict[str, Any] | None = None,
@@ -335,7 +428,8 @@ def build_product_yaml(
                 "skipped_bodies": skipped_bodies,
             },
             "asteroids": asteroids if include_asteroids else None,
-            "transit": _build_transit_block(
+            "transit": _build_transit_for_profile(
+                profile=transit_profile,
                 start_date=transit_start_date or generated_at,
                 days=transit_days,
                 lat=lat,
@@ -379,6 +473,7 @@ def build_product_yaml(
         "include_shichusuimei": include_shichusuimei,
         "include_transit": include_transit,
         "transit_days": transit_days,
+        "transit_profile": transit_profile,
         "day_change_at_23": day_change_at_23,
     })
     birth_time_data = _birth_time_struct(

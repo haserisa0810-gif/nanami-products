@@ -3966,6 +3966,8 @@ LONG_TERM_TRANSITS_ADDON_CHART_PROMPT = """あなたは西洋占星術の鑑定�
 - 生年月日から天体位置を再計算しないでください。
 - 31日トランジット、今日の運勢、短期的な日別予報として扱わないでください。
 - Saturn / Uranus / Neptune / Pluto / Jupiter などの長期的な流れを中心に、今後1年のテーマを読んでください。
+- systems.western.transit_long_term.samples は約7日間隔の観測点です。日別予報ではなく、主要天体のサイン・逆行・ネイタルとのアスペクトの推移として読んでください。
+- Chiron / North Node / South Node は補助情報として扱い、主要5天体より優先しないでください。
 - 断定しすぎず、長期テーマ・変化の方向性・活かし方として解釈してください。
 
 以下のYAMLを読み込んで、年単位の長期トランジット鑑定を行ってください。
@@ -3985,6 +3987,7 @@ def _build_long_term_transits_addon_from_base(
         include_shichusuimei=False,
         include_transit=True,
         transit_days=365,
+        transit_profile="long_term",
         transit_start_date=transit_start_date,
     )
     generated_western = ((full_doc.get("systems") or {}).get("western") or {})
