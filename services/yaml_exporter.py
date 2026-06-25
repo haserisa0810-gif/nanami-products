@@ -684,7 +684,7 @@ def build_asteroid_addon_yaml(
     return yaml_text, ASTEROID_ADDON_PROMPT.strip() + "\n", doc
 
 
-TRANSIT_31DAYS_ADDON_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、基本版ホロスコープに後から追加する31日トランジットデータです。
+TRANSIT_31DAYS_ADDON_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、基本版ホロスコープに後から追加する38日トランジットデータです。
 
 重要ルール:
 - このYAML単体を出生図全体として扱わないでください。
@@ -692,7 +692,7 @@ TRANSIT_31DAYS_ADDON_PROMPT = """あなたは西洋占星術の鑑定者です�
 - systems.western.transit を、基本版ホロスコープYAMLの追加部品として読んでください。
 - トランジット天体位置・出生図へのアスペクト・月の時間帯データは変更しないでください。
 - 生年月日から再計算しないでください。
-- YAML内の計算結果を根拠として、今後31日間の流れを読んでください。
+- YAML内の計算結果を根拠として、今後38日間の流れを読んでください。
 - today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。
 - 「動きやすい日」「注意したい日」には、today.selected_date 以降の日付を優先して出力してください。
 - next_31_days_summary に過去日しか存在しない場合は、過去日を無理に未来の予定として書かず、「この期間に出た違和感や発想は今後の参考になる」などの振り返り表現にしてください。
@@ -715,7 +715,7 @@ def build_31days_transit_addon_yaml(
     gender: str = "unknown",
     house_system: str = "P",
     transit_start_date: datetime | None = None,
-    transit_days: int = 31,
+    transit_days: int = 38,
     birth_time_accuracy: str = "auto",
     birth_time_range: dict[str, Any] | None = None,
     birth_time_note: str | None = None,
@@ -765,6 +765,9 @@ def build_31days_transit_addon_yaml(
         summary.setdefault("active_periods", [])
         summary.setdefault("easy_to_move_days", [])
         summary.setdefault("caution_days", [])
+    addon_prompt_text = TRANSIT_31DAYS_ADDON_PROMPT.strip() + "\n"
+    if transit_days != 38:
+        addon_prompt_text = addon_prompt_text.replace("38日", f"{transit_days}日")
     doc = {
         "version": "nanami-products-yaml-addon-v1",
         "meta": {
@@ -783,7 +786,7 @@ def build_31days_transit_addon_yaml(
         },
         "product": {
             "type": "western_31days_transit_addon",
-            "label": "ホロスコープ：31日トランジット追加",
+            "label": "ホロスコープ：38日トランジット追加",
             "options": {
                 "addon": True,
                 "western_natal": False,
@@ -821,7 +824,7 @@ def build_31days_transit_addon_yaml(
         },
     }
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
-    return yaml_text, TRANSIT_31DAYS_ADDON_PROMPT.strip() + "\n", doc
+    return yaml_text, addon_prompt_text, doc
 
 
 def refresh_dynamic_transit_yaml(full_yaml_text: str) -> str:

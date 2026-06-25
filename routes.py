@@ -475,7 +475,7 @@ I18N = {
         "helper_note": "ChatGPT / Claude / Gemini など各種AIサービスに対応",
         "full_asteroid_note": "FULL版には、小惑星を含む詳しいデータも入っています。<br>もっと深く鑑定したい時に使えます。<br>",
         "full_asteroid_link": "FULL版の小惑星データを見る",
-        "transit_detail_note": "このページには、31日分のトランジットを含む詳しいデータが入っています。<br>もっと深く鑑定したい時に使えます。<br>",
+        "transit_detail_note": "このページには、38日分のトランジットを含む詳しいデータが入っています。<br>もっと深く鑑定したい時に使えます。<br>",
         "transit_detail_link": "トランジット詳細データを見る",
         "chart_note": "ホロスコープ図も用意されています。鑑定を始めるだけなら見なくて大丈夫ですが、図で確認したい方はこちらから見られます。<br>",
         "view_horoscope_chart": "ホロスコープ図を見る",
@@ -504,7 +504,7 @@ I18N = {
         "download_horoscope_svg": "ホロスコープSVG",
         "download_shichu_svg": "命式SVG",
         "next_transit_title": "次のトランジットを作成",
-        "next_transit_desc": "前回の鑑定データを引き継いで、<br>次の31日トランジットを生成できます。",
+        "next_transit_desc": "前回の鑑定データを引き継いで、<br>次の38日トランジットを生成できます。",
         "chart_details_summary_both": "ホロスコープ図・命式図を見る",
         "chart_details_summary_horoscope": "ホロスコープ図を見る",
         "chart_details_summary_shichu": "命式図を見る",
@@ -533,15 +533,15 @@ I18N = {
         "full_details_title_asteroids": "利用可能なデータ種別",
         "full_details_title_transit": "利用可能なデータ種別",
         "full_details_hint_asteroids": "小惑星を含む詳細データです。もっと深く鑑定したい場合に使えます。",
-        "full_details_hint_transit": "31日トランジットを含む詳細データです。もっと深く鑑定したい場合に使えます。",
+        "full_details_hint_transit": "38日トランジットを含む詳細データです。もっと深く鑑定したい場合に使えます。",
         "asteroid_mode_label": "小惑星つき版",
         "recommended_badge": "おすすめ",
-        "asteroid_mode_desc": "小惑星や31日トランジットを含む、より詳しいデータです。",
+        "asteroid_mode_desc": "小惑星や38日トランジットを含む、より詳しいデータです。",
         "standard_mode_desc": "この商品で利用できる基本データです。通常のAI鑑定や保存に使えます。",
         "full_mode_label": "完全版",
         "all_details_badge": "全詳細",
-        "full_mode_desc_asteroids": "小惑星・31日全詳細データを含む完全版です。情報量が多いため、必要な場合だけご利用ください。",
-        "full_mode_desc_transit": "31日分のトランジット詳細データを含む版です。",
+        "full_mode_desc_asteroids": "小惑星・38日全詳細データを含む完全版です。情報量が多いため、必要な場合だけご利用ください。",
+        "full_mode_desc_transit": "38日分のトランジット詳細データを含む版です。",
         "send_selected_to_ai": "選んだ版をAIに送る",
         "copy_selected": "選んだ版をコピー",
         "data_preview_label": "YAMLとプロンプトを確認する",
@@ -563,7 +563,7 @@ I18N = {
         "yaml_full_title": "YAML全文",
         "yaml_complete_title": "完全版YAML",
         "yaml_hint_transit": "イベント時点の天体配置データです。AIにはこの計算結果を変更せず、解釈だけさせてください。",
-        "yaml_hint_full": "完全版YAMLは、小惑星や31日分の詳細までじっくり読みたい時に使います。",
+        "yaml_hint_full": "完全版YAMLは、小惑星や38日分の詳細までじっくり読みたい時に使います。",
         "yaml_hint_standard": "通常版YAMLです。AIにはこの計算結果を変更せず、解釈だけさせてください。",
         "copy_yaml_full": "YAML全文コピー",
         "copy_yaml_complete": "完全版YAMLコピー",
@@ -622,7 +622,7 @@ I18N = {
         "order_code_placeholder": "例：9824333454",
         "order_code_hint": "購入確認メールの件名にある注文番号です。追加部品ごとに1回だけ使用できます。",
         "base_data_title": "基本データ入力",
-        "base_data_hint_transit": "トランジット追加は、基本版の出生データを土台に生成します。",
+        "base_data_hint_transit": "38日トランジット追加は、基本版の出生データを土台に生成します。",
         "base_data_hint_standard": "基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。",
         "previous_chart_url_label": "90日以内の前回鑑定URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
@@ -631,12 +631,12 @@ I18N = {
         "base_yaml_placeholder": "ここに基本版YAMLを貼り付けてください",
         "base_yaml_hint": "基本版YAMLの内容から出生情報を読み取り、addon生成に使用します。",
         "transit_period_title": "トランジット期間",
-        "transit_period_hint": "31日トランジットは31日間、長期トランジットは1年間です。開始日は現在日から前後5年以内で指定できます。",
+        "transit_period_hint": "38日トランジットは38日間、長期トランジットは1年間です。開始日は現在日から前後5年以内で指定できます。",
         "transit_start_date_label": "開始日",
         "transit_start_date_hint": "指定可能範囲: {min_date} 〜 {max_date}",
         "generate_button": "追加部品YAMLを生成する",
-        "generated_transit_title": "31日トランジットデータを生成しました",
-        "generated_transit_lead": "以下のURLから32日間アクセスできます。",
+        "generated_transit_title": "38日トランジットデータを生成しました",
+        "generated_transit_lead": "以下のURLから閲覧できます。",
         "transit_url_label": "閲覧URL",
         "transit_expires_hint": "有効期限: {label}",
         "transit_url_hint": "AIに詳しく読ませたい場合は、ダウンロードしたYAMLファイルを添付してください。",
@@ -833,7 +833,7 @@ I18N = {
         "helper_note": "Compatible with ChatGPT / Claude / Gemini and other AI services.",
         "full_asteroid_note": "The FULL version also includes detailed data such as asteroids.<br>Use it if you want a deeper reading.<br>",
         "full_asteroid_link": "View FULL asteroid data",
-        "transit_detail_note": "This page also includes detailed data for 31 days of transits.<br>Use it if you want a deeper reading.<br>",
+        "transit_detail_note": "This page also includes detailed data for 38 days of transits.<br>Use it if you want a deeper reading.<br>",
         "transit_detail_link": "View detailed transit data",
         "chart_note": "A horoscope chart is also available. You do not need to view it to start the reading, but you can check it here if you want to see the chart.<br>",
         "view_horoscope_chart": "View horoscope chart",
@@ -862,7 +862,7 @@ I18N = {
         "download_horoscope_svg": "Horoscope SVG",
         "download_shichu_svg": "Four Pillars SVG",
         "next_transit_title": "Create the next transit",
-        "next_transit_desc": "You can carry over the previous AI-readable astrology data<br>and generate the next 31-day transit.",
+        "next_transit_desc": "You can carry over the previous AI-readable astrology data<br>and generate the next 38-day transit.",
         "chart_details_summary_both": "View horoscope and Four Pillars charts",
         "chart_details_summary_horoscope": "View horoscope chart",
         "chart_details_summary_shichu": "View Four Pillars chart",
@@ -891,15 +891,15 @@ I18N = {
         "full_details_title_asteroids": "Available data types",
         "full_details_title_transit": "Available data types",
         "full_details_hint_asteroids": "Detailed data with asteroids. Use it if you want a deeper reading.",
-        "full_details_hint_transit": "Detailed data including 31-day transits. Use it if you want a deeper reading.",
+        "full_details_hint_transit": "Detailed data including 38-day transits. Use it if you want a deeper reading.",
         "asteroid_mode_label": "Asteroid version",
         "recommended_badge": "Recommended",
-        "asteroid_mode_desc": "Detailed data including asteroids and the 31-day transit.",
+        "asteroid_mode_desc": "Detailed data including asteroids and the 38-day transit.",
         "standard_mode_desc": "The basic data available with this product. Use it for regular AI readings or storage.",
         "full_mode_label": "Complete version",
         "all_details_badge": "All details",
-        "full_mode_desc_asteroids": "The complete version includes asteroids and all 31-day details. Use it only when you need the extra volume.",
-        "full_mode_desc_transit": "This version includes detailed transit data for 31 days.",
+        "full_mode_desc_asteroids": "The complete version includes asteroids and all 38-day details. Use it only when you need the extra volume.",
+        "full_mode_desc_transit": "This version includes detailed transit data for 38 days.",
         "send_selected_to_ai": "Send selected version to AI",
         "copy_selected": "Copy selected version",
         "data_preview_label": "Check YAML and prompt",
@@ -921,7 +921,7 @@ I18N = {
         "yaml_full_title": "Full YAML",
         "yaml_complete_title": "Complete YAML",
         "yaml_hint_transit": "This is planetary position data at the event time. Ask the AI to interpret the results without changing the calculation.",
-        "yaml_hint_full": "Use the complete YAML when you want to read asteroids and 31-day details in depth.",
+        "yaml_hint_full": "Use the complete YAML when you want to read asteroids and 38-day details in depth.",
         "yaml_hint_standard": "This is the standard YAML. Ask the AI to interpret the results without recalculating them.",
         "copy_yaml_full": "Copy full YAML",
         "copy_yaml_complete": "Copy complete YAML",
@@ -989,12 +989,12 @@ I18N = {
         "base_yaml_placeholder": "Paste the basic YAML here",
         "base_yaml_hint": "The basic YAML is used to read the birth data for add-on generation.",
         "transit_period_title": "Transit period",
-        "transit_period_hint": "The 31-day transit covers 31 days, and the long-term transit covers one year. The start date can be set within five years before or after today.",
+        "transit_period_hint": "The 38-day transit covers 38 days, and the long-term transit covers one year. The start date can be set within five years before or after today.",
         "transit_start_date_label": "Start date",
         "transit_start_date_hint": "Available range: {min_date} to {max_date}",
         "generate_button": "Generate add-on YAML",
-        "generated_transit_title": "31-day transit data generated",
-        "generated_transit_lead": "You can access this page for 32 days from the URL below.",
+        "generated_transit_title": "38-day transit data generated",
+        "generated_transit_lead": "You can access this page from the URL below.",
         "transit_url_label": "View URL",
         "transit_expires_hint": "Expires: {label}",
         "transit_url_hint": "If you want AI to read it in more detail, attach the downloaded YAML file.",
@@ -1096,7 +1096,7 @@ def _localized_product(product_type: str, lang: str) -> dict:
     if lang == "en":
         english_descriptions = {
             "western_basic": "Creates core birth chart data for Western astrology. No asteroids, Four Pillars, or day-boundary options are shown.",
-            "western_full": "Includes asteroids and a 31-day transit set. No selection is required from the buyer.",
+            "western_full": "Includes asteroids and a 38-day transit set. No selection is required from the buyer.",
             "western_asteroids_addon": "Creates the asteroid add-on YAML to use with the basic version.",
             "shichu": "Creates Four Pillars data. The day-change boundary can be set to the standard 1:00 AM or 11:00 PM.",
             "transit_yaml": "Creates YAML for the planetary positions at a specific event, date, and place. Birth information is not used.",
@@ -1111,7 +1111,7 @@ def _localized_product(product_type: str, lang: str) -> dict:
             "western_full": [
                 "Western astrology birth chart data",
                 "Includes asteroids",
-                "Includes 31-day transits",
+                "Includes 38-day transits",
                 "No Four Pillars data",
             ],
             "western_asteroids_addon": [
@@ -1593,7 +1593,7 @@ def _product_label(product_type: str | None) -> str:
         return "APIキー"
     addon_labels = {
         "western_asteroids_addon": "ホロスコープ：小惑星追加",
-        "western_31days_transit_addon": "ホロスコープ：31日トランジット追加",
+        "western_31days_transit_addon": "ホロスコープ：38日トランジット追加",
         "western_long_term_transits_addon": "ホロスコープ：長期トランジット追加",
         "shichu_fortune_cycles_addon": "四柱推命：大運・流年追加",
     }
@@ -3666,7 +3666,7 @@ def admin_yaml_result(request: Request, token: str):
 
 ADDON_FORM_OPTIONS = [
     {"value": "western_asteroids_addon", "label": "小惑星追加"},
-    {"value": "western_31days_transit_addon", "label": "31日トランジット追加"},
+    {"value": "western_31days_transit_addon", "label": "38日トランジット追加"},
     {"value": "western_long_term_transits_addon", "label": "長期トランジット（1年）追加"},
 ]
 
@@ -3675,13 +3675,13 @@ def _localized_addon_options(lang: str) -> list[dict[str, str]]:
     if lang == "en":
         labels = {
             "western_asteroids_addon": "Asteroid add-on",
-            "western_31days_transit_addon": "31-day transit add-on",
+            "western_31days_transit_addon": "38-day transit add-on",
             "western_long_term_transits_addon": "Long-term transits add-on (1 year)",
         }
     else:
         labels = {
             "western_asteroids_addon": "小惑星追加",
-            "western_31days_transit_addon": "31日トランジット追加",
+            "western_31days_transit_addon": "38日トランジット追加",
             "western_long_term_transits_addon": "長期トランジット（1年）追加",
         }
     return [{"value": item["value"], "label": labels.get(item["value"], item["label"])} for item in ADDON_FORM_OPTIONS]
@@ -3930,7 +3930,7 @@ def _build_transit_addon_from_base(
     doc: dict,
     *,
     transit_start_date: datetime,
-    transit_days: int = 31,
+    transit_days: int = 38,
     product_type: str = "western_31days_transit_addon",
     product_label: str | None = None,
     addon_type: str = "western_31days_transit",
@@ -3945,8 +3945,8 @@ def _build_transit_addon_from_base(
         transit_start_date=transit_start_date,
         transit_days=transit_days,
     )
-    if transit_days != 31:
-        addon_prompt_text = addon_prompt_text.replace("31日", f"{transit_days}日")
+    if transit_days != 38:
+        addon_prompt_text = addon_prompt_text.replace("38日", f"{transit_days}日")
     addon_meta = addon_doc.setdefault("meta", {})
     addon_meta["product_type"] = product_type
     addon_meta["addon_type"] = addon_type
@@ -4005,7 +4005,7 @@ LONG_TERM_TRANSITS_ADDON_CHART_PROMPT = """あなたは西洋占星術の鑑定�
 重要ルール:
 - このYAML内の出生図データと長期トランジットだけを根拠にしてください。
 - 生年月日から天体位置を再計算しないでください。
-- 31日トランジット、今日の運勢、短期的な日別予報として扱わないでください。
+- 38日トランジット、今日の運勢、短期的な日別予報として扱わないでください。
 - Saturn / Uranus / Neptune / Pluto / Jupiter などの長期的な流れを中心に、今後1年のテーマを読んでください。
 - systems.western.transit_long_term.samples は約7日間隔の観測点です。日別予報ではなく、主要天体のサイン・逆行・ネイタルとのアスペクトの推移として読んでください。
 - Chiron / North Node / South Node は補助情報として扱い、主要5天体より優先しないでください。
@@ -4468,9 +4468,6 @@ def note_transit_generate(request: Request, access_key: str, payload: dict = Bod
             source_doc,
             transit_start_date=start_dt,
             transit_days=campaign.days,
-            product_type="western_note_transit_addon",
-            product_label=f"{campaign.label} トランジット追加",
-            addon_type="western_note_transit",
             extra_meta={
                 "campaign_id": campaign.campaign_id,
                 "target_month": campaign.target_month,
@@ -4534,7 +4531,7 @@ def note_transit_generate(request: Request, access_key: str, payload: dict = Bod
 
 
 def _transit_addon_expires_at() -> datetime:
-    # 31日トランジット addon も /chart/{token} の鑑定データページとして扱うため、
+    # 38日トランジット addon も /chart/{token} の鑑定データページとして扱うため、
     # 基本版・FULL版と同じ公開寿命にそろえる。
     return _chart_expires_at()
 
@@ -5157,9 +5154,9 @@ def _chart_has_western_natal(chart: dict, *, doc: dict | None = None) -> bool:
 
 def _chart_has_31day_transit(chart: dict, *, doc: dict | None = None) -> bool:
     options = chart.get("options") or {}
-    if options.get("transit_days") == 31 or bool(options.get("transit_31days_summary")):
+    if options.get("transit_days") in {31, 38} or bool(options.get("transit_31days_summary")):
         return True
-    if bool(options.get("transit")) and options.get("product_type") == "western_31days_transit_addon":
+    if bool(options.get("transit")) and options.get("product_type") in {"western_31days_transit_addon", "western_note_transit_addon"}:
         return True
     doc = doc if isinstance(doc, dict) else {}
     western = ((doc.get("systems") or {}).get("western") or {})
@@ -5170,7 +5167,7 @@ def _chart_has_31day_transit(chart: dict, *, doc: dict | None = None) -> bool:
     if isinstance(daily, list) and len(daily) >= 31:
         return True
     period = transit.get("period") or {}
-    return period.get("days") == 31
+    return period.get("days") in {31, 38}
 
 
 def _chart_has_western_asteroids(chart: dict, *, doc: dict | None = None) -> bool:
@@ -5295,15 +5292,15 @@ def _chart_zip_readme(chart: dict) -> str:
         files.extend([
             "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
             "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",
-            "transit.yaml: 31日分のトランジットデータです。今後の流れを詳しく見たいときに使います。",
+            "transit.yaml: 38日分のトランジットデータです。今後の流れを詳しく見たいときに使います。",
         ])
     elif asteroid_like_western:
         files.extend([
             "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
             "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",
         ])
-    if has_long_term_transits(doc=chart_doc):
-        files.append("long-term-transits.yaml: 年単位の長期トランジット専用YAMLです。31日トランジットとは別に使います。")
+        if has_long_term_transits(doc=chart_doc):
+            files.append("long-term-transits.yaml: 年単位の長期トランジット専用YAMLです。38日トランジットとは別に使います。")
     if chart.get("horoscope_svg"):
         files.append("horoscope.svg: ホロスコープ図のSVGです。図として確認したいときに使います。")
     if chart.get("shichusuimei_svg"):

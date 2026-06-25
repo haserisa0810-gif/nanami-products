@@ -199,7 +199,6 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(payload["source_type"], "url")
         load_source.assert_called_once()
         self.assertEqual(build_transit.call_args.kwargs["transit_days"], 38)
-        self.assertEqual(build_transit.call_args.kwargs["product_type"], "western_note_transit_addon")
         save_result.assert_called_once_with(
             "generated-yaml",
             chart_payload={
@@ -305,19 +304,16 @@ class NoteTransitTest(unittest.TestCase):
                 "routes.build_31days_transit_addon_yaml",
                 return_value=(
                     yaml.safe_dump(addon_doc, allow_unicode=True, sort_keys=False),
-                    "今後31日間のaddon-prompt",
+                    "今後38日間のaddon-prompt",
                     addon_doc,
                 ),
             ) as build_addon,
-            patch("routes.build_product_yaml", return_value=("", "31日分のchart-prompt", generated_doc)),
+            patch("routes.build_product_yaml", return_value=("", "38日分のchart-prompt", generated_doc)),
         ):
             addon_yaml, addon_prompt, _addon_doc, chart_yaml, chart_prompt, chart_doc = _build_transit_addon_from_base(
                 _source_doc(),
                 transit_start_date=datetime(2026, 7, 1, tzinfo=timezone.utc),
                 transit_days=campaign.days,
-                product_type="western_note_transit_addon",
-                product_label=f"{campaign.label} トランジット追加",
-                addon_type="western_note_transit",
                 extra_meta={"campaign_id": campaign.campaign_id},
                 extra_options={"campaign_id": campaign.campaign_id},
                 extra_root={"campaign": addon_doc["campaign"]},
@@ -328,7 +324,7 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(build_addon.call_args.kwargs["transit_days"], 38)
         self.assertIsNotNone(loaded["systems"]["western"]["natal"])
         self.assertEqual(loaded["systems"]["western"]["transit"]["period"]["days"], 38)
-        self.assertEqual(chart_doc["meta"]["product_type"], "western_note_transit_addon")
+        self.assertEqual(chart_doc["meta"]["product_type"], "western_31days_transit_addon")
         self.assertEqual(addon_loaded["meta"]["campaign_id"], "note-2026-07")
         self.assertIn("38日間", addon_prompt)
         self.assertIn("38日分", chart_prompt)
@@ -366,9 +362,9 @@ class NoteTransitTest(unittest.TestCase):
 
         addon_loaded = yaml.safe_load(addon_yaml)
         self.assertEqual(addon_loaded["meta"]["product_type"], "western_31days_transit_addon")
-        self.assertEqual(addon_loaded["product"]["options"]["transit_days"], 31)
+        self.assertEqual(addon_loaded["product"]["options"]["transit_days"], 38)
         self.assertEqual(chart_doc["product"]["options"]["product_type"], "western_31days_transit_addon")
-        self.assertEqual(chart_doc["product"]["options"]["transit_days"], 31)
+        self.assertEqual(chart_doc["product"]["options"]["transit_days"], 38)
 
     def test_note_specific_result_routes_are_removed(self) -> None:
         template_path = Path("templates/note_transit_result.html")
