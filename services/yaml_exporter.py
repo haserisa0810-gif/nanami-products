@@ -715,6 +715,7 @@ def build_31days_transit_addon_yaml(
     gender: str = "unknown",
     house_system: str = "P",
     transit_start_date: datetime | None = None,
+    transit_days: int = 31,
     birth_time_accuracy: str = "auto",
     birth_time_range: dict[str, Any] | None = None,
     birth_time_note: str | None = None,
@@ -734,7 +735,7 @@ def build_31days_transit_addon_yaml(
         include_shichusuimei=False,
         include_transit=True,
         transit_start_date=transit_start_date,
-        transit_days=31,
+        transit_days=transit_days,
         birth_time_accuracy=birth_time_accuracy,
         birth_time_range=birth_time_range,
         birth_time_note=birth_time_note,
@@ -788,7 +789,7 @@ def build_31days_transit_addon_yaml(
                 "western_natal": False,
                 "asteroids": False,
                 "transit": True,
-                "transit_days": 31,
+                "transit_days": transit_days,
                 "shichusuimei": False,
             },
         },
@@ -808,7 +809,7 @@ def build_31days_transit_addon_yaml(
         "usage_note": {
             "for_ai": "これは追加部品データです。基本版ホロスコープYAMLと一緒にAIへ貼り付けて使ってください。",
             "merge_instruction": "systems.western.transit を、同じ出生情報で作成済みの基本版YAMLへ追加する想定です。",
-            "not_included": "出生図全体・小惑星・四柱推命・鑑定本文は含みません。31日トランジット追加用の計算済みデータです。",
+            "not_included": f"出生図全体・小惑星・四柱推命・鑑定本文は含みません。{transit_days}日トランジット追加用の計算済みデータです。",
         },
         "systems": {
             "western": {

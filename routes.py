@@ -40,7 +40,6 @@ from services.light_yaml import (
 from services.long_term_transit_yaml import build_long_term_transits_yaml, has_long_term_transits
 from services.note_transit import (
     NoteTransitCampaign,
-    build_note_transit_yaml,
     get_note_transit_campaign_by_access_key,
 )
 from services.post_chart import build_post_chart
@@ -3931,13 +3930,37 @@ def _build_transit_addon_from_base(
     doc: dict,
     *,
     transit_start_date: datetime,
+    transit_days: int = 31,
+    product_type: str = "western_31days_transit_addon",
+    product_label: str | None = None,
+    addon_type: str = "western_31days_transit",
+    extra_meta: dict[str, object] | None = None,
+    extra_options: dict[str, object] | None = None,
+    extra_root: dict[str, object] | None = None,
 ) -> tuple[str, str, dict, str, str, dict]:
     _validate_addon_base_doc(doc, "western_31days_transit_addon")
     args = _addon_args_from_base_doc(doc)
     addon_yaml_text, addon_prompt_text, addon_doc = build_31days_transit_addon_yaml(
         **args,
         transit_start_date=transit_start_date,
+        transit_days=transit_days,
     )
+    if transit_days != 31:
+        addon_prompt_text = addon_prompt_text.replace("31日", f"{transit_days}日")
+    addon_meta = addon_doc.setdefault("meta", {})
+    addon_meta["product_type"] = product_type
+    addon_meta["addon_type"] = addon_type
+    addon_meta.update(extra_meta or {})
+    addon_product = addon_doc.setdefault("product", {})
+    addon_product["type"] = product_type
+    if product_label:
+        addon_product["label"] = product_label
+    addon_options = addon_product.setdefault("options", {})
+    addon_options["transit_days"] = transit_days
+    addon_options.update(extra_options or {})
+    addon_doc.update(copy.deepcopy(extra_root or {}))
+    addon_yaml_text = yaml.safe_dump(addon_doc, allow_unicode=True, sort_keys=False, width=120)
+
     has_asteroids = _doc_has_western_asteroids(doc)
     _generated_yaml_text, chart_prompt_text, _generated_doc = build_product_yaml(
         **args,
@@ -3945,20 +3968,33 @@ def _build_transit_addon_from_base(
         include_shichusuimei=False,
         include_transit=True,
         transit_start_date=transit_start_date,
-        transit_days=31,
+        transit_days=transit_days,
     )
+    if transit_days != 31:
+        chart_prompt_text = chart_prompt_text.replace("31日", f"{transit_days}日")
     chart_doc = copy.deepcopy(doc)
     systems = chart_doc.setdefault("systems", {})
     western = systems.setdefault("western", {})
     western["transit"] = (((addon_doc.get("systems") or {}).get("western") or {}).get("transit"))
     product = chart_doc.setdefault("product", {})
+    product["type"] = product_type
+    if product_label:
+        product["label"] = product_label
     product_options = product.setdefault("options", {})
     product_options["transit"] = True
-    product_options["transit_days"] = 31
+    product_options["transit_days"] = transit_days
+    product_options["product_type"] = product_type
+    product_options.update(extra_options or {})
     if "western_natal" not in product_options:
         product_options["western_natal"] = True
     if "asteroids" not in product_options:
         product_options["asteroids"] = has_asteroids
+    meta = chart_doc.setdefault("meta", {})
+    meta["product_type"] = product_type
+    meta["data_role"] = "base_chart"
+    meta["addon_type"] = addon_type
+    meta.update(extra_meta or {})
+    chart_doc.update(copy.deepcopy(extra_root or {}))
     chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
     chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
     return addon_yaml_text, addon_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
@@ -4059,7 +4095,13 @@ def _transit_addon_chart_payload(
         "birth_date": str(input_block.get("birth_date") or "").strip(),
         "birth_time": str(input_block.get("birth_time") or input_block.get("calculation_time") or "").strip() or None,
         "birth_place": str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip() or None,
-        "options": {**(chart_doc.get("product", {}).get("options", {}) or {}), "product_type": "western_31days_transit_addon"},
+        "options": {
+            **(chart_doc.get("product", {}).get("options", {}) or {}),
+            "product_type": (
+                ((chart_doc.get("product") or {}).get("options") or {}).get("product_type")
+                or "western_31days_transit_addon"
+            ),
+        },
         "yaml_text": yaml_text,
         "prompt_text": prompt_text,
         "share_yaml_text": share_yaml_text,
@@ -4323,83 +4365,6 @@ def _resolve_note_transit_source(data_url: str, base_yaml: str) -> tuple[dict, s
     )
 
 
-NOTE_TRANSIT_CHART_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図とnote特典の月固定トランジットを統合した鑑定用データです。
-
-重要ルール:
-- YAML内の出生図とトランジット計算結果を変更せず、再計算しないでください。
-- campaign.start_date から campaign.end_date までの固定期間を対象にしてください。
-- systems.western.natal と systems.western.transit を組み合わせて解釈してください。
-- 期間外の運勢を、このデータから断定しないでください。
-
-以下のYAMLを読み込んで、対象期間のトランジット鑑定を行ってください。
-"""
-
-
-def _build_note_transit_chart(
-    *,
-    source_doc: dict,
-    addon_yaml_text: str,
-    campaign: NoteTransitCampaign,
-) -> tuple[str, str, dict, dict[str, object]]:
-    addon_doc = yaml.safe_load(addon_yaml_text) or {}
-    addon_transit = (((addon_doc.get("systems") or {}).get("western") or {}).get("transit"))
-    if not isinstance(addon_transit, dict) or not addon_transit:
-        raise NoteTransitRequestError(
-            "生成したトランジットデータを結果画面用に統合できませんでした。",
-            code="generation_failed",
-            status_code=500,
-        )
-
-    chart_doc = copy.deepcopy(source_doc)
-    systems = chart_doc.setdefault("systems", {})
-    western = systems.setdefault("western", {})
-    western["transit"] = addon_transit
-
-    product = chart_doc.setdefault("product", {})
-    product["type"] = "western_note_transit_addon"
-    product["label"] = f"{campaign.label} トランジット追加"
-    options = product.setdefault("options", {})
-    options["western_natal"] = True
-    options["transit"] = True
-    options["transit_days"] = campaign.days
-    options["product_type"] = "western_note_transit_addon"
-    options["campaign_id"] = campaign.campaign_id
-    options["target_month"] = campaign.target_month
-
-    meta = chart_doc.setdefault("meta", {})
-    meta["product_type"] = "western_note_transit_addon"
-    meta["data_role"] = "base_chart"
-    meta["addon_type"] = "western_note_transit"
-    meta["campaign_id"] = campaign.campaign_id
-    meta["target_month"] = campaign.target_month
-    chart_doc["campaign"] = copy.deepcopy(addon_doc.get("campaign") or {})
-    chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
-
-    assets = chart_doc.setdefault("assets", {})
-    assets["yaml_transit"] = {
-        "available": True,
-        "file_name": "transit.yaml",
-        "merge_path": "systems.western.transit",
-    }
-
-    chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
-    chart_prompt_text = NOTE_TRANSIT_CHART_PROMPT.strip() + "\n"
-    chart_payload = _transit_addon_chart_payload(
-        yaml_text=chart_yaml_text,
-        prompt_text=chart_prompt_text,
-        chart_doc=chart_doc,
-    )
-    chart_payload["options"] = {
-        **dict(chart_payload["options"]),
-        "product_type": "western_note_transit_addon",
-        "campaign_id": campaign.campaign_id,
-        "target_month": campaign.target_month,
-        "order_provider": "note",
-        "order_strict_check": False,
-    }
-    return chart_yaml_text, chart_prompt_text, chart_doc, chart_payload
-
-
 def _save_note_transit_result(
     addon_yaml_text: str,
     *,
@@ -4479,17 +4444,53 @@ def note_transit_generate(request: Request, access_key: str, payload: dict = Bod
             str(payload.get("data_url") or ""),
             str(payload.get("base_yaml") or ""),
         )
-        calculation_args = _addon_args_from_base_doc(source_doc)
-        result_yaml = build_note_transit_yaml(
-            campaign=campaign,
-            source_doc=source_doc,
-            calculation_args=calculation_args,
+        start_dt = datetime(
+            campaign.start_date.year,
+            campaign.start_date.month,
+            campaign.start_date.day,
+            tzinfo=ZoneInfo(str(((source_doc.get("input") or {}).get("timezone") or "Asia/Tokyo"))),
         )
-        _chart_yaml_text, _chart_prompt_text, _chart_doc, chart_payload = _build_note_transit_chart(
-            source_doc=source_doc,
-            addon_yaml_text=result_yaml,
-            campaign=campaign,
+        campaign_data = {
+            "id": campaign.campaign_id,
+            "label": campaign.label,
+            "target_month": campaign.target_month,
+            "start_date": campaign.start_date.isoformat(),
+            "end_date": campaign.end_date.isoformat(),
+        }
+        (
+            result_yaml,
+            _addon_prompt_text,
+            _addon_doc,
+            chart_yaml_text,
+            chart_prompt_text,
+            chart_doc,
+        ) = _build_transit_addon_from_base(
+            source_doc,
+            transit_start_date=start_dt,
+            transit_days=campaign.days,
+            product_type="western_note_transit_addon",
+            product_label=f"{campaign.label} トランジット追加",
+            addon_type="western_note_transit",
+            extra_meta={
+                "campaign_id": campaign.campaign_id,
+                "target_month": campaign.target_month,
+            },
+            extra_options={
+                "campaign_id": campaign.campaign_id,
+                "target_month": campaign.target_month,
+            },
+            extra_root={"campaign": campaign_data},
         )
+        chart_payload = _transit_addon_chart_payload(
+            yaml_text=chart_yaml_text,
+            prompt_text=chart_prompt_text,
+            chart_doc=chart_doc,
+        )
+        chart_payload["options"] = {
+            **dict(chart_payload["options"]),
+            "order_provider": "note",
+            "order_strict_check": False,
+        }
         token, expires_at = _save_note_transit_result(
             result_yaml,
             chart_payload=chart_payload,

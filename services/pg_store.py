@@ -882,33 +882,53 @@ def redeem_addon_order_and_save_transit_link(
                 if cur.fetchone() is None:
                     return "already_used", order
 
-            cur.execute(
-                f"""
-                INSERT INTO {SCHEMA}.transit_addon_links
-                    (token, yaml_text, expires_at)
-                VALUES (%s, %s, %s)
-                """,
-                (token, yaml_text, expires_at),
+            _insert_transit_addon_result(
+                cur,
+                token=token,
+                order_code=order_code,
+                yaml_text=yaml_text,
+                expires_at=expires_at,
+                chart_payload=chart_payload,
             )
-            if chart_payload:
-                _insert_chart(
-                    cur,
-                    token=token,
-                    order_code=order_code,
-                    buyer_name=chart_payload.get("buyer_name"),
-                    birth_date=str(chart_payload["birth_date"]),
-                    birth_time=chart_payload.get("birth_time"),
-                    birth_place=chart_payload.get("birth_place"),
-                    options=dict(chart_payload["options"]),
-                    yaml_text=str(chart_payload["yaml_text"]),
-                    prompt_text=str(chart_payload["prompt_text"]),
-                    share_yaml_text=chart_payload.get("share_yaml_text"),
-                    horoscope_svg=chart_payload.get("horoscope_svg"),
-                    shichusuimei_svg=chart_payload.get("shichusuimei_svg"),
-                    expires_at=expires_at,
-                    on_conflict_do_nothing=False,
-                )
             return "ok", order
+
+
+def _insert_transit_addon_result(
+    cur,
+    *,
+    token: str,
+    order_code: str | None,
+    yaml_text: str,
+    expires_at: datetime,
+    chart_payload: dict[str, Any] | None,
+) -> None:
+    cur.execute(
+        f"""
+        INSERT INTO {SCHEMA}.transit_addon_links
+            (token, yaml_text, expires_at)
+        VALUES (%s, %s, %s)
+        """,
+        (token, yaml_text, expires_at),
+    )
+    if not chart_payload:
+        return
+    _insert_chart(
+        cur,
+        token=token,
+        order_code=order_code,
+        buyer_name=chart_payload.get("buyer_name"),
+        birth_date=str(chart_payload["birth_date"]),
+        birth_time=chart_payload.get("birth_time"),
+        birth_place=chart_payload.get("birth_place"),
+        options=dict(chart_payload["options"]),
+        yaml_text=str(chart_payload["yaml_text"]),
+        prompt_text=str(chart_payload["prompt_text"]),
+        share_yaml_text=chart_payload.get("share_yaml_text"),
+        horoscope_svg=chart_payload.get("horoscope_svg"),
+        shichusuimei_svg=chart_payload.get("shichusuimei_svg"),
+        expires_at=expires_at,
+        on_conflict_do_nothing=False,
+    )
 
 
 def save_transit_addon_link(*, token: str, yaml_text: str, expires_at: datetime) -> None:
@@ -933,30 +953,13 @@ def save_transit_addon_link_and_chart(
 ) -> None:
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                INSERT INTO {SCHEMA}.transit_addon_links
-                    (token, yaml_text, expires_at)
-                VALUES (%s, %s, %s)
-                """,
-                (token, yaml_text, expires_at),
-            )
-            _insert_chart(
+            _insert_transit_addon_result(
                 cur,
                 token=token,
                 order_code=None,
-                buyer_name=chart_payload.get("buyer_name"),
-                birth_date=str(chart_payload["birth_date"]),
-                birth_time=chart_payload.get("birth_time"),
-                birth_place=chart_payload.get("birth_place"),
-                options=dict(chart_payload["options"]),
-                yaml_text=str(chart_payload["yaml_text"]),
-                prompt_text=str(chart_payload["prompt_text"]),
-                share_yaml_text=chart_payload.get("share_yaml_text"),
-                horoscope_svg=chart_payload.get("horoscope_svg"),
-                shichusuimei_svg=chart_payload.get("shichusuimei_svg"),
+                yaml_text=yaml_text,
                 expires_at=expires_at,
-                on_conflict_do_nothing=False,
+                chart_payload=chart_payload,
             )
 
 
