@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ campaign.label }} トランジット追加データ発行 | nanami-products</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products</p>
+      {% if unavailable_error %}
+        <h1>note特典<br>トランジット追加データ発行</h1>
+        <div class="error">{{ unavailable_error }}</div>
+      {% else %}
+        <h1>{{ campaign.start_date.year }}年{{ campaign.start_date.month }}月 note特典<br>トランジット追加データ発行</h1>
+        <p class="lead">基本版またはFULL版のデータURLを入力してください。</p>
+
+        <section class="notice-box">
+          <h2>収録期間</h2>
+          <p><strong>{{ campaign.start_date.isoformat() }} ～ {{ campaign.end_date.isoformat() }}</strong></p>
+          <p class="hint">対象月と期間はこのページに固定されています。変更はできません。</p>
+        </section>
+
+        <div id="error-message" class="error" hidden aria-live="assertive"></div>
+        <form id="note-transit-form" class="form">
+          <div class="form-section">
+            <h2>データURL</h2>
+            <label>基本版またはFULL版のデータURL<span class="required">必須</span>
+              <input type="url" name="data_url" id="data-url" required
+                     placeholder="https://.../chart/..."
+                     autocomplete="off">
+              <small>発行済みの鑑定データページURL、またはそのYAML URLを貼り付けてください。</small>
+            </label>
+          </div>
+          <button type="submit" class="submit-button" id="submit-button">追加データを発行する</button>
+        </form>
+
+        <section class="form-section" id="result-section" hidden>
+          <h2>発行結果</h2>
+          <p class="hint" id="period-label"></p>
+          <textarea id="result-yaml" readonly spellcheck="false"></textarea>
+          <div class="links" style="margin-top:12px">
+            <button type="button" id="copy-button">コピー</button>
+            <button type="button" id="download-button">ダウンロード</button>
+          </div>
+          <p class="hint" id="result-status" aria-live="polite"></p>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+
+  {% if not unavailable_error %}
+  <script>
+    const form = document.getElementById('note-transit-form');
+    const dataUrl = document.getElementById('data-url');
+    const submitButton = document.getElementById('submit-button');
+    const errorMessage = document.getElementById('error-message');
+    const resultSection = document.getElementById('result-section');
+    const resultYaml = document.getElementById('result-yaml');
+    const periodLabel = document.getElementById('period-label');
+    const resultStatus = document.getElementById('result-status');
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.hidden = false;
+      resultSection.hidden = true;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorMessage.hidden = true;
+      resultStatus.textContent = '';
+      submitButton.disabled = true;
+      submitButton.textContent = '生成中です...';
+      try {
+        const response = await fetch({{ api_url | tojson }}, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({data_url: dataUrl.value.trim()}),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          showError(payload.error || 'トランジット生成に失敗しました。');
+          return;
+        }
+        resultYaml.value = payload.yaml;
+        periodLabel.textContent = `収録期間: ${payload.start_date} ～ ${payload.end_date}`;
+        resultSection.hidden = false;
+      } catch (error) {
+        showError('通信に失敗しました。時間をおいて再度お試しください。');
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = '追加データを発行する';
+      }
+    });
+
+    document.getElementById('copy-button').addEventListener('click', async () => {
+      if (!resultYaml.value) return;
+      await navigator.clipboard.writeText(resultYaml.value);
+      resultStatus.textContent = 'コピーしました。';
+    });
+
+    document.getElementById('download-button').addEventListener('click', () => {
+      if (!resultYaml.value) return;
+      const blob = new Blob([resultYaml.value], {type: 'text/yaml;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `nanami-note-transit-{{ target_month }}.yaml`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      resultStatus.textContent = 'ダウンロードを開始しました。';
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

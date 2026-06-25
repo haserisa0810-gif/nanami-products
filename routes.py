@@ -38,6 +38,11 @@ from services.light_yaml import (
     build_transit_astrology_yaml,
 )
 from services.long_term_transit_yaml import build_long_term_transits_yaml, has_long_term_transits
+from services.note_transit import (
+    NoteTransitCampaign,
+    build_note_transit_yaml,
+    get_note_transit_campaign,
+)
 from services.post_chart import build_post_chart
 from services.prompt_builder import ensure_transit_date_guidance
 from services.shichu_chart import (
@@ -4191,6 +4196,173 @@ def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str, addon_
     except ValueError as exc:
         raise ValueError("このURLにはaddonに使えるネイタル情報がありません。基本版ホロスコープのYAMLまたはURLを入力してください。") from exc
     return doc
+
+
+class NoteTransitRequestError(ValueError):
+    def __init__(self, message: str, *, code: str, status_code: int = 400):
+        super().__init__(message)
+        self.code = code
+        self.status_code = status_code
+
+
+def _require_note_transit_campaign(target_month: str) -> NoteTransitCampaign:
+    campaign = get_note_transit_campaign(target_month)
+    if campaign is None:
+        raise NoteTransitRequestError(
+            "指定された月のキャンペーンは定義されていません。",
+            code="campaign_not_found",
+            status_code=404,
+        )
+    if not campaign.enabled:
+        raise NoteTransitRequestError(
+            "このキャンペーンは現在利用できません。",
+            code="campaign_disabled",
+            status_code=403,
+        )
+    return campaign
+
+
+def _load_note_transit_source_doc(data_url: str) -> dict:
+    raw_url = (data_url or "").strip()
+    if not raw_url:
+        raise NoteTransitRequestError("データURLを入力してください。", code="url_required")
+    try:
+        parsed = urlparse(raw_url)
+    except ValueError as exc:
+        raise NoteTransitRequestError("URL形式が不正です。", code="invalid_url") from exc
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise NoteTransitRequestError(
+            "URL形式が不正です。http:// または https:// から始まるURLを入力してください。",
+            code="invalid_url",
+        )
+
+    token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\.yaml)?/?", parsed.path or "")
+    if not token_match:
+        raise NoteTransitRequestError(
+            "対応していないURLです。基本版またはFULL版の鑑定データURLを入力してください。",
+            code="unsupported_url",
+        )
+
+    try:
+        chart = pg_store.get_chart(token_match.group(1), include_svgs=False)
+    except Exception as exc:
+        logger.exception("note_transit_source_load_failed url=%s error=%r", raw_url, exc)
+        raise NoteTransitRequestError(
+            "データ取得に失敗しました。時間をおいて再度お試しください。",
+            code="data_fetch_failed",
+            status_code=502,
+        ) from exc
+    if not chart:
+        raise NoteTransitRequestError(
+            "データを取得できませんでした。URLが正しいか確認してください。",
+            code="data_fetch_failed",
+            status_code=404,
+        )
+    chart_options = chart.get("options") or {}
+    chart_product_type = chart_options.get("product_type") if isinstance(chart_options, dict) else None
+    if chart_product_type and chart_product_type not in {"western_basic", "western_full"}:
+        raise NoteTransitRequestError(
+            "対応していないURLです。基本版またはFULL版の鑑定データURLを入力してください。",
+            code="unsupported_url",
+        )
+
+    expires_at = _chart_expiry(chart)
+    if expires_at and datetime.now(timezone.utc) >= expires_at:
+        raise NoteTransitRequestError(
+            "このデータURLの有効期限は終了しています。",
+            code="data_fetch_failed",
+            status_code=410,
+        )
+    try:
+        doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""))
+        _validate_addon_base_doc(doc, "western_31days_transit_addon")
+    except ValueError as exc:
+        raise NoteTransitRequestError(
+            "対応していないURLです。基本版またはFULL版の鑑定データURLを入力してください。",
+            code="unsupported_url",
+        ) from exc
+    return doc
+
+
+@app.get("/note-transit/{target_month}", response_class=HTMLResponse)
+def note_transit_page(request: Request, target_month: str):
+    unavailable_error = None
+    try:
+        campaign = _require_note_transit_campaign(target_month)
+    except NoteTransitRequestError as exc:
+        campaign = get_note_transit_campaign(target_month)
+        if campaign is None:
+            return templates.TemplateResponse(
+                "note_transit.html",
+                {
+                    "request": request,
+                    "campaign": NoteTransitCampaign(
+                        campaign_id="undefined",
+                        label=target_month,
+                        start_date=date(1970, 1, 1),
+                        end_date=date(1970, 1, 1),
+                        enabled=False,
+                    ),
+                    "target_month": target_month,
+                    "api_url": f"/api/note-transit/{target_month}",
+                    "unavailable_error": str(exc),
+                },
+                status_code=exc.status_code,
+            )
+        unavailable_error = str(exc)
+    return templates.TemplateResponse(
+        "note_transit.html",
+        {
+            "request": request,
+            "campaign": campaign,
+            "target_month": target_month,
+            "api_url": f"/api/note-transit/{target_month}",
+            "unavailable_error": unavailable_error,
+        },
+        status_code=403 if unavailable_error else 200,
+    )
+
+
+@app.post("/api/note-transit/{target_month}", response_class=JSONResponse)
+def note_transit_generate(target_month: str, payload: dict = Body(default={})):
+    try:
+        campaign = _require_note_transit_campaign(target_month)
+        source_doc = _load_note_transit_source_doc(str(payload.get("data_url") or ""))
+        calculation_args = _addon_args_from_base_doc(source_doc)
+        result_yaml = build_note_transit_yaml(
+            campaign=campaign,
+            source_doc=source_doc,
+            calculation_args=calculation_args,
+        )
+    except NoteTransitRequestError as exc:
+        return JSONResponse(
+            {"ok": False, "error": str(exc), "code": exc.code},
+            status_code=exc.status_code,
+        )
+    except Exception as exc:
+        logger.exception(
+            "note_transit_generation_failed target_month=%s error=%r",
+            target_month,
+            exc,
+        )
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": "トランジット生成に失敗しました。時間をおいて再度お試しください。",
+                "code": "generation_failed",
+            },
+            status_code=500,
+        )
+    return JSONResponse(
+        {
+            "ok": True,
+            "campaign_id": campaign.campaign_id,
+            "target_month": campaign.target_month,
+            "start_date": campaign.start_date.isoformat(),
+            "end_date": campaign.end_date.isoformat(),
+            "yaml": result_yaml,
+        }
+    )
 
 
 def _transit_addon_expires_at() -> datetime:
