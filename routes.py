@@ -4284,6 +4284,45 @@ def _load_note_transit_source_doc(data_url: str) -> dict:
     return doc
 
 
+def _load_note_transit_source_yaml(base_yaml: str) -> dict:
+    raw_yaml = (base_yaml or "").strip()
+    if not raw_yaml:
+        raise NoteTransitRequestError(
+            "データURLまたはYAMLを入力してください。",
+            code="source_required",
+        )
+    try:
+        doc = _load_addon_base_yaml(raw_yaml)
+        _validate_addon_base_doc(doc, "western_31days_transit_addon")
+    except ValueError as exc:
+        raise NoteTransitRequestError(
+            f"YAMLを確認してください。{exc}",
+            code="invalid_yaml",
+        ) from exc
+
+    product = doc.get("product") or {}
+    options = product.get("options") or {}
+    product_type = options.get("product_type") if isinstance(options, dict) else None
+    if product_type and product_type not in {"western_basic", "western_full"}:
+        raise NoteTransitRequestError(
+            "対応していないYAMLです。基本版またはFULL版のYAMLを貼り付けてください。",
+            code="unsupported_yaml",
+        )
+    return doc
+
+
+def _resolve_note_transit_source(data_url: str, base_yaml: str) -> tuple[dict, str, str | None]:
+    if (data_url or "").strip():
+        warning = "URLとYAMLの両方が入力されたため、URLを優先しました。" if (base_yaml or "").strip() else None
+        return _load_note_transit_source_doc(data_url), "url", warning
+    if (base_yaml or "").strip():
+        return _load_note_transit_source_yaml(base_yaml), "yaml", None
+    raise NoteTransitRequestError(
+        "データURLまたはYAMLを入力してください。",
+        code="source_required",
+    )
+
+
 def _save_note_transit_result(yaml_text: str) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
         raise NoteTransitRequestError(
@@ -4354,7 +4393,10 @@ def note_transit_page(request: Request, access_key: str):
 def note_transit_generate(request: Request, access_key: str, payload: dict = Body(default={})):
     try:
         campaign = _require_note_transit_campaign(access_key)
-        source_doc = _load_note_transit_source_doc(str(payload.get("data_url") or ""))
+        source_doc, source_type, warning = _resolve_note_transit_source(
+            str(payload.get("data_url") or ""),
+            str(payload.get("base_yaml") or ""),
+        )
         calculation_args = _addon_args_from_base_doc(source_doc)
         result_yaml = build_note_transit_yaml(
             campaign=campaign,
@@ -4393,6 +4435,8 @@ def note_transit_generate(request: Request, access_key: str, payload: dict = Bod
             "download_url": f"{base_url}/note-transit/result/{token}.yaml",
             "expires_at": expires_at.isoformat(),
             "expires_label": _chart_expiry_label(expires_at),
+            "source_type": source_type,
+            "warning": warning,
             "yaml": result_yaml,
         }
     )

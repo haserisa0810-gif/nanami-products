@@ -27,14 +27,22 @@
         <div id="error-message" class="error" hidden aria-live="assertive"></div>
         <form id="note-transit-form" class="form">
           <div class="form-section">
-            <h2>データURL</h2>
-            <label>基本版またはFULL版のデータURL<span class="required">必須</span>
-              <input type="url" name="data_url" id="data-url" required
+            <h2>URLで発行する</h2>
+            <label>基本版またはFULL版のデータURL
+              <input type="url" name="data_url" id="data-url"
                      placeholder="https://.../chart/..."
                      autocomplete="off">
               <small>発行済みの鑑定データページURL、またはそのYAML URLを貼り付けてください。</small>
             </label>
           </div>
+          <details class="form-section" id="yaml-input-details">
+            <summary>URLが使えない場合：YAMLを直接貼り付ける ▼</summary>
+            <p class="hint">URLが入力されている場合はURLを優先します。</p>
+            <label>基本版またはFULL版のYAML
+              <textarea name="base_yaml" id="base-yaml" spellcheck="false"
+                        placeholder="version: から始まるYAMLを貼り付けてください"></textarea>
+            </label>
+          </details>
           <button type="submit" class="submit-button" id="submit-button">追加データを発行する</button>
         </form>
 
@@ -64,6 +72,7 @@
   <script>
     const form = document.getElementById('note-transit-form');
     const dataUrl = document.getElementById('data-url');
+    const baseYaml = document.getElementById('base-yaml');
     const submitButton = document.getElementById('submit-button');
     const errorMessage = document.getElementById('error-message');
     const resultSection = document.getElementById('result-section');
@@ -84,13 +93,22 @@
       event.preventDefault();
       errorMessage.hidden = true;
       resultStatus.textContent = '';
+      const dataUrlValue = dataUrl.value.trim();
+      const baseYamlValue = baseYaml.value.trim();
+      if (!dataUrlValue && !baseYamlValue) {
+        showError('データURLまたはYAMLを入力してください。');
+        return;
+      }
       submitButton.disabled = true;
       submitButton.textContent = '生成中です...';
       try {
         const response = await fetch({{ api_url | tojson }}, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({data_url: dataUrl.value.trim()}),
+          body: JSON.stringify({
+            data_url: dataUrlValue,
+            base_yaml: baseYamlValue,
+          }),
         });
         const payload = await response.json();
         if (!response.ok) {
@@ -103,6 +121,7 @@
         expiresLabel.textContent = `閲覧期限: ${payload.expires_label}`;
         periodLabel.textContent = `収録期間: ${payload.start_date} ～ ${payload.end_date}`;
         resultSection.hidden = false;
+        if (payload.warning) resultStatus.textContent = payload.warning;
       } catch (error) {
         showError('通信に失敗しました。時間をおいて再度お試しください。');
       } finally {

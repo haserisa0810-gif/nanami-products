@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import patch
 
 import yaml
@@ -11,6 +12,8 @@ from fastapi import Request
 from routes import (
     NoteTransitRequestError,
     _load_note_transit_source_doc,
+    _load_note_transit_source_yaml,
+    _resolve_note_transit_source,
     note_transit_result_page,
     note_transit_result_yaml,
     note_transit_generate,
@@ -132,6 +135,50 @@ class NoteTransitTest(unittest.TestCase):
 
         self.assertEqual(unsupported.exception.code, "unsupported_url")
 
+    def test_yaml_source_accepts_basic_yaml(self) -> None:
+        doc = _load_note_transit_source_yaml(
+            yaml.safe_dump(_source_doc(), allow_unicode=True, sort_keys=False)
+        )
+
+        self.assertEqual(doc["input"]["birth_date"], "2000-01-01")
+
+    def test_source_resolution_prefers_url_and_warns_when_both_exist(self) -> None:
+        with patch("routes._load_note_transit_source_doc", return_value=_source_doc()) as load_url:
+            doc, source_type, warning = _resolve_note_transit_source(
+                "https://example.com/chart/abcdefghijklmnopqrstuvwxyz",
+                yaml.safe_dump(_source_doc(), allow_unicode=True, sort_keys=False),
+            )
+
+        self.assertEqual(doc["input"]["birth_date"], "2000-01-01")
+        self.assertEqual(source_type, "url")
+        self.assertIn("URLを優先", warning)
+        load_url.assert_called_once()
+
+    def test_source_resolution_uses_yaml_when_url_is_empty(self) -> None:
+        doc, source_type, warning = _resolve_note_transit_source(
+            "",
+            yaml.safe_dump(_source_doc(), allow_unicode=True, sort_keys=False),
+        )
+
+        self.assertEqual(doc["input"]["birth_date"], "2000-01-01")
+        self.assertEqual(source_type, "yaml")
+        self.assertIsNone(warning)
+
+    def test_source_resolution_rejects_empty_inputs(self) -> None:
+        with self.assertRaises(NoteTransitRequestError) as missing:
+            _resolve_note_transit_source("", "")
+
+        self.assertEqual(missing.exception.code, "source_required")
+
+    def test_yaml_input_is_collapsed_and_url_is_not_required(self) -> None:
+        template = Path("templates/note_transit.html").read_text(encoding="utf-8")
+
+        self.assertIn("<details", template)
+        self.assertNotIn("<details open", template)
+        self.assertIn("URLが使えない場合：YAMLを直接貼り付ける", template)
+        self.assertIn('id="base-yaml"', template)
+        self.assertNotIn('id="data-url" required', template)
+
     @patch("routes.build_note_transit_yaml", return_value="generated-yaml")
     @patch(
         "routes._save_note_transit_result",
@@ -163,7 +210,10 @@ class NoteTransitTest(unittest.TestCase):
         response = note_transit_generate(
             request,
             "secret-key",
-            {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"},
+            {
+                "data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz",
+                "base_yaml": "",
+            },
         )
         payload = yaml.safe_load(response.body)
 
@@ -173,6 +223,7 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(payload["yaml"], "generated-yaml")
         self.assertEqual(payload["result_url"], "https://example.com/note-transit/result/generated-token")
         self.assertEqual(payload["download_url"], "https://example.com/note-transit/result/generated-token.yaml")
+        self.assertEqual(payload["source_type"], "url")
         load_source.assert_called_once()
         save_result.assert_called_once_with("generated-yaml")
 
@@ -197,6 +248,45 @@ class NoteTransitTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(payload["code"], "campaign_not_found")
+
+    @patch("routes.build_note_transit_yaml", return_value="generated-from-yaml")
+    @patch(
+        "routes._save_note_transit_result",
+        return_value=("yaml-token", datetime(2026, 10, 1, tzinfo=timezone.utc)),
+    )
+    @patch("routes._require_note_transit_campaign")
+    def test_api_generates_from_yaml_when_url_is_empty(
+        self,
+        require_campaign,
+        _save_result,
+        _build,
+    ) -> None:
+        require_campaign.return_value = get_note_transit_campaign("2026-07")
+        request = Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": "/api/note-transit/secret-key",
+                "query_string": b"",
+                "headers": [],
+                "server": ("example.com", 443),
+                "scheme": "https",
+            }
+        )
+
+        response = note_transit_generate(
+            request,
+            "secret-key",
+            {
+                "data_url": "",
+                "base_yaml": yaml.safe_dump(_source_doc(), allow_unicode=True, sort_keys=False),
+            },
+        )
+        payload = yaml.safe_load(response.body)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["source_type"], "yaml")
+        self.assertEqual(payload["yaml"], "generated-from-yaml")
 
     @patch(
         "routes._load_transit_addon_link",
