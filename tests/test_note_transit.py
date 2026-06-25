@@ -11,11 +11,10 @@ from fastapi import Request
 
 from routes import (
     NoteTransitRequestError,
+    _build_note_transit_chart,
     _load_note_transit_source_doc,
     _load_note_transit_source_yaml,
     _resolve_note_transit_source,
-    note_transit_result_page,
-    note_transit_result_yaml,
     note_transit_generate,
 )
 from services.note_transit import (
@@ -184,6 +183,10 @@ class NoteTransitTest(unittest.TestCase):
         "routes._save_note_transit_result",
         return_value=("generated-token", datetime(2026, 10, 1, tzinfo=timezone.utc)),
     )
+    @patch(
+        "routes._build_note_transit_chart",
+        return_value=("chart-yaml", "chart-prompt", {}, {"options": {}}),
+    )
     @patch("routes._addon_args_from_base_doc", return_value={"tz_name": "Asia/Tokyo"})
     @patch("routes._load_note_transit_source_doc", return_value=_source_doc())
     @patch("routes._require_note_transit_campaign")
@@ -192,6 +195,7 @@ class NoteTransitTest(unittest.TestCase):
         require_campaign,
         load_source,
         _args,
+        _build_chart,
         save_result,
         _build,
     ) -> None:
@@ -221,11 +225,11 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(payload["start_date"], "2026-07-01")
         self.assertEqual(payload["end_date"], "2026-08-07")
         self.assertEqual(payload["yaml"], "generated-yaml")
-        self.assertEqual(payload["result_url"], "https://example.com/note-transit/result/generated-token")
-        self.assertEqual(payload["download_url"], "https://example.com/note-transit/result/generated-token.yaml")
+        self.assertEqual(payload["result_url"], "https://example.com/chart/generated-token")
+        self.assertEqual(payload["download_url"], "https://example.com/chart/generated-token/transit.yaml")
         self.assertEqual(payload["source_type"], "url")
         load_source.assert_called_once()
-        save_result.assert_called_once_with("generated-yaml")
+        save_result.assert_called_once_with("generated-yaml", chart_payload={"options": {}})
 
     def test_api_rejects_month_instead_of_secret_key(self) -> None:
         request = Request(
@@ -254,10 +258,15 @@ class NoteTransitTest(unittest.TestCase):
         "routes._save_note_transit_result",
         return_value=("yaml-token", datetime(2026, 10, 1, tzinfo=timezone.utc)),
     )
+    @patch(
+        "routes._build_note_transit_chart",
+        return_value=("chart-yaml", "chart-prompt", {}, {"options": {}}),
+    )
     @patch("routes._require_note_transit_campaign")
     def test_api_generates_from_yaml_when_url_is_empty(
         self,
         require_campaign,
+        _build_chart,
         _save_result,
         _build,
     ) -> None:
@@ -288,44 +297,42 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(payload["source_type"], "yaml")
         self.assertEqual(payload["yaml"], "generated-from-yaml")
 
-    @patch(
-        "routes._load_transit_addon_link",
-        return_value=(
-            {
-                "yaml_text": yaml.safe_dump(
-                    {
-                        "campaign": {
-                            "label": "2026年7月 note特典",
-                            "start_date": "2026-07-01",
-                            "end_date": "2026-08-07",
-                        }
-                    },
-                    allow_unicode=True,
-                )
+    def test_chart_integration_preserves_natal_and_marks_note_campaign(self) -> None:
+        campaign = get_note_transit_campaign("2026-07")
+        addon_doc = {
+            "generated_at": "2026-06-25T00:00:00+09:00",
+            "campaign": {
+                "id": campaign.campaign_id,
+                "start_date": "2026-07-01",
+                "end_date": "2026-08-07",
             },
-            False,
-        ),
-    )
-    def test_result_page_and_yaml_use_saved_link(self, _load_link) -> None:
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "path": "/note-transit/result/generated-token",
-                "query_string": b"",
-                "headers": [],
-                "server": ("example.com", 443),
-                "scheme": "https",
-            }
-        )
+            "systems": {
+                "western": {
+                    "transit": {
+                        "period": {"start_date": "2026-07-01", "end_date": "2026-08-07", "days": 38},
+                        "daily": [{"date": "2026-07-01"}],
+                    }
+                }
+            },
+        }
 
-        page_response = note_transit_result_page(request, "generated-token")
-        yaml_response = note_transit_result_yaml("generated-token")
+        with patch("routes._transit_addon_chart_payload", return_value={"options": {}}):
+            chart_yaml, _prompt, chart_doc, payload = _build_note_transit_chart(
+                source_doc=_source_doc(),
+                addon_yaml_text=yaml.safe_dump(addon_doc, allow_unicode=True, sort_keys=False),
+                campaign=campaign,
+            )
 
-        self.assertEqual(page_response.status_code, 200)
-        self.assertIn("2026-07-01", page_response.body.decode())
-        self.assertEqual(yaml_response.status_code, 200)
-        self.assertIn("2026年7月 note特典", yaml_response.body.decode())
+        loaded = yaml.safe_load(chart_yaml)
+        self.assertIsNotNone(loaded["systems"]["western"]["natal"])
+        self.assertEqual(loaded["systems"]["western"]["transit"]["period"]["days"], 38)
+        self.assertEqual(chart_doc["meta"]["product_type"], "western_note_transit_addon")
+        self.assertEqual(payload["options"]["campaign_id"], "note-2026-07")
+
+    def test_note_specific_result_routes_are_removed(self) -> None:
+        template_path = Path("templates/note_transit_result.html")
+
+        self.assertFalse(template_path.exists())
 
 
 if __name__ == "__main__":

@@ -4323,7 +4323,88 @@ def _resolve_note_transit_source(data_url: str, base_yaml: str) -> tuple[dict, s
     )
 
 
-def _save_note_transit_result(yaml_text: str) -> tuple[str, datetime]:
+NOTE_TRANSIT_CHART_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図とnote特典の月固定トランジットを統合した鑑定用データです。
+
+重要ルール:
+- YAML内の出生図とトランジット計算結果を変更せず、再計算しないでください。
+- campaign.start_date から campaign.end_date までの固定期間を対象にしてください。
+- systems.western.natal と systems.western.transit を組み合わせて解釈してください。
+- 期間外の運勢を、このデータから断定しないでください。
+
+以下のYAMLを読み込んで、対象期間のトランジット鑑定を行ってください。
+"""
+
+
+def _build_note_transit_chart(
+    *,
+    source_doc: dict,
+    addon_yaml_text: str,
+    campaign: NoteTransitCampaign,
+) -> tuple[str, str, dict, dict[str, object]]:
+    addon_doc = yaml.safe_load(addon_yaml_text) or {}
+    addon_transit = (((addon_doc.get("systems") or {}).get("western") or {}).get("transit"))
+    if not isinstance(addon_transit, dict) or not addon_transit:
+        raise NoteTransitRequestError(
+            "生成したトランジットデータを結果画面用に統合できませんでした。",
+            code="generation_failed",
+            status_code=500,
+        )
+
+    chart_doc = copy.deepcopy(source_doc)
+    systems = chart_doc.setdefault("systems", {})
+    western = systems.setdefault("western", {})
+    western["transit"] = addon_transit
+
+    product = chart_doc.setdefault("product", {})
+    product["type"] = "western_note_transit_addon"
+    product["label"] = f"{campaign.label} トランジット追加"
+    options = product.setdefault("options", {})
+    options["western_natal"] = True
+    options["transit"] = True
+    options["transit_days"] = campaign.days
+    options["product_type"] = "western_note_transit_addon"
+    options["campaign_id"] = campaign.campaign_id
+    options["target_month"] = campaign.target_month
+
+    meta = chart_doc.setdefault("meta", {})
+    meta["product_type"] = "western_note_transit_addon"
+    meta["data_role"] = "base_chart"
+    meta["addon_type"] = "western_note_transit"
+    meta["campaign_id"] = campaign.campaign_id
+    meta["target_month"] = campaign.target_month
+    chart_doc["campaign"] = copy.deepcopy(addon_doc.get("campaign") or {})
+    chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
+
+    assets = chart_doc.setdefault("assets", {})
+    assets["yaml_transit"] = {
+        "available": True,
+        "file_name": "transit.yaml",
+        "merge_path": "systems.western.transit",
+    }
+
+    chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
+    chart_prompt_text = NOTE_TRANSIT_CHART_PROMPT.strip() + "\n"
+    chart_payload = _transit_addon_chart_payload(
+        yaml_text=chart_yaml_text,
+        prompt_text=chart_prompt_text,
+        chart_doc=chart_doc,
+    )
+    chart_payload["options"] = {
+        **dict(chart_payload["options"]),
+        "product_type": "western_note_transit_addon",
+        "campaign_id": campaign.campaign_id,
+        "target_month": campaign.target_month,
+        "order_provider": "note",
+        "order_strict_check": False,
+    }
+    return chart_yaml_text, chart_prompt_text, chart_doc, chart_payload
+
+
+def _save_note_transit_result(
+    addon_yaml_text: str,
+    *,
+    chart_payload: dict[str, object],
+) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
         raise NoteTransitRequestError(
             "発行データの保存設定がありません。管理者に連絡してください。",
@@ -4335,10 +4416,11 @@ def _save_note_transit_result(yaml_text: str) -> tuple[str, datetime]:
         token = secrets.token_urlsafe(24)
         expires_at = _chart_expires_at()
         try:
-            pg_store.save_transit_addon_link(
+            pg_store.save_transit_addon_link_and_chart(
                 token=token,
-                yaml_text=yaml_text,
+                yaml_text=addon_yaml_text,
                 expires_at=expires_at,
+                chart_payload=chart_payload,
             )
             return token, expires_at
         except Exception as exc:
@@ -4403,7 +4485,15 @@ def note_transit_generate(request: Request, access_key: str, payload: dict = Bod
             source_doc=source_doc,
             calculation_args=calculation_args,
         )
-        token, expires_at = _save_note_transit_result(result_yaml)
+        _chart_yaml_text, _chart_prompt_text, _chart_doc, chart_payload = _build_note_transit_chart(
+            source_doc=source_doc,
+            addon_yaml_text=result_yaml,
+            campaign=campaign,
+        )
+        token, expires_at = _save_note_transit_result(
+            result_yaml,
+            chart_payload=chart_payload,
+        )
     except NoteTransitRequestError as exc:
         return JSONResponse(
             {"ok": False, "error": str(exc), "code": exc.code},
@@ -4431,54 +4521,14 @@ def note_transit_generate(request: Request, access_key: str, payload: dict = Bod
             "target_month": campaign.target_month,
             "start_date": campaign.start_date.isoformat(),
             "end_date": campaign.end_date.isoformat(),
-            "result_url": f"{base_url}/note-transit/result/{token}",
-            "download_url": f"{base_url}/note-transit/result/{token}.yaml",
+            "result_url": f"{base_url}/chart/{token}",
+            "download_url": f"{base_url}/chart/{token}/transit.yaml",
             "expires_at": expires_at.isoformat(),
             "expires_label": _chart_expiry_label(expires_at),
             "source_type": source_type,
             "warning": warning,
             "yaml": result_yaml,
         }
-    )
-
-
-@app.get("/note-transit/result/{token}.yaml", response_class=PlainTextResponse)
-def note_transit_result_yaml(token: str):
-    link, expired = _load_transit_addon_link(token)
-    if expired:
-        return PlainTextResponse("このnote特典データの有効期限は終了しました。\n", status_code=410)
-    response = PlainTextResponse(str((link or {}).get("yaml_text") or ""), media_type="text/yaml; charset=utf-8")
-    response.headers["Content-Disposition"] = 'attachment; filename="nanami-note-transit-addon.yaml"'
-    response.headers["X-Robots-Tag"] = "noindex, nofollow"
-    return response
-
-
-@app.get("/note-transit/result/{token}", response_class=HTMLResponse)
-def note_transit_result_page(request: Request, token: str):
-    link, expired = _load_transit_addon_link(token)
-    expires_at = _chart_expiry(link or {})
-    yaml_text = "" if expired else str((link or {}).get("yaml_text") or "")
-    campaign: dict[str, object] = {}
-    if yaml_text:
-        try:
-            loaded = yaml.safe_load(yaml_text) or {}
-            campaign = loaded.get("campaign") if isinstance(loaded, dict) else {}
-            if not isinstance(campaign, dict):
-                campaign = {}
-        except yaml.YAMLError:
-            campaign = {}
-    return templates.TemplateResponse(
-        "note_transit_result.html",
-        {
-            "request": request,
-            "expired": expired,
-            "expired_message": "このnote特典データの有効期限は終了しました。",
-            "yaml_text": yaml_text,
-            "campaign": campaign,
-            "expires_label": _chart_expiry_label(expires_at),
-            "download_url": f"/note-transit/result/{token}.yaml",
-        },
-        status_code=410 if expired else 200,
     )
 
 
