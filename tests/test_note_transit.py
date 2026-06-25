@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import unittest
 from unittest.mock import patch
 
@@ -11,8 +12,11 @@ from routes import (
     note_transit_generate,
 )
 from services.note_transit import (
+    NOTE_TRANSIT_CAMPAIGNS,
+    NoteTransitCampaign,
     build_note_transit_yaml,
     get_note_transit_campaign,
+    get_note_transit_campaign_by_access_key,
 )
 
 
@@ -51,6 +55,21 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(campaign.start_date.isoformat(), "2026-07-01")
         self.assertEqual(campaign.end_date.isoformat(), "2026-08-07")
         self.assertEqual(campaign.days, 38)
+        self.assertEqual(len(campaign.access_key_hash), 64)
+
+    def test_campaign_is_resolved_by_secret_key_not_month(self) -> None:
+        test_key = "unit-test-secret"
+        test_campaign = NoteTransitCampaign(
+            campaign_id="test-campaign",
+            access_key_hash=hashlib.sha256(test_key.encode()).hexdigest(),
+            label="test",
+            start_date=get_note_transit_campaign("2026-07").start_date,
+            end_date=get_note_transit_campaign("2026-07").end_date,
+            enabled=True,
+        )
+        with patch.dict(NOTE_TRANSIT_CAMPAIGNS, {"test": test_campaign}, clear=True):
+            self.assertEqual(get_note_transit_campaign_by_access_key(test_key), test_campaign)
+            self.assertIsNone(get_note_transit_campaign_by_access_key("2026-07"))
 
     @patch("services.note_transit.build_product_yaml")
     def test_build_yaml_uses_campaign_dates(self, build_product_yaml_mock) -> None:
@@ -112,11 +131,10 @@ class NoteTransitTest(unittest.TestCase):
     @patch("routes.build_note_transit_yaml", return_value="generated-yaml")
     @patch("routes._addon_args_from_base_doc", return_value={"tz_name": "Asia/Tokyo"})
     @patch("routes._load_note_transit_source_doc", return_value=_source_doc())
-    def test_api_generates_july_from_url_only(self, load_source, _args, _build) -> None:
-        response = note_transit_generate(
-            "2026-07",
-            {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"},
-        )
+    @patch("routes._require_note_transit_campaign")
+    def test_api_generates_july_from_url_only(self, require_campaign, load_source, _args, _build) -> None:
+        require_campaign.return_value = get_note_transit_campaign("2026-07")
+        response = note_transit_generate("secret-key", {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"})
         payload = yaml.safe_load(response.body)
 
         self.assertEqual(response.status_code, 200)
@@ -125,7 +143,7 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(payload["yaml"], "generated-yaml")
         load_source.assert_called_once()
 
-    def test_api_rejects_undefined_campaign(self) -> None:
+    def test_api_rejects_month_instead_of_secret_key(self) -> None:
         response = note_transit_generate("2026-08", {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"})
         payload = yaml.safe_load(response.body)
 

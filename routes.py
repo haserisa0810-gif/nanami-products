@@ -41,7 +41,7 @@ from services.long_term_transit_yaml import build_long_term_transits_yaml, has_l
 from services.note_transit import (
     NoteTransitCampaign,
     build_note_transit_yaml,
-    get_note_transit_campaign,
+    get_note_transit_campaign_by_access_key,
 )
 from services.post_chart import build_post_chart
 from services.prompt_builder import ensure_transit_date_guidance
@@ -4205,11 +4205,11 @@ class NoteTransitRequestError(ValueError):
         self.status_code = status_code
 
 
-def _require_note_transit_campaign(target_month: str) -> NoteTransitCampaign:
-    campaign = get_note_transit_campaign(target_month)
+def _require_note_transit_campaign(access_key: str) -> NoteTransitCampaign:
+    campaign = get_note_transit_campaign_by_access_key(access_key)
     if campaign is None:
         raise NoteTransitRequestError(
-            "指定された月のキャンペーンは定義されていません。",
+            "このURLは利用できません。noteに記載されたURLを確認してください。",
             code="campaign_not_found",
             status_code=404,
         )
@@ -4284,49 +4284,38 @@ def _load_note_transit_source_doc(data_url: str) -> dict:
     return doc
 
 
-@app.get("/note-transit/{target_month}", response_class=HTMLResponse)
-def note_transit_page(request: Request, target_month: str):
-    unavailable_error = None
+@app.get("/note-transit/{access_key}", response_class=HTMLResponse)
+def note_transit_page(request: Request, access_key: str):
     try:
-        campaign = _require_note_transit_campaign(target_month)
+        campaign = _require_note_transit_campaign(access_key)
     except NoteTransitRequestError as exc:
-        campaign = get_note_transit_campaign(target_month)
-        if campaign is None:
-            return templates.TemplateResponse(
-                "note_transit.html",
-                {
-                    "request": request,
-                    "campaign": NoteTransitCampaign(
-                        campaign_id="undefined",
-                        label=target_month,
-                        start_date=date(1970, 1, 1),
-                        end_date=date(1970, 1, 1),
-                        enabled=False,
-                    ),
-                    "target_month": target_month,
-                    "api_url": f"/api/note-transit/{target_month}",
-                    "unavailable_error": str(exc),
-                },
-                status_code=exc.status_code,
-            )
-        unavailable_error = str(exc)
+        return templates.TemplateResponse(
+            "note_transit.html",
+            {
+                "request": request,
+                "campaign": None,
+                "target_month": "",
+                "api_url": "",
+                "unavailable_error": str(exc),
+            },
+            status_code=exc.status_code,
+        )
     return templates.TemplateResponse(
         "note_transit.html",
         {
             "request": request,
             "campaign": campaign,
-            "target_month": target_month,
-            "api_url": f"/api/note-transit/{target_month}",
-            "unavailable_error": unavailable_error,
+            "target_month": campaign.target_month,
+            "api_url": f"/api/note-transit/{access_key}",
+            "unavailable_error": None,
         },
-        status_code=403 if unavailable_error else 200,
     )
 
 
-@app.post("/api/note-transit/{target_month}", response_class=JSONResponse)
-def note_transit_generate(target_month: str, payload: dict = Body(default={})):
+@app.post("/api/note-transit/{access_key}", response_class=JSONResponse)
+def note_transit_generate(access_key: str, payload: dict = Body(default={})):
     try:
-        campaign = _require_note_transit_campaign(target_month)
+        campaign = _require_note_transit_campaign(access_key)
         source_doc = _load_note_transit_source_doc(str(payload.get("data_url") or ""))
         calculation_args = _addon_args_from_base_doc(source_doc)
         result_yaml = build_note_transit_yaml(
@@ -4341,8 +4330,8 @@ def note_transit_generate(target_month: str, payload: dict = Body(default={})):
         )
     except Exception as exc:
         logger.exception(
-            "note_transit_generation_failed target_month=%s error=%r",
-            target_month,
+            "note_transit_generation_failed campaign_id=%s error=%r",
+            campaign.campaign_id,
             exc,
         )
         return JSONResponse(
