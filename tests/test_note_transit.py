@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import hashlib
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import yaml
+from fastapi import Request
 
 from routes import (
     NoteTransitRequestError,
     _load_note_transit_source_doc,
+    note_transit_result_page,
+    note_transit_result_yaml,
     note_transit_generate,
 )
 from services.note_transit import (
@@ -129,26 +133,109 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(unsupported.exception.code, "unsupported_url")
 
     @patch("routes.build_note_transit_yaml", return_value="generated-yaml")
+    @patch(
+        "routes._save_note_transit_result",
+        return_value=("generated-token", datetime(2026, 10, 1, tzinfo=timezone.utc)),
+    )
     @patch("routes._addon_args_from_base_doc", return_value={"tz_name": "Asia/Tokyo"})
     @patch("routes._load_note_transit_source_doc", return_value=_source_doc())
     @patch("routes._require_note_transit_campaign")
-    def test_api_generates_july_from_url_only(self, require_campaign, load_source, _args, _build) -> None:
+    def test_api_generates_saves_and_returns_result_url(
+        self,
+        require_campaign,
+        load_source,
+        _args,
+        save_result,
+        _build,
+    ) -> None:
         require_campaign.return_value = get_note_transit_campaign("2026-07")
-        response = note_transit_generate("secret-key", {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"})
+        request = Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": "/api/note-transit/secret-key",
+                "query_string": b"",
+                "headers": [],
+                "server": ("example.com", 443),
+                "scheme": "https",
+            }
+        )
+        response = note_transit_generate(
+            request,
+            "secret-key",
+            {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"},
+        )
         payload = yaml.safe_load(response.body)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["start_date"], "2026-07-01")
         self.assertEqual(payload["end_date"], "2026-08-07")
         self.assertEqual(payload["yaml"], "generated-yaml")
+        self.assertEqual(payload["result_url"], "https://example.com/note-transit/result/generated-token")
+        self.assertEqual(payload["download_url"], "https://example.com/note-transit/result/generated-token.yaml")
         load_source.assert_called_once()
+        save_result.assert_called_once_with("generated-yaml")
 
     def test_api_rejects_month_instead_of_secret_key(self) -> None:
-        response = note_transit_generate("2026-08", {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"})
+        request = Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": "/api/note-transit/2026-08",
+                "query_string": b"",
+                "headers": [],
+                "server": ("example.com", 443),
+                "scheme": "https",
+            }
+        )
+        response = note_transit_generate(
+            request,
+            "2026-08",
+            {"data_url": "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"},
+        )
         payload = yaml.safe_load(response.body)
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(payload["code"], "campaign_not_found")
+
+    @patch(
+        "routes._load_transit_addon_link",
+        return_value=(
+            {
+                "yaml_text": yaml.safe_dump(
+                    {
+                        "campaign": {
+                            "label": "2026年7月 note特典",
+                            "start_date": "2026-07-01",
+                            "end_date": "2026-08-07",
+                        }
+                    },
+                    allow_unicode=True,
+                )
+            },
+            False,
+        ),
+    )
+    def test_result_page_and_yaml_use_saved_link(self, _load_link) -> None:
+        request = Request(
+            {
+                "type": "http",
+                "method": "GET",
+                "path": "/note-transit/result/generated-token",
+                "query_string": b"",
+                "headers": [],
+                "server": ("example.com", 443),
+                "scheme": "https",
+            }
+        )
+
+        page_response = note_transit_result_page(request, "generated-token")
+        yaml_response = note_transit_result_yaml("generated-token")
+
+        self.assertEqual(page_response.status_code, 200)
+        self.assertIn("2026-07-01", page_response.body.decode())
+        self.assertEqual(yaml_response.status_code, 200)
+        self.assertIn("2026年7月 note特典", yaml_response.body.decode())
 
 
 if __name__ == "__main__":

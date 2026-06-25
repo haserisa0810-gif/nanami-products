@@ -41,9 +41,17 @@
         <section class="form-section" id="result-section" hidden>
           <h2>発行結果</h2>
           <p class="hint" id="period-label"></p>
+          <label>閲覧用URL
+            <input type="text" id="result-url" readonly>
+          </label>
+          <p class="hint" id="expires-label"></p>
+          <div class="links" style="margin-top:12px">
+            <button type="button" id="copy-url-button">URLをコピー</button>
+            <a id="open-result-link" href="#" target="_blank" rel="noopener">発行ページを開く</a>
+          </div>
           <textarea id="result-yaml" readonly spellcheck="false"></textarea>
           <div class="links" style="margin-top:12px">
-            <button type="button" id="copy-button">コピー</button>
+            <button type="button" id="copy-button">YAMLをコピー</button>
             <button type="button" id="download-button">ダウンロード</button>
           </div>
           <p class="hint" id="result-status" aria-live="polite"></p>
@@ -59,6 +67,9 @@
     const submitButton = document.getElementById('submit-button');
     const errorMessage = document.getElementById('error-message');
     const resultSection = document.getElementById('result-section');
+    const resultUrl = document.getElementById('result-url');
+    const openResultLink = document.getElementById('open-result-link');
+    const expiresLabel = document.getElementById('expires-label');
     const resultYaml = document.getElementById('result-yaml');
     const periodLabel = document.getElementById('period-label');
     const resultStatus = document.getElementById('result-status');
@@ -87,6 +98,9 @@
           return;
         }
         resultYaml.value = payload.yaml;
+        resultUrl.value = payload.result_url;
+        openResultLink.href = payload.result_url;
+        expiresLabel.textContent = `閲覧期限: ${payload.expires_label}`;
         periodLabel.textContent = `収録期間: ${payload.start_date} ～ ${payload.end_date}`;
         resultSection.hidden = false;
       } catch (error) {
@@ -95,6 +109,12 @@
         submitButton.disabled = false;
         submitButton.textContent = '追加データを発行する';
       }
+    });
+
+    document.getElementById('copy-url-button').addEventListener('click', async () => {
+      if (!resultUrl.value) return;
+      await navigator.clipboard.writeText(resultUrl.value);
+      resultStatus.textContent = '閲覧用URLをコピーしました。';
     });
 
     document.getElementById('copy-button').addEventListener('click', async () => {

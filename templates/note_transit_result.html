@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>note特典 トランジット追加データ | nanami-products</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products</p>
+      <h1>note特典<br>トランジット追加データ</h1>
+
+      {% if expired %}
+        <div class="error">{{ expired_message }}</div>
+      {% else %}
+        {% if campaign %}
+          <p class="lead">{{ campaign.label }}</p>
+          <section class="notice-box">
+            <h2>収録期間</h2>
+            <p><strong>{{ campaign.start_date }} ～ {{ campaign.end_date }}</strong></p>
+          </section>
+        {% endif %}
+        <p class="hint">このページは {{ expires_label }} 開けます。URLを保存してください。</p>
+
+        <section class="form-section">
+          <h2>YAMLデータ</h2>
+          <textarea id="result-yaml" readonly spellcheck="false">{{ yaml_text }}</textarea>
+          <div class="links" style="margin-top:12px">
+            <button type="button" id="copy-button">YAMLをコピー</button>
+            <a href="{{ download_url }}" download="nanami-note-transit-addon.yaml">ダウンロード</a>
+          </div>
+          <p class="hint" id="copy-status" aria-live="polite"></p>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+  {% if not expired %}
+  <script>
+    const resultYaml = document.getElementById('result-yaml');
+    const copyStatus = document.getElementById('copy-status');
+    document.getElementById('copy-button').addEventListener('click', async () => {
+      if (!resultYaml.value) return;
+      await navigator.clipboard.writeText(resultYaml.value);
+      copyStatus.textContent = 'コピーしました。';
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

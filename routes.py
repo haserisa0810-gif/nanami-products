@@ -4284,6 +4284,44 @@ def _load_note_transit_source_doc(data_url: str) -> dict:
     return doc
 
 
+def _save_note_transit_result(yaml_text: str) -> tuple[str, datetime]:
+    if not os.environ.get("DATABASE_URL"):
+        raise NoteTransitRequestError(
+            "発行データの保存設定がありません。管理者に連絡してください。",
+            code="save_unavailable",
+            status_code=503,
+        )
+    last_exc: Exception | None = None
+    for _ in range(3):
+        token = secrets.token_urlsafe(24)
+        expires_at = _chart_expires_at()
+        try:
+            pg_store.save_transit_addon_link(
+                token=token,
+                yaml_text=yaml_text,
+                expires_at=expires_at,
+            )
+            return token, expires_at
+        except Exception as exc:
+            last_exc = exc
+            logger.warning(
+                "note_transit_save_failed token_prefix=%s error_type=%s error=%r",
+                token[:8],
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
+            time.sleep(0.15)
+    raise NoteTransitRequestError(
+        _public_error_message(
+            last_exc or RuntimeError("note transit save failed"),
+            fallback="発行データの保存に失敗しました。時間をおいて再度お試しください。",
+        ),
+        code="save_failed",
+        status_code=500,
+    )
+
+
 @app.get("/note-transit/{access_key}", response_class=HTMLResponse)
 def note_transit_page(request: Request, access_key: str):
     try:
@@ -4313,7 +4351,7 @@ def note_transit_page(request: Request, access_key: str):
 
 
 @app.post("/api/note-transit/{access_key}", response_class=JSONResponse)
-def note_transit_generate(access_key: str, payload: dict = Body(default={})):
+def note_transit_generate(request: Request, access_key: str, payload: dict = Body(default={})):
     try:
         campaign = _require_note_transit_campaign(access_key)
         source_doc = _load_note_transit_source_doc(str(payload.get("data_url") or ""))
@@ -4323,6 +4361,7 @@ def note_transit_generate(access_key: str, payload: dict = Body(default={})):
             source_doc=source_doc,
             calculation_args=calculation_args,
         )
+        token, expires_at = _save_note_transit_result(result_yaml)
     except NoteTransitRequestError as exc:
         return JSONResponse(
             {"ok": False, "error": str(exc), "code": exc.code},
@@ -4342,6 +4381,7 @@ def note_transit_generate(access_key: str, payload: dict = Body(default={})):
             },
             status_code=500,
         )
+    base_url = _public_base_url(request)
     return JSONResponse(
         {
             "ok": True,
@@ -4349,8 +4389,52 @@ def note_transit_generate(access_key: str, payload: dict = Body(default={})):
             "target_month": campaign.target_month,
             "start_date": campaign.start_date.isoformat(),
             "end_date": campaign.end_date.isoformat(),
+            "result_url": f"{base_url}/note-transit/result/{token}",
+            "download_url": f"{base_url}/note-transit/result/{token}.yaml",
+            "expires_at": expires_at.isoformat(),
+            "expires_label": _chart_expiry_label(expires_at),
             "yaml": result_yaml,
         }
+    )
+
+
+@app.get("/note-transit/result/{token}.yaml", response_class=PlainTextResponse)
+def note_transit_result_yaml(token: str):
+    link, expired = _load_transit_addon_link(token)
+    if expired:
+        return PlainTextResponse("このnote特典データの有効期限は終了しました。\n", status_code=410)
+    response = PlainTextResponse(str((link or {}).get("yaml_text") or ""), media_type="text/yaml; charset=utf-8")
+    response.headers["Content-Disposition"] = 'attachment; filename="nanami-note-transit-addon.yaml"'
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+@app.get("/note-transit/result/{token}", response_class=HTMLResponse)
+def note_transit_result_page(request: Request, token: str):
+    link, expired = _load_transit_addon_link(token)
+    expires_at = _chart_expiry(link or {})
+    yaml_text = "" if expired else str((link or {}).get("yaml_text") or "")
+    campaign: dict[str, object] = {}
+    if yaml_text:
+        try:
+            loaded = yaml.safe_load(yaml_text) or {}
+            campaign = loaded.get("campaign") if isinstance(loaded, dict) else {}
+            if not isinstance(campaign, dict):
+                campaign = {}
+        except yaml.YAMLError:
+            campaign = {}
+    return templates.TemplateResponse(
+        "note_transit_result.html",
+        {
+            "request": request,
+            "expired": expired,
+            "expired_message": "このnote特典データの有効期限は終了しました。",
+            "yaml_text": yaml_text,
+            "campaign": campaign,
+            "expires_label": _chart_expiry_label(expires_at),
+            "download_url": f"/note-transit/result/{token}.yaml",
+        },
+        status_code=410 if expired else 200,
     )
 
 
