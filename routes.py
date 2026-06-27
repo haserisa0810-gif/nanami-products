@@ -3196,7 +3196,7 @@ def chart_transit_yaml(token: str):
 def chart_long_term_transits_yaml(token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
     try:
-        yaml_text = build_long_term_transits_yaml(chart["yaml_text"])
+        yaml_text = build_long_term_transits_yaml(yaml_text=chart["yaml_text"])
     except Exception as exc:
         _raise_chart_yaml_generation_error(token, "long-term-transits.yaml", exc)
     if not yaml_text:
@@ -3287,7 +3287,7 @@ def chart_download_zip(token: str):
     has_31day_transit = _chart_has_31day_transit(chart, doc=chart_doc)
     full_like_western = has_western_natal and has_31day_transit
     asteroid_like_western = has_western_natal and has_western_asteroids
-    long_term_transits_yaml = build_long_term_transits_yaml(chart["yaml_text"], doc=chart_doc) if has_long_term_transits(doc=chart_doc) else None
+    long_term_transits_yaml = build_long_term_transits_yaml(doc=chart_doc) if has_long_term_transits(doc=chart_doc) else None
     full_yaml_text = chart["yaml_text"]
     share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
     try:
