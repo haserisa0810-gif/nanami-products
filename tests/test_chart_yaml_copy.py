@@ -28,14 +28,21 @@ class ChartYamlCopyTest(unittest.TestCase):
             "async function copySelectedAiChunk()", 1
         )[0]
 
-        self.assertIn("await writeClipboard(yaml, UI_TEXT.yamlOnlyCopied)", function)
+        self.assertIn("await writeClipboard(yaml, message, { kind:", function)
         self.assertNotIn("buildSelectedAiText", function)
         self.assertNotIn("buildAiTextFromYaml", function)
         self.assertNotIn("COMBINED_PROMPT", function)
 
     def test_yaml_only_copy_uses_selected_product_yaml(self) -> None:
-        self.assertIn("const yaml = await getSelectedYaml();", self.template)
+        self.assertIn("const yaml = HAS_LONG_TERM_TRANSITS ? getYamlOnlyCopyText() : await getSelectedYaml();", self.template)
         self.assertIn('onclick="copyYamlOnly()"', self.template)
+
+    def test_long_term_yaml_only_copy_uses_light_ai_yaml_and_label(self) -> None:
+        self.assertIn("function getYamlOnlyCopyText()", self.template)
+        self.assertIn("if (HAS_LONG_TERM_TRANSITS) return SHARE_YAML;", self.template)
+        self.assertIn("yamlOnlyCopiedLongTerm", self.template)
+        self.assertIn("copy_yaml_only_long_term", self.template)
+        self.assertIn("copy_yaml_only_hint_long_term", self.template)
 
     def test_detailed_products_default_to_available_detailed_yaml(self) -> None:
         self.assertIn(
@@ -54,6 +61,15 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn('<section class="yaml-only-panel"', detail_box)
         self.assertIn('onclick="copyYamlOnly()"', yaml_panel)
         self.assertIn(".yaml-only-panel .secondary-action {\n      width: 100%;", self.template)
+
+    def test_write_clipboard_emits_debug_metadata_when_enabled(self) -> None:
+        function = self.template.split("async function writeClipboard(text, message = UI_TEXT.copied, debugInfo = {})", 1)[1].split(
+            "function getSelectedAiMode", 1
+        )[0]
+
+        self.assertIn("debugShare('clipboard', debugPayload);", function)
+        self.assertIn("navigatorClipboard", function)
+        self.assertIn("execCommandResult", function)
 
     def test_detail_data_selector_is_available_to_standard_products(self) -> None:
         detail_start = self.template.index('<details class="detail-box" id="detail-box">')

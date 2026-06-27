@@ -827,9 +827,9 @@
               <button class="secondary-action" onclick="copySelectedAiText()">{{ t["copy_selected"] }}</button>
             </div>
             <section class="yaml-only-panel" aria-labelledby="yaml-only-title">
-              <h3 id="yaml-only-title">{{ t.yaml_only_title }}</h3>
-              <p class="hint">{{ t.copy_yaml_only_hint }}</p>
-              <button class="secondary-action" onclick="copyYamlOnly()">{{ t.copy_yaml_only }}</button>
+              <h3 id="yaml-only-title">{% if has_long_term_transits %}{{ t["yaml_only_title_long_term"] }}{% else %}{{ t.yaml_only_title }}{% endif %}</h3>
+              <p class="hint">{% if has_long_term_transits %}{{ t["copy_yaml_only_hint_long_term"] }}{% else %}{{ t.copy_yaml_only_hint }}{% endif %}</p>
+              <button class="secondary-action" onclick="copyYamlOnly()">{% if has_long_term_transits %}{{ t["copy_yaml_only_long_term"] }}{% else %}{{ t.copy_yaml_only }}{% endif %}</button>
             </section>
           </div>
         </div>
@@ -993,6 +993,7 @@
       svgLoadFailed: {{ t["svg_load_failed"] | tojson }},
       pngFailedSvgCopied: {{ t["png_failed_svg_copied"] | tojson }},
       yamlOnlyCopied: {{ t["yaml_only_copied"] | tojson }},
+      yamlOnlyCopiedLongTerm: {{ t["yaml_only_copied_long_term"] | tojson }},
       yamlOnlyCopyFailed: {{ t["yaml_only_copy_failed"] | tojson }},
     };
     let fullYamlCache = FULL_YAML_INLINE;
@@ -1007,10 +1008,22 @@
       yaml: Number(localStorage.getItem('chart-copy-yaml') || '0'),
     };
 
-    async function writeClipboard(text, message = UI_TEXT.copied) {
+    async function writeClipboard(text, message = UI_TEXT.copied, debugInfo = {}) {
+      const debugPayload = {
+        kind: debugInfo.kind || 'clipboard',
+        chars: text ? text.length : 0,
+        bytes: new Blob([text || '']).size,
+        navigatorClipboard: typeof navigator.clipboard?.writeText === 'function',
+        execCommand: false,
+        execCommandResult: null,
+        success: false,
+      };
       try {
         await navigator.clipboard.writeText(text);
+        debugPayload.success = true;
       } catch (e) {
+        debugPayload.execCommand = true;
+        debugPayload.navigatorError = { name: e && e.name, message: e && e.message };
         const tmp = document.createElement('textarea');
         tmp.value = text;
         tmp.style.position = 'fixed';
@@ -1018,9 +1031,11 @@
         document.body.appendChild(tmp);
         tmp.focus();
         tmp.select();
-        document.execCommand('copy');
+        debugPayload.execCommandResult = document.execCommand('copy');
         document.body.removeChild(tmp);
+        debugPayload.success = Boolean(debugPayload.execCommandResult);
       }
+      debugShare('clipboard', debugPayload);
       const status = document.getElementById('copy-status');
       if (status) {
         status.textContent = message;
@@ -1039,6 +1054,11 @@
       if (mode === 'full') return UI_TEXT.modeFull;
       if (mode === 'asteroids') return UI_TEXT.modeAsteroids;
       return UI_TEXT.modePaste;
+    }
+
+    function getYamlOnlyCopyText() {
+      if (HAS_LONG_TERM_TRANSITS) return SHARE_YAML;
+      return null;
     }
 
     function sleep(ms) {
@@ -1434,18 +1454,28 @@
 
     async function copySelectedAiText() {
       const mode = getSelectedAiMode();
-      await writeClipboard(await buildSelectedAiText(mode), UI_TEXT.selectedCopiedMore.replace('{label}', getSelectedAiLabel(mode)));
+      await writeClipboard(
+        await buildSelectedAiText(mode),
+        UI_TEXT.selectedCopiedMore.replace('{label}', getSelectedAiLabel(mode)),
+        { kind: `ai-copy:${mode}` },
+      );
     }
 
     async function copyDefaultAiText() {
       selectAiMode('paste');
-      await writeClipboard(await buildSelectedAiText('paste'), UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modePaste));
+      await writeClipboard(
+        await buildSelectedAiText('paste'),
+        UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modePaste),
+        { kind: 'ai-copy:paste' },
+      );
     }
 
     async function copyYamlOnly() {
       try {
-        const yaml = await getSelectedYaml();
-        await writeClipboard(yaml, UI_TEXT.yamlOnlyCopied);
+        const yaml = HAS_LONG_TERM_TRANSITS ? getYamlOnlyCopyText() : await getSelectedYaml();
+        if (!yaml) throw new Error('yaml_only_copy_unavailable');
+        const message = HAS_LONG_TERM_TRANSITS ? UI_TEXT.yamlOnlyCopiedLongTerm : UI_TEXT.yamlOnlyCopied;
+        await writeClipboard(yaml, message, { kind: HAS_LONG_TERM_TRANSITS ? 'yaml-only:long-term-ai' : 'yaml-only:selected' });
       } catch (e) {
         const status = document.getElementById('copy-status');
         if (status) {
@@ -1529,14 +1559,14 @@
       const fullYaml = await getFullYaml();
       copyState.yaml = 1;
       localStorage.setItem('chart-copy-yaml', '1');
-      await writeClipboard(fullYaml, UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modeFull));
+      await writeClipboard(fullYaml, UI_TEXT.selectedCopiedMore.replace('{label}', UI_TEXT.modeFull), { kind: 'yaml-full:copy' });
     }
 
     async function copyYamlChunk() {
       const fullYaml = await getFullYaml();
       const chunks = splitText(fullYaml, 12000);
       if (chunks.length <= 1) {
-        await writeClipboard(fullYaml, UI_TEXT.selectedCopied.replace('{label}', UI_TEXT.modeFull));
+        await writeClipboard(fullYaml, UI_TEXT.selectedCopied.replace('{label}', UI_TEXT.modeFull), { kind: 'yaml-full:copy-chunk' });
         return;
       }
       const index = copyState.yaml % chunks.length;
@@ -1545,7 +1575,7 @@
       await writeClipboard(chunks[index], UI_TEXT.chunkCopied
         .replace('{label}', UI_TEXT.modeFull)
         .replace('{index}', String(index + 1))
-        .replace('{total}', String(chunks.length)));
+        .replace('{total}', String(chunks.length)), { kind: 'yaml-full:copy-chunk' });
     }
 
     async function downloadYamlOnly() {
