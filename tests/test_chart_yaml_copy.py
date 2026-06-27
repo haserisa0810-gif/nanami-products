@@ -89,11 +89,12 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn('<div class="fallback-actions">', self.template)
         self.assertIn(".fallback-share .fallback-actions {\n      display: grid;", self.template)
 
-    def test_direct_share_and_fallback_are_state_managed(self) -> None:
-        self.assertIn('<details class="fallback-share" id="fallback-share" hidden>', self.template)
-        self.assertIn("setDirectShareAvailable(canUseTextShare());", self.template)
-        self.assertIn("if (primaryAction) primaryAction.hidden = !available;", self.template)
-        self.assertIn("fallbackShare.hidden = available;", self.template)
+    def test_ai_share_and_fallback_controls_are_always_visible(self) -> None:
+        self.assertIn('<button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">', self.template)
+        self.assertIn('<details class="fallback-share" id="fallback-share">', self.template)
+        self.assertNotIn("primaryAction.hidden", self.template)
+        self.assertNotIn("fallbackShare.hidden", self.template)
+        self.assertNotIn("setDirectShareAvailable", self.template)
 
     def test_can_share_files_is_not_used_for_text_share_support(self) -> None:
         text_share_fn = self.template.split("function canUseTextShare()", 1)[1].split(

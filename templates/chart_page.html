@@ -755,7 +755,7 @@
           <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
           <p class="helper-note-inline">{{ t.helper_note }}</p>
         </div>
-        <details class="fallback-share" id="fallback-share" hidden>
+        <details class="fallback-share" id="fallback-share">
           <summary>{{ t.fallback_summary }}</summary>
           <p class="fallback-lead">{{ t.fallback_desc }}</p>
           <div class="fallback-actions">
@@ -1294,21 +1294,9 @@
     function showShareFallback(message = UI_TEXT.shareUnavailable) {
       const fallbackShare = document.getElementById('fallback-share');
       if (fallbackShare) {
-        fallbackShare.hidden = false;
         fallbackShare.open = true;
       }
       setShareStatus(message);
-    }
-
-    function setDirectShareAvailable(available) {
-      const primaryAction = document.getElementById('primary-ai-action');
-      const fallbackShare = document.getElementById('fallback-share');
-      if (primaryAction) primaryAction.hidden = !available;
-      if (fallbackShare) {
-        fallbackShare.hidden = available;
-        fallbackShare.open = !available;
-      }
-      setShareStatus('');
     }
 
     function buildAiTextFileName(mode = getSelectedAiMode()) {
@@ -1703,7 +1691,6 @@
     initCopyHelpers();
     initLazyFullYaml();
     initLazyCharts();
-    setDirectShareAvailable(canUseTextShare());
     selectAiMode(HAS_YAML_MODE_SELECTOR ? (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full') : 'paste');
 
   </script>
