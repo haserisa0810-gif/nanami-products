@@ -755,7 +755,7 @@
           <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
           <p class="helper-note-inline">{{ t.helper_note }}</p>
         </div>
-        <details class="fallback-share" id="fallback-share">
+        <details class="fallback-share" id="fallback-share" hidden>
           <summary>{{ t.fallback_summary }}</summary>
           <p class="fallback-lead">{{ t.fallback_desc }}</p>
           <div class="fallback-actions">
@@ -1273,7 +1273,42 @@
     }
 
     function canUseTextShare() {
-      return Boolean(navigator.share);
+      return typeof navigator.share === 'function';
+    }
+
+    function isShareAbort(error) {
+      return Boolean(error && error.name === 'AbortError');
+    }
+
+    function setShareStatus(message, duration = 4000) {
+      const status = document.getElementById('copy-status');
+      if (!status) return;
+      status.textContent = message || '';
+      if (message && duration) {
+        setTimeout(() => {
+          if (status.textContent === message) status.textContent = '';
+        }, duration);
+      }
+    }
+
+    function showShareFallback(message = UI_TEXT.shareUnavailable) {
+      const fallbackShare = document.getElementById('fallback-share');
+      if (fallbackShare) {
+        fallbackShare.hidden = false;
+        fallbackShare.open = true;
+      }
+      setShareStatus(message);
+    }
+
+    function setDirectShareAvailable(available) {
+      const primaryAction = document.getElementById('primary-ai-action');
+      const fallbackShare = document.getElementById('fallback-share');
+      if (primaryAction) primaryAction.hidden = !available;
+      if (fallbackShare) {
+        fallbackShare.hidden = available;
+        fallbackShare.open = !available;
+      }
+      setShareStatus('');
     }
 
     function buildAiTextFileName(mode = getSelectedAiMode()) {
@@ -1327,136 +1362,53 @@
       return await response.blob();
     }
 
+    async function shareAiTextPayload({ shareText, file }) {
+      if (!shareText || !canUseTextShare()) {
+        showShareFallback();
+        return;
+      }
+      try {
+        if (file && canUseFileShare(file)) {
+          await navigator.share({
+            title: UI_TEXT.shareTxtTitle,
+            text: shareText,
+            files: [file],
+          });
+          return;
+        }
+        await navigator.share({
+          title: UI_TEXT.shareTextTitle,
+          text: shareText,
+        });
+      } catch (e) {
+        if (isShareAbort(e)) return;
+        showShareFallback();
+      }
+    }
+
     async function shareSelectedAiText() {
       const mode = getSelectedAiMode();
       try {
         const shareText = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : await buildSelectedAiText(mode);
         const file = new File([shareText], buildAiTextFileName(mode), { type: 'text/plain' });
         preparedAiTextFiles[mode] = file;
-        if (!file) {
-          const error = new Error('txt_file_is_not_prepared');
-          error.name = 'NotReadyError';
-          throw error;
-        }
-        const canShareFiles = canUseFileShare(file);
-        if (!canShareFiles) {
-          if (canUseTextShare() && shareText) {
-            navigator.share({
-              title: UI_TEXT.shareTextTitle,
-              text: shareText,
-            }).catch((e) => {
-              if (e && e.name === 'AbortError') return;
-              openFallbackShare();
-              const status = document.getElementById('copy-status');
-              if (status) {
-                status.textContent = UI_TEXT.shareUnavailable;
-                setTimeout(() => status.textContent = '', 4000);
-              }
-            });
-            return;
-          }
-          const error = new Error('navigator.canShare({ files }) is false');
-          error.name = 'NotSupportedError';
-          throw error;
-        }
-        const sharePromise = navigator.share({
-          title: UI_TEXT.shareTxtTitle,
-          text: shareText,
-          files: [file],
-        });
-        sharePromise.catch((e) => {
-          if (e && e.name === 'AbortError') {
-            return;
-          }
-          openFallbackShare();
-          const status = document.getElementById('copy-status');
-          if (status) {
-            status.textContent = UI_TEXT.shareUnavailable;
-            setTimeout(() => status.textContent = '', 4000);
-          }
-        });
-        return;
+        await shareAiTextPayload({ shareText, file });
       } catch (e) {
-        if (e && e.name === 'AbortError') {
-          return;
-        }
-        openFallbackShare();
-        const status = document.getElementById('copy-status');
-        if (status) {
-          status.textContent = UI_TEXT.shareUnavailable;
-          setTimeout(() => status.textContent = '', 4000);
-        }
-        return;
+        if (isShareAbort(e)) return;
+        showShareFallback();
       }
     }
 
     function shareDefaultAiText() {
       selectAiMode('paste');
-      const file = getPreparedAiTextFile('paste');
       const shareText = getPreparedAiTextShareText('paste');
-      try {
-        if (!file) {
-          const error = new Error('txt_file_is_not_prepared');
-          error.name = 'NotReadyError';
-          throw error;
-        }
-        const canShareFiles = canUseFileShare(file);
-        if (!canShareFiles) {
-          if (canUseTextShare() && shareText) {
-            navigator.share({
-              title: UI_TEXT.shareTextTitle,
-              text: shareText,
-            }).catch((e) => {
-              if (e && e.name === 'AbortError') return;
-              openFallbackShare();
-              const status = document.getElementById('copy-status');
-              if (status) {
-                status.textContent = UI_TEXT.shareUnavailable;
-                setTimeout(() => status.textContent = '', 4000);
-              }
-            });
-            return;
-          }
-          const error = new Error('navigator.canShare({ files }) is false');
-          error.name = 'NotSupportedError';
-          throw error;
-        }
-        const sharePromise = navigator.share({
-          title: UI_TEXT.shareTxtTitle,
-          text: shareText,
-          files: [file],
-        });
-        sharePromise.catch((e) => {
-          if (e && e.name === 'AbortError') {
-            return;
-          }
-          openFallbackShare();
-          const status = document.getElementById('copy-status');
-          if (status) {
-            status.textContent = UI_TEXT.shareUnavailable;
-            setTimeout(() => status.textContent = '', 4000);
-          }
-        });
-        return;
-      } catch (e) {
-        if (e && e.name === 'AbortError') {
-          return;
-        }
-        openFallbackShare();
-        const status = document.getElementById('copy-status');
-        if (status) {
-          status.textContent = UI_TEXT.shareUnavailable;
-          setTimeout(() => status.textContent = '', 4000);
-        }
-        return;
-      }
+      const file = getPreparedAiTextFile('paste') || (shareText ? new File([shareText], buildAiTextFileName('paste'), { type: 'text/plain' }) : null);
+      if (file) preparedAiTextFiles.paste = file;
+      shareAiTextPayload({ shareText, file });
     }
 
     function openFallbackShare() {
-      const fallbackShare = document.getElementById('fallback-share');
-      if (fallbackShare) {
-        fallbackShare.open = true;
-      }
+      showShareFallback();
     }
 
     async function saveBlobWithPicker(blob, filename, mimeType, description) {
@@ -1751,6 +1703,7 @@
     initCopyHelpers();
     initLazyFullYaml();
     initLazyCharts();
+    setDirectShareAvailable(canUseTextShare());
     selectAiMode(HAS_YAML_MODE_SELECTOR ? (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full') : 'paste');
 
   </script>
