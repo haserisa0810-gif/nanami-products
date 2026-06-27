@@ -9,6 +9,7 @@ import yaml
 
 from routes import chart_download_zip
 from tests.test_light_yaml_transit_summary import _full_doc
+from tests.test_long_term_transit_addon_chart import _samples_long_term_doc
 
 
 class ChartDownloadZipTest(unittest.TestCase):
@@ -52,6 +53,37 @@ systems:
         self.assertIn("overall_theme", ai_paste)
         self.assertIn("key_dates", detail_yaml)
         self.assertIn("key_dates", ai_paste)
+
+    def test_zip_includes_ai_and_full_long_term_transit_files(self) -> None:
+        doc = _samples_long_term_doc()
+        full_yaml = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
+        chart = {
+            "token": "longtoken",
+            "options": doc["product"]["options"],
+            "yaml_text": full_yaml,
+            "prompt_text": "AI prompt",
+            "share_yaml_text": None,
+            "horoscope_svg": None,
+            "shichusuimei_svg": None,
+        }
+
+        with patch("routes._load_chart_or_404", return_value=chart):
+            response = chart_download_zip("longtoken")
+
+        with zipfile.ZipFile(io.BytesIO(response.body)) as archive:
+            names = set(archive.namelist())
+            ai_long = yaml.safe_load(archive.read("long-term-transits-ai.yaml").decode("utf-8"))
+            full_long = yaml.safe_load(archive.read("long-term-transits-full.yaml").decode("utf-8"))
+            ai_paste = archive.read("ai_paste.txt").decode("utf-8")
+
+        self.assertIn("long-term-transits.yaml", names)
+        self.assertIn("long-term-transits-full.yaml", names)
+        self.assertIn("long-term-transits-ai.yaml", names)
+        self.assertIn("items", ai_long["systems"]["western"]["transit_long_term"])
+        self.assertNotIn("samples", ai_long["systems"]["western"]["transit_long_term"])
+        self.assertIn("samples", full_long["systems"]["western"]["transit_long_term"])
+        self.assertIn("transit_long_term:\n      period:", ai_paste)
+        self.assertNotIn("samples:", ai_paste)
 
 
 if __name__ == "__main__":

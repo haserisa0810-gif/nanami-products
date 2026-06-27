@@ -9,6 +9,8 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from services.long_term_transit_yaml import compact_long_term_transits_for_ai
+
 logger = logging.getLogger(__name__)
 
 KEY_BODY_NAMES = {"Sun", "Moon", "ASC", "MC", "Saturn", "Uranus", "Neptune", "Pluto"}
@@ -440,6 +442,7 @@ def build_light_astrology_yaml(
     natal = western.get("natal") or {}
     transit = western.get("transit") or {}
     long_term_transit = western.get("transit_long_term") or None
+    ai_long_term_transit = compact_long_term_transits_for_ai(long_term_transit) if long_term_transit else None
     daily = transit.get("daily") or []
     today, selected_date, selection_status = _select_today_entry(daily, doc, today=current_date)
 
@@ -525,7 +528,7 @@ def build_light_astrology_yaml(
                     } if today else None,
                     "next_31_days_summary": {} if daily else None,
                 } if transit else None,
-                "transit_long_term": long_term_transit,
+                "transit_long_term": ai_long_term_transit,
             },
             "shichusuimei": None,
         },

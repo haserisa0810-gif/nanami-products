@@ -37,7 +37,7 @@ from services.light_yaml import (
     build_natal_asteroids_yaml,
     build_transit_astrology_yaml,
 )
-from services.long_term_transit_yaml import build_long_term_transits_yaml, has_long_term_transits
+from services.long_term_transit_yaml import build_ai_long_term_transits_yaml, build_long_term_transits_yaml, has_long_term_transits
 from services.note_transit import (
     NoteTransitCampaign,
     get_note_transit_campaign_by_access_key,
@@ -3288,6 +3288,7 @@ def chart_download_zip(token: str):
     full_like_western = has_western_natal and has_31day_transit
     asteroid_like_western = has_western_natal and has_western_asteroids
     long_term_transits_yaml = build_long_term_transits_yaml(doc=chart_doc) if has_long_term_transits(doc=chart_doc) else None
+    ai_long_term_transits_yaml = build_ai_long_term_transits_yaml(doc=chart_doc) if has_long_term_transits(doc=chart_doc) else None
     full_yaml_text = chart["yaml_text"]
     share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
     try:
@@ -3312,6 +3313,9 @@ def chart_download_zip(token: str):
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
         if long_term_transits_yaml:
             zf.writestr("long-term-transits.yaml", long_term_transits_yaml)
+            zf.writestr("long-term-transits-full.yaml", long_term_transits_yaml)
+        if ai_long_term_transits_yaml:
+            zf.writestr("long-term-transits-ai.yaml", ai_long_term_transits_yaml)
         if chart.get("horoscope_svg"):
             zf.writestr("horoscope.svg", optimize_svg(chart["horoscope_svg"]) or "")
         if chart.get("shichusuimei_svg"):
@@ -5301,8 +5305,12 @@ def _chart_zip_readme(chart: dict) -> str:
             "natal.yaml: ネイタル基本データです。出生図だけを確認したいときに使います。",
             "natal-asteroids.yaml: ネイタルに小惑星を追加したデータです。小惑星を詳しく見たいときに使います。",
         ])
-        if has_long_term_transits(doc=chart_doc):
-            files.append("long-term-transits.yaml: 年単位の長期トランジット専用YAMLです。38日トランジットとは別に使います。")
+    if has_long_term_transits(doc=chart_doc):
+        files.extend([
+            "long-term-transits-ai.yaml: AI共有用に主要イベントだけへ軽量化した長期トランジットYAMLです。",
+            "long-term-transits-full.yaml: 週次samplesを含む保存・検証用の長期トランジット詳細YAMLです。",
+            "long-term-transits.yaml: 互換用の長期トランジット詳細YAMLです。内容はlong-term-transits-full.yamlと同等です。",
+        ])
     if chart.get("horoscope_svg"):
         files.append("horoscope.svg: ホロスコープ図のSVGです。図として確認したいときに使います。")
     if chart.get("shichusuimei_svg"):
