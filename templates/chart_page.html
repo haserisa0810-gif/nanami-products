@@ -897,7 +897,7 @@
             <p class="hint">{{ t.page_url_hint }}</p>
           </div>
           <div class="save-data-panel">
-            <button class="download-primary" id="zip-download-button" onclick="downloadFullArchiveZip()">{{ t.save_zip }}</button>
+            <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>{{ t.save_zip }}</a>
             <details class="advanced-downloads">
               <summary>{{ t.individual_files }}</summary>
               <div class="download-grid">
@@ -959,15 +959,14 @@
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
     const HAS_WESTERN_ASTEROIDS = {{ has_western_asteroids | tojson }};
+    const HAS_LONG_TERM_TRANSITS = {{ has_long_term_transits | tojson }};
     const FULL_YAML_URL = {{ yaml_url | tojson }};
     const DETAIL_YAML_URL = {{ detail_yaml_url | tojson }};
-    const FULL_ARCHIVE_ZIP_URL = {{ download_zip_url | tojson }};
     const HOROSCOPE_SVG_URL = {{ horoscope_svg_url | tojson }};
     const SHICHU_SVG_URL = {{ shichusuimei_svg_url | tojson }};
     const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% else %}{{ chart.yaml_text | tojson }}{% endif %};
     const UI_TEXT = {
       copied: {{ t.copied | tojson }},
-      saveZip: {{ t.save_zip | tojson }},
       modeFull: {{ t["mode_full"] | tojson }},
       modeAsteroids: {{ t["mode_asteroids"] | tojson }},
       modePaste: {{ t["mode_paste"] | tojson }},
@@ -986,9 +985,7 @@
       shareTextTitle: {{ t["share_text_title"] | tojson }},
       shareTxtTitle: {{ t["share_txt_title"] | tojson }},
       shareUnavailable: {{ t["share_unavailable"] | tojson }},
-      zipSaveFailed: {{ t["zip_save_failed"] | tojson }},
-      zipPreparing: {{ t["zip_preparing"] | tojson }},
-      zipStarted: {{ t["zip_started"] | tojson }},
+      shareLargeUnavailable: {{ t["share_large_unavailable"] | tojson }},
       selectedCopiedMore: {{ t["selected_copied_more"] | tojson }},
       selectedCopied: {{ t["selected_copied"] | tojson }},
       chunkCopied: {{ t["chunk_copied"] | tojson }},
@@ -1001,6 +998,7 @@
     let fullYamlCache = FULL_YAML_INLINE;
     let asteroidYamlCache = ASTEROID_YAML || '';
     const TXT_SHARE_TEST_MODE = new URLSearchParams(window.location.search).get('txtShareTest') === 'small';
+    const DEBUG_SHARE = new URLSearchParams(window.location.search).get('debugShare') === '1';
     const preparedAiTextFiles = { paste: null, asteroids: null, full: null };
     const copyState = {
       paste: Number(localStorage.getItem('chart-copy-paste') || '0'),
@@ -1177,20 +1175,6 @@
       return await buildAiText(mode);
     }
 
-    function buildDatedZipFileName(prefix) {
-      const today = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Tokyo',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(new Date()).replace(/-/g, '');
-      return `${prefix}_${today}.zip`;
-    }
-
-    function buildFullArchiveZipFileName() {
-      return buildDatedZipFileName('nanami_chart_bundle');
-    }
-
     function splitText(text, size) {
       const chunks = [];
       for (let i = 0; i < text.length; i += size) {
@@ -1291,7 +1275,19 @@
       }
     }
 
-    function showShareFallback(message = UI_TEXT.shareUnavailable) {
+    function debugShare(event, details = {}) {
+      if (!DEBUG_SHARE) return;
+      console.log('[nanami-share]', event, details);
+    }
+
+    function getShareFallbackMessage(shareText = '') {
+      if (HAS_LONG_TERM_TRANSITS || String(shareText || '').length > 100000) {
+        return UI_TEXT.shareLargeUnavailable;
+      }
+      return UI_TEXT.shareUnavailable;
+    }
+
+    function showShareFallback(message = getShareFallbackMessage()) {
       const fallbackShare = document.getElementById('fallback-share');
       if (fallbackShare) {
         fallbackShare.open = true;
@@ -1342,21 +1338,22 @@
       return yaml ? buildAiTextFromYaml(yaml) : '';
     }
 
-    async function fetchZipBlob(url) {
-      const response = await fetchWithRetry(url, { credentials: 'same-origin' }, { attempts: 2, timeoutMs: 60000 });
-      if (!response.ok) {
-        throw new Error('zip_fetch_failed');
-      }
-      return await response.blob();
-    }
-
     async function shareAiTextPayload({ shareText, file }) {
+      const canFileShare = file ? canUseFileShare(file) : false;
+      debugShare('shareAiTextPayload', {
+        textLength: shareText ? shareText.length : 0,
+        hasNavigatorShare: canUseTextShare(),
+        hasFile: Boolean(file),
+        fileSize: file ? file.size : 0,
+        canFileShare,
+        longTerm: HAS_LONG_TERM_TRANSITS,
+      });
       if (!shareText || !canUseTextShare()) {
-        showShareFallback();
+        showShareFallback(getShareFallbackMessage(shareText));
         return;
       }
       try {
-        if (file && canUseFileShare(file)) {
+        if (file && canFileShare) {
           await navigator.share({
             title: UI_TEXT.shareTxtTitle,
             text: shareText,
@@ -1369,8 +1366,9 @@
           text: shareText,
         });
       } catch (e) {
+        debugShare('shareError', { name: e && e.name, message: e && e.message });
         if (isShareAbort(e)) return;
-        showShareFallback();
+        showShareFallback(getShareFallbackMessage(shareText));
       }
     }
 
@@ -1382,8 +1380,9 @@
         preparedAiTextFiles[mode] = file;
         await shareAiTextPayload({ shareText, file });
       } catch (e) {
+        debugShare('shareSelectedError', { name: e && e.name, message: e && e.message });
         if (isShareAbort(e)) return;
-        showShareFallback();
+        showShareFallback(getShareFallbackMessage());
       }
     }
 
@@ -1399,48 +1398,6 @@
       showShareFallback();
     }
 
-    async function saveBlobWithPicker(blob, filename, mimeType, description) {
-      if (!window.showSaveFilePicker) return false;
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: filename,
-          types: [{
-            description,
-            accept: { [mimeType]: [`.${filename.split('.').pop()}`] },
-          }],
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return true;
-      } catch (e) {
-        if (e && e.name === 'AbortError') return true;
-        return false;
-      }
-    }
-
-    async function downloadZipFromUrl(zipUrl, filename, description) {
-      try {
-        const blob = await fetchZipBlob(zipUrl);
-        const saved = await saveBlobWithPicker(blob, filename, 'application/zip', description);
-        if (saved) return;
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      } catch (e) {
-        const status = document.getElementById('copy-status');
-        if (status) {
-          status.textContent = UI_TEXT.zipSaveFailed;
-          setTimeout(() => status.textContent = '', 2600);
-        }
-      }
-    }
-
     function downloadAiPasteTxt() {
       const file = getPreparedAiTextFile('paste');
       if (!file) return;
@@ -1450,29 +1407,6 @@
     function downloadDefaultAiPasteTxt() {
       selectAiMode('paste');
       downloadAiPasteTxt();
-    }
-
-    async function downloadFullArchiveZip() {
-      const button = document.getElementById('zip-download-button');
-      const status = document.getElementById('copy-status');
-      const originalText = button ? button.textContent : '';
-      if (button) {
-        button.disabled = true;
-        button.textContent = UI_TEXT.zipPreparing;
-      }
-      if (status) status.textContent = UI_TEXT.zipPreparing;
-      try {
-        await downloadZipFromUrl(FULL_ARCHIVE_ZIP_URL, buildFullArchiveZipFileName(), 'nanami-products ZIP');
-        if (status) {
-          status.textContent = UI_TEXT.zipStarted;
-          setTimeout(() => status.textContent = '', 2200);
-        }
-      } finally {
-        if (button) {
-          button.disabled = false;
-          button.textContent = originalText || UI_TEXT.saveZip;
-        }
-      }
     }
 
     function downloadText(filename, content, mimeType) {

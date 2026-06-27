@@ -96,6 +96,12 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertNotIn("fallbackShare.hidden", self.template)
         self.assertNotIn("setDirectShareAvailable", self.template)
 
+    def test_zip_download_uses_regular_link(self) -> None:
+        self.assertIn('<a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>', self.template)
+        self.assertNotIn("downloadFullArchiveZip", self.template)
+        self.assertNotIn("downloadZipFromUrl", self.template)
+        self.assertNotIn("fetchZipBlob", self.template)
+
     def test_can_share_files_is_not_used_for_text_share_support(self) -> None:
         text_share_fn = self.template.split("function canUseTextShare()", 1)[1].split(
             "function buildAiTextFileName", 1
@@ -110,7 +116,7 @@ class ChartYamlCopyTest(unittest.TestCase):
         )[0]
 
         self.assertIn("if (isShareAbort(e)) return;", share_payload_fn)
-        self.assertIn("showShareFallback();", share_payload_fn)
+        self.assertIn("showShareFallback(getShareFallbackMessage(shareText));", share_payload_fn)
 
 
 if __name__ == "__main__":
