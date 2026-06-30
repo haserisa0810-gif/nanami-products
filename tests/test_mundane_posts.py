@@ -116,9 +116,18 @@ class MundanePostsTest(unittest.TestCase):
         template = Path("templates/mundane_form.html").read_text(encoding="utf-8")
 
         self.assertIn("マンデンYAMLを生成", template)
-        self.assertIn("/admin/mundane/generate-yaml", template)
+        self.assertIn("admin_mundane_generate_url", template)
         self.assertIn("生成中", template)
         self.assertNotIn("貼り付けてください", template)
+
+    def test_mundane_admin_routes_use_unguessable_prefix(self) -> None:
+        paths = {route.path for route in routes.app.routes}
+
+        self.assertIn(f"{routes.MUNDANE_ADMIN_PREFIX}/new", paths)
+        self.assertIn(f"{routes.MUNDANE_ADMIN_PREFIX}/generate-yaml", paths)
+        self.assertNotIn("/admin/mundane/new", paths)
+        self.assertTrue(routes.MUNDANE_ADMIN_PREFIX.startswith("/admin/"))
+        self.assertGreaterEqual(len(routes.MUNDANE_ADMIN_PREFIX.split("/")[2]), 16)
 
     def test_pg_store_mundane_crud_does_not_create_table(self) -> None:
         source = Path("services/pg_store.py").read_text(encoding="utf-8")

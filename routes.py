@@ -3533,6 +3533,10 @@ def post_chart_new(request: Request):
 
 MUNDANE_POST_STATUSES = {"draft", "published"}
 MUNDANE_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,80}$")
+MUNDANE_ADMIN_PREFIX = os.getenv(
+    "MUNDANE_ADMIN_PREFIX",
+    "/admin/7d4c2f8b91a64e0d/mundane",
+).rstrip("/")
 
 
 def _render_simple_markdown(markdown_text: str | None) -> Markup:
@@ -3696,11 +3700,15 @@ def _mundane_form_context(
         "error": error,
         "saved": saved,
         "public_url": public_url,
+        "admin_mundane_new_url": f"{MUNDANE_ADMIN_PREFIX}/new",
+        "admin_mundane_create_url": MUNDANE_ADMIN_PREFIX,
+        "admin_mundane_generate_url": f"{MUNDANE_ADMIN_PREFIX}/generate-yaml",
+        "admin_mundane_edit_url": f"{MUNDANE_ADMIN_PREFIX}/{post['id']}/edit" if post and post.get("id") else "",
         "statuses": ("draft", "published"),
     }
 
 
-@app.get("/admin/mundane/new", response_class=HTMLResponse)
+@app.get(f"{MUNDANE_ADMIN_PREFIX}/new", response_class=HTMLResponse)
 def mundane_new(request: Request):
     return templates.TemplateResponse(
         "mundane_form.html",
@@ -3708,7 +3716,7 @@ def mundane_new(request: Request):
     )
 
 
-@app.post("/admin/mundane", response_class=HTMLResponse)
+@app.post(MUNDANE_ADMIN_PREFIX, response_class=HTMLResponse)
 def mundane_create(
     request: Request,
     title: str = Form(""),
@@ -3752,10 +3760,10 @@ def mundane_create(
             _mundane_form_context(request, form=form, error=str(exc)),
             status_code=400,
         )
-    return RedirectResponse(f"/admin/mundane/{post['id']}/edit?saved=1", status_code=303)
+    return RedirectResponse(f"{MUNDANE_ADMIN_PREFIX}/{post['id']}/edit?saved=1", status_code=303)
 
 
-@app.post("/admin/mundane/generate-yaml")
+@app.post(f"{MUNDANE_ADMIN_PREFIX}/generate-yaml")
 def mundane_generate_yaml(payload: dict[str, object] = Body(...)):
     try:
         title = str(payload.get("title") or "").strip()
@@ -3778,7 +3786,7 @@ def mundane_generate_yaml(payload: dict[str, object] = Body(...)):
     return {"ok": True, "yaml_content": yaml_content}
 
 
-@app.get("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)
+@app.get(f"{MUNDANE_ADMIN_PREFIX}/{{post_id}}/edit", response_class=HTMLResponse)
 def mundane_edit(request: Request, post_id: str):
     post = pg_store.get_mundane_post_by_id(post_id)
     if not post:
@@ -3789,7 +3797,7 @@ def mundane_edit(request: Request, post_id: str):
     )
 
 
-@app.post("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)
+@app.post(f"{MUNDANE_ADMIN_PREFIX}/{{post_id}}/edit", response_class=HTMLResponse)
 def mundane_update(
     request: Request,
     post_id: str,
@@ -3837,7 +3845,7 @@ def mundane_update(
         )
     if not post:
         raise HTTPException(status_code=404, detail="mundane post not found")
-    return RedirectResponse(f"/admin/mundane/{post_id}/edit?saved=1", status_code=303)
+    return RedirectResponse(f"{MUNDANE_ADMIN_PREFIX}/{post_id}/edit?saved=1", status_code=303)
 
 
 @app.get("/mundane/{slug}", response_class=HTMLResponse)

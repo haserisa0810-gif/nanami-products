@@ -28,12 +28,12 @@
           <p class="hint">statusがpublishedで、公開日時が現在以前の場合だけ表示されます。</p>
           <div class="links">
             <a href="{{ public_url }}" target="_blank" rel="noopener">公開ページを開く</a>
-            <a href="/admin/mundane/new">新規作成</a>
+            <a href="{{ admin_mundane_new_url }}">新規作成</a>
           </div>
         </section>
       {% endif %}
 
-      <form method="post" action="{% if post and post.id %}/admin/mundane/{{ post.id }}/edit{% else %}/admin/mundane{% endif %}" class="form mundane-form">
+      <form method="post" action="{% if post and post.id %}{{ admin_mundane_edit_url }}{% else %}{{ admin_mundane_create_url }}{% endif %}" class="form mundane-form">
         <div class="form-section">
           <label>title
             <input type="text" name="title" required value="{{ form.title }}" placeholder="例：ホロスコープで読む、2026年7月の社会の流れ">
@@ -106,7 +106,7 @@
       generateButton.disabled = true;
       generateButton.textContent = '生成中...';
       try {
-        const response = await fetch('/admin/mundane/generate-yaml', {
+        const response = await fetch({{ admin_mundane_generate_url | tojson }}, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
