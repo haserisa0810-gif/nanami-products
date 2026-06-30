@@ -114,6 +114,7 @@ class MundanePostsTest(unittest.TestCase):
         self.assertIn("☉", svg or "")
         self.assertIn('dominant-baseline="middle"', svg or "")
         self.assertIn("ハウスなし", svg or "")
+        self.assertIn('data-leader="offset"', svg or "")
 
     def test_mundane_chart_aspects_include_quincunx_and_minor_styles(self) -> None:
         yaml_text = """

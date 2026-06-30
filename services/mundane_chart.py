@@ -20,6 +20,8 @@ MUNDANE_CHART_BODIES = [
 ]
 SIGN_LABELS = ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"]
 SIGN_NAMES = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"]
+NEAR_BODY_CLUSTER_DEGREES = 22
+PLANET_RADIAL_STEP = 18
 ASPECT_DEFINITIONS = [
     {
         "type": "conjunction",
@@ -193,25 +195,40 @@ def _body_items(doc: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _spread_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     sorted_items = sorted(items, key=lambda item: item["lon"])
+    if not sorted_items:
+        return []
+    clusters: list[list[dict[str, Any]]] = []
     cluster: list[dict[str, Any]] = []
-
-    def flush_cluster() -> None:
-        cluster_size = len(cluster)
-        for idx, clustered in enumerate(cluster):
-            clustered["lane"] = idx % 4
-            clustered["label_lane"] = idx % 3
-            clustered["label_shift"] = (idx - (cluster_size - 1) / 2) * 24
 
     previous_lon: float | None = None
     for item in sorted_items:
         lon = float(item["lon"])
-        if previous_lon is None or abs(lon - previous_lon) <= 12:
+        if previous_lon is None or abs(lon - previous_lon) <= NEAR_BODY_CLUSTER_DEGREES:
             cluster.append(item)
         else:
-            flush_cluster()
+            clusters.append(cluster)
             cluster = [item]
         previous_lon = lon
-    flush_cluster()
+    clusters.append(cluster)
+
+    if len(clusters) > 1:
+        first_lon = float(clusters[0][0]["lon"])
+        last_lon = float(clusters[-1][-1]["lon"])
+        wrap_distance = (first_lon + 360) - last_lon
+        if wrap_distance <= NEAR_BODY_CLUSTER_DEGREES:
+            clusters[0] = clusters[-1] + clusters[0]
+            clusters.pop()
+
+    for cluster in clusters:
+        cluster_size = len(cluster)
+        center = (cluster_size - 1) / 2
+        for idx, clustered in enumerate(cluster):
+            offset = (idx - center) * PLANET_RADIAL_STEP
+            clustered["radial_offset"] = offset
+            clustered["label_offset"] = offset * 1.25
+            clustered["label_shift"] = (idx - center) * 34
+            clustered["cluster_index"] = idx
+            clustered["cluster_size"] = cluster_size
     return sorted_items
 
 
@@ -299,7 +316,7 @@ def build_mundane_chart_svg_from_yaml(yaml_text: str, *, doc: dict[str, Any] | N
     parts: list[str] = [
         f'<svg class="mundane-chart-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" role="img" aria-label="月次マンデンチャート">',
         "<defs>",
-        '<style>.mundane-chart-svg text{font-family:"Noto Sans Symbols 2","Noto Sans Symbols","Segoe UI Symbol","Noto Sans JP",Arial,sans-serif}.title{font-size:30px;font-weight:700}.meta{font-size:18px}.caption{font-size:16px}.small{font-size:13px}.sign{font-size:27px}.planet{font-size:25px}.angle-label{font-size:15px;font-weight:700}.retro{font-size:11px;font-weight:700}.degree{font-size:10px}</style>',
+        '<style>.mundane-chart-svg text{font-family:"Noto Sans Symbols 2","Noto Sans Symbols","Segoe UI Symbol","Noto Sans JP",Arial,sans-serif}.title{font-size:30px;font-weight:700}.meta{font-size:18px}.caption{font-size:16px}.small{font-size:13px}.sign{font-size:27px}.planet{font-size:25px}.angle-label{font-size:15px;font-weight:700}.retro{font-size:11px;font-weight:700}.degree{font-size:10px;paint-order:stroke;stroke:#fffdf9;stroke-width:3px;stroke-linejoin:round}</style>',
         "</defs>",
         '<rect width="1280" height="670" rx="0" fill="#fffaf5"/>',
         '<rect x="38" y="38" width="1204" height="594" rx="30" fill="#fffdf9" stroke="#eadcc8" stroke-width="1.2"/>',
@@ -338,19 +355,49 @@ def build_mundane_chart_svg_from_yaml(yaml_text: str, *, doc: dict[str, Any] | N
 
     for item in items:
         lon = float(item["lon"])
-        lane = int(item.get("lane", 0))
-        radius = planet_r - lane * 23
+        radial_offset = float(item.get("radial_offset", 0))
+        radius = planet_r + radial_offset
         x, y = _polar(cx, cy, radius, lon)
         parts.append(f'<g data-body="{html.escape(item["name"])}">')
         circle_radius = 16 if item.get("angle_point") else 18
+        if radius >= planet_r:
+            leader_start = planet_r
+            leader_end = radius - circle_radius - 4
+        else:
+            leader_start = radius + circle_radius + 4
+            leader_end = planet_r
+        if abs(radial_offset) > 1 and abs(leader_end - leader_start) > 2:
+            parts.append(
+                _line(
+                    cx,
+                    cy,
+                    leader_start,
+                    leader_end,
+                    lon,
+                    stroke="#d8bd96",
+                    stroke_width=".8",
+                    stroke_dasharray="2 6",
+                    opacity=".78",
+                    data_leader="offset",
+                )
+            )
         parts.append(_circle(x, y, circle_radius, fill="#fffdf9", stroke="#ad8d62", stroke_width="1", opacity=".88"))
         label_class = "angle-label" if item.get("angle_point") else "planet"
         parts.append(_text(x, y, str(item["symbol"]), fill="#3c2a1a", text_anchor="middle", class_=label_class))
         if item.get("retrograde"):
             parts.append(_text(x + 14, y - 14, "R", fill="#9b3d35", text_anchor="middle", class_="retro"))
-        label_radius = min(radius + 46 + int(item.get("label_lane", 0)) * 10, sign_r - 30)
+        label_radius = min(radius + 34, sign_r - 18)
         label_x, label_y = _polar(cx, cy, label_radius, lon)
-        parts.append(_text(label_x, label_y + float(item.get("label_shift", 0)), _degree_label(lon), fill="#6a5135", text_anchor="middle", class_="degree"))
+        parts.append(
+            _text(
+                label_x,
+                label_y + float(item.get("label_shift", 0)),
+                _degree_label(lon),
+                fill="#6a5135",
+                text_anchor="middle",
+                class_="degree",
+            )
+        )
         parts.append(_line(cx, cy, inner, radius - 22, lon, stroke="#e2c9a6", stroke_width=".75", stroke_dasharray="2 7", opacity=".72"))
         parts.append(f'<title>{html.escape(item["name"])} {_degree_label(lon)}{" R" if item.get("retrograde") else ""}</title>')
         parts.append("</g>")
