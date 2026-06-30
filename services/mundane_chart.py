@@ -18,7 +18,7 @@ MUNDANE_CHART_BODIES = [
     ("neptune", "Neptune", "♆"),
     ("pluto", "Pluto", "♇"),
 ]
-SIGN_LABELS = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"]
+SIGN_LABELS = ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"]
 SIGN_NAMES = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"]
 ASPECT_DEFINITIONS = [
     {
@@ -26,42 +26,42 @@ ASPECT_DEFINITIONS = [
         "angle": 0,
         "orb": 8,
         "symbol": "☌",
-        "style": {"stroke": "#5f5b54", "stroke_width": "2.1", "opacity": ".54"},
+        "style": {"stroke": "#605b54", "stroke_width": "1.35", "opacity": ".32", "stroke_linecap": "round"},
     },
     {
         "type": "sextile",
         "angle": 60,
         "orb": 4,
         "symbol": "✶",
-        "style": {"stroke": "#367cb6", "stroke_width": "1.9", "opacity": ".58"},
+        "style": {"stroke": "#4e86b8", "stroke_width": "1.2", "opacity": ".34", "stroke_linecap": "round"},
     },
     {
         "type": "square",
         "angle": 90,
         "orb": 6,
         "symbol": "□",
-        "style": {"stroke": "#c55548", "stroke_width": "2.2", "opacity": ".64"},
+        "style": {"stroke": "#c96a5f", "stroke_width": "1.35", "opacity": ".38", "stroke_linecap": "round"},
     },
     {
         "type": "trine",
         "angle": 120,
         "orb": 6,
         "symbol": "△",
-        "style": {"stroke": "#2f70ad", "stroke_width": "2.1", "opacity": ".62"},
+        "style": {"stroke": "#3f7fb4", "stroke_width": "1.3", "opacity": ".36", "stroke_linecap": "round"},
     },
     {
         "type": "quincunx",
         "angle": 150,
         "orb": 3,
         "symbol": "⚻",
-        "style": {"stroke": "#3c8a65", "stroke_width": "1.8", "opacity": ".58", "stroke_dasharray": "8 7"},
+        "style": {"stroke": "#509476", "stroke_width": "1.15", "opacity": ".34", "stroke_dasharray": "7 8", "stroke_linecap": "round"},
     },
     {
         "type": "opposition",
         "angle": 180,
         "orb": 8,
         "symbol": "☍",
-        "style": {"stroke": "#b83e45", "stroke_width": "2.3", "opacity": ".66"},
+        "style": {"stroke": "#bf555d", "stroke_width": "1.45", "opacity": ".40", "stroke_linecap": "round"},
     },
     {
         "type": "semi-sextile",
@@ -69,7 +69,7 @@ ASPECT_DEFINITIONS = [
         "orb": 2,
         "symbol": "⚺",
         "minor": True,
-        "style": {"stroke": "#6fa2c9", "stroke_width": "1.2", "opacity": ".32", "stroke_dasharray": "4 7"},
+        "style": {"stroke": "#7aa5c4", "stroke_width": ".85", "opacity": ".20", "stroke_dasharray": "3 7", "stroke_linecap": "round"},
     },
     {
         "type": "semi-square",
@@ -77,7 +77,7 @@ ASPECT_DEFINITIONS = [
         "orb": 2,
         "symbol": "∠",
         "minor": True,
-        "style": {"stroke": "#d1847a", "stroke_width": "1.2", "opacity": ".34", "stroke_dasharray": "4 6"},
+        "style": {"stroke": "#d08b82", "stroke_width": ".85", "opacity": ".22", "stroke_dasharray": "3 7", "stroke_linecap": "round"},
     },
     {
         "type": "sesqui-square",
@@ -85,7 +85,7 @@ ASPECT_DEFINITIONS = [
         "orb": 2,
         "symbol": "⚼",
         "minor": True,
-        "style": {"stroke": "#d1847a", "stroke_width": "1.2", "opacity": ".34", "stroke_dasharray": "4 6"},
+        "style": {"stroke": "#d08b82", "stroke_width": ".85", "opacity": ".22", "stroke_dasharray": "3 7", "stroke_linecap": "round"},
     },
 ]
 
@@ -123,6 +123,11 @@ def _degree_label(lon: float) -> str:
     sign_index = int(normalized // 30)
     degree = normalized - sign_index * 30
     return f"{SIGN_NAMES[sign_index]} {degree:.1f}°"
+
+
+def _shorten_label(value: str, limit: int = 28) -> str:
+    stripped = value.strip()
+    return stripped if len(stripped) <= limit else f"{stripped[: limit - 1]}…"
 
 
 def _body_items(doc: dict[str, Any]) -> list[dict[str, Any]]:
@@ -191,14 +196,16 @@ def _spread_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     cluster: list[dict[str, Any]] = []
 
     def flush_cluster() -> None:
+        cluster_size = len(cluster)
         for idx, clustered in enumerate(cluster):
             clustered["lane"] = idx % 4
             clustered["label_lane"] = idx % 3
+            clustered["label_shift"] = (idx - (cluster_size - 1) / 2) * 24
 
     previous_lon: float | None = None
     for item in sorted_items:
         lon = float(item["lon"])
-        if previous_lon is None or abs(lon - previous_lon) <= 8:
+        if previous_lon is None or abs(lon - previous_lon) <= 12:
             cluster.append(item)
         else:
             flush_cluster()
@@ -267,42 +274,54 @@ def build_mundane_chart_svg_from_yaml(yaml_text: str, *, doc: dict[str, Any] | N
     context = doc.get("mundane_context") or {}
     snapshot = doc.get("monthly_snapshot") or {}
     title = str(context.get("title") or "Monthly mundane chart").strip()
+    target_year = context.get("target_year")
+    target_month = context.get("target_month")
     date_label = str(snapshot.get("date") or "")
     time_label = str(snapshot.get("time") or "")
     timezone_label = str(snapshot.get("timezone") or "")
 
-    width = 920
-    height = 920
-    cx = 460
-    cy = 460
-    outer = 370
-    zodiac = 326
-    planet_r = 286
-    inner = 182
-    aspect_r = 132
+    width = 1280
+    height = 670
+    cx = 370
+    cy = 335
+    outer = 294
+    zodiac = 232
+    sign_r = 266
+    planet_r = 194
+    inner = 132
+    aspect_r = 92
+    info_x = 760
+    if target_year and target_month:
+        chart_title = f"{target_year}年{target_month}月 月次マンデンチャート"
+    else:
+        chart_title = _shorten_label(title, 22)
 
     parts: list[str] = [
         f'<svg class="mundane-chart-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" role="img" aria-label="月次マンデンチャート">',
         "<defs>",
-        '<style>.mundane-chart-svg text{font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols","Noto Sans JP",Arial,sans-serif}.title{font-size:28px;font-weight:700}.meta{font-size:17px}.sign{font-size:32px}.planet{font-size:30px}.angle-label{font-size:18px;font-weight:700}.retro{font-size:13px;font-weight:700}.degree{font-size:12px}</style>',
+        '<style>.mundane-chart-svg text{font-family:"Noto Sans Symbols 2","Noto Sans Symbols","Segoe UI Symbol","Noto Sans JP",Arial,sans-serif}.title{font-size:30px;font-weight:700}.meta{font-size:18px}.caption{font-size:16px}.small{font-size:13px}.sign{font-size:27px}.planet{font-size:25px}.angle-label{font-size:15px;font-weight:700}.retro{font-size:11px;font-weight:700}.degree{font-size:10px}</style>',
         "</defs>",
-        '<rect width="920" height="920" rx="18" fill="#fffaf2"/>',
-        _circle(cx, cy, outer, fill="rgba(255,255,255,.32)", stroke="#9d7c54", stroke_width="3"),
-        _circle(cx, cy, zodiac, fill="none", stroke="#c8aa82", stroke_width="1.5"),
-        _circle(cx, cy, inner, fill="rgba(255,255,255,.22)", stroke="#d0b792", stroke_width="1.2"),
-        _circle(cx, cy, aspect_r, fill="rgba(255,255,255,.12)", stroke="#e0ccb0", stroke_width="1"),
-        _text(cx, 54, title, fill="#3b2b1d", text_anchor="middle", class_="title"),
-        _text(cx, 84, f"{date_label} {time_label} {timezone_label}".strip(), fill="#80684a", text_anchor="middle", class_="meta"),
+        '<rect width="1280" height="670" rx="0" fill="#fffaf5"/>',
+        '<rect x="38" y="38" width="1204" height="594" rx="30" fill="#fffdf9" stroke="#eadcc8" stroke-width="1.2"/>',
+        _circle(cx, cy, outer, fill="#fff8ed", stroke="#d9c3a8", stroke_width="1.7"),
+        _circle(cx, cy, zodiac, fill="#fffdf9", stroke="#ceb18c", stroke_width="1.1"),
+        _circle(cx, cy, inner, fill="#fffaf3", stroke="#ead6bc", stroke_width=".9"),
+        _circle(cx, cy, aspect_r, fill="none", stroke="#efddc3", stroke_width=".8"),
+        _text(info_x, 178, chart_title, fill="#3b2b1d", text_anchor="start", class_="title"),
+        _text(info_x, 220, f"{date_label} {time_label} {timezone_label}".strip(), fill="#80684a", text_anchor="start", class_="meta"),
+        _text(info_x, 274, "月初の天体配置をもとにした", fill="#6d5a43", text_anchor="start", class_="caption"),
+        _text(info_x, 302, "月次マンデン用チャート", fill="#6d5a43", text_anchor="start", class_="caption"),
+        _text(info_x, 354, "ハウスなし / 社会全体のテーマを見る参考図", fill="#9a8061", text_anchor="start", class_="small"),
     ]
 
     for lon in range(0, 360, 30):
-        parts.append(_line(cx, cy, inner, outer, lon, stroke="#b89a72", stroke_width="1.4"))
+        parts.append(_line(cx, cy, inner, zodiac, lon, stroke="#d0b690", stroke_width="1"))
     for lon in range(0, 360, 10):
-        tick_inner = outer - (24 if lon % 30 == 0 else 14)
-        parts.append(_line(cx, cy, tick_inner, outer, lon, stroke="#d8c4a7", stroke_width="1", opacity=".68"))
+        tick_inner = zodiac - (16 if lon % 30 == 0 else 9)
+        parts.append(_line(cx, cy, tick_inner, zodiac, lon, stroke="#dec9ab", stroke_width=".8", opacity=".62"))
     for i, label in enumerate(SIGN_LABELS):
-        x, y = _polar(cx, cy, 345, i * 30 + 15)
-        parts.append(_text(x, y + 10, label, fill="#73593b", text_anchor="middle", class_="sign"))
+        x, y = _polar(cx, cy, sign_r, i * 30 + 15)
+        parts.append(_text(x, y, label, fill="#7b6347", text_anchor="middle", class_="sign"))
 
     body_by_name = {item["name"]: item for item in items}
     for aspect in _aspects(items):
@@ -320,19 +339,19 @@ def build_mundane_chart_svg_from_yaml(yaml_text: str, *, doc: dict[str, Any] | N
     for item in items:
         lon = float(item["lon"])
         lane = int(item.get("lane", 0))
-        radius = planet_r - lane * 32
+        radius = planet_r - lane * 23
         x, y = _polar(cx, cy, radius, lon)
         parts.append(f'<g data-body="{html.escape(item["name"])}">')
-        circle_radius = 24 if item.get("angle_point") else 26
-        parts.append(_circle(x, y, circle_radius, fill="#fffaf2", stroke="#8e6d44", stroke_width="1.8"))
+        circle_radius = 16 if item.get("angle_point") else 18
+        parts.append(_circle(x, y, circle_radius, fill="#fffdf9", stroke="#ad8d62", stroke_width="1", opacity=".88"))
         label_class = "angle-label" if item.get("angle_point") else "planet"
         parts.append(_text(x, y, str(item["symbol"]), fill="#3c2a1a", text_anchor="middle", class_=label_class))
         if item.get("retrograde"):
-            parts.append(_text(x + 20, y - 18, "R", fill="#8f2d23", text_anchor="middle", class_="retro"))
-        label_radius = radius + 50 + int(item.get("label_lane", 0)) * 12
+            parts.append(_text(x + 14, y - 14, "R", fill="#9b3d35", text_anchor="middle", class_="retro"))
+        label_radius = min(radius + 46 + int(item.get("label_lane", 0)) * 10, sign_r - 30)
         label_x, label_y = _polar(cx, cy, label_radius, lon)
-        parts.append(_text(label_x, label_y, _degree_label(lon), fill="#6a5135", text_anchor="middle", class_="degree"))
-        parts.append(_line(cx, cy, inner, radius - 30, lon, stroke="#d3b991", stroke_width="1", stroke_dasharray="3 8"))
+        parts.append(_text(label_x, label_y + float(item.get("label_shift", 0)), _degree_label(lon), fill="#6a5135", text_anchor="middle", class_="degree"))
+        parts.append(_line(cx, cy, inner, radius - 22, lon, stroke="#e2c9a6", stroke_width=".75", stroke_dasharray="2 7", opacity=".72"))
         parts.append(f'<title>{html.escape(item["name"])} {_degree_label(lon)}{" R" if item.get("retrograde") else ""}</title>')
         parts.append("</g>")
 

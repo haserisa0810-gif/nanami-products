@@ -109,9 +109,11 @@ class MundanePostsTest(unittest.TestCase):
 
         self.assertIsNotNone(svg)
         self.assertIn("mundane-chart-svg", svg or "")
+        self.assertIn('viewBox="0 0 1280 670"', svg or "")
         self.assertIn("2026-07-01", svg or "")
         self.assertIn("☉", svg or "")
         self.assertIn('dominant-baseline="middle"', svg or "")
+        self.assertIn("ハウスなし", svg or "")
 
     def test_mundane_chart_aspects_include_quincunx_and_minor_styles(self) -> None:
         yaml_text = """

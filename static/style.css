@@ -755,7 +755,7 @@ textarea {
 }
 .mundane-chart-frame {
   width: 100%;
-  max-width: 720px;
+  max-width: 980px;
   margin: 2px auto 0;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -768,7 +768,7 @@ textarea {
   height: auto;
 }
 .mundane-aspect-list {
-  max-width: 720px;
+  max-width: 980px;
   width: 100%;
   margin: 0 auto;
   border: 1px solid var(--border);
