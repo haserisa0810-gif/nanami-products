@@ -749,6 +749,24 @@ textarea {
 .mundane-public h1 {
   max-width: 18ch;
 }
+.mundane-chart-panel {
+  display: grid;
+  gap: 12px;
+}
+.mundane-chart-frame {
+  width: 100%;
+  max-width: 720px;
+  margin: 2px auto 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fffaf2;
+  overflow: hidden;
+}
+.mundane-chart-frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 .mundane-body {
   display: grid;
   gap: 12px;

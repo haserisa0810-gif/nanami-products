@@ -11,6 +11,7 @@ import psycopg2
 
 import routes
 from services import pg_store
+from services.mundane_chart import build_mundane_chart_svg_from_yaml
 from services.mundane_yaml import generate_mundane_yaml
 
 
@@ -97,12 +98,52 @@ class MundanePostsTest(unittest.TestCase):
 
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_mundane_chart_svg_builds_from_monthly_snapshot(self) -> None:
+        yaml_text = generate_mundane_yaml(
+            title="ホロスコープで読む、2026年7月の社会の流れ",
+            slug="2026-07",
+            target_year=2026,
+            target_month=7,
+        )
+        svg = build_mundane_chart_svg_from_yaml(yaml_text)
+
+        self.assertIsNotNone(svg)
+        self.assertIn("mundane-chart-svg", svg or "")
+        self.assertIn("2026-07-01", svg or "")
+        self.assertIn("☉", svg or "")
+
+    def test_chart_svg_route_returns_svg_for_published_post(self) -> None:
+        yaml_text = generate_mundane_yaml(
+            title="ホロスコープで読む、2026年7月の社会の流れ",
+            slug="2026-07",
+            target_year=2026,
+            target_month=7,
+        )
+        with patch.object(
+            routes.pg_store,
+            "get_published_mundane_post_by_slug",
+            return_value={"slug": "2026-07", "yaml_content": yaml_text},
+        ):
+            response = routes.mundane_chart_svg("2026-07")
+
+        self.assertEqual(response.media_type, "image/svg+xml; charset=utf-8")
+        self.assertIn("<svg", response.body.decode("utf-8"))
+
+    def test_chart_svg_route_404s_when_no_published_post_exists(self) -> None:
+        with patch.object(routes.pg_store, "get_published_mundane_post_by_slug", return_value=None):
+            with self.assertRaises(HTTPException) as raised:
+                routes.mundane_chart_svg("2026-07")
+
+        self.assertEqual(raised.exception.status_code, 404)
+
     def test_public_template_has_yaml_copy_controls(self) -> None:
         template = Path("templates/mundane_page.html").read_text(encoding="utf-8")
 
         self.assertIn("YAMLをコピー", template)
         self.assertIn("const MUNDANE_YAML", template)
         self.assertIn("id=\"copy-status\"", template)
+        self.assertIn("月次マンデンチャート", template)
+        self.assertIn("chart_svg | safe", template)
 
     def test_generate_mundane_yaml_returns_monthly_context(self) -> None:
         yaml_text = generate_mundane_yaml(

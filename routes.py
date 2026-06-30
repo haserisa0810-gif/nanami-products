@@ -40,6 +40,7 @@ from services.light_yaml import (
     build_transit_astrology_yaml,
 )
 from services.long_term_transit_yaml import build_ai_long_term_transits_yaml, build_long_term_transits_yaml, has_long_term_transits
+from services.mundane_chart import build_mundane_chart_svg_from_yaml
 from services.mundane_yaml import generate_mundane_yaml
 from services.note_transit import (
     NoteTransitCampaign,
@@ -3869,16 +3870,30 @@ def mundane_raw(slug: str):
     return PlainTextResponse(str(post.get("yaml_content") or ""), media_type="text/plain; charset=utf-8")
 
 
+@app.get("/mundane/{slug}/chart.svg", response_class=PlainTextResponse)
+def mundane_chart_svg(slug: str):
+    post = _load_published_mundane_post_or_404(slug)
+    svg = build_mundane_chart_svg_from_yaml(str(post.get("yaml_content") or ""))
+    if not svg:
+        raise HTTPException(status_code=404, detail="mundane chart not found")
+    response = PlainTextResponse(svg, media_type="image/svg+xml; charset=utf-8")
+    response.headers["Content-Disposition"] = f'inline; filename="mundane-{post["slug"]}-chart.svg"'
+    return response
+
+
 @app.get("/mundane/{slug}", response_class=HTMLResponse)
 def mundane_public(request: Request, slug: str):
     post = _load_published_mundane_post_or_404(slug)
     public_url = f"{_public_base_url(request)}/mundane/{post['slug']}"
+    chart_svg = build_mundane_chart_svg_from_yaml(str(post.get("yaml_content") or ""))
     return templates.TemplateResponse(
         "mundane_page.html",
         {
             "request": request,
             "post": post,
             "public_url": public_url,
+            "chart_svg": chart_svg,
+            "chart_svg_url": f"{_public_base_url(request)}/mundane/{post['slug']}/chart.svg",
             "body_html": _render_simple_markdown(post.get("body_markdown")),
         },
     )
