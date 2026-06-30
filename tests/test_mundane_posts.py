@@ -7,8 +7,10 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, Request
+import psycopg2
 
 import routes
+from services import pg_store
 from services.mundane_yaml import generate_mundane_yaml
 
 
@@ -117,6 +119,29 @@ class MundanePostsTest(unittest.TestCase):
         self.assertIn("/admin/mundane/generate-yaml", template)
         self.assertIn("生成中", template)
         self.assertNotIn("貼り付けてください", template)
+
+    def test_pg_store_mundane_crud_does_not_create_table(self) -> None:
+        source = Path("services/pg_store.py").read_text(encoding="utf-8")
+        mundane_section = source.split("def create_mundane_post", 1)[1].split("def expired_charts_summary", 1)[0]
+
+        self.assertNotIn("CREATE TABLE", mundane_section)
+        self.assertNotIn("ALTER TABLE", mundane_section)
+        self.assertNotIn("ensure_mundane_posts_table", source)
+
+    def test_missing_mundane_table_gets_clear_error(self) -> None:
+        with patch.object(pg_store, "_conn", side_effect=psycopg2.errors.UndefinedTable("relation does not exist")):
+            with self.assertRaisesRegex(RuntimeError, "マンデン投稿テーブルが未作成"):
+                pg_store.create_mundane_post(
+                    title="title",
+                    slug="2026-07",
+                    target_year=2026,
+                    target_month=7,
+                    summary=None,
+                    yaml_content="month: 2026-07\n",
+                    body_markdown=None,
+                    status="draft",
+                    published_at=None,
+                )
 
 
 if __name__ == "__main__":

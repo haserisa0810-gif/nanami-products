@@ -1,4 +1,5 @@
 CREATE SCHEMA IF NOT EXISTS nanami_products;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS nanami_products.redemptions (
   order_code TEXT PRIMARY KEY,
@@ -54,7 +55,7 @@ CREATE TABLE IF NOT EXISTS nanami_products.transit_addon_links (
 );
 
 CREATE TABLE IF NOT EXISTS nanami_products.mundane_posts (
-  id BIGSERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   target_year INTEGER NOT NULL,

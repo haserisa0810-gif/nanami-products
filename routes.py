@@ -3779,7 +3779,7 @@ def mundane_generate_yaml(payload: dict[str, object] = Body(...)):
 
 
 @app.get("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)
-def mundane_edit(request: Request, post_id: int):
+def mundane_edit(request: Request, post_id: str):
     post = pg_store.get_mundane_post_by_id(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="mundane post not found")
@@ -3792,7 +3792,7 @@ def mundane_edit(request: Request, post_id: int):
 @app.post("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)
 def mundane_update(
     request: Request,
-    post_id: int,
+    post_id: str,
     title: str = Form(""),
     slug: str = Form(""),
     target_year: int = Form(...),
