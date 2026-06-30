@@ -740,6 +740,27 @@ def _raise_mundane_table_setup_error(exc: Exception) -> None:
     raise exc
 
 
+def _debug_sql_params(params: tuple[Any, ...]) -> tuple[Any, ...]:
+    debug_values = []
+    for value in params:
+        if isinstance(value, str) and len(value) > 300:
+            debug_values.append(f"{value[:300]}...<truncated len={len(value)}>")
+        else:
+            debug_values.append(value)
+    return tuple(debug_values)
+
+
+def _log_mundane_sql_error(*, action: str, sql: str, params: tuple[Any, ...], exc: Exception) -> None:
+    logger.exception(
+        "mundane_post_sql_failed action=%s sql=%s params=%r error=%r",
+        action,
+        sql,
+        _debug_sql_params(params),
+        exc,
+        stack_info=True,
+    )
+
+
 def create_mundane_post(
     *,
     title: str,
@@ -752,31 +773,31 @@ def create_mundane_post(
     status: str,
     published_at: datetime | None,
 ) -> dict[str, Any]:
-    try:
-        with _conn() as con:
-            with con.cursor() as cur:
-                cur.execute(
-                    f"""
+    sql = f"""
                     INSERT INTO {SCHEMA}.mundane_posts
                         (title, slug, target_year, target_month, summary, yaml_content, body_markdown, status, published_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id, title, slug, target_year, target_month, summary, yaml_content,
                               body_markdown, status, published_at, created_at, updated_at
-                    """,
-                    (
-                        title,
-                        slug,
-                        target_year,
-                        target_month,
-                        summary,
-                        yaml_content,
-                        body_markdown,
-                        status,
-                        published_at,
-                    ),
-                )
+                    """
+    params = (
+        title,
+        slug,
+        target_year,
+        target_month,
+        summary,
+        yaml_content,
+        body_markdown,
+        status,
+        published_at,
+    )
+    try:
+        with _conn(operation="mundane_post_create", sql=sql) as con:
+            with con.cursor() as cur:
+                cur.execute(sql, params)
                 row = cur.fetchone()
     except Exception as exc:
+        _log_mundane_sql_error(action="create", sql=sql, params=params, exc=exc)
         _raise_mundane_table_setup_error(exc)
     return dict(row)
 
@@ -794,11 +815,7 @@ def update_mundane_post(
     status: str,
     published_at: datetime | None,
 ) -> dict[str, Any] | None:
-    try:
-        with _conn() as con:
-            with con.cursor() as cur:
-                cur.execute(
-                    f"""
+    sql = f"""
                     UPDATE {SCHEMA}.mundane_posts
                     SET title = %s,
                         slug = %s,
@@ -813,22 +830,26 @@ def update_mundane_post(
                     WHERE id = %s
                     RETURNING id, title, slug, target_year, target_month, summary, yaml_content,
                               body_markdown, status, published_at, created_at, updated_at
-                    """,
-                    (
-                        title,
-                        slug,
-                        target_year,
-                        target_month,
-                        summary,
-                        yaml_content,
-                        body_markdown,
-                        status,
-                        published_at,
-                        post_id,
-                    ),
-                )
+                    """
+    params = (
+        title,
+        slug,
+        target_year,
+        target_month,
+        summary,
+        yaml_content,
+        body_markdown,
+        status,
+        published_at,
+        post_id,
+    )
+    try:
+        with _conn(operation="mundane_post_update", sql=sql) as con:
+            with con.cursor() as cur:
+                cur.execute(sql, params)
                 row = cur.fetchone()
     except Exception as exc:
+        _log_mundane_sql_error(action="update", sql=sql, params=params, exc=exc)
         _raise_mundane_table_setup_error(exc)
     return dict(row) if row else None
 
