@@ -130,7 +130,7 @@ class MundanePostsTest(unittest.TestCase):
 
     def test_missing_mundane_table_gets_clear_error(self) -> None:
         with patch.object(pg_store, "_conn", side_effect=psycopg2.errors.UndefinedTable("relation does not exist")):
-            with self.assertRaisesRegex(RuntimeError, "マンデン投稿テーブルが未作成"):
+            with self.assertRaisesRegex(RuntimeError, "mundane_posts テーブルが存在しません"):
                 pg_store.create_mundane_post(
                     title="title",
                     slug="2026-07",

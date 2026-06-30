@@ -28,7 +28,7 @@ API_KEY_AUTH_SQL = f"""
     WHERE key_hash = %s
 """
 MUNDANE_TABLE_SETUP_MESSAGE = (
-    "マンデン投稿テーブルが未作成、またはDBユーザーに参照権限がありません。"
+    "mundane_posts テーブルが存在しません。"
     "Supabase SQL Editorで nanami_products.mundane_posts を作成し、必要な権限を付与してください。"
 )
 
