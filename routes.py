@@ -40,6 +40,7 @@ from services.light_yaml import (
     build_transit_astrology_yaml,
 )
 from services.long_term_transit_yaml import build_ai_long_term_transits_yaml, build_long_term_transits_yaml, has_long_term_transits
+from services.mundane_yaml import generate_mundane_yaml
 from services.note_transit import (
     NoteTransitCampaign,
     get_note_transit_campaign_by_access_key,
@@ -3752,6 +3753,29 @@ def mundane_create(
             status_code=400,
         )
     return RedirectResponse(f"/admin/mundane/{post['id']}/edit?saved=1", status_code=303)
+
+
+@app.post("/admin/mundane/generate-yaml")
+def mundane_generate_yaml(payload: dict[str, object] = Body(...)):
+    try:
+        title = str(payload.get("title") or "").strip()
+        slug = str(payload.get("slug") or "").strip().lower()
+        target_year = int(payload.get("target_year") or 0)
+        target_month = int(payload.get("target_month") or 0)
+        if not title:
+            raise ValueError("titleを入力してください。")
+        if not MUNDANE_SLUG_RE.fullmatch(slug):
+            raise ValueError("slugは半角小文字英数字とハイフンで入力してください。例: 2026-07")
+        yaml_content = generate_mundane_yaml(
+            title=title,
+            slug=slug,
+            target_year=target_year,
+            target_month=target_month,
+        )
+    except Exception as exc:
+        logger.exception("mundane_yaml_generate_failed error=%r", exc)
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+    return {"ok": True, "yaml_content": yaml_content}
 
 
 @app.get("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)

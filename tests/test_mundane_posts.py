@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException, Request
 
 import routes
+from services.mundane_yaml import generate_mundane_yaml
 
 
 def _request(path: str = "/mundane/2026-07") -> Request:
@@ -81,6 +82,41 @@ class MundanePostsTest(unittest.TestCase):
         self.assertIn("YAMLをコピー", template)
         self.assertIn("const MUNDANE_YAML", template)
         self.assertIn("id=\"copy-status\"", template)
+
+    def test_generate_mundane_yaml_returns_monthly_context(self) -> None:
+        yaml_text = generate_mundane_yaml(
+            title="ホロスコープで読む、2026年7月の社会の流れ",
+            slug="2026-07",
+            target_year=2026,
+            target_month=7,
+        )
+
+        self.assertIn("format: mundane-monthly-yaml-v1", yaml_text)
+        self.assertIn("target_year: 2026", yaml_text)
+        self.assertIn("target_month: 7", yaml_text)
+        self.assertIn("lunar_events:", yaml_text)
+        self.assertIn("major_aspects:", yaml_text)
+
+    def test_generate_endpoint_returns_yaml_content(self) -> None:
+        result = routes.mundane_generate_yaml(
+            {
+                "title": "ホロスコープで読む、2026年7月の社会の流れ",
+                "slug": "2026-07",
+                "target_year": 2026,
+                "target_month": 7,
+            }
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertIn("mundane_context:", result["yaml_content"])
+
+    def test_admin_form_has_generation_controls_and_no_paste_placeholder(self) -> None:
+        template = Path("templates/mundane_form.html").read_text(encoding="utf-8")
+
+        self.assertIn("マンデンYAMLを生成", template)
+        self.assertIn("/admin/mundane/generate-yaml", template)
+        self.assertIn("生成中", template)
+        self.assertNotIn("貼り付けてください", template)
 
 
 if __name__ == "__main__":

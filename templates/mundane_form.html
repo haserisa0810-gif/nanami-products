@@ -68,8 +68,16 @@
         </div>
 
         <div class="form-section">
+          <div class="mundane-generator-head">
+            <div>
+              <h2>YAML生成</h2>
+              <p class="hint">対象年月から月相・サイン移動・主要アスペクトを計算して、下のYAML欄へ入力します。</p>
+            </div>
+            <button type="button" class="secondary-action" id="generate-yaml-button">マンデンYAMLを生成</button>
+          </div>
+          <p class="hint" id="generate-yaml-status" aria-live="polite"></p>
           <label>yaml_content
-            <textarea name="yaml_content" required class="yaml-editor" placeholder="mundane_context:&#10;  target_month: 2026-07">{{ form.yaml_content or '' }}</textarea>
+            <textarea id="yaml-content" name="yaml_content" required class="yaml-editor" placeholder="生成ボタンでYAMLを作成できます。生成後もここで手動修正できます。">{{ form.yaml_content or '' }}</textarea>
           </label>
         </div>
 
@@ -84,6 +92,44 @@
     </div>
   </main>
   <script>
+    const generateButton = document.getElementById('generate-yaml-button');
+    const generateStatus = document.getElementById('generate-yaml-status');
+    const yamlContent = document.getElementById('yaml-content');
+
+    function setGenerateStatus(message, isError = false) {
+      generateStatus.textContent = message;
+      generateStatus.classList.toggle('error-text', isError);
+    }
+
+    async function generateMundaneYaml() {
+      setGenerateStatus('生成中です...');
+      generateButton.disabled = true;
+      generateButton.textContent = '生成中...';
+      try {
+        const response = await fetch('/admin/mundane/generate-yaml', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            title: document.querySelector('[name="title"]').value,
+            slug: document.querySelector('[name="slug"]').value,
+            target_year: document.querySelector('[name="target_year"]').value,
+            target_month: document.querySelector('[name="target_month"]').value,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.error || 'YAML生成に失敗しました。');
+        yamlContent.value = data.yaml_content;
+        setGenerateStatus('YAMLを生成しました。必要に応じて編集して保存してください。');
+      } catch (error) {
+        setGenerateStatus(error.message || 'YAML生成に失敗しました。', true);
+      } finally {
+        generateButton.disabled = false;
+        generateButton.textContent = 'マンデンYAMLを生成';
+      }
+    }
+
+    generateButton.addEventListener('click', generateMundaneYaml);
+
     async function copyFrom(id) {
       await navigator.clipboard.writeText(document.getElementById(id).value);
       alert('コピーしました');
