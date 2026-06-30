@@ -18,10 +18,25 @@
       {% if chart_svg %}
         <section class="mundane-chart-panel">
           <h2>{{ post.target_year }}年{{ post.target_month }}月 月次マンデンチャート</h2>
-          <p class="hint">このチャートは、{{ post.target_year }}年{{ post.target_month }}月の社会全体の流れを読むために作成した月次マンデン用チャートです。月初の天体配置をもとにした、社会全体のテーマを読むための参考データです。</p>
+          <p class="hint">このチャートは、{{ post.target_year }}年{{ post.target_month }}月の社会全体の流れを読むために作成した月次マンデン用チャートです。月初の天体配置をもとに、社会全体のテーマを読むための参考データとして表示しています。</p>
           <div class="mundane-chart-frame">
             {{ chart_svg | safe }}
           </div>
+          {% if chart_aspects %}
+            <div class="mundane-aspect-list">
+              <h3>主要アスペクト</h3>
+              <ul>
+                {% for aspect in chart_aspects %}
+                  <li>
+                    <span>{{ aspect.body1 }}</span>
+                    <strong>{{ aspect.symbol }}</strong>
+                    <span>{{ aspect.body2 }}</span>
+                    <em>orb {{ "%.1f"|format(aspect.orb) }}°</em>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
           <div class="links">
             <a href="{{ chart_svg_url }}" target="_blank" rel="noopener">SVGを開く</a>
             <a href="{{ chart_svg_url }}" download="mundane-{{ post.slug }}-chart.svg">画像として保存</a>
