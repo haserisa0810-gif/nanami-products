@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>{% if post and post.id %}マンデンYAML編集{% else %}マンデンYAML新規作成{% endif %}</title>
+  <title>{% if is_edit %}マンデンYAML編集{% else %}マンデンYAML新規作成{% endif %}</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
@@ -12,13 +12,13 @@
   <main class="wrap wide">
     <div class="card">
       <p class="eyebrow">nanami-products 管理画面</p>
-      <h1>{% if post and post.id %}マンデンYAML編集{% else %}マンデンYAML新規作成{% endif %}</h1>
+      <h1>{% if is_edit %}マンデンYAML編集{% else %}マンデンYAML新規作成{% endif %}</h1>
       <p class="lead">月次のマンデン占星術YAMLを保存し、公開URLから無料で共有できるようにします。</p>
 
-      {% if saved %}<div class="notice-box soft">保存しました。</div>{% endif %}
+      {% if saved %}<div class="notice-box soft">{{ saved_label }}</div>{% endif %}
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      {% if post and post.id %}
+      {% if is_edit %}
         <section>
           <h2>公開URL</h2>
           <div class="copyline">
@@ -33,7 +33,7 @@
         </section>
       {% endif %}
 
-      <form method="post" action="{% if post and post.id %}{{ admin_mundane_edit_url }}{% else %}{{ admin_mundane_create_url }}{% endif %}" class="form mundane-form">
+      <form method="post" action="{{ form_action }}" class="form mundane-form">
         <div class="form-section">
           <label>title
             <input type="text" name="title" required value="{{ form.title }}" placeholder="例：ホロスコープで読む、2026年7月の社会の流れ">
@@ -87,7 +87,7 @@
           </label>
         </div>
 
-        <button type="submit">{% if post and post.id %}更新する{% else %}作成する{% endif %}</button>
+        <button type="submit">{{ submit_label }}</button>
       </form>
     </div>
   </main>

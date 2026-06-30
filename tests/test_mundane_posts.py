@@ -129,6 +129,29 @@ class MundanePostsTest(unittest.TestCase):
         self.assertTrue(routes.MUNDANE_ADMIN_PREFIX.startswith("/admin/"))
         self.assertGreaterEqual(len(routes.MUNDANE_ADMIN_PREFIX.split("/")[2]), 16)
 
+    def test_edit_form_context_posts_to_update_endpoint(self) -> None:
+        post = {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "title": "title",
+            "slug": "2026-07",
+            "target_year": 2026,
+            "target_month": 7,
+            "summary": "",
+            "yaml_content": "month: 2026-07\n",
+            "body_markdown": "",
+            "status": "draft",
+            "published_at": None,
+        }
+        context = routes._mundane_form_context(_request(), post=post)
+
+        self.assertTrue(context["is_edit"])
+        self.assertEqual(
+            context["form_action"],
+            f"{routes.MUNDANE_ADMIN_PREFIX}/11111111-1111-1111-1111-111111111111/edit",
+        )
+        self.assertEqual(context["submit_label"], "更新する")
+        self.assertNotEqual(context["form_action"], context["admin_mundane_create_url"])
+
     def test_pg_store_mundane_crud_does_not_create_table(self) -> None:
         source = Path("services/pg_store.py").read_text(encoding="utf-8")
         mundane_section = source.split("def create_mundane_post", 1)[1].split("def expired_charts_summary", 1)[0]

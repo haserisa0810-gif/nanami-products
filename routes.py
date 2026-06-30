@@ -3675,6 +3675,7 @@ def _mundane_form_context(
 ) -> dict:
     base_url = _public_base_url(request)
     now = datetime.now(ZoneInfo("Asia/Tokyo"))
+    is_edit = bool(post and post.get("id"))
     if form is None and post:
         form = {
             **post,
@@ -3693,17 +3694,22 @@ def _mundane_form_context(
             "published_at": _format_datetime_local(now),
         }
     public_url = f"{base_url}/mundane/{form.get('slug')}" if form.get("slug") else ""
+    edit_url = f"{MUNDANE_ADMIN_PREFIX}/{post['id']}/edit" if is_edit else ""
     return {
         "request": request,
         "form": form,
         "post": post,
+        "is_edit": is_edit,
         "error": error,
         "saved": saved,
         "public_url": public_url,
         "admin_mundane_new_url": f"{MUNDANE_ADMIN_PREFIX}/new",
         "admin_mundane_create_url": MUNDANE_ADMIN_PREFIX,
         "admin_mundane_generate_url": f"{MUNDANE_ADMIN_PREFIX}/generate-yaml",
-        "admin_mundane_edit_url": f"{MUNDANE_ADMIN_PREFIX}/{post['id']}/edit" if post and post.get("id") else "",
+        "admin_mundane_edit_url": edit_url,
+        "form_action": edit_url if is_edit else MUNDANE_ADMIN_PREFIX,
+        "submit_label": "更新する" if is_edit else "作成する",
+        "saved_label": "更新しました。" if is_edit else "保存しました。",
         "statuses": ("draft", "published"),
     }
 
@@ -3729,6 +3735,7 @@ def mundane_create(
     status: str = Form("draft"),
     published_at: str = Form(""),
 ):
+    logger.info("mundane_post_create_endpoint method=POST path=%s action=insert", request.url.path)
     try:
         values = _parse_mundane_form(
             title=title,
@@ -3811,6 +3818,7 @@ def mundane_update(
     status: str = Form("draft"),
     published_at: str = Form(""),
 ):
+    logger.info("mundane_post_update_endpoint method=POST path=%s post_id=%s action=update", request.url.path, post_id)
     try:
         values = _parse_mundane_form(
             title=title,
