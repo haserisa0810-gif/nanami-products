@@ -78,6 +78,25 @@ class MundanePostsTest(unittest.TestCase):
 
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_raw_route_returns_yaml_text_only_for_published_post(self) -> None:
+        with patch.object(
+            routes.pg_store,
+            "get_published_mundane_post_by_slug",
+            return_value={"slug": "2026-07", "yaml_content": "month: 2026-07\n"},
+        ):
+            response = routes.mundane_raw("2026-07")
+
+        self.assertEqual(response.body.decode("utf-8"), "month: 2026-07\n")
+        self.assertEqual(response.media_type, "text/plain; charset=utf-8")
+        self.assertNotIn("<html", response.body.decode("utf-8").lower())
+
+    def test_raw_route_404s_when_no_published_post_exists(self) -> None:
+        with patch.object(routes.pg_store, "get_published_mundane_post_by_slug", return_value=None):
+            with self.assertRaises(HTTPException) as raised:
+                routes.mundane_raw("2026-07")
+
+        self.assertEqual(raised.exception.status_code, 404)
+
     def test_public_template_has_yaml_copy_controls(self) -> None:
         template = Path("templates/mundane_page.html").read_text(encoding="utf-8")
 

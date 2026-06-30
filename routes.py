@@ -3856,11 +3856,22 @@ def mundane_update(
     return RedirectResponse(f"{MUNDANE_ADMIN_PREFIX}/{post_id}/edit?saved=1", status_code=303)
 
 
-@app.get("/mundane/{slug}", response_class=HTMLResponse)
-def mundane_public(request: Request, slug: str):
+def _load_published_mundane_post_or_404(slug: str) -> dict:
     post = pg_store.get_published_mundane_post_by_slug(slug.strip().lower())
     if not post:
         raise HTTPException(status_code=404, detail="mundane post not found")
+    return post
+
+
+@app.get("/mundane/{slug}/raw", response_class=PlainTextResponse)
+def mundane_raw(slug: str):
+    post = _load_published_mundane_post_or_404(slug)
+    return PlainTextResponse(str(post.get("yaml_content") or ""), media_type="text/plain; charset=utf-8")
+
+
+@app.get("/mundane/{slug}", response_class=HTMLResponse)
+def mundane_public(request: Request, slug: str):
+    post = _load_published_mundane_post_or_404(slug)
     public_url = f"{_public_base_url(request)}/mundane/{post['slug']}"
     return templates.TemplateResponse(
         "mundane_page.html",
