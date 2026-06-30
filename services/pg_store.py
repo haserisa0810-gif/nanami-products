@@ -201,6 +201,7 @@ def init_db() -> None:
             """)
             _ensure_addon_redemptions_table(cur)
             _ensure_transit_addon_links_table(cur)
+            ensure_mundane_posts_table(cur)
             ensure_api_tables(cur)
 
 
@@ -235,6 +236,51 @@ def _ensure_transit_addon_links_table(cur) -> None:
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     """)
+
+
+def ensure_mundane_posts_table(cur=None) -> None:
+    owns_connection = cur is None
+    if owns_connection:
+        con_cm = _conn()
+        con = con_cm.__enter__()
+        cur = con.cursor()
+    try:
+        cur.execute(f"""
+            CREATE TABLE IF NOT EXISTS {SCHEMA}.mundane_posts (
+                id            BIGSERIAL PRIMARY KEY,
+                title         TEXT        NOT NULL,
+                slug          TEXT        NOT NULL UNIQUE,
+                target_year   INTEGER     NOT NULL,
+                target_month  INTEGER     NOT NULL,
+                summary       TEXT,
+                yaml_content  TEXT        NOT NULL,
+                body_markdown TEXT,
+                status        TEXT        NOT NULL DEFAULT 'draft',
+                published_at  TIMESTAMPTZ,
+                created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute(f"ALTER TABLE {SCHEMA}.mundane_posts ADD COLUMN IF NOT EXISTS summary TEXT")
+        cur.execute(f"ALTER TABLE {SCHEMA}.mundane_posts ADD COLUMN IF NOT EXISTS body_markdown TEXT")
+        cur.execute(f"ALTER TABLE {SCHEMA}.mundane_posts ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ")
+        cur.execute(f"ALTER TABLE {SCHEMA}.mundane_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ")
+        cur.execute(f"""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_mundane_posts_slug_unique
+            ON {SCHEMA}.mundane_posts (slug)
+        """)
+        cur.execute(f"""
+            CREATE INDEX IF NOT EXISTS idx_mundane_posts_public
+            ON {SCHEMA}.mundane_posts (slug, published_at)
+            WHERE status = 'published'
+        """)
+        if owns_connection:
+            cur.close()
+            con_cm.__exit__(None, None, None)
+    except Exception as exc:
+        if owns_connection:
+            con_cm.__exit__(type(exc), exc, exc.__traceback__)
+        raise
 
 
 def _chart_columns(cur) -> set[str]:
@@ -713,6 +759,131 @@ def get_chart(token: str, *, include_svgs: bool = True) -> dict[str, Any] | None
         except (psycopg2.InterfaceError, psycopg2.OperationalError):
             if attempt:
                 raise
+    return dict(row) if row else None
+
+
+def create_mundane_post(
+    *,
+    title: str,
+    slug: str,
+    target_year: int,
+    target_month: int,
+    summary: str | None,
+    yaml_content: str,
+    body_markdown: str | None,
+    status: str,
+    published_at: datetime | None,
+) -> dict[str, Any]:
+    with _conn() as con:
+        with con.cursor() as cur:
+            ensure_mundane_posts_table(cur)
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.mundane_posts
+                    (title, slug, target_year, target_month, summary, yaml_content, body_markdown, status, published_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, title, slug, target_year, target_month, summary, yaml_content,
+                          body_markdown, status, published_at, created_at, updated_at
+                """,
+                (
+                    title,
+                    slug,
+                    target_year,
+                    target_month,
+                    summary,
+                    yaml_content,
+                    body_markdown,
+                    status,
+                    published_at,
+                ),
+            )
+            row = cur.fetchone()
+    return dict(row)
+
+
+def update_mundane_post(
+    post_id: int,
+    *,
+    title: str,
+    slug: str,
+    target_year: int,
+    target_month: int,
+    summary: str | None,
+    yaml_content: str,
+    body_markdown: str | None,
+    status: str,
+    published_at: datetime | None,
+) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            ensure_mundane_posts_table(cur)
+            cur.execute(
+                f"""
+                UPDATE {SCHEMA}.mundane_posts
+                SET title = %s,
+                    slug = %s,
+                    target_year = %s,
+                    target_month = %s,
+                    summary = %s,
+                    yaml_content = %s,
+                    body_markdown = %s,
+                    status = %s,
+                    published_at = %s,
+                    updated_at = NOW()
+                WHERE id = %s
+                RETURNING id, title, slug, target_year, target_month, summary, yaml_content,
+                          body_markdown, status, published_at, created_at, updated_at
+                """,
+                (
+                    title,
+                    slug,
+                    target_year,
+                    target_month,
+                    summary,
+                    yaml_content,
+                    body_markdown,
+                    status,
+                    published_at,
+                    post_id,
+                ),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def get_mundane_post_by_id(post_id: int) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            ensure_mundane_posts_table(cur)
+            cur.execute(
+                f"""
+                SELECT id, title, slug, target_year, target_month, summary, yaml_content,
+                       body_markdown, status, published_at, created_at, updated_at
+                FROM {SCHEMA}.mundane_posts
+                WHERE id = %s
+                """,
+                (post_id,),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def get_published_mundane_post_by_slug(slug: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            ensure_mundane_posts_table(cur)
+            cur.execute(
+                f"""
+                SELECT id, title, slug, target_year, target_month, summary, yaml_content,
+                       body_markdown, status, published_at, created_at, updated_at
+                FROM {SCHEMA}.mundane_posts
+                WHERE slug = %s
+                  AND status = 'published'
+                  AND (published_at IS NULL OR published_at <= NOW())
+                """,
+                (slug,),
+            )
+            row = cur.fetchone()
     return dict(row) if row else None
 
 

@@ -10,6 +10,7 @@ import secrets
 import subprocess
 import time
 import zipfile
+from html import escape as html_escape
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
@@ -22,6 +23,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
@@ -3524,6 +3526,309 @@ def post_chart_new(request: Request):
             "default_date": now.strftime("%Y-%m-%d"),
             "default_time": now.strftime("%H:%M"),
             "form": None,
+        },
+    )
+
+
+MUNDANE_POST_STATUSES = {"draft", "published"}
+MUNDANE_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,80}$")
+
+
+def _render_simple_markdown(markdown_text: str | None) -> Markup:
+    raw = (markdown_text or "").strip()
+    if not raw:
+        return Markup("")
+
+    blocks: list[str] = []
+    paragraph: list[str] = []
+    list_items: list[str] = []
+
+    def flush_paragraph() -> None:
+        nonlocal paragraph
+        if paragraph:
+            blocks.append(f"<p>{'<br>'.join(html_escape(line) for line in paragraph)}</p>")
+            paragraph = []
+
+    def flush_list() -> None:
+        nonlocal list_items
+        if list_items:
+            blocks.append("<ul>" + "".join(f"<li>{item}</li>" for item in list_items) + "</ul>")
+            list_items = []
+
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            flush_paragraph()
+            flush_list()
+            continue
+        if stripped.startswith("### "):
+            flush_paragraph()
+            flush_list()
+            blocks.append(f"<h3>{html_escape(stripped[4:].strip())}</h3>")
+            continue
+        if stripped.startswith("## "):
+            flush_paragraph()
+            flush_list()
+            blocks.append(f"<h2>{html_escape(stripped[3:].strip())}</h2>")
+            continue
+        if stripped.startswith("# "):
+            flush_paragraph()
+            flush_list()
+            blocks.append(f"<h2>{html_escape(stripped[2:].strip())}</h2>")
+            continue
+        if stripped.startswith(("- ", "* ")):
+            flush_paragraph()
+            list_items.append(html_escape(stripped[2:].strip()))
+            continue
+        flush_list()
+        paragraph.append(stripped)
+
+    flush_paragraph()
+    flush_list()
+    return Markup("\n".join(blocks))
+
+
+def _format_datetime_local(value) -> str:
+    if not value:
+        return ""
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return value[:16]
+    if isinstance(value, datetime):
+        if value.tzinfo:
+            value = value.astimezone(ZoneInfo("Asia/Tokyo"))
+        return value.strftime("%Y-%m-%dT%H:%M")
+    return ""
+
+
+def _parse_mundane_published_at(value: str) -> datetime | None:
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError as exc:
+        raise ValueError("公開日時の形式が不正です。") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=ZoneInfo("Asia/Tokyo"))
+    return parsed
+
+
+def _parse_mundane_form(
+    *,
+    title: str,
+    slug: str,
+    target_year: int,
+    target_month: int,
+    summary: str,
+    yaml_content: str,
+    body_markdown: str,
+    status: str,
+    published_at: str,
+) -> dict:
+    clean_slug = slug.strip().lower()
+    clean_status = status.strip().lower() or "draft"
+    clean_yaml = yaml_content.strip()
+    if not title.strip():
+        raise ValueError("titleを入力してください。")
+    if not MUNDANE_SLUG_RE.fullmatch(clean_slug):
+        raise ValueError("slugは半角小文字英数字とハイフンで入力してください。例: 2026-07")
+    if not (1 <= int(target_month) <= 12):
+        raise ValueError("target_monthは1〜12で入力してください。")
+    if not (1900 <= int(target_year) <= 2100):
+        raise ValueError("target_yearは1900〜2100で入力してください。")
+    if clean_status not in MUNDANE_POST_STATUSES:
+        raise ValueError("statusはdraftまたはpublishedを選んでください。")
+    if not clean_yaml:
+        raise ValueError("yaml_contentを入力してください。")
+    try:
+        yaml.safe_load(clean_yaml)
+    except yaml.YAMLError as exc:
+        raise ValueError(f"YAMLの形式が不正です: {exc}") from exc
+    return {
+        "title": title.strip(),
+        "slug": clean_slug,
+        "target_year": int(target_year),
+        "target_month": int(target_month),
+        "summary": summary.strip() or None,
+        "yaml_content": clean_yaml,
+        "body_markdown": body_markdown.strip() or None,
+        "status": clean_status,
+        "published_at": _parse_mundane_published_at(published_at),
+    }
+
+
+def _mundane_form_context(
+    request: Request,
+    *,
+    form: dict | None = None,
+    post: dict | None = None,
+    error: str | None = None,
+    saved: bool = False,
+) -> dict:
+    base_url = _public_base_url(request)
+    now = datetime.now(ZoneInfo("Asia/Tokyo"))
+    if form is None and post:
+        form = {
+            **post,
+            "published_at": _format_datetime_local(post.get("published_at")),
+        }
+    if form is None:
+        form = {
+            "title": "",
+            "slug": now.strftime("%Y-%m"),
+            "target_year": now.year,
+            "target_month": now.month,
+            "summary": "",
+            "yaml_content": "",
+            "body_markdown": "",
+            "status": "draft",
+            "published_at": _format_datetime_local(now),
+        }
+    public_url = f"{base_url}/mundane/{form.get('slug')}" if form.get("slug") else ""
+    return {
+        "request": request,
+        "form": form,
+        "post": post,
+        "error": error,
+        "saved": saved,
+        "public_url": public_url,
+        "statuses": ("draft", "published"),
+    }
+
+
+@app.get("/admin/mundane/new", response_class=HTMLResponse)
+def mundane_new(request: Request):
+    return templates.TemplateResponse(
+        "mundane_form.html",
+        _mundane_form_context(request),
+    )
+
+
+@app.post("/admin/mundane", response_class=HTMLResponse)
+def mundane_create(
+    request: Request,
+    title: str = Form(""),
+    slug: str = Form(""),
+    target_year: int = Form(...),
+    target_month: int = Form(...),
+    summary: str = Form(""),
+    yaml_content: str = Form(""),
+    body_markdown: str = Form(""),
+    status: str = Form("draft"),
+    published_at: str = Form(""),
+):
+    try:
+        values = _parse_mundane_form(
+            title=title,
+            slug=slug,
+            target_year=target_year,
+            target_month=target_month,
+            summary=summary,
+            yaml_content=yaml_content,
+            body_markdown=body_markdown,
+            status=status,
+            published_at=published_at,
+        )
+        post = pg_store.create_mundane_post(**values)
+    except Exception as exc:
+        logger.exception("mundane_post_create_failed error=%r", exc)
+        form = {
+            "title": title,
+            "slug": slug,
+            "target_year": target_year,
+            "target_month": target_month,
+            "summary": summary,
+            "yaml_content": yaml_content,
+            "body_markdown": body_markdown,
+            "status": status,
+            "published_at": published_at,
+        }
+        return templates.TemplateResponse(
+            "mundane_form.html",
+            _mundane_form_context(request, form=form, error=str(exc)),
+            status_code=400,
+        )
+    return RedirectResponse(f"/admin/mundane/{post['id']}/edit?saved=1", status_code=303)
+
+
+@app.get("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)
+def mundane_edit(request: Request, post_id: int):
+    post = pg_store.get_mundane_post_by_id(post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="mundane post not found")
+    return templates.TemplateResponse(
+        "mundane_form.html",
+        _mundane_form_context(request, post=post, saved=request.query_params.get("saved") == "1"),
+    )
+
+
+@app.post("/admin/mundane/{post_id}/edit", response_class=HTMLResponse)
+def mundane_update(
+    request: Request,
+    post_id: int,
+    title: str = Form(""),
+    slug: str = Form(""),
+    target_year: int = Form(...),
+    target_month: int = Form(...),
+    summary: str = Form(""),
+    yaml_content: str = Form(""),
+    body_markdown: str = Form(""),
+    status: str = Form("draft"),
+    published_at: str = Form(""),
+):
+    try:
+        values = _parse_mundane_form(
+            title=title,
+            slug=slug,
+            target_year=target_year,
+            target_month=target_month,
+            summary=summary,
+            yaml_content=yaml_content,
+            body_markdown=body_markdown,
+            status=status,
+            published_at=published_at,
+        )
+        post = pg_store.update_mundane_post(post_id, **values)
+    except Exception as exc:
+        logger.exception("mundane_post_update_failed post_id=%s error=%r", post_id, exc)
+        form = {
+            "id": post_id,
+            "title": title,
+            "slug": slug,
+            "target_year": target_year,
+            "target_month": target_month,
+            "summary": summary,
+            "yaml_content": yaml_content,
+            "body_markdown": body_markdown,
+            "status": status,
+            "published_at": published_at,
+        }
+        return templates.TemplateResponse(
+            "mundane_form.html",
+            _mundane_form_context(request, form=form, post=form, error=str(exc)),
+            status_code=400,
+        )
+    if not post:
+        raise HTTPException(status_code=404, detail="mundane post not found")
+    return RedirectResponse(f"/admin/mundane/{post_id}/edit?saved=1", status_code=303)
+
+
+@app.get("/mundane/{slug}", response_class=HTMLResponse)
+def mundane_public(request: Request, slug: str):
+    post = pg_store.get_published_mundane_post_by_slug(slug.strip().lower())
+    if not post:
+        raise HTTPException(status_code=404, detail="mundane post not found")
+    public_url = f"{_public_base_url(request)}/mundane/{post['slug']}"
+    return templates.TemplateResponse(
+        "mundane_page.html",
+        {
+            "request": request,
+            "post": post,
+            "public_url": public_url,
+            "body_html": _render_simple_markdown(post.get("body_markdown")),
         },
     )
 

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ post.title }}</title>
+  <meta name="description" content="{{ post.summary or post.title }}">
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+</head>
+<body>
+  <main class="wrap wide mundane-public">
+    <article class="card">
+      <p class="eyebrow">nanami mundane astrology</p>
+      <h1>{{ post.title }}</h1>
+      {% if post.summary %}<p class="lead">{{ post.summary }}</p>{% endif %}
+
+      <section class="page-url-panel">
+        <h2>共有URL</h2>
+        <div class="copyline">
+          <input id="public-url" value="{{ public_url }}" readonly>
+          <button type="button" onclick="copyFromInput('public-url', 'URLをコピーしました。')">URLをコピー</button>
+        </div>
+        <p class="hint">noteやSNSへ貼り付けて共有できます。</p>
+      </section>
+
+      {% if body_html %}
+        <section class="mundane-body">
+          {{ body_html }}
+        </section>
+      {% endif %}
+
+      <section>
+        <h2>マンデンYAML</h2>
+        <div class="yaml-action-row">
+          <button type="button" class="secondary-action" onclick="copyYaml()">YAMLをコピー</button>
+          <span id="copy-status" class="copy-status" aria-live="polite"></span>
+        </div>
+        <pre class="yaml-code"><code>{{ post.yaml_content }}</code></pre>
+      </section>
+
+      <section class="notice-box soft mundane-context-note">
+        <p>このYAMLは、AIに今月の社会全体の流れを伝えるためのデータです。</p>
+        <p>さらに個人の出生図やトランジットデータを組み合わせることで、「社会全体ではこういう流れ。その中で自分は何を意識するとよいか」をAIに読み解かせることができます。</p>
+      </section>
+    </article>
+  </main>
+
+  <script>
+    const MUNDANE_YAML = {{ post.yaml_content | tojson }};
+    const statusEl = document.getElementById('copy-status');
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+      window.setTimeout(() => {
+        if (statusEl.textContent === message) statusEl.textContent = '';
+      }, 3500);
+    }
+
+    async function writeClipboard(text, message) {
+      await navigator.clipboard.writeText(text);
+      setStatus(message);
+    }
+
+    async function copyYaml() {
+      await writeClipboard(MUNDANE_YAML, 'YAMLをコピーしました。');
+    }
+
+    async function copyFromInput(id, message) {
+      await writeClipboard(document.getElementById(id).value, message);
+    }
+  </script>
+</body>
+</html>

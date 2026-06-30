@@ -53,6 +53,21 @@ CREATE TABLE IF NOT EXISTS nanami_products.transit_addon_links (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS nanami_products.mundane_posts (
+  id BIGSERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  target_year INTEGER NOT NULL,
+  target_month INTEGER NOT NULL,
+  summary TEXT,
+  yaml_content TEXT NOT NULL,
+  body_markdown TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS nanami_products.api_keys (
   id BIGSERIAL PRIMARY KEY,
   key_hash TEXT UNIQUE NOT NULL,
@@ -122,6 +137,25 @@ WHERE expires_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_charts_expires_at
   ON nanami_products.charts (expires_at);
 
+ALTER TABLE nanami_products.mundane_posts
+  ADD COLUMN IF NOT EXISTS summary TEXT;
+
+ALTER TABLE nanami_products.mundane_posts
+  ADD COLUMN IF NOT EXISTS body_markdown TEXT;
+
+ALTER TABLE nanami_products.mundane_posts
+  ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+
+ALTER TABLE nanami_products.mundane_posts
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mundane_posts_slug_unique
+  ON nanami_products.mundane_posts (slug);
+
+CREATE INDEX IF NOT EXISTS idx_mundane_posts_public
+  ON nanami_products.mundane_posts (slug, published_at)
+  WHERE status = 'published';
+
 -- Cloud Run の DATABASE_URL が authenticator の場合
 GRANT USAGE ON SCHEMA nanami_products TO authenticator;
 GRANT CREATE ON SCHEMA nanami_products TO authenticator;
@@ -129,6 +163,7 @@ GRANT ALL PRIVILEGES ON TABLE nanami_products.charts TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.redemptions TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.addon_redemptions TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.transit_addon_links TO authenticator;
+GRANT ALL PRIVILEGES ON TABLE nanami_products.mundane_posts TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.stores_orders TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.api_keys TO authenticator;
 GRANT ALL PRIVILEGES ON TABLE nanami_products.api_usage_logs TO authenticator;

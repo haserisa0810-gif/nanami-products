@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% if post and post.id %}マンデンYAML編集{% else %}マンデンYAML新規作成{% endif %}</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products 管理画面</p>
+      <h1>{% if post and post.id %}マンデンYAML編集{% else %}マンデンYAML新規作成{% endif %}</h1>
+      <p class="lead">月次のマンデン占星術YAMLを保存し、公開URLから無料で共有できるようにします。</p>
+
+      {% if saved %}<div class="notice-box soft">保存しました。</div>{% endif %}
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+      {% if post and post.id %}
+        <section>
+          <h2>公開URL</h2>
+          <div class="copyline">
+            <input id="public-url" value="{{ public_url }}" readonly>
+            <button type="button" onclick="copyFrom('public-url')">コピー</button>
+          </div>
+          <p class="hint">statusがpublishedで、公開日時が現在以前の場合だけ表示されます。</p>
+          <div class="links">
+            <a href="{{ public_url }}" target="_blank" rel="noopener">公開ページを開く</a>
+            <a href="/admin/mundane/new">新規作成</a>
+          </div>
+        </section>
+      {% endif %}
+
+      <form method="post" action="{% if post and post.id %}/admin/mundane/{{ post.id }}/edit{% else %}/admin/mundane{% endif %}" class="form mundane-form">
+        <div class="form-section">
+          <label>title
+            <input type="text" name="title" required value="{{ form.title }}" placeholder="例：ホロスコープで読む、2026年7月の社会の流れ">
+          </label>
+          <label>slug
+            <input type="text" name="slug" required value="{{ form.slug }}" placeholder="例：2026-07" pattern="[a-z0-9][a-z0-9-]{0,80}">
+            <small>公開URLは /mundane/slug になります。slugはユニークです。</small>
+          </label>
+          <div class="mundane-grid">
+            <label>target_year
+              <input type="number" name="target_year" required min="1900" max="2100" value="{{ form.target_year }}">
+            </label>
+            <label>target_month
+              <input type="number" name="target_month" required min="1" max="12" value="{{ form.target_month }}">
+            </label>
+          </div>
+          <label>summary
+            <textarea name="summary" class="short-textarea" placeholder="記事上部に表示する短い説明">{{ form.summary or '' }}</textarea>
+          </label>
+          <div class="mundane-grid">
+            <label>status
+              <select name="status">
+                {% for value in statuses %}
+                  <option value="{{ value }}" {% if form.status == value %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>published_at
+              <input type="datetime-local" name="published_at" value="{{ form.published_at or '' }}">
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label>yaml_content
+            <textarea name="yaml_content" required class="yaml-editor" placeholder="mundane_context:&#10;  target_month: 2026-07">{{ form.yaml_content or '' }}</textarea>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <label>body_markdown <span class="optional">任意</span>
+            <textarea name="body_markdown" placeholder="解説文を入力します。見出し、段落、箇条書きを簡易表示します。">{{ form.body_markdown or '' }}</textarea>
+          </label>
+        </div>
+
+        <button type="submit">{% if post and post.id %}更新する{% else %}作成する{% endif %}</button>
+      </form>
+    </div>
+  </main>
+  <script>
+    async function copyFrom(id) {
+      await navigator.clipboard.writeText(document.getElementById(id).value);
+      alert('コピーしました');
+    }
+  </script>
+</body>
+</html>

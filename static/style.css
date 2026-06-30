@@ -717,6 +717,68 @@ textarea {
 }
 .links a:hover { background: var(--gold-bg); }
 
+.mundane-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.mundane-form .short-textarea {
+  min-height: 96px;
+}
+.mundane-form .yaml-editor {
+  min-height: 420px;
+}
+.mundane-public h1 {
+  max-width: 18ch;
+}
+.mundane-body {
+  display: grid;
+  gap: 12px;
+  color: var(--body);
+  font-size: .94rem;
+}
+.mundane-body h2,
+.mundane-body h3 {
+  margin: 8px 0 0;
+  color: var(--text);
+  font-size: 1rem;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+.mundane-body ul {
+  padding-left: 1.2rem;
+}
+.yaml-code {
+  max-height: min(62vh, 680px);
+  overflow: auto;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #2f281f;
+  color: #fff7e8;
+  padding: 16px 18px;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mundane-context-note {
+  display: grid;
+  gap: 8px;
+}
+.mundane-context-note p {
+  color: var(--body);
+  font-size: .9rem;
+  line-height: 1.85;
+}
+
+@media (max-width: 640px) {
+  .mundane-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .checks { display: grid; gap: 8px; }
 .checks label { display: flex; align-items: center; gap: 10px; font-weight: 300; color: var(--body); }
 .checks input { width: auto; min-height: auto; }
