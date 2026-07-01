@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import io
+import json
 import logging
 import os
 import re
@@ -42,6 +43,15 @@ from services.light_yaml import (
 from services.long_term_transit_yaml import build_ai_long_term_transits_yaml, build_long_term_transits_yaml, has_long_term_transits
 from services.mundane_chart import build_mundane_chart_svg_from_yaml, mundane_aspect_summary_from_yaml
 from services.mundane_yaml import generate_mundane_yaml
+from services.mcp_chart_service import (
+    ChartMcpError,
+    extract_chart_id_from_url,
+    get_available_sections_from_url,
+    get_chart_summary_from_url,
+    get_chart_yaml_from_url,
+    get_download_info_from_url,
+    mask_chart_id,
+)
 from services.note_transit import (
     NoteTransitCampaign,
     get_note_transit_campaign_by_access_key,
@@ -162,6 +172,176 @@ def _asset_url(path: str) -> str:
 
 
 templates.env.globals.update(asset_version=ASSET_VERSION, asset_url=_asset_url)
+
+
+MCP_TOOL_DEFINITIONS = [
+    {
+        "name": "get_chart_yaml_from_url",
+        "description": (
+            "Chart URLからAI解釈用YAMLを取得します。ネイタル、トランジット、小惑星、"
+            "四柱推命、インド占星術などのセクションを必要に応じて取得できます。"
+            "URLはアクセスキーとして扱われます。期限が近い場合は保存案内を返し、"
+            "期限切れの場合はYAMLを返しません。"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "chart_url": {"type": "string", "description": "https://chart.nanami-astro.com/chart/{chart_id}"},
+                "sections": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["natal", "transit_31days", "long_term", "asteroid", "shichu", "indian"],
+                    },
+                    "description": "必要なセクション。未指定なら利用可能な全YAMLを返します。",
+                },
+                "format": {"type": "string", "enum": ["full"], "default": "full"},
+            },
+            "required": ["chart_url"],
+        },
+    },
+    {
+        "name": "get_chart_summary_from_url",
+        "description": (
+            "Chart URLから商品種別、生成日時、有効期限、残り日数、含まれるセクション一覧を確認します。"
+            "URLはアクセスキーとして扱われ、期限切れの場合は保存済みYAML利用または再購入案内を返します。"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"chart_url": {"type": "string", "description": "https://chart.nanami-astro.com/chart/{chart_id}"}},
+            "required": ["chart_url"],
+        },
+    },
+    {
+        "name": "get_available_sections_from_url",
+        "description": (
+            "Chart URLに含まれるネイタル、トランジット、小惑星、四柱推命などの利用可能セクション一覧を返します。"
+            "URLはアクセスキーとして扱われます。"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"chart_url": {"type": "string", "description": "https://chart.nanami-astro.com/chart/{chart_id}"}},
+            "required": ["chart_url"],
+        },
+    },
+    {
+        "name": "get_download_info_from_url",
+        "description": (
+            "Chart URLのYAMLダウンロードURL、ファイル名、有効期限、保存推奨メッセージを返します。"
+            "期限が近い場合は保存案内を返し、期限切れの場合はYAMLを返さず再購入導線を案内します。"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"chart_url": {"type": "string", "description": "https://chart.nanami-astro.com/chart/{chart_id}"}},
+            "required": ["chart_url"],
+        },
+    },
+]
+
+
+def _mcp_result(request_id, result: dict) -> JSONResponse:
+    return JSONResponse({"jsonrpc": "2.0", "id": request_id, "result": result})
+
+
+def _mcp_error(request_id, code: int, message: str, *, data: dict | None = None) -> JSONResponse:
+    error: dict[str, object] = {"code": code, "message": message}
+    if data:
+        error["data"] = data
+    return JSONResponse({"jsonrpc": "2.0", "id": request_id, "error": error})
+
+
+def _mcp_tool_content(payload: dict, *, is_error: bool = False) -> dict:
+    return {
+        "content": [
+            {
+                "type": "text",
+                "text": json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+            }
+        ],
+        "isError": is_error,
+    }
+
+
+def _call_mcp_tool(name: str, arguments: dict) -> dict:
+    if not isinstance(arguments, dict):
+        raise ChartMcpError("arguments は object で指定してください。", code="invalid_arguments")
+    if name == "get_chart_yaml_from_url":
+        sections = arguments.get("sections")
+        if sections is not None and not isinstance(sections, list):
+            raise ChartMcpError("sections は配列で指定してください。", code="invalid_sections")
+        return get_chart_yaml_from_url(
+            chart_url=str(arguments.get("chart_url") or ""),
+            sections=sections,
+            format=str(arguments.get("format") or "full"),
+        )
+    if name == "get_chart_summary_from_url":
+        return get_chart_summary_from_url(chart_url=str(arguments.get("chart_url") or ""))
+    if name == "get_available_sections_from_url":
+        return get_available_sections_from_url(chart_url=str(arguments.get("chart_url") or ""))
+    if name == "get_download_info_from_url":
+        return get_download_info_from_url(chart_url=str(arguments.get("chart_url") or ""))
+    raise ChartMcpError("未知のMCPツールです。", code="unknown_tool")
+
+
+@app.post("/mcp")
+async def mcp_endpoint(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        return _mcp_error(None, -32700, "Invalid JSON")
+    request_id = body.get("id") if isinstance(body, dict) else None
+    if not isinstance(body, dict):
+        return _mcp_error(request_id, -32600, "Invalid Request")
+    method = str(body.get("method") or "")
+    params = body.get("params") if isinstance(body.get("params"), dict) else {}
+
+    if method == "initialize":
+        return _mcp_result(
+            request_id,
+            {
+                "protocolVersion": "2024-11-05",
+                "serverInfo": {"name": "nanami-products-mcp", "version": ASSET_VERSION},
+                "capabilities": {"tools": {}},
+            },
+        )
+    if method == "notifications/initialized":
+        return Response(status_code=202)
+    if method == "tools/list":
+        return _mcp_result(request_id, {"tools": MCP_TOOL_DEFINITIONS})
+    if method == "tools/call":
+        name = str(params.get("name") or "")
+        arguments = params.get("arguments") if isinstance(params.get("arguments"), dict) else {}
+        chart_url = str(arguments.get("chart_url") or "")
+        try:
+            chart_id = extract_chart_id_from_url(chart_url) if chart_url else ""
+            payload = _call_mcp_tool(name, arguments)
+            if chart_id:
+                logger.info("mcp_tool_call_ok tool=%s chart_id=%s", name, mask_chart_id(chart_id))
+            return _mcp_result(request_id, _mcp_tool_content(payload))
+        except ChartMcpError as exc:
+            masked = ""
+            try:
+                masked = mask_chart_id(extract_chart_id_from_url(chart_url)) if chart_url else ""
+            except Exception:
+                masked = ""
+            logger.info("mcp_tool_call_rejected tool=%s chart_id=%s code=%s", name, masked, exc.code)
+            return _mcp_result(
+                request_id,
+                _mcp_tool_content(
+                    {"ok": False, "error_code": exc.code, "message": str(exc)},
+                    is_error=True,
+                ),
+            )
+        except Exception:
+            logger.exception("mcp_tool_call_failed tool=%s", name)
+            return _mcp_result(
+                request_id,
+                _mcp_tool_content(
+                    {"ok": False, "error_code": "internal_error", "message": "内部エラーが発生しました。時間をおいて再度お試しください。"},
+                    is_error=True,
+                ),
+            )
+    return _mcp_error(request_id, -32601, "Method not found")
 
 
 @app.get("/favicon.ico")
