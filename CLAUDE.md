@@ -23,6 +23,16 @@ Key endpoints — 購入者フロー:
 - `GET /chart/{token}.yaml` — raw YAML
 - `GET /chart/{token}/prompt.txt` — AI プロンプトテキスト
 
+Key endpoints — ACG（アストロカートグラフィ）:
+- `GET /acg` — 天空線マップページ（マンデン＋YAML貼り付けパーソナル、Leaflet + Natural Earth + turf.js すべて自前ホスティング）
+- `GET /api/acg/mundane?date=YYYY-MM-DD` — マンデン線 GeoJSON（認証なし・日次メモリキャッシュ・当該日 03:00 UTC = JST正午固定・日付範囲 1800〜2399）
+- `POST /api/acg/personal` — JSON `{"yaml_text": "..."}` → ネイタル線 GeoJSON（ステートレス、保存もログ出力もしない。抽出は subject.datetime 優先 → input フォールバック。過去日は弾かない = Moshier 自動フォールバック）
+
+計算コアは `services/acg_core.py`（`lines_to_geojson(dt_utc, natal=False)`）、API層は `services/acg_api.py`、CLI は `acg.py`。
+1 Feature = 1 LineString。経度180度またぎは RFC 7946 準拠で複数 Feature に分割し `properties.line_group`（例 `Venus_MC`）で束ねる。
+ASC/DSC は緯度1度刻み（±85）。地点逆引き（500km以内・上位5件・strength判定）と「AIに渡す用YAML」コピーはフロント側 turf.js で実装。
+解釈は固定辞書 `static/acg_interpretations.json`（`Venus_MC` 形式キー、label/meaning/meaning_hint、生成AIなし）。
+
 Key endpoints — 管理者フロー:
 - `GET /admin/yaml/new` — 管理者用生成フォーム
 - `POST /admin/yaml/generate` — YAML 生成・保存
