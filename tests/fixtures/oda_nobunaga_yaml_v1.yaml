@@ -1,0 +1,320 @@
+version: nanami-products-yaml-v1
+product:
+  type: personal_ai_astrology_yaml
+  options:
+    western_natal: true
+    asteroids: false
+    transit: false
+    shichusuimei: false
+generated_at: '2026-05-05T02:37:53.697348+00:00'
+input:
+  title: 織田信長
+  birth_date: '1534-06-23'
+  birth_time: 04:00
+  prefecture: 愛知県
+  birth_place_kind: domestic
+  birth_place: 愛知県
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.31638888888889
+  gender: unknown
+usage_note:
+  for_ai: このYAMLは計算済みデータです。AIに解釈させる場合、生年月日から再計算させず、この値を根拠にしてください。
+  not_included: 鑑定本文は含みません。AI解釈用の構造化データです。
+systems:
+  western:
+    natal:
+      engine: Swiss Ephemeris
+      house_system: P
+      subject:
+        datetime: 1534-06-23T04:00:00+09:18:59
+        location:
+          lat: 35.18028
+          lng: 136.90667
+          city: 愛知
+      bodies:
+        Sun:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 0.2941
+          absolute_longitude: 90.2941
+          house: 1
+          retrograde: false
+        Moon:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 11.5404
+          absolute_longitude: 101.5404
+          house: 2
+          retrograde: false
+        Mercury:
+          sign: Gem
+          sign_ja: 双子座
+          degree: 18.6251
+          absolute_longitude: 78.6251
+          house: 1
+          retrograde: true
+        Venus:
+          sign: Gem
+          sign_ja: 双子座
+          degree: 0.7389
+          absolute_longitude: 60.7389
+          house: 12
+          retrograde: false
+        Mars:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 17.3336
+          absolute_longitude: 137.3336
+          house: 3
+          retrograde: false
+        Jupiter:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 0.365
+          absolute_longitude: 300.365
+          house: 9
+          retrograde: true
+        Saturn:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 25.2466
+          absolute_longitude: 115.2466
+          house: 2
+          retrograde: false
+        Uranus:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 16.9461
+          absolute_longitude: 106.9461
+          house: 2
+          retrograde: false
+        Neptune:
+          sign: Ari
+          sign_ja: 牡羊座
+          degree: 2.6287
+          absolute_longitude: 2.6287
+          house: 11
+          retrograde: false
+        Pluto:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 4.1225
+          absolute_longitude: 304.1225
+          house: 9
+          retrograde: true
+        North Node:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 7.2451
+          absolute_longitude: 127.2451
+          house: 3
+          retrograde: true
+        South Node:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 7.2451
+          absolute_longitude: 307.2451
+          house: 9
+          retrograde: true
+        ASC:
+          sign: Gem
+          sign_ja: 双子座
+          degree: 15.6985
+          absolute_longitude: 75.6985
+          house: 1
+          retrograde: false
+        MC:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 24.9973
+          absolute_longitude: 324.9973
+          house: 10
+          retrograde: false
+      houses:
+        '1':
+          sign: Gem
+          sign_ja: 双子座
+          degree: 15.6985
+          absolute_longitude: 75.6985
+        '2':
+          sign: Can
+          sign_ja: 蟹座
+          degree: 8.298
+          absolute_longitude: 98.298
+        '3':
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 0.0991
+          absolute_longitude: 120.0991
+        '4':
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 24.9973
+          absolute_longitude: 144.9973
+        '5':
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 26.7109
+          absolute_longitude: 176.7109
+        '6':
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 6.1725
+          absolute_longitude: 216.1725
+        '7':
+          sign: Sag
+          sign_ja: 射手座
+          degree: 15.6985
+          absolute_longitude: 255.6985
+        '8':
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 8.298
+          absolute_longitude: 278.298
+        '9':
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 0.0991
+          absolute_longitude: 300.0991
+        '10':
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 24.9973
+          absolute_longitude: 324.9973
+        '11':
+          sign: Pis
+          sign_ja: 魚座
+          degree: 26.7109
+          absolute_longitude: 356.7109
+        '12':
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 6.1725
+          absolute_longitude: 36.1725
+      aspects:
+      - body1: North Node
+        body2: South Node
+        aspect: opposition
+        orb: 0.0
+      - body1: Venus
+        body2: Jupiter
+        aspect: trine
+        orb: 0.37
+      - body1: Mercury
+        body2: Mars
+        aspect: sextile
+        orb: 1.29
+      - body1: Moon
+        body2: Lilith
+        aspect: sextile
+        orb: 1.34
+      - body1: Neptune
+        body2: Pluto
+        aspect: sextile
+        orb: 1.49
+      - body1: Mars
+        body2: ASC
+        aspect: sextile
+        orb: 1.64
+      - body1: Venus
+        body2: Neptune
+        aspect: sextile
+        orb: 1.89
+      - body1: Jupiter
+        body2: Neptune
+        aspect: sextile
+        orb: 2.26
+      - body1: Sun
+        body2: Neptune
+        aspect: square
+        orb: 2.33
+      - body1: Mercury
+        body2: ASC
+        aspect: conjunction
+        orb: 2.93
+      - body1: Pluto
+        body2: North Node
+        aspect: opposition
+        orb: 3.12
+      - body1: Pluto
+        body2: South Node
+        aspect: conjunction
+        orb: 3.12
+      - body1: Venus
+        body2: Pluto
+        aspect: trine
+        orb: 3.38
+      - body1: Jupiter
+        body2: Pluto
+        aspect: conjunction
+        orb: 3.76
+      - body1: Mars
+        body2: Lilith
+        aspect: square
+        orb: 4.46
+      - body1: Neptune
+        body2: North Node
+        aspect: trine
+        orb: 4.62
+      - body1: Jupiter
+        body2: Saturn
+        aspect: opposition
+        orb: 5.12
+      - body1: Sun
+        body2: MC
+        aspect: trine
+        orb: 5.3
+      - body1: Moon
+        body2: Uranus
+        aspect: conjunction
+        orb: 5.41
+      - body1: North Node
+        body2: Lilith
+        aspect: square
+        orb: 5.63
+      - body1: South Node
+        body2: Lilith
+        aspect: square
+        orb: 5.63
+      - body1: Venus
+        body2: MC
+        aspect: square
+        orb: 5.74
+      - body1: Jupiter
+        body2: North Node
+        aspect: opposition
+        orb: 6.88
+      - body1: Jupiter
+        body2: South Node
+        aspect: conjunction
+        orb: 6.88
+      - body1: Mars
+        body2: MC
+        aspect: opposition
+        orb: 7.66
+      summary:
+        elements:
+          fire: 2
+          earth: 0
+          air: 4
+          water: 4
+        modes:
+          cardinal: 5
+          fixed: 3
+          mutable: 2
+        dominant_signs:
+        - sign: Can
+          sign_ja: 蟹座
+          count: 4
+        - sign: Aqu
+          sign_ja: 水瓶座
+          count: 2
+        - sign: Gem
+          sign_ja: 双子座
+          count: 2
+      skipped_bodies:
+      - name: Chiron
+        reason: Swiss Ephemeris (*.se1) が無いため、この天体は計算できません
+    asteroids: null
+    transit: null
+  shichusuimei: null

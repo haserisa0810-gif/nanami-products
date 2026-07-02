@@ -2328,6 +2328,71 @@ def healthz():
     return {"ok": True, "service": "nanami-products"}
 
 
+# ─── ACG（アストロカートグラフィ） ─────────────────────────────
+
+
+@app.get("/acg", response_class=HTMLResponse)
+def acg_map_page(request: Request):
+    """ACG 天空線マップ（マンデン＋YAML貼り付けパーソナル）。"""
+    return templates.TemplateResponse("acg_map.html", {"request": request})
+
+
+@app.get("/api/acg/mundane")
+def acg_mundane(date: str = ""):
+    """指定日のマンデン ACG 線 GeoJSON。認証なし・日付単位で全ユーザー共通。
+
+    計算基準時刻は当該日 03:00 UTC 固定（= 日本時間の正午時点の空）。
+    """
+    from services.acg_api import AcgInputError, mundane_geojson
+
+    target = date.strip() if date else datetime.now(timezone.utc).date().isoformat()
+    try:
+        geojson = mundane_geojson(target)
+    except AcgInputError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+    return JSONResponse(
+        geojson,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.post("/api/acg/personal")
+async def acg_personal(request: Request):
+    """貼り付け YAML からパーソナル ACG 線 GeoJSON を返す。
+
+    ステートレス: 貼り付け内容はサーバーに保存せず、ログにも本文を出さない。
+    """
+    from services.acg_api import (
+        MAX_YAML_BYTES,
+        AcgInputError,
+        AcgYamlFormatError,
+        personal_geojson,
+    )
+
+    body = await request.body()
+    if len(body) > MAX_YAML_BYTES:
+        return JSONResponse({"ok": False, "error": "YAML テキストが大きすぎます。"}, status_code=413)
+
+    yaml_text = body.decode("utf-8", errors="replace")
+    # 仕様は JSON ボディ {"yaml_text": "..."}。生テキスト貼り付けも受け付ける
+    content_type = (request.headers.get("content-type") or "").lower()
+    if "application/json" in content_type:
+        try:
+            parsed = json.loads(yaml_text)
+            if isinstance(parsed, dict) and isinstance(parsed.get("yaml_text"), str):
+                yaml_text = parsed["yaml_text"]
+        except json.JSONDecodeError:
+            pass
+
+    try:
+        geojson = personal_geojson(yaml_text)
+    except AcgYamlFormatError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=422)
+    except AcgInputError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+    return _mark_no_store(JSONResponse(geojson))
+
+
 # ─── 計算結果API ────────────────────────────────────────────────
 
 
