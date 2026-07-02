@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACG 天空線マップ | nanami astrology</title>
+  <meta name="description" content="アストロカートグラフィ（ACG）の天空線を世界地図に表示します。今日の空のマンデン線と、YAML貼り付けによるパーソナル線に対応。">
+  <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+  <style>
+    :root {
+      --brand-base: #0A1128;
+      --brand-base-2: #101A3C;
+      --brand-line: #C9A227;
+      --brand-line-soft: rgba(201, 162, 39, 0.55);
+      --text-main: #ECEAE2;
+      --text-dim: #9AA0B5;
+      --panel-border: rgba(201, 162, 39, 0.25);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      background: var(--brand-base);
+      color: var(--text-main);
+      font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    header.acg-header {
+      padding: 12px 16px 8px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+    header.acg-header h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--brand-line);
+    }
+    header.acg-header p { margin: 4px 0 0; font-size: 0.78rem; color: var(--text-dim); }
+    .acg-layout { flex: 1; display: flex; min-height: 0; }
+    .acg-side {
+      width: 320px;
+      min-width: 280px;
+      padding: 12px;
+      overflow-y: auto;
+      background: var(--brand-base-2);
+      border-right: 1px solid var(--panel-border);
+    }
+    .acg-map-wrap { flex: 1; min-width: 0; }
+    #map { width: 100%; height: 100%; background: var(--brand-base); }
+    .panel { margin-bottom: 14px; }
+    .panel h2 {
+      font-size: 0.82rem;
+      margin: 0 0 6px;
+      color: var(--brand-line);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .mode-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .mode-tabs button {
+      flex: 1;
+      padding: 7px 4px;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .mode-tabs button.active {
+      background: var(--brand-line);
+      color: var(--brand-base);
+      border-color: var(--brand-line);
+      font-weight: 600;
+    }
+    input[type="date"], textarea {
+      width: 100%;
+      background: var(--brand-base);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 7px 8px;
+      font-size: 0.85rem;
+    }
+    textarea { height: 130px; resize: vertical; font-family: ui-monospace, monospace; font-size: 0.72rem; }
+    .action-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 9px;
+      background: var(--brand-line);
+      color: var(--brand-base);
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .action-btn:disabled { opacity: 0.5; cursor: wait; }
+    .view-btns, .preset-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .view-btns button, .preset-btns button {
+      flex: 1 1 45%;
+      padding: 7px 4px;
+      background: transparent;
+      color: var(--brand-line);
+      border: 1px solid var(--brand-line-soft);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .view-btns button:hover, .preset-btns button:hover { background: rgba(201, 162, 39, 0.12); }
+    .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+    .toggle-grid label, .angle-row label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.8rem; cursor: pointer; padding: 2px 0;
+    }
+    .angle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+    input[type="checkbox"] { accent-color: var(--brand-line); }
+    .status { font-size: 0.76rem; color: var(--text-dim); margin-top: 6px; min-height: 1.2em; }
+    .status.error { color: #E08A8A; }
+    .note { font-size: 0.72rem; color: var(--text-dim); margin: 6px 0 0; }
+    .legend-samples { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 0.74rem; color: var(--text-dim); }
+    .legend-samples svg { vertical-align: middle; margin-right: 4px; }
+    .acg-popup { font-size: 0.82rem; line-height: 1.55; }
+    .acg-popup strong { display: block; margin-bottom: 4px; }
+    /* 逆引きパネル */
+    #nearby-panel { border: 1px solid var(--panel-border); border-radius: 8px; padding: 8px 10px; }
+    #nearby-title { font-size: 0.78rem; color: var(--text-dim); margin: 0 0 6px; }
+    #nearby-list { list-style: none; margin: 0; padding: 0; }
+    #nearby-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(201, 162, 39, 0.12);
+      font-size: 0.8rem;
+    }
+    #nearby-list li:last-child { border-bottom: none; }
+    #nearby-list .line-head { display: flex; justify-content: space-between; align-items: baseline; }
+    #nearby-list .line-name { color: var(--brand-line); font-weight: 600; }
+    #nearby-list .line-dist { color: var(--text-dim); font-size: 0.74rem; }
+    #nearby-list .line-hint { color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; }
+    .strength-strong { color: #E8C75A; }
+    .strength-moderate { color: #C9A227; }
+    .strength-faint { color: #8F7519; }
+    .leaflet-popup-content-wrapper {
+      background: var(--brand-base-2);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+    }
+    .leaflet-popup-tip { background: var(--brand-base-2); }
+    .leaflet-container a.leaflet-popup-close-button { color: var(--text-dim); }
+    .leaflet-control-attribution {
+      background: rgba(10, 17, 40, 0.7) !important;
+      color: var(--text-dim) !important;
+      font-size: 0.65rem;
+    }
+    .leaflet-control-attribution a { color: var(--brand-line) !important; }
+    .leaflet-control-zoom a {
+      background: var(--brand-base-2) !important;
+      color: var(--text-main) !important;
+      border-color: var(--panel-border) !important;
+    }
+    @media (max-width: 760px) {
+      .acg-layout { flex-direction: column; }
+      .acg-side {
+        width: 100%; min-width: 0; max-height: 48vh;
+        border-right: none; border-bottom: 1px solid var(--panel-border);
+      }
+      .acg-map-wrap { min-height: 52vh; }
+    }
+  </style>
+</head>
+<body>
+  <header class="acg-header">
+    <h1>ACG 天空線マップ</h1>
+    <p>天体の力が強く働く場所を世界地図で確認できます。線をタップすると意味が、地図の地点をタップすると近くの線が表示されます。</p>
+  </header>
+  <div class="acg-layout">
+    <aside class="acg-side">
+      <div class="mode-tabs">
+        <button id="tab-mundane" class="active" type="button">今日の空（マンデン）</button>
+        <button id="tab-personal" type="button">わたしの線（YAML）</button>
+      </div>
+
+      <div class="panel" id="panel-mundane">
+        <h2>日付</h2>
+        <input type="date" id="mundane-date">
+        <button class="action-btn" id="btn-mundane" type="button">この日の天空線を表示</button>
+        <p class="note">日本時間の正午時点の空を表示します。</p>
+      </div>
+
+      <div class="panel" id="panel-personal" hidden>
+        <h2>YAML 貼り付け</h2>
+        <textarea id="yaml-input" placeholder="購入した YAML の全文をここに貼り付けてください"></textarea>
+        <button class="action-btn" id="btn-personal" type="button">わたしの天空線を表示</button>
+        <p class="note">貼り付けた内容はサーバーに保存されません。</p>
+      </div>
+
+      <p class="status" id="status"></p>
+
+      <div class="panel" id="nearby-panel" hidden>
+        <h2>この地点の近くの線</h2>
+        <p id="nearby-title"></p>
+        <ul id="nearby-list"></ul>
+        <button class="action-btn" id="btn-copy-yaml" type="button">AIに渡す用YAMLをコピー</button>
+      </div>
+
+      <div class="panel">
+        <h2>プリセット</h2>
+        <div class="preset-btns">
+          <button type="button" data-preset="basic">基本</button>
+          <button type="button" data-preset="work">仕事の線</button>
+          <button type="button" data-preset="relation">人の縁の線</button>
+          <button type="button" data-preset="all">すべて表示</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>天体</h2>
+        <div class="toggle-grid" id="planet-toggles"></div>
+      </div>
+
+      <div class="panel">
+        <h2>アングル</h2>
+        <div class="angle-row" id="angle-toggles"></div>
+      </div>
+
+      <div class="panel">
+        <h2>表示範囲</h2>
+        <div class="view-btns">
+          <button type="button" id="btn-zoom-japan">日本にズーム</button>
+          <button type="button" id="btn-zoom-world">世界全体</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>線の見かた</h2>
+        <div class="legend-samples">
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4"/></svg>MC</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4" stroke-dasharray="7 5"/></svg>IC</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="1.6"/></svg>ASC</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="1.6" stroke-dasharray="2 4"/></svg>DSC</span>
+        </div>
+      </div>
+    </aside>
+    <div class="acg-map-wrap"><div id="map"></div></div>
+  </div>
+
+  <script src="{{ asset_url('vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ asset_url('vendor/turf/turf.min.js') }}"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var PLANETS = [
+      ["Sun", "太陽"], ["Moon", "月"], ["Mercury", "水星"], ["Venus", "金星"],
+      ["Mars", "火星"], ["Jupiter", "木星"], ["Saturn", "土星"],
+      ["Uranus", "天王星"], ["Neptune", "海王星"], ["Pluto", "冥王星"]
+    ];
+    var ANGLES = ["MC", "IC", "ASC", "DSC"];
+    // 40本表示時の視認性のため天体グループごとに明度差をつける
+    var PLANET_COLOR = {
+      Sun: "#E8C75A", Moon: "#E8C75A",
+      Mercury: "#C9A227", Venus: "#C9A227", Mars: "#C9A227",
+      Jupiter: "#C9A227", Saturn: "#C9A227",
+      Uranus: "#9C7F1E", Neptune: "#9C7F1E", Pluto: "#9C7F1E"
+    };
+    var ANGLE_STYLE = {
+      MC:  { weight: 2.4, dashArray: null },
+      IC:  { weight: 2.4, dashArray: "7 5" },
+      ASC: { weight: 1.6, dashArray: null },
+      DSC: { weight: 1.6, dashArray: "2 4" }
+    };
+    // 逆引きの強度判定（フロント定数）
+    var NEARBY_MAX_KM = 500;
+    var NEARBY_LIMIT = 5;
+    function strengthOf(km) {
+      if (km < 150) { return "strong"; }
+      if (km < 300) { return "moderate"; }
+      return "faint";
+    }
+    // プリセット定義（辞書の文言と整合）
+    var PRESETS = {
+      basic:    { planets: ["Sun", "Venus", "Jupiter"], angles: ["MC", "ASC"] },
+      work:     { planets: ["Sun", "Saturn"], angles: ["MC", "IC"] },
+      relation: { planets: ["Venus", "Moon"], angles: ["ASC", "DSC"] },
+      all:      { planets: PLANETS.map(function (p) { return p[0]; }), angles: ANGLES.slice() }
+    };
+
+    var map = L.map("map", {
+      center: [25, 15],
+      zoom: 2,
+      minZoom: 1,
+      maxZoom: 8,
+      worldCopyJump: false,
+      maxBounds: [[-85, -180], [85, 180]],
+      maxBoundsViscosity: 0.8,
+      attributionControl: true
+    });
+    map.attributionControl.setPrefix(false);
+    map.attributionControl.addAttribution("地図データ: Natural Earth");
+
+    // ベース地図（世界）→ 高精細日本 → 天空線 の重なり順を pane で固定する
+    map.createPane("basemap").style.zIndex = 200;
+    map.createPane("japan").style.zIndex = 210;
+
+    var dict = {};             // 解釈固定辞書（Venus_MC 形式のキー）
+    var linesLayer = L.layerGroup().addTo(map);
+    var currentFeatures = [];  // 表示中データの全 Feature（LineString）
+    var currentMode = "mundane";
+    var currentDate = "";      // マンデンの対象日
+    var planetState = {};
+    var angleState = {};
+    var lastQuery = null;      // 直近の逆引き結果（YAMLコピー用）
+    var clickMarker = null;
+
+    var JAPAN_FILL = "#2A3A6E";
+    var JAPAN_BORDER = "rgba(201, 162, 39, 0.9)";
+
+    fetch("{{ asset_url('geo/ne_110m_admin_0_countries.geojson') }}")
+      .then(function (r) { return r.json(); })
+      .then(function (geo) {
+        L.geoJSON(geo, {
+          pane: "basemap",
+          style: function (feature) {
+            // 日本だけ塗りと縁取りを明るくして見つけやすくする
+            if (feature.properties && feature.properties.name === "日本") {
+              return { color: JAPAN_BORDER, weight: 1.2, fillColor: JAPAN_FILL, fillOpacity: 1 };
+            }
+            return {
+              color: "rgba(201, 162, 39, 0.35)",
+              weight: 0.6,
+              fillColor: "#1B2547",
+              fillOpacity: 1
+            };
+          },
+          interactive: false
+        }).addTo(map);
+      });
+
+    // ズームイン時に海岸線がきれいに見えるよう、高精細（10m）の日本を重ねる
+    fetch("{{ asset_url('geo/japan_10m.geojson') }}")
+      .then(function (r) { return r.json(); })
+      .then(function (geo) {
+        L.geoJSON(geo, {
+          pane: "japan",
+          style: { color: JAPAN_BORDER, weight: 1, fillColor: JAPAN_FILL, fillOpacity: 1 },
+          interactive: false
+        }).addTo(map);
+      });
+
+    fetch("{{ asset_url('acg_interpretations.json') }}")
+      .then(function (r) { return r.json(); })
+      .then(function (data) { dict = data; });
+
+    function setStatus(text, isError) {
+      var el = document.getElementById("status");
+      el.textContent = text || "";
+      el.className = isError ? "status error" : "status";
+    }
+
+    function dictEntry(group) {
+      return dict[group] || null;
+    }
+
+    function popupHtml(props) {
+      var entry = dictEntry(props.line_group);
+      var label = (entry && entry.label) || props.label;
+      var meaning = (entry && entry.meaning) || "";
+      return '<div class="acg-popup"><strong>' + label + "</strong>" + meaning + "</div>";
+    }
+
+    // --- 線の描画（line_group 単位でまとめる） ---
+    function groupFeatures() {
+      var groups = {};
+      currentFeatures.forEach(function (feature) {
+        var g = feature.properties.line_group;
+        (groups[g] = groups[g] || []).push(feature);
+      });
+      return groups;
+    }
+
+    function isGroupVisible(group) {
+      var parts = group.split("_");
+      return !!(planetState[parts[0]] && angleState[parts[1]]);
+    }
+
+    function renderLines() {
+      linesLayer.clearLayers();
+      var groups = groupFeatures();
+      Object.keys(groups).forEach(function (group) {
+        if (!isGroupVisible(group)) { return; }
+        var features = groups[group];
+        var props = features[0].properties;
+        var style = ANGLE_STYLE[props.angle] || ANGLE_STYLE.MC;
+        var color = PLANET_COLOR[props.planet] || "#C9A227";
+        var fc = { type: "FeatureCollection", features: features };
+        var visible = L.geoJSON(fc, {
+          interactive: false,
+          style: { color: color, weight: style.weight, dashArray: style.dashArray, opacity: 0.85 }
+        });
+        // タップしやすいよう、透明の太い当たり判定レイヤーを重ねる
+        var hit = L.geoJSON(fc, { style: { color: color, weight: 14, opacity: 0 } });
+        // 辞書フェッチ完了前に描画されても、開いた時点の内容で表示されるよう関数で渡す
+        hit.bindPopup(function () { return popupHtml(props); }, { maxWidth: 260 });
+        hit.on("mouseover", function () { visible.setStyle({ weight: style.weight + 1.2, opacity: 1 }); });
+        hit.on("mouseout", function () { visible.setStyle({ weight: style.weight, opacity: 0.85 }); });
+        linesLayer.addLayer(visible);
+        linesLayer.addLayer(hit);
+      });
+    }
+
+    function applyGeojson(fc, mode) {
+      currentFeatures = fc.features || [];
+      currentMode = mode;
+      clearNearby();
+      renderLines();
+    }
+
+    function loadMundane(dateStr) {
+      setStatus("計算中…");
+      var btn = document.getElementById("btn-mundane");
+      btn.disabled = true;
+      // v= はレスポンススキーマ版。変更時にブラウザHTTPキャッシュ（max-age=86400）を無効化する
+      fetch("/api/acg/mundane?date=" + encodeURIComponent(dateStr) + "&v=2")
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          if (!res.ok) { throw new Error(res.body.error || "取得に失敗しました。"); }
+          currentDate = dateStr;
+          applyGeojson(res.body, "mundane");
+          setStatus(dateStr + " のマンデン線を表示しています。");
+        })
+        .catch(function (e) { setStatus(e.message, true); })
+        .finally(function () { btn.disabled = false; });
+    }
+
+    function loadPersonal() {
+      var text = document.getElementById("yaml-input").value;
+      if (!text.trim()) { setStatus("YAML を貼り付けてください。", true); return; }
+      setStatus("計算中…");
+      var btn = document.getElementById("btn-personal");
+      btn.disabled = true;
+      fetch("/api/acg/personal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yaml_text: text })
+      })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          if (!res.ok) { throw new Error(res.body.error || "取得に失敗しました。"); }
+          applyGeojson(res.body, "personal");
+          setStatus("あなたのネイタル天空線を表示しています。");
+        })
+        .catch(function (e) { setStatus(e.message, true); })
+        .finally(function () { btn.disabled = false; });
+    }
+
+    // --- 地点逆引き + YAMLエクスポート ---
+    function clearNearby() {
+      lastQuery = null;
+      document.getElementById("nearby-panel").hidden = true;
+      if (clickMarker) { map.removeLayer(clickMarker); clickMarker = null; }
+    }
+
+    function lookupNearby(latlng) {
+      var pt = turf.point([latlng.lng, latlng.lat]);
+      var groups = groupFeatures();
+      var results = [];
+      Object.keys(groups).forEach(function (group) {
+        if (!isGroupVisible(group)) { return; }
+        // 分割線分は同一 line_group 内の最小距離を採用
+        var minKm = Infinity;
+        groups[group].forEach(function (feature) {
+          var km = turf.pointToLineDistance(pt, feature, { units: "kilometers" });
+          if (km < minKm) { minKm = km; }
+        });
+        if (minKm <= NEARBY_MAX_KM) {
+          var props = groups[group][0].properties;
+          var entry = dictEntry(group);
+          results.push({
+            planet: props.planet,
+            angle: props.angle,
+            label: (entry && entry.label) || props.label,
+            meaning_hint: (entry && entry.meaning_hint) || "",
+            distance_km: Math.round(minKm),
+            strength: strengthOf(minKm)
+          });
+        }
+      });
+      results.sort(function (a, b) { return a.distance_km - b.distance_km; });
+      return results.slice(0, NEARBY_LIMIT);
+    }
+
+    function showNearby(latlng, results) {
+      lastQuery = {
+        latitude: Math.round(latlng.lat * 100) / 100,
+        longitude: Math.round(latlng.lng * 100) / 100,
+        results: results
+      };
+      var panel = document.getElementById("nearby-panel");
+      var title = document.getElementById("nearby-title");
+      var list = document.getElementById("nearby-list");
+      title.textContent = "緯度 " + lastQuery.latitude + " / 経度 " + lastQuery.longitude +
+        "（" + NEARBY_MAX_KM + "km以内・近い順）";
+      list.innerHTML = "";
+      if (!results.length) {
+        var empty = document.createElement("li");
+        empty.textContent = "近くに表示中の線はありません。";
+        list.appendChild(empty);
+      }
+      results.forEach(function (r) {
+        var li = document.createElement("li");
+        var head = document.createElement("div");
+        head.className = "line-head";
+        var name = document.createElement("span");
+        name.className = "line-name";
+        name.textContent = r.label;
+        var distText = document.createElement("span");
+        distText.className = "line-dist strength-" + r.strength;
+        distText.textContent = r.distance_km + "km（" + r.strength + "）";
+        head.appendChild(name);
+        head.appendChild(distText);
+        li.appendChild(head);
+        if (r.meaning_hint) {
+          var hint = document.createElement("div");
+          hint.className = "line-hint";
+          hint.textContent = r.meaning_hint;
+          li.appendChild(hint);
+        }
+        list.appendChild(li);
+      });
+      panel.hidden = false;
+
+      if (clickMarker) { map.removeLayer(clickMarker); }
+      clickMarker = L.circleMarker(latlng, {
+        radius: 6, color: "#E8C75A", weight: 2, fillColor: "#E8C75A", fillOpacity: 0.4
+      }).addTo(map);
+    }
+
+    map.on("click", function (e) {
+      if (!currentFeatures.length) { return; }
+      showNearby(e.latlng, lookupNearby(e.latlng));
+    });
+
+    function buildExportYaml() {
+      if (!lastQuery) { return ""; }
+      var today = new Date().toISOString().slice(0, 10);
+      // マンデン時は対象日、パーソナル時は閲覧日
+      var reportDate = currentMode === "mundane" ? (currentDate || today) : today;
+      var lines = [
+        "acg_location_report:",
+        "  generated_by: nanami-astro ACG",
+        "  mode: " + (currentMode === "mundane" ? "mundane" : "personal"),
+        "  query:",
+        '    location_name: ""',
+        "    latitude: " + lastQuery.latitude,
+        "    longitude: " + lastQuery.longitude,
+        '    date: "' + reportDate + '"'
+      ];
+      if (lastQuery.results.length) {
+        lines.push("  lines_nearby:");
+        lastQuery.results.forEach(function (r) {
+          lines.push("    - planet: " + r.planet);
+          lines.push("      angle: " + r.angle);
+          lines.push("      distance_km: " + r.distance_km);
+          lines.push("      strength: " + r.strength);
+          lines.push("      meaning_hint: " + r.meaning_hint);
+        });
+      } else {
+        lines.push("  lines_nearby: []");
+      }
+      lines.push("  usage_note: >-");
+      lines.push("    この土地の「向き・テーマ」を示す参考情報です。");
+      lines.push("    吉凶や安全性の判断には使えません。");
+      lines.push("    過去の滞在経験との照合(振り返り)に使うのが最も有効です。");
+      return lines.join("\n") + "\n";
+    }
+
+    document.getElementById("btn-copy-yaml").addEventListener("click", function () {
+      var text = buildExportYaml();
+      if (!text) { return; }
+      function done() { setStatus("AIに渡す用YAMLをコピーしました。"); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+
+    function fallbackCopy(text, done) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) { setStatus("コピーに失敗しました。", true); }
+      document.body.removeChild(ta);
+    }
+
+    // --- トグルUI組み立て ---
+    var planetChecks = {};
+    var angleChecks = {};
+    var planetWrap = document.getElementById("planet-toggles");
+    PLANETS.forEach(function (pair) {
+      var key = pair[0], ja = pair[1];
+      planetState[key] = false;
+      var label = document.createElement("label");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.addEventListener("change", function () {
+        planetState[key] = cb.checked;
+        renderLines();
+      });
+      planetChecks[key] = cb;
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(ja));
+      planetWrap.appendChild(label);
+    });
+
+    var angleWrap = document.getElementById("angle-toggles");
+    ANGLES.forEach(function (key) {
+      angleState[key] = false;
+      var label = document.createElement("label");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.addEventListener("change", function () {
+        angleState[key] = cb.checked;
+        renderLines();
+      });
+      angleChecks[key] = cb;
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(key));
+      angleWrap.appendChild(label);
+    });
+
+    function applyPreset(name) {
+      var preset = PRESETS[name];
+      if (!preset) { return; }
+      PLANETS.forEach(function (pair) {
+        var on = preset.planets.indexOf(pair[0]) >= 0;
+        planetState[pair[0]] = on;
+        planetChecks[pair[0]].checked = on;
+      });
+      ANGLES.forEach(function (key) {
+        var on = preset.angles.indexOf(key) >= 0;
+        angleState[key] = on;
+        angleChecks[key].checked = on;
+      });
+      renderLines();
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".preset-btns button"), function (btn) {
+      btn.addEventListener("click", function () { applyPreset(btn.dataset.preset); });
+    });
+
+    // --- タブ切り替え ---
+    function selectTab(mode) {
+      var mundane = mode === "mundane";
+      document.getElementById("tab-mundane").className = mundane ? "active" : "";
+      document.getElementById("tab-personal").className = mundane ? "" : "active";
+      document.getElementById("panel-mundane").hidden = !mundane;
+      document.getElementById("panel-personal").hidden = mundane;
+    }
+    document.getElementById("tab-mundane").addEventListener("click", function () { selectTab("mundane"); });
+    document.getElementById("tab-personal").addEventListener("click", function () { selectTab("personal"); });
+
+    document.getElementById("btn-mundane").addEventListener("click", function () {
+      var v = document.getElementById("mundane-date").value;
+      if (v) { loadMundane(v); }
+    });
+    document.getElementById("btn-personal").addEventListener("click", loadPersonal);
+
+    // --- 表示範囲 ---
+    var JAPAN_BOUNDS = [[24.0, 122.5], [45.8, 146.5]];
+    document.getElementById("btn-zoom-japan").addEventListener("click", function () {
+      map.fitBounds(JAPAN_BOUNDS);
+    });
+    document.getElementById("btn-zoom-world").addEventListener("click", function () {
+      map.setView([25, 15], 2);
+    });
+
+    // 初期表示: プリセット「基本」+ 今日のマンデン線
+    applyPreset("basic");
+    var today = new Date().toISOString().slice(0, 10);
+    document.getElementById("mundane-date").value = today;
+    loadMundane(today);
+  })();
+  </script>
+</body>
+</html>
