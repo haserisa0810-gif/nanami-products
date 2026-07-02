@@ -13,6 +13,7 @@ from services.mcp_chart_service import (
     ChartMcpError,
     available_sections_for_doc,
     extract_chart_id_from_url,
+    get_astrology_prompt,
     get_chart_yaml_from_url,
 )
 
@@ -97,6 +98,16 @@ class McpChartServiceTest(unittest.TestCase):
 
         self.assertIn("ローカル保存", result["notice"])
 
+    def test_get_astrology_prompt_returns_required_rules(self) -> None:
+        result = get_astrology_prompt(purpose="today_fortune", product_type="western_31days_transit_addon")
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["recommended_sections"], ["natal", "asteroid", "transit_31days"])
+        self.assertIn("生年月日から再計算しないでください。", result["prompt"])
+        self.assertIn("moon_timepoints", result["prompt"])
+        self.assertIn("today.selected_date", result["prompt"])
+        self.assertIn("get_astrology_prompt", "\n".join(result["usage_order"]))
+
 
 class McpEndpointTest(unittest.TestCase):
     def _call_endpoint(self, body: dict):
@@ -109,7 +120,9 @@ class McpEndpointTest(unittest.TestCase):
     def test_tools_list_and_call(self) -> None:
         listed = self._call_endpoint({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
         self.assertEqual(listed.status_code, 200)
-        self.assertIn("get_chart_yaml_from_url", {tool["name"] for tool in json.loads(listed.body)["result"]["tools"]})
+        tool_names = {tool["name"] for tool in json.loads(listed.body)["result"]["tools"]}
+        self.assertIn("get_chart_yaml_from_url", tool_names)
+        self.assertIn("get_astrology_prompt", tool_names)
 
         with patch("services.mcp_chart_service.pg_store.get_chart", return_value=_chart()):
             called = self._call_endpoint(
@@ -129,6 +142,28 @@ class McpEndpointTest(unittest.TestCase):
         payload = json.loads(text)
         self.assertTrue(payload["ok"])
         self.assertIn("natal", payload["available_sections"])
+
+    def test_tools_call_get_astrology_prompt(self) -> None:
+        called = self._call_endpoint(
+            {
+                "jsonrpc": "2.0",
+                "id": 4,
+                "method": "tools/call",
+                "params": {
+                    "name": "get_astrology_prompt",
+                    "arguments": {
+                        "purpose": "today_fortune",
+                        "product_type": "western_31days_transit_addon",
+                    },
+                },
+            }
+        )
+
+        self.assertEqual(called.status_code, 200)
+        text = json.loads(called.body)["result"]["content"][0]["text"]
+        payload = json.loads(text)
+        self.assertTrue(payload["ok"])
+        self.assertIn("YAML内の計算結果を唯一の根拠", payload["prompt"])
 
     def test_tools_call_rejects_bad_domain_without_internal_error(self) -> None:
         called = self._call_endpoint(

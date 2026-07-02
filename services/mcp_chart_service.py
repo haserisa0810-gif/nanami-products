@@ -20,6 +20,40 @@ CHART_ID_RE = re.compile(r"^[A-Za-z0-9_-]{5,128}$")
 CHART_EXPIRES_DAYS = 90
 SUPPORTED_SECTIONS = ("natal", "transit_31days", "long_term", "asteroid", "shichu", "indian")
 DEFAULT_MAX_YAML_BYTES = 4_000_000
+SUPPORTED_PROMPT_PURPOSES = ("today_fortune", "natal_with_transit")
+
+
+WESTERN_TODAY_FORTUNE_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図・小惑星・38日分のトランジットを含む計算済みデータです。
+
+重要ルール:
+- 天体位置・ハウス・アスペクト・トランジットの計算結果は変更しないでください。
+- 生年月日から再計算しないでください。
+- YAML内の計算結果を唯一の根拠として解釈してください。
+- 断定しすぎず、傾向・使い方・活かし方として表現してください。
+- 出生図を土台に、小惑星と今後38日分のトランジットをつなげて読んでください。
+- 月は朝・昼・夜の動きが入っています。日内の変化を読む時に参照してください。
+- transitデータは「現在の流れ」の根拠として使ってください。
+- moon_timepoints は「朝・昼・夜」の日内の使い方の根拠として使ってください。
+- 今後数日の動きは、トランジットのタイトなアスペクトを優先して判断してください。
+- today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。
+- 「動きやすい日」「注意したい日」には、today.selected_date 以降の日付を優先して出力してください。
+- next_31_days_summary に過去日しか存在しない場合は、過去日を無理に未来の予定として書かず、「この期間に出た違和感や発想は今後の参考になる」などの振り返り表現にしてください。
+- 当日以降の判断は today と next_few_days を優先し、next_31_days_summary は補助として使ってください。
+- 「良い・悪い」ではなく、「どう使うとズレにくいか」を優先して書いてください。
+- 「ラッキー」などの軽い表現は避け、具体的な行動ヒントに置き換えてください。
+
+出力してほしい内容:
+- 全体像
+- 才能・強み
+- つまずきやすいパターン
+- 仕事・活動の向き
+- 人間関係の傾向
+- 今後38日間の流れ
+- 動きやすい日・注意したい日
+- 現在の流れ（トランジット）
+- 今日の使い方（朝・昼・夜）
+- 今後数日の動き
+- 今後の活かし方"""
 
 
 class ChartMcpError(ValueError):
@@ -310,4 +344,28 @@ def get_download_info_from_url(*, chart_url: str) -> dict[str, Any]:
         "days_until_expiry": 0 if expired else days,
         "notice": expiry_notice(0 if expired else days, expired=expired),
         "save_recommendation": "期限内にYAMLをダウンロードしてローカル保存してください。期限後に最新トランジットが必要な場合は再購入してください。",
+    }
+
+
+def get_astrology_prompt(*, purpose: str = "today_fortune", product_type: str = "") -> dict[str, Any]:
+    purpose_value = (purpose or "today_fortune").strip()
+    if purpose_value not in SUPPORTED_PROMPT_PURPOSES:
+        raise ChartMcpError(
+            "MVPでは today_fortune / natal_with_transit の鑑定プロンプトのみ対応しています。",
+            code="unsupported_prompt_purpose",
+        )
+    product_value = (product_type or "").strip() or "western_31days_transit_addon"
+    return {
+        "ok": True,
+        "purpose": purpose_value,
+        "product_type": product_value,
+        "prompt": WESTERN_TODAY_FORTUNE_PROMPT,
+        "recommended_sections": ["natal", "asteroid", "transit_31days"],
+        "usage_order": [
+            "get_chart_summary_from_url でChart URLの有効期限と含まれるセクションを確認する",
+            "get_astrology_prompt で鑑定ルールを取得する",
+            "get_chart_yaml_from_url で recommended_sections を取得する",
+            "YAML内の計算結果だけを根拠に、プロンプトの出力構成で解釈する",
+        ],
+        "notice": "MCPサーバーは鑑定本文を生成しません。このプロンプトとChart YAMLをAI側で組み合わせ、再計算せずに解釈してください。",
     }

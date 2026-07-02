@@ -47,6 +47,7 @@ from services.mcp_chart_service import (
     ChartMcpError,
     extract_chart_id_from_url,
     get_available_sections_from_url,
+    get_astrology_prompt,
     get_chart_summary_from_url,
     get_chart_yaml_from_url,
     get_download_info_from_url,
@@ -181,7 +182,9 @@ MCP_TOOL_DEFINITIONS = [
             "Chart URLからAI解釈用YAMLを取得します。ネイタル、トランジット、小惑星、"
             "四柱推命、インド占星術などのセクションを必要に応じて取得できます。"
             "URLはアクセスキーとして扱われます。期限が近い場合は保存案内を返し、"
-            "期限切れの場合はYAMLを返しません。"
+            "期限切れの場合はYAMLを返しません。今日の占い、ホロスコープ、ネイタルチャート、"
+            "トランジット、小惑星を読む依頼では、先に get_chart_summary_from_url と "
+            "get_astrology_prompt を呼び、取得した鑑定ルールに沿ってこのYAMLを解釈してください。"
         ),
         "inputSchema": {
             "type": "object",
@@ -205,11 +208,37 @@ MCP_TOOL_DEFINITIONS = [
         "description": (
             "Chart URLから商品種別、生成日時、有効期限、残り日数、含まれるセクション一覧を確認します。"
             "URLはアクセスキーとして扱われ、期限切れの場合は保存済みYAML利用または再購入案内を返します。"
+            "今日の占い、ネイタル、トランジット、小惑星を読む前の最初の確認ツールとして使ってください。"
         ),
         "inputSchema": {
             "type": "object",
             "properties": {"chart_url": {"type": "string", "description": "https://chart.nanami-astro.com/chart/{chart_id}"}},
             "required": ["chart_url"],
+        },
+    },
+    {
+        "name": "get_astrology_prompt",
+        "description": (
+            "nanami-products側の西洋占星術鑑定ルール・出力構成・禁止事項を返します。"
+            "今日の占い、ホロスコープ、ネイタルチャート、トランジット、小惑星を使う依頼では、"
+            "Chart YAMLを解釈する前に必ずこのツールで鑑定プロンプトを取得してください。"
+            "MCPは鑑定本文を生成せず、AIはこのプロンプトと get_chart_yaml_from_url のYAMLだけを根拠に解釈します。"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "purpose": {
+                    "type": "string",
+                    "enum": ["today_fortune", "monthly_flow", "natal_with_transit", "relationship", "work_activity", "long_term"],
+                    "default": "today_fortune",
+                    "description": "MVPでは today_fortune / natal_with_transit に対応します。",
+                },
+                "product_type": {
+                    "type": "string",
+                    "default": "western_31days_transit_addon",
+                    "description": "Chart summary の product_type が分かる場合に渡してください。",
+                },
+            },
         },
     },
     {
@@ -276,6 +305,11 @@ def _call_mcp_tool(name: str, arguments: dict) -> dict:
         )
     if name == "get_chart_summary_from_url":
         return get_chart_summary_from_url(chart_url=str(arguments.get("chart_url") or ""))
+    if name == "get_astrology_prompt":
+        return get_astrology_prompt(
+            purpose=str(arguments.get("purpose") or "today_fortune"),
+            product_type=str(arguments.get("product_type") or ""),
+        )
     if name == "get_available_sections_from_url":
         return get_available_sections_from_url(chart_url=str(arguments.get("chart_url") or ""))
     if name == "get_download_info_from_url":
