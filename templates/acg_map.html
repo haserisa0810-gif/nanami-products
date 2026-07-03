@@ -146,6 +146,7 @@
     #nearby-list .line-dist { color: var(--text-dim); font-size: 0.74rem; }
     #nearby-list .line-hint { color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; }
     .strength-strong { color: #E8C75A; }
+    .strength-medium { color: #C9A227; }
     .strength-moderate { color: #C9A227; }
     .strength-faint { color: #8F7519; }
     .leaflet-popup-content-wrapper {
@@ -327,7 +328,7 @@
     var NEARBY_LIMIT = 5;
     function strengthOf(km) {
       if (km < 150) { return "strong"; }
-      if (km < 300) { return "moderate"; }
+      if (km < 300) { return "medium"; }
       return "faint";
     }
     // プリセット定義（辞書の文言と整合）
@@ -448,6 +449,7 @@
     var dict = {};             // 解釈固定辞書（Venus_MC 形式のキー）
     var linesLayer = L.layerGroup().addTo(map);
     var currentFeatures = [];  // 表示中データの全 Feature（LineString）
+    var featureSets = { mundane: [], personal: [] };
     var currentMode = "mundane";
     var currentDate = "";      // マンデンの対象日
     var planetState = {};
@@ -478,8 +480,12 @@
 
     // --- 線の描画（line_group 単位でまとめる） ---
     function groupFeatures() {
+      return groupFeatureList(currentFeatures);
+    }
+
+    function groupFeatureList(features) {
       var groups = {};
-      currentFeatures.forEach(function (feature) {
+      features.forEach(function (feature) {
         var g = feature.properties.line_group;
         (groups[g] = groups[g] || []).push(feature);
       });
@@ -518,7 +524,9 @@
     }
 
     function applyGeojson(fc, mode) {
-      currentFeatures = fc.features || [];
+      var features = fc.features || [];
+      featureSets[mode] = features;
+      currentFeatures = features;
       currentMode = mode;
       clearNearby();
       renderLines();
@@ -570,8 +578,12 @@
     }
 
     function lookupNearby(latlng) {
+      return lookupNearbyFromFeatures(latlng, currentFeatures);
+    }
+
+    function lookupNearbyFromFeatures(latlng, features) {
       var pt = turf.point([latlng.lng, latlng.lat]);
-      var groups = groupFeatures();
+      var groups = groupFeatureList(features || []);
       var results = [];
       Object.keys(groups).forEach(function (group) {
         if (!isGroupVisible(group)) { return; }
@@ -600,10 +612,15 @@
     }
 
     function showNearby(latlng, results) {
+      var personalResults = featureSets.personal.length ? lookupNearbyFromFeatures(latlng, featureSets.personal) : [];
+      var mundaneResults = featureSets.mundane.length ? lookupNearbyFromFeatures(latlng, featureSets.mundane) : [];
       lastQuery = {
         latitude: Math.round(latlng.lat * 100) / 100,
         longitude: Math.round(latlng.lng * 100) / 100,
-        results: results
+        results: results,
+        personal_results: personalResults,
+        mundane_results: mundaneResults,
+        has_personal: featureSets.personal.length > 0
       };
       var panel = document.getElementById("nearby-panel");
       var title = document.getElementById("nearby-title");
@@ -653,36 +670,62 @@
     function buildExportYaml() {
       if (!lastQuery) { return ""; }
       var today = new Date().toISOString().slice(0, 10);
-      // マンデン時は対象日、パーソナル時は閲覧日
-      var reportDate = currentMode === "mundane" ? (currentDate || today) : today;
+      var reportDate = currentDate || today;
+      var combined = !!lastQuery.has_personal;
       var lines = [
         "acg_location_report:",
         "  generated_by: nanami-astro ACG",
-        "  mode: " + (currentMode === "mundane" ? "mundane" : "personal"),
+        "  mode: " + (combined ? "combined" : (currentMode === "mundane" ? "mundane" : "personal")),
         "  query:",
         '    location_name: ""',
         "    latitude: " + lastQuery.latitude,
         "    longitude: " + lastQuery.longitude,
         '    date: "' + reportDate + '"'
       ];
-      if (lastQuery.results.length) {
-        lines.push("  lines_nearby:");
-        lastQuery.results.forEach(function (r) {
-          lines.push("    - planet: " + r.planet);
-          lines.push("      angle: " + r.angle);
-          lines.push("      line_type: " + r.line_type);
-          lines.push("      distance_km: " + r.distance_km);
-          lines.push("      strength: " + r.strength);
-          lines.push("      meaning_hint: " + r.meaning_hint);
-        });
+      if (combined) {
+        appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results);
+        appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results);
+        lines.push("  context_for_ai:");
+        lines.push("    reading_mode: location_context");
+        lines.push("    interpretation_policy:");
+        lines.push("      - 吉凶や安全性は断定しない");
+        lines.push("      - 本人の出生図、滞在目的、過去の体験と照合して読む");
+        lines.push("      - mundane_lines_nearby は「その日の社会的・集合的な空気」として扱う");
+        lines.push("      - personal_lines_nearby は「本人にとってその土地が持ちやすいテーマ」として扱う");
+        lines.push("      - 両者が同じ場所で近い場合は「本人テーマ」と「今日の空気」の重なりとして読む");
+        lines.push("  suggested_questions:");
+        lines.push("    - この場所は、今日の空と私の出生図を重ねるとどんなテーマがありますか？");
+        lines.push("    - この場所に今日行くなら、どんな使い方が向いていますか？");
+        lines.push("    - 仕事・発信・人間関係の観点で読むとどうですか？");
+        lines.push("    - 過去にこの地域へ行った経験がある場合、どんな振り返りができますか？");
       } else {
-        lines.push("  lines_nearby: []");
+        appendLineList(lines, "lines_nearby", lastQuery.results);
       }
       lines.push("  usage_note: >-");
-      lines.push("    この土地の「向き・テーマ」を示す参考情報です。");
+      lines.push("    このYAMLは、この土地の「向き・テーマ」をAIが解釈するための参考情報です。");
       lines.push("    吉凶や安全性の判断には使えません。");
-      lines.push("    過去の滞在経験との照合(振り返り)に使うのが最も有効です。");
+      lines.push("    過去の滞在経験との照合、旅行・移住・活動場所の検討材料として使ってください。");
       return lines.join("\n") + "\n";
+    }
+
+    function yamlString(value) {
+      return '"' + String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    }
+
+    function appendLineList(lines, key, results) {
+      if (!results || !results.length) {
+        lines.push("  " + key + ": []");
+        return;
+      }
+      lines.push("  " + key + ":");
+      results.forEach(function (r) {
+        lines.push("    - planet: " + r.planet);
+        lines.push("      angle: " + r.angle);
+        lines.push("      line_type: " + r.line_type);
+        lines.push("      distance_km: " + r.distance_km);
+        lines.push("      strength: " + r.strength);
+        lines.push("      meaning_hint: " + yamlString(r.meaning_hint));
+      });
     }
 
     document.getElementById("btn-copy-yaml").addEventListener("click", function () {
