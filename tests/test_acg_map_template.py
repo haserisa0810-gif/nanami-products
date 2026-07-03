@@ -24,8 +24,8 @@ def test_acg_lines_render_above_tile_map() -> None:
     assert 'map.createPane("acg-lines").style.zIndex = 450;' in template
     assert 'pane: "acg-lines"' in template
     assert "var ROLE_COLOR = {" in template
-    assert 'mundane: {' in template
-    assert 'natal: {' in template
+    assert 'mundane: "#3B82F6"' in template
+    assert 'natal: "#F59E0B"' in template
     assert 'var weight = style.weight + (props.mode === "natal" ? 1 : 0);' in template
     assert 'opacity: 0.84' in template
     assert 'switchBaseLayer("osm");' in template
@@ -67,15 +67,25 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     assert "personal_context:" in template
     assert "context_for_ai:" in template
     assert "reading_mode: location_context" in template
+    assert "interpretation_order:" in template
     assert "selected_theme:" in template
     assert "selected_preset:" in template
+    assert "interpretation_scope:" in template
     assert "included_line_rules:" in template
     assert "category_match:" in template
+    assert "meaning:" in template
+    assert "short_hint:" in template
+    assert "typical_topics:" in template
     assert "work: {" in template
     assert "relation: {" in template
     assert "suggested_questions:" in template
-    assert "このYAMLは、ACG地図上の地点と選択中プリセットをもとにしたAI解釈用の場所コンテキストです。" in template
+    assert "この場所は仕事や発信の場所としてどう読めますか？" in template
+    assert "この場所は人間関係や出会いの場としてどう読めますか？" in template
+    assert "このYAMLは、ACG地図上の地点と選択中プリセットをもとにした場所コンテキストです。" in template
+    assert "解釈はAI側で行ってください。" in template
     assert "keywords:" in template
-    assert "ai_hint:" in template
+    assert 'key + ": >-"' in template
+    assert "出生図の関連配置と組み合わせて読む。" in template
     assert "function yamlString(value)" in template
+    assert "function appendFoldedScalar(lines, indent, key, text)" in template
     assert "AIへ場所コンテキストをコピー" in template

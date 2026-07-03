@@ -368,18 +368,8 @@
     ];
     var ANGLES = ["MC", "IC", "ASC", "DSC"];
     var ROLE_COLOR = {
-      mundane: {
-        MC: "#3B82F6",
-        ASC: "#60A5FA",
-        DSC: "#2563EB",
-        IC: "#1D4ED8"
-      },
-      natal: {
-        MC: "#F59E0B",
-        ASC: "#FBBF24",
-        DSC: "#D97706",
-        IC: "#B45309"
-      }
+      mundane: "#3B82F6",
+      natal: "#F59E0B"
     };
     var ANGLE_STYLE = {
       MC:  { weight: 2.4, dashArray: null },
@@ -401,44 +391,181 @@
         key: "basic",
         label: "基本",
         purpose: "全体の傾向をざっと読むための線",
+        interpretation_scope: {
+          focus: ["全体傾向", "生活基盤", "自己表現"],
+          secondary: ["仕事", "人間関係", "学び"]
+        },
         included_line_rules: [
-          { planet: "Sun", angles: ["MC"], reason: "社会的役割・自己表現・仕事上の見え方" },
-          { planet: "Moon", angles: ["IC"], reason: "安心感・生活リズム・内面の土台" },
-          { planet: "Venus", angles: ["ASC"], reason: "魅力・第一印象・対人の入り口" },
-          { planet: "Jupiter", angles: ["MC"], reason: "発展・拡大・機会の広がり" },
-          { planet: "Saturn", angles: ["MC"], reason: "責任・継続・長期的な成果" }
+          {
+            planet: "Sun",
+            angles: ["MC"],
+            reason: "社会的役割・自己表現・仕事上の見え方",
+            short_hint: "社会で自分を発揮しやすいテーマ",
+            keywords: ["キャリア", "自己表現", "発信", "評価", "肩書き"],
+            typical_topics: ["転職", "起業", "SNS活動", "ブランド作り", "公的活動"]
+          },
+          {
+            planet: "Moon",
+            angles: ["IC"],
+            reason: "安心感・生活リズム・内面の土台",
+            short_hint: "落ち着きやすい居場所のテーマ",
+            keywords: ["安心感", "生活", "居場所", "家族", "習慣"],
+            typical_topics: ["住まい", "家族", "生活リズム", "休養", "拠点づくり"]
+          },
+          {
+            planet: "Venus",
+            angles: ["ASC"],
+            reason: "魅力・第一印象・対人の入り口",
+            short_hint: "人に見えやすい魅力のテーマ",
+            keywords: ["魅力", "第一印象", "対人関係", "美意識", "調和"],
+            typical_topics: ["接客", "美容", "デザイン", "交流", "紹介"]
+          },
+          {
+            planet: "Jupiter",
+            angles: ["MC"],
+            reason: "発展・拡大・機会の広がり",
+            short_hint: "広がりを持ちやすい仕事や役割のテーマ",
+            keywords: ["発展", "拡大", "機会", "学び", "余裕"],
+            typical_topics: ["新規展開", "学習", "海外", "企画", "紹介"]
+          },
+          {
+            planet: "Saturn",
+            angles: ["MC"],
+            reason: "責任・継続・長期的な成果",
+            short_hint: "継続と責任を担いやすいテーマ",
+            keywords: ["責任", "継続", "実績", "肩書き", "成熟"],
+            typical_topics: ["管理", "長期計画", "制度", "組織", "積み上げ"]
+          }
         ]
       },
       work: {
         key: "work",
         label: "仕事の線",
         purpose: "仕事・社会的評価・活動場所を読むための線",
+        interpretation_scope: {
+          focus: ["キャリア", "社会活動", "発信", "活動場所"],
+          secondary: ["人間関係", "学び"]
+        },
         included_line_rules: [
-          { planet: "Sun", angles: ["MC"], reason: "社会的役割・自己表現・肩書き" },
-          { planet: "Jupiter", angles: ["MC", "ASC"], reason: "発展・拡大・チャンス" },
-          { planet: "Saturn", angles: ["MC"], reason: "責任・継続・肩書き・長期的成果" },
-          { planet: "Mercury", angles: ["MC", "ASC"], reason: "文章・発信・商談・知的活動" },
-          { planet: "Mars", angles: ["MC", "ASC"], reason: "行動力・勝負・独立性" },
-          { planet: "Venus", angles: ["MC"], reason: "接客・人気・美的活動・ブランド性" }
+          {
+            planet: "Sun",
+            angles: ["MC"],
+            reason: "社会的役割・自己表現・肩書き",
+            short_hint: "社会で自分を発揮しやすいテーマ",
+            keywords: ["キャリア", "自己表現", "発信", "評価", "肩書き"],
+            typical_topics: ["転職", "起業", "SNS活動", "ブランド作り", "公的活動"]
+          },
+          {
+            planet: "Jupiter",
+            angles: ["MC", "ASC"],
+            reason: "発展・拡大・チャンス",
+            short_hint: "広がりと機会を取り込みやすいテーマ",
+            keywords: ["発展", "拡大", "機会", "学び", "余裕"],
+            typical_topics: ["新規展開", "学習", "海外", "企画", "紹介"]
+          },
+          {
+            planet: "Saturn",
+            angles: ["MC"],
+            reason: "責任・継続・肩書き・長期的成果",
+            short_hint: "責任と継続がテーマになりやすい",
+            keywords: ["責任", "継続", "実績", "肩書き", "成熟"],
+            typical_topics: ["管理", "長期計画", "制度", "組織", "積み上げ"]
+          },
+          {
+            planet: "Mercury",
+            angles: ["MC", "ASC"],
+            reason: "文章・発信・商談・知的活動",
+            short_hint: "言葉や情報が仕事につながりやすい",
+            keywords: ["文章", "発信", "商談", "知的活動", "情報"],
+            typical_topics: ["執筆", "編集", "営業", "会議", "学習"]
+          },
+          {
+            planet: "Mars",
+            angles: ["MC", "ASC"],
+            reason: "行動力・勝負・独立性",
+            short_hint: "動き出しや勝負どころのテーマ",
+            keywords: ["行動力", "勝負", "独立", "推進力", "決断"],
+            typical_topics: ["立ち上げ", "交渉", "移動", "競争", "実行"]
+          },
+          {
+            planet: "Venus",
+            angles: ["MC"],
+            reason: "接客・人気・美的活動・ブランド性",
+            short_hint: "見た目や好感度が仕事に結びつきやすい",
+            keywords: ["接客", "人気", "美的活動", "ブランド", "調和"],
+            typical_topics: ["接客", "美容", "デザイン", "広報", "ブランド"]
+          }
         ]
       },
       relation: {
         key: "relation",
         label: "人の縁の線",
         purpose: "対人関係・出会い・協力関係を読むための線",
+        interpretation_scope: {
+          focus: ["人間関係", "出会い", "協力関係", "居場所"],
+          secondary: ["仕事", "学び"]
+        },
         included_line_rules: [
-          { planet: "Venus", angles: ["ASC", "DSC"], reason: "魅力・第一印象・関係の入り口" },
-          { planet: "Moon", angles: ["ASC", "DSC", "IC"], reason: "安心感・親しさ・居場所" },
-          { planet: "Jupiter", angles: ["DSC"], reason: "援助・広がり・よい出会い" },
-          { planet: "Mercury", angles: ["DSC"], reason: "会話・紹介・連絡・調整" },
-          { planet: "Sun", angles: ["DSC"], reason: "相手を通じた自己理解・関係性の軸" }
+          {
+            planet: "Venus",
+            angles: ["ASC", "DSC"],
+            reason: "魅力・第一印象・関係の入り口",
+            short_hint: "人に見えやすい魅力と関係の入り口",
+            keywords: ["魅力", "第一印象", "対人関係", "美意識", "調和"],
+            typical_topics: ["紹介", "交流", "デート", "接客", "協力"]
+          },
+          {
+            planet: "Moon",
+            angles: ["ASC", "DSC", "IC"],
+            reason: "安心感・親しさ・居場所",
+            short_hint: "安心して関われる関係や居場所",
+            keywords: ["安心感", "親しさ", "居場所", "家族", "共感"],
+            typical_topics: ["同居", "友人関係", "家族", "コミュニティ", "サポート"]
+          },
+          {
+            planet: "Jupiter",
+            angles: ["DSC"],
+            reason: "援助・広がり・よい出会い",
+            short_hint: "広がりをもたらす出会いのテーマ",
+            keywords: ["援助", "広がり", "出会い", "学び", "紹介"],
+            typical_topics: ["ネットワーク", "師弟関係", "共同企画", "紹介", "学び"]
+          },
+          {
+            planet: "Mercury",
+            angles: ["DSC"],
+            reason: "会話・紹介・連絡・調整",
+            short_hint: "会話や連絡で関係が動きやすい",
+            keywords: ["会話", "紹介", "連絡", "調整", "情報"],
+            typical_topics: ["連絡", "打ち合わせ", "商談", "相談", "紹介"]
+          },
+          {
+            planet: "Sun",
+            angles: ["DSC"],
+            reason: "相手を通じた自己理解・関係性の軸",
+            short_hint: "相手との関係を通じて自分が見えやすい",
+            keywords: ["自己理解", "相手", "関係性", "軸", "存在感"],
+            typical_topics: ["パートナー", "共同作業", "対面相談", "契約", "関係の中心"]
+          }
         ]
       },
       all: {
         key: "all",
         label: "すべて表示",
         purpose: "表示中の全線を整理して読むための総覧",
-        included_line_rules: PLANETS.map(function (p) { return { planet: p[0], angles: ANGLES.slice(), reason: "全体確認用" }; })
+        interpretation_scope: {
+          focus: ["全体確認", "相性", "比較", "総合整理"],
+          secondary: ["仕事", "人間関係", "移動"]
+        },
+        included_line_rules: PLANETS.map(function (p) {
+          return {
+            planet: p[0],
+            angles: ANGLES.slice(),
+            reason: "全体確認用",
+            short_hint: "全体確認のための線",
+            keywords: ["全体", "比較", "確認"],
+            typical_topics: ["全体確認", "比較", "整理"]
+          };
+        })
       }
     };
     var PRESETS = {
@@ -618,8 +745,7 @@
         var features = groups[group];
         var props = features[0].properties;
         var style = ANGLE_STYLE[props.angle] || ANGLE_STYLE.MC;
-        var palette = ROLE_COLOR[props.mode] || ROLE_COLOR.mundane;
-        var color = palette[props.angle] || "#C9A227";
+        var color = ROLE_COLOR[props.mode] || ROLE_COLOR.mundane;
         var weight = style.weight + (props.mode === "natal" ? 1 : 0);
         var fc = { type: "FeatureCollection", features: features };
         var visible = L.geoJSON(fc, {
@@ -845,11 +971,30 @@
       lines.push("    key: " + yamlString(preset.key));
       lines.push("    label: " + yamlString(preset.label));
       lines.push("    purpose: " + yamlString(preset.purpose));
+      if (preset.interpretation_scope) {
+        lines.push("    interpretation_scope:");
+        lines.push("      focus:");
+        preset.interpretation_scope.focus.forEach(function (item) {
+          lines.push("        - " + yamlString(item));
+        });
+        lines.push("      secondary:");
+        preset.interpretation_scope.secondary.forEach(function (item) {
+          lines.push("        - " + yamlString(item));
+        });
+      }
       lines.push("    included_line_rules:");
       preset.included_line_rules.forEach(function (rule) {
         lines.push("      - planet: " + rule.planet);
         lines.push("        angles: [" + rule.angles.map(function (angle) { return angle; }).join(", ") + "]");
         lines.push("        reason: " + yamlString(rule.reason));
+        lines.push("        keywords:");
+        rule.keywords.forEach(function (item) {
+          lines.push("          - " + yamlString(item));
+        });
+        lines.push("        typical_topics:");
+        rule.typical_topics.forEach(function (item) {
+          lines.push("          - " + yamlString(item));
+        });
       });
     }
 
@@ -857,16 +1002,18 @@
       lines.push("  context_for_ai:");
       lines.push("    reading_mode: location_context");
       lines.push("    selected_theme: " + yamlString(preset.key));
+      lines.push("    interpretation_order:");
+      lines.push("      - personal_lines_nearby");
+      lines.push("      - mundane_lines_nearby");
+      lines.push("      - natal_yaml");
+      lines.push("      - transit_yaml");
       lines.push("    interpretation_policy:");
       if (combined) {
-        lines.push("      - 吉凶や成功を断定しない");
-        lines.push("      - このYAMLは仕事・活動場所を読むための材料として扱う");
-        lines.push("      - personal_lines_nearby は本人にとってその土地が持ちやすい仕事テーマとして読む");
+        lines.push("      - personal_lines_nearby は本人にとってその土地が持ちやすいテーマとして読む");
         lines.push("      - mundane_lines_nearby はその日の社会的・集合的な空気として読む");
         lines.push("      - 本人の出生図YAML、現在の目的、過去の滞在経験と照合して読む");
+        lines.push("      - 近い線同士がある場合は、本人テーマと今日の空気の重なりとして読む");
       } else {
-        lines.push("      - 吉凶や成功を断定しない");
-        lines.push("      - このYAMLは選択中プリセットに沿った場所コンテキストとして扱う");
         lines.push("      - lines_nearby は選択中プリセットのテーマに沿って読む");
         lines.push("      - 本人の出生図YAMLがある場合は、出生図と重ねて読む");
       }
@@ -891,8 +1038,8 @@
 
     function appendUsageNote(lines) {
       lines.push("  usage_note: >-");
-      lines.push("    このYAMLは、ACG地図上の地点と選択中プリセットをもとにしたAI解釈用の場所コンテキストです。");
-      lines.push("    吉凶・成功・安全性を断定するものではありません。");
+      lines.push("    このYAMLは、ACG地図上の地点と選択中プリセットをもとにした場所コンテキストです。");
+      lines.push("    解釈はAI側で行ってください。");
     }
 
     function yamlNullable(value) {
@@ -924,6 +1071,17 @@
           lines.push("        preset: " + yamlString(match.preset));
           lines.push("        reason: " + yamlString(match.reason));
         }
+        lines.push("      meaning:");
+        lines.push("        title: " + yamlString(lineMeaningTitle(r)));
+        lines.push("        short_hint: " + yamlString(lineMeaningShortHint(mode, preset, r, match)));
+        lines.push("        keywords:");
+        lineMeaningKeywords(r, match).forEach(function (item) {
+          lines.push("          - " + yamlString(item));
+        });
+        lines.push("        typical_topics:");
+        lineMeaningTopics(r, match).forEach(function (item) {
+          lines.push("          - " + yamlString(item));
+        });
         var keywords = keywordsFromHint(r.meaning_hint);
         if (keywords.length) {
           lines.push("      keywords:");
@@ -933,8 +1091,47 @@
         } else {
           lines.push("      keywords: []");
         }
-        lines.push("      ai_hint: " + yamlString(categoryAiHint(mode, preset)));
+        appendFoldedScalar(lines, "      ", "ai_hint", categoryAiHint(mode, preset));
       });
+    }
+
+    function lineMeaningTitle(line) {
+      return line.label || (line.planet + line.angle);
+    }
+
+    function lineMeaningShortHint(mode, preset, line, match) {
+      if (preset && preset.key === "work") {
+        return mode === "personal"
+          ? "このラインは、この土地で本人が発揮しやすい仕事テーマとして扱う。"
+          : "このラインは、その日の社会的・集合的なテーマとして扱う。";
+      }
+      if (preset && preset.key === "relation") {
+        return mode === "personal"
+          ? "このラインは、この土地で本人が人と関わりやすいテーマとして扱う。"
+          : "このラインは、その日の対人・集合的なテーマとして扱う。";
+      }
+      if (match) {
+        return mode === "personal"
+          ? "このラインは、この土地で本人が発揮しやすいテーマとして扱う。"
+          : "このラインは、その日の社会的・集合的なテーマとして扱う。";
+      }
+      return mode === "personal"
+        ? "このラインは、この土地で本人にとってのテーマとして扱う。"
+        : "このラインは、その日のテーマとして扱う。";
+    }
+
+    function lineMeaningKeywords(line, match) {
+      if (match) {
+        return match.keywords || [];
+      }
+      return keywordsFromHint(line.meaning_hint);
+    }
+
+    function lineMeaningTopics(line, match) {
+      if (match) {
+        return match.typical_topics || [];
+      }
+      return keywordsFromHint(line.meaning_hint);
     }
 
     function categoryMatchForLine(line, preset) {
@@ -943,7 +1140,7 @@
         var rule = preset.included_line_rules[i];
         if (rule.planet !== line.planet) { continue; }
         if (rule.angles.indexOf(line.angle) < 0) { continue; }
-        return { preset: preset.key, reason: rule.reason };
+        return { preset: preset.key, reason: rule.reason, keywords: rule.keywords || [], typical_topics: rule.typical_topics || [] };
       }
       return null;
     }
@@ -951,22 +1148,29 @@
     function categoryAiHint(mode, preset) {
       if (preset && preset.key === "work") {
         return mode === "mundane"
-          ? "その日の社会的・集合的な空気"
-          : "本人にとっての仕事・活動テーマ";
+          ? "このラインは、その日の社会的・集合的な仕事テーマとして扱う。\n本人ラインとの重なりがあれば、場所の使い方として合わせて読む。"
+          : "このラインは、この土地で本人が発揮しやすい仕事テーマとして扱う。\n出生図の関連配置と組み合わせて読む。";
       }
       if (preset && preset.key === "relation") {
         return mode === "mundane"
-          ? "その日の対人・集合的な空気"
-          : "本人にとっての人の縁・関係テーマ";
+          ? "このラインは、その日の対人・集合的な関係テーマとして扱う。\n本人ラインとの重なりがあれば、関係の起こり方として読む。"
+          : "このラインは、この土地で本人が人と関わりやすいテーマとして扱う。\n出生図の関連配置と組み合わせて読む。";
       }
       if (preset && preset.key === "basic") {
         return mode === "mundane"
-          ? "その日の全体的な空気"
-          : "本人にとっての全体テーマ";
+          ? "このラインは、その日の全体的なテーマとして扱う。\n本人ラインとの重なりがあれば、総合的な読みの材料にする。"
+          : "このラインは、この土地で本人が発揮しやすい全体テーマとして扱う。\n出生図の関連配置と組み合わせて読む。";
       }
       return mode === "mundane"
-        ? "その日の社会的・集合的な空気"
-        : "本人にとっての土地テーマ";
+        ? "このラインは、その日の社会的・集合的なテーマとして扱う。\n本人ラインとの重なりがあれば、場所のテーマとして合わせて読む。"
+        : "このラインは、この土地で本人が発揮しやすいテーマとして扱う。\n出生図の関連配置と組み合わせて読む。";
+    }
+
+    function appendFoldedScalar(lines, indent, key, text) {
+      lines.push(indent + key + ": >-");
+      String(text || "").split("\n").forEach(function (line) {
+        lines.push(indent + "  " + line);
+      });
     }
 
     document.getElementById("btn-copy-yaml").addEventListener("click", function () {
