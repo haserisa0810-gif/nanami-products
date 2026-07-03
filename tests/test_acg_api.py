@@ -12,6 +12,7 @@ from services.acg_api import (
     AcgInputError,
     AcgYamlFormatError,
     natal_dt_utc_from_yaml,
+    personal_context_from_yaml,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -23,6 +24,30 @@ input:
   birth_date: "1990-01-15"
   birth_time: "08:30"
   timezone_offset_hours: 9.0
+"""
+
+CONTEXT_YAML = """
+version: nanami-products-yaml-v1
+input:
+  birth_date: "1990-01-15"
+  birth_time: "08:30"
+  timezone_offset_hours: 9.0
+systems:
+  western:
+    natal:
+      bodies:
+        Sun:
+          sign: Leo
+          house: 5
+        Moon:
+          sign: Aquarius
+          house: 11
+        ASC:
+          sign: Aries
+          house: 1
+        MC:
+          sign: Capricorn
+          house: 10
 """
 
 
@@ -81,6 +106,16 @@ input:
         with self.assertRaises(AcgYamlFormatError):
             natal_dt_utc_from_yaml("version: nanami-products-yaml-v1\n")
 
+    def test_personal_context_extracts_minimal_natal_summary(self) -> None:
+        context = personal_context_from_yaml(CONTEXT_YAML)
+
+        self.assertEqual(context["source"], "uploaded_birth_yaml")
+        self.assertEqual(context["natal_summary"]["sun"], "Leo 5H")
+        self.assertEqual(context["natal_summary"]["moon"], "Aquarius 11H")
+        self.assertEqual(context["natal_summary"]["asc"], "Aries")
+        self.assertEqual(context["natal_summary"]["mc"], "Capricorn")
+        self.assertIn("別途YAML本文", context["note"])
+
 
 class MundaneCacheTest(unittest.TestCase):
     def test_same_date_returns_cached_object(self) -> None:
@@ -135,6 +170,7 @@ class AcgEndpointsTest(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         body = res.json()
         self.assertEqual(body["meta"]["mode"], "natal")
+        self.assertEqual(body["meta"]["personal_context"]["source"], "uploaded_birth_yaml")
         # subject.datetime（LMT）が優先され、UTC変換されている
         self.assertEqual(body["meta"]["datetime_utc"], "1534-06-22T18:41:01+00:00")
         groups = {f["properties"]["line_group"] for f in body["features"]}

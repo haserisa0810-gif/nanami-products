@@ -452,6 +452,7 @@
     var featureSets = { mundane: [], personal: [] };
     var currentMode = "mundane";
     var currentDate = "";      // マンデンの対象日
+    var personalContext = null;
     var planetState = {};
     var angleState = {};
     var lastQuery = null;      // 直近の逆引き結果（YAMLコピー用）
@@ -563,6 +564,7 @@
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
         .then(function (res) {
           if (!res.ok) { throw new Error(res.body.error || "取得に失敗しました。"); }
+          personalContext = (res.body.meta && res.body.meta.personal_context) || null;
           applyGeojson(res.body, "personal");
           setStatus("あなたのネイタル天空線を表示しています。");
         })
@@ -683,23 +685,19 @@
         '    date: "' + reportDate + '"'
       ];
       if (combined) {
-        appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results);
-        appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results);
-        lines.push("  context_for_ai:");
-        lines.push("    reading_mode: location_context");
-        lines.push("    interpretation_policy:");
+        appendPersonalContext(lines);
+        appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results, "本人にとって、この土地が持ちやすいテーマ");
+        appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results, "その日の社会的・集合的な空気");
+        lines.push("  interpretation_prompt:");
+        lines.push("    task: >");
+        lines.push("      上記の personal_lines_nearby と mundane_lines_nearby を、");
+        lines.push("      本人の出生図YAMLと照合して、この場所の使い方として解釈してください。");
+        lines.push("    rules:");
         lines.push("      - 吉凶や安全性は断定しない");
-        lines.push("      - 本人の出生図、滞在目的、過去の体験と照合して読む");
-        lines.push("      - mundane_lines_nearby は「その日の社会的・集合的な空気」として扱う");
-        lines.push("      - personal_lines_nearby は「本人にとってその土地が持ちやすいテーマ」として扱う");
-        lines.push("      - 両者が同じ場所で近い場合は「本人テーマ」と「今日の空気」の重なりとして読む");
-        lines.push("  suggested_questions:");
-        lines.push("    - この場所は、今日の空と私の出生図を重ねるとどんなテーマがありますか？");
-        lines.push("    - この場所に今日行くなら、どんな使い方が向いていますか？");
-        lines.push("    - 仕事・発信・人間関係の観点で読むとどうですか？");
-        lines.push("    - 過去にこの地域へ行った経験がある場合、どんな振り返りができますか？");
+        lines.push("      - 旅行、移住、仕事、発信、振り返りの材料として読む");
+        lines.push("      - mundane は今日の空気、personal は本人にとっての土地テーマとして分けて扱う");
       } else {
-        appendLineList(lines, "lines_nearby", lastQuery.results);
+        appendLineList(lines, "lines_nearby", lastQuery.results, currentMode === "mundane" ? "その日の社会的・集合的な空気" : "本人にとって、この土地が持ちやすいテーマ");
       }
       lines.push("  usage_note: >-");
       lines.push("    このYAMLは、この土地の「向き・テーマ」をAIが解釈するための参考情報です。");
@@ -712,7 +710,35 @@
       return '"' + String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
     }
 
-    function appendLineList(lines, key, results) {
+    function appendPersonalContext(lines) {
+      var context = personalContext || {
+        source: "uploaded_birth_yaml",
+        natal_summary: { sun: null, moon: null, asc: null, mc: null },
+        note: "出生図の詳しい解釈は、別途YAML本文を参照"
+      };
+      var summary = context.natal_summary || {};
+      lines.push("  personal_context:");
+      lines.push("    source: " + (context.source || "uploaded_birth_yaml"));
+      lines.push("    natal_summary:");
+      lines.push("      sun: " + yamlNullable(summary.sun));
+      lines.push("      moon: " + yamlNullable(summary.moon));
+      lines.push("      asc: " + yamlNullable(summary.asc));
+      lines.push("      mc: " + yamlNullable(summary.mc));
+      lines.push("    note: " + yamlString(context.note || "出生図の詳しい解釈は、別途YAML本文を参照"));
+    }
+
+    function yamlNullable(value) {
+      return value ? yamlString(value) : "null";
+    }
+
+    function keywordsFromHint(value) {
+      return String(value || "")
+        .split(/[・、,，／/]/)
+        .map(function (item) { return item.trim(); })
+        .filter(function (item) { return !!item; });
+    }
+
+    function appendLineList(lines, key, results, aiHint) {
       if (!results || !results.length) {
         lines.push("  " + key + ": []");
         return;
@@ -724,7 +750,16 @@
         lines.push("      line_type: " + r.line_type);
         lines.push("      distance_km: " + r.distance_km);
         lines.push("      strength: " + r.strength);
-        lines.push("      meaning_hint: " + yamlString(r.meaning_hint));
+        var keywords = keywordsFromHint(r.meaning_hint);
+        if (keywords.length) {
+          lines.push("      keywords:");
+          keywords.forEach(function (keyword) {
+            lines.push("        - " + yamlString(keyword));
+          });
+        } else {
+          lines.push("      keywords: []");
+        }
+        lines.push("      ai_hint: " + yamlString(aiHint));
       });
     }
 

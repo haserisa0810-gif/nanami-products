@@ -53,10 +53,13 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     assert "var featureSets = { mundane: [], personal: [] };" in template
     assert 'featureSets[mode] = features;' in template
     assert 'mode: " + (combined ? "combined"' in template
-    assert 'appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results);' in template
-    assert 'appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results);' in template
-    assert "reading_mode: location_context" in template
-    assert "mundane_lines_nearby は「その日の社会的・集合的な空気」として扱う" in template
-    assert "personal_lines_nearby は「本人にとってその土地が持ちやすいテーマ」として扱う" in template
-    assert "suggested_questions:" in template
+    assert "appendPersonalContext(lines);" in template
+    assert 'appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results, "本人にとって、この土地が持ちやすいテーマ");' in template
+    assert 'appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results, "その日の社会的・集合的な空気");' in template
+    assert "personal_context:" in template
+    assert "interpretation_prompt:" in template
+    assert "本人の出生図YAMLと照合して、この場所の使い方として解釈してください" in template
+    assert "mundane は今日の空気、personal は本人にとっての土地テーマとして分けて扱う" in template
+    assert "keywords:" in template
+    assert "ai_hint:" in template
     assert "function yamlString(value)" in template

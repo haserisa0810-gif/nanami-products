@@ -160,7 +160,45 @@ def natal_dt_utc_from_yaml(yaml_text: str) -> datetime:
     return dt_utc
 
 
+def _format_natal_body(body: Any, *, include_house: bool) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    sign = body.get("sign") or body.get("sign_ja")
+    if not sign:
+        return None
+    parts = [str(sign)]
+    house = body.get("house")
+    if include_house and house is not None:
+        parts.append(f"{house}H")
+    return " ".join(parts)
+
+
+def personal_context_from_yaml(yaml_text: str) -> dict[str, Any]:
+    """AIへ渡すACG combined用に、出生YAMLから最小限の文脈だけ抽出する。"""
+    try:
+        doc = yaml.safe_load(yaml_text)
+    except yaml.YAMLError as exc:
+        raise AcgYamlFormatError("対応していないYAML形式です") from exc
+    if not isinstance(doc, dict):
+        raise AcgYamlFormatError("対応していないYAML形式です")
+
+    bodies = ((((doc.get("systems") or {}).get("western") or {}).get("natal") or {}).get("bodies") or {})
+    natal_summary = {
+        "sun": _format_natal_body(bodies.get("Sun"), include_house=True),
+        "moon": _format_natal_body(bodies.get("Moon"), include_house=True),
+        "asc": _format_natal_body(bodies.get("ASC"), include_house=False),
+        "mc": _format_natal_body(bodies.get("MC"), include_house=False),
+    }
+    return {
+        "source": "uploaded_birth_yaml",
+        "natal_summary": natal_summary,
+        "note": "出生図の詳しい解釈は、別途YAML本文を参照",
+    }
+
+
 def personal_geojson(yaml_text: str) -> dict[str, Any]:
     """貼り付け YAML からパーソナル（ネイタル）ACG 線 GeoJSON を返す。保存しない。"""
     dt_utc = natal_dt_utc_from_yaml(yaml_text)
-    return lines_to_geojson(dt_utc, natal=True)
+    result = lines_to_geojson(dt_utc, natal=True)
+    result.setdefault("meta", {})["personal_context"] = personal_context_from_yaml(yaml_text)
+    return result
