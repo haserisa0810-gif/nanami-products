@@ -76,6 +76,7 @@ from services.yaml_exporter import (
 
 app = FastAPI(title="nanami-products")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/kaii", StaticFiles(directory="kaii", html=True), name="kaii")
 templates = Jinja2Templates(directory="templates")
 logger = logging.getLogger("nanami.chart")
 TRANSIENT_ERROR_MARKERS = (

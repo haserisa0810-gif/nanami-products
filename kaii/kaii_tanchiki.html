@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>怪異探知機 for AI — 丑三つ時計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700;800&family=Zen+Old+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sumi:#0c0a0e;
+    --washi:#e6dcc3;
+    --washi-dim:#8f8672;
+    --shu:#a8232b;
+    --aitetsu:#232b33;
+    --kin:#8a7443;
+    --mincho:"Shippori Mincho","Zen Old Mincho","Yu Mincho","Hiragino Mincho ProN",serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--sumi);color:var(--washi);font-family:var(--mincho);min-height:100%}
+  body{
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, rgba(138,116,67,.10), transparent 60%),
+      radial-gradient(ellipse 90% 70% at 50% 110%, rgba(35,43,51,.5), transparent 70%),
+      var(--sumi);
+    letter-spacing:.04em;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:34px}
+  .daiji{font-size:28px;font-weight:800;letter-spacing:.2em;line-height:1.2}
+  .daiji small{display:block;font-size:11px;font-weight:400;color:var(--washi-dim);letter-spacing:.3em;margin-top:6px}
+  .inkan{
+    width:44px;height:44px;border:1.5px solid var(--shu);color:var(--shu);
+    display:flex;align-items:center;justify-content:center;
+    writing-mode:vertical-rl;font-size:13px;font-weight:700;letter-spacing:.1em;
+    border-radius:3px;opacity:.9;flex:none;margin-top:4px;
+  }
+
+  .main-card{text-align:center;padding:34px 12px 30px;position:relative}
+  .main-card::before,.main-card::after{
+    content:"";position:absolute;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--kin),transparent);opacity:.55;
+  }
+  .main-card::before{top:0}.main-card::after{bottom:0}
+  .status-label{font-size:13px;color:var(--washi-dim);letter-spacing:.35em;margin-bottom:14px}
+  .countdown{
+    font-size:60px;font-weight:700;letter-spacing:.06em;
+    font-variant-numeric:tabular-nums;line-height:1;
+    text-shadow:0 0 30px rgba(138,116,67,.25);
+  }
+  .countdown .unit{font-size:20px;font-weight:400;color:var(--washi-dim);margin:0 2px}
+  .sub-line{margin-top:16px;font-size:14px;color:var(--washi-dim);letter-spacing:.12em}
+  .sub-line b{color:var(--washi);font-weight:500}
+
+  body.ushimitsu{--washi:#efe3c8}
+  body.ushimitsu .countdown{color:var(--shu);text-shadow:0 0 34px rgba(168,35,43,.45)}
+  body.ushimitsu .status-label{color:var(--shu)}
+  @media (prefers-reduced-motion:no-preference){
+    body.ushimitsu .countdown{animation:rousoku 4.5s ease-in-out infinite}
+    @keyframes rousoku{0%,100%{opacity:1}42%{opacity:.86}44%{opacity:.97}71%{opacity:.9}}
+  }
+
+  section{margin-top:40px}
+  h2{
+    font-size:13px;font-weight:700;letter-spacing:.4em;color:var(--washi-dim);
+    margin-bottom:16px;display:flex;align-items:center;gap:12px;
+  }
+  h2::after{content:"";flex:1;height:1px;background:var(--aitetsu)}
+  .yoru-bar{position:relative;height:56px;border:1px solid var(--aitetsu);border-radius:2px;display:flex;overflow:hidden}
+  .koku{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    font-size:15px;color:var(--washi-dim);border-right:1px solid rgba(35,43,51,.9);position:relative;
+  }
+  .koku:last-child{border-right:none}
+  .koku.ushi{color:var(--washi);background:rgba(138,116,67,.08)}
+  .mitsu-band{position:absolute;top:0;bottom:0;background:rgba(168,35,43,.35);border-left:1px solid var(--shu);border-right:1px solid var(--shu)}
+  .now-needle{
+    position:absolute;top:-7px;bottom:-7px;width:1.5px;background:var(--washi);
+    box-shadow:0 0 8px rgba(230,220,195,.6);display:none;
+  }
+  .now-needle::before{content:"今";position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--washi)}
+  .bar-caption{display:flex;justify-content:space-between;font-size:11px;color:var(--washi-dim);margin-top:8px;letter-spacing:.1em}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:10px 4px;border-bottom:1px solid rgba(35,43,51,.7)}
+  td:first-child{color:var(--washi-dim);letter-spacing:.15em;white-space:nowrap;width:9em}
+  td:last-child{text-align:right;font-variant-numeric:tabular-nums;letter-spacing:.05em}
+  tr.strong td{color:var(--washi);font-weight:700}
+  tr.strong td:last-child{color:var(--shu)}
+  .note{font-size:11.5px;color:var(--washi-dim);line-height:1.9;margin-top:14px;letter-spacing:.06em}
+
+  .kaii-num{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
+  .kaii-num .val{font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .kaii-num .pct{font-size:18px;color:var(--washi-dim)}
+  .kaii-num .verdict{margin-left:auto;font-size:15px;letter-spacing:.2em;writing-mode:vertical-rl;color:var(--shu);font-weight:700;border-right:1px solid var(--shu);padding-right:8px;max-height:96px}
+  .factor{margin-bottom:12px}
+  .factor .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--washi-dim);margin-bottom:5px;letter-spacing:.12em}
+  .factor .row b{color:var(--washi);font-weight:500;font-variant-numeric:tabular-nums}
+  .gauge{height:5px;background:rgba(35,43,51,.8);border-radius:1px;overflow:hidden}
+  .gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--kin),var(--shu));width:0;transition:width 1.2s ease}
+
+  .personal-block{display:none;margin-top:24px;border-left:1px solid var(--kin);padding:2px 0 2px 16px}
+  .personal-block.show{display:block}
+  .personal-block h3{
+    font-size:13px;font-weight:700;letter-spacing:.28em;color:var(--washi);
+    margin-bottom:10px;
+  }
+  .personal-block p{font-size:14px;line-height:2;color:var(--washi-dim);letter-spacing:.06em}
+
+  .yaml-box{
+    width:100%;min-height:132px;resize:vertical;padding:14px;
+    font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    font-size:12px;line-height:1.7;color:var(--washi);
+    background:rgba(35,43,51,.24);border:1px solid var(--aitetsu);border-radius:2px;
+  }
+  .yaml-box:focus{outline:2px solid var(--kin);outline-offset:2px}
+  .yaml-meta{font-size:11.5px;color:var(--washi-dim);line-height:1.9;margin-top:10px;letter-spacing:.06em}
+
+  /* ── AI観測 ─────────────────── */
+  .kansoku-btn{
+    display:block;width:100%;padding:16px;
+    font-family:var(--mincho);font-size:15px;font-weight:700;letter-spacing:.5em;text-indent:.5em;
+    background:rgba(168,35,43,.1);border:1px solid var(--shu);color:var(--washi);
+    border-radius:2px;cursor:pointer;transition:background .3s;
+  }
+  .kansoku-btn:hover{background:rgba(168,35,43,.22)}
+  .kansoku-btn:disabled{opacity:.5;cursor:wait}
+  .kansoku-btn:focus-visible{outline:2px solid var(--shu);outline-offset:2px}
+  .ai-block{display:none;margin-top:26px}
+  .ai-block.show{display:block}
+  .ai-card{border:1px solid var(--aitetsu);border-radius:2px;padding:20px 18px;margin-bottom:18px;position:relative}
+  .ai-card .fuda{
+    position:absolute;top:-9px;left:14px;background:var(--sumi);padding:0 10px;
+    font-size:12px;letter-spacing:.3em;color:var(--kin);font-weight:700;
+  }
+  .ai-card p{font-size:14.5px;line-height:2.1;letter-spacing:.06em}
+  .ai-card ul{list-style:none}
+  .ai-card li{font-size:14.5px;line-height:2.1;padding-left:1.2em;position:relative}
+  .ai-card li::before{content:"禁";position:absolute;left:0;top:0;font-size:11px;color:var(--shu)}
+  .ai-card.kaidan{background:rgba(35,43,51,.25)}
+  .ai-card.kaidan p{font-size:14px;color:var(--washi)}
+  .ai-status{font-size:12px;color:var(--washi-dim);letter-spacing:.15em;text-align:center;margin-top:12px;min-height:1.5em}
+
+  .loc-row{display:flex;gap:10px;align-items:center;margin-top:26px;flex-wrap:wrap}
+  button.plain{
+    font-family:var(--mincho);font-size:13px;letter-spacing:.2em;
+    background:none;border:1px solid var(--kin);color:var(--washi);
+    padding:10px 18px;border-radius:2px;cursor:pointer;
+  }
+  button.plain:hover{background:rgba(138,116,67,.12)}
+  button.plain:focus-visible{outline:2px solid var(--shu);outline-offset:2px}
+  .loc-label{font-size:12px;color:var(--washi-dim);letter-spacing:.1em}
+  footer{margin-top:48px;font-size:11px;color:var(--washi-dim);line-height:2;letter-spacing:.08em;border-top:1px solid var(--aitetsu);padding-top:18px}
+  footer .shu{color:var(--shu)}
+
+  @media (max-width:420px){
+    .countdown{font-size:46px}
+    .countdown .unit{font-size:15px}
+    .koku{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 class="daiji">怪異探知機<small>丑三つ時計 ・ 不定時法算出 ・ AI観測</small></h1>
+    <div class="inkan">験</div>
+  </header>
+
+  <div class="main-card">
+    <div class="status-label" id="statusLabel">丑三つ時まで</div>
+    <div class="countdown" id="countdown">--<span class="unit">:</span>--<span class="unit">:</span>--</div>
+    <div class="sub-line" id="subLine">算出中…</div>
+  </div>
+
+  <section>
+    <h2>今宵ノ刻</h2>
+    <div class="yoru-bar" id="yoruBar">
+      <div class="koku">酉</div><div class="koku">戌</div><div class="koku">亥</div>
+      <div class="koku">子</div><div class="koku ushi">丑</div><div class="koku">寅</div>
+      <div class="mitsu-band" id="mitsuBand"></div>
+      <div class="now-needle" id="nowNeedle"></div>
+    </div>
+    <div class="bar-caption"><span id="capSunset">暮六つ --:--</span><span id="capSunrise">明六つ --:--</span></div>
+  </section>
+
+  <section>
+    <h2>算出</h2>
+    <table>
+      <tr><td>日没（暮六つ）</td><td id="tSunset">--:--</td></tr>
+      <tr><td>日出（明六つ）</td><td id="tSunrise">--:--</td></tr>
+      <tr><td>夜の長さ</td><td id="tNight">--</td></tr>
+      <tr><td>丑の刻</td><td id="tUshi">--:-- 〜 --:--</td></tr>
+      <tr class="strong"><td>丑三つ時</td><td id="tMitsu">--:-- 〜 --:--</td></tr>
+      <tr><td>（定時法なら）</td><td>02:00 〜 02:30</td></tr>
+      <tr><td>月齢</td><td id="tMoon">--</td></tr>
+    </table>
+    <p class="note">不定時法：日没から日出までを六等分し、五番目を丑の刻とする。丑の刻をさらに四分し、その三つ目が「丑三つ時」。夜の長さは季節と土地で変わるため、丑三つ時も毎晩ずれる。太陽位置は端末内で天文計算している。</p>
+  </section>
+
+  <section>
+    <h2>怪異指数</h2>
+    <div class="kaii-num">
+      <span class="val" id="kaiiVal">--</span><span class="pct">%</span>
+      <span class="verdict" id="kaiiVerdict"></span>
+    </div>
+    <div class="factor"><div class="row"><span>刻ノ深サ</span><b id="fKokuV">--</b></div><div class="gauge"><i id="fKoku"></i></div></div>
+    <div class="factor"><div class="row"><span>月ノ闇</span><b id="fMoonV">--</b></div><div class="gauge"><i id="fMoon"></i></div></div>
+    <div class="factor"><div class="row"><span>今宵ノ揺ラギ</span><b id="fRandV">--</b></div><div class="gauge"><i id="fRand"></i></div></div>
+    <div class="factor"><div class="row"><span>地相</span><b id="fGeoV">--</b></div><div class="gauge"><i id="fGeo"></i></div></div>
+    <div class="personal-block" id="personalTonight">
+      <h3>あなたの今夜</h3>
+      <p id="personalTonightText"></p>
+    </div>
+    <div class="personal-block" id="placePresence">
+      <h3>この場所の気配</h3>
+      <p id="placePresenceText"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>占術YAML</h2>
+    <textarea class="yaml-box" id="astroYaml" spellcheck="false" placeholder="nanami-astroのネイタルYAML、トランジットYAML、ACG地点レポートYAMLを貼る"></textarea>
+    <p class="yaml-meta" id="yamlMeta">貼り付けると、月・海王星・冥王星・ASC・IC・12ハウス・ACGライン概要を拾える範囲で反映する。</p>
+  </section>
+
+  <section>
+    <h2>AI観測</h2>
+    <button class="kansoku-btn" id="kansokuBtn">今夜ヲ観測スル</button>
+    <div class="ai-status" id="aiStatus"></div>
+    <div class="ai-block" id="aiBlock">
+      <div class="ai-card">
+        <span class="fuda">今夜ノ怪異</span>
+        <p id="aiKaii"></p>
+      </div>
+      <div class="ai-card">
+        <span class="fuda">今日ノ禁忌</span>
+        <ul id="aiKinki"></ul>
+      </div>
+      <div class="ai-card kaidan">
+        <span class="fuda">怪談</span>
+        <p id="aiKaidan"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="loc-row">
+    <button class="plain" id="locBtn">現在地で算出</button>
+    <span class="loc-label" id="locLabel">既定地点：東京（北緯35.69 東経139.69）</span>
+  </div>
+
+  <footer>
+    日没・日出・月齢は実際の天文計算に基づく。<span class="shu">怪異指数とAI観測はホラーエンタメ演出であり、心霊現象の存在や現実の危険を示すものではない。</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  // ───────── 太陽計算 ─────────
+  const rad = Math.PI/180, dayMs = 864e5, J1970 = 2440588, J2000 = 2451545;
+  const toJulian = d => d.valueOf()/dayMs - .5 + J1970;
+  const fromJulian = j => new Date((j + .5 - J1970) * dayMs);
+  const solarMeanAnomaly = d => rad*(357.5291 + .98560028*d);
+  const eclipticLongitude = M => {
+    const C = rad*(1.9148*Math.sin(M) + .02*Math.sin(2*M) + .0003*Math.sin(3*M));
+    return M + C + rad*102.9372 + Math.PI;
+  };
+  const e = rad*23.4397;
+  const declination = L => Math.asin(Math.sin(e)*Math.sin(L));
+  function sunEvents(date, lat, lng){
+    const lw = rad*-lng, phi = rad*lat;
+    const d = toJulian(date) - J2000;
+    const n = Math.round(d - .0009 - lw/(2*Math.PI));
+    const ds = .0009 + lw/(2*Math.PI) + n;
+    const M = solarMeanAnomaly(ds);
+    const L = eclipticLongitude(M);
+    const dec = declination(L);
+    const Jnoon = J2000 + ds + .0053*Math.sin(M) - .0069*Math.sin(2*L);
+    const h0 = rad*-0.833;
+    const cosH = (Math.sin(h0) - Math.sin(phi)*Math.sin(dec)) / (Math.cos(phi)*Math.cos(dec));
+    if (cosH < -1 || cosH > 1) return null;
+    const w = Math.acos(cosH);
+    const Jset = J2000 + (.0009 + (w + lw)/(2*Math.PI) + n) + .0053*Math.sin(M) - .0069*Math.sin(2*L);
+    const Jrise = Jnoon - (Jset - Jnoon);
+    return { rise: fromJulian(Jrise), set: fromJulian(Jset) };
+  }
+
+  const SYNODIC = 29.530588853;
+  const moonAge = d => {
+    const epoch = Date.UTC(2000,0,6,18,14);
+    let a = ((d - epoch)/dayMs) % SYNODIC;
+    return a < 0 ? a + SYNODIC : a;
+  };
+  const moonIllum = age => (1 - Math.cos(2*Math.PI*age/SYNODIC))/2;
+
+  function mulberry32(seed){
+    return () => {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed>>>15, 1|seed);
+      t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+      return ((t ^ t>>>14)>>>0)/4294967296;
+    };
+  }
+
+  let lat = 35.69, lng = 139.69;
+  const $ = id => document.getElementById(id);
+  const fmt = d => d.toTimeString().slice(0,5);
+  const fmtDur = ms => {
+    const h = Math.floor(ms/36e5), m = Math.round(ms%36e5/6e4);
+    return `${h}時間${String(m).padStart(2,"0")}分`;
+  };
+
+  function currentNight(now){
+    for (const off of [-1, 0, 1]){
+      const base = new Date(now); base.setDate(base.getDate()+off);
+      const evSet = sunEvents(base, lat, lng);
+      const nextDay = new Date(base); nextDay.setDate(nextDay.getDate()+1);
+      const evRise = sunEvents(nextDay, lat, lng);
+      if (!evSet || !evRise) continue;
+      const night = { set: evSet.set, rise: evRise.rise };
+      if (now < night.rise) {
+        if (off === -1 && now >= night.set) return night;
+        if (off === 0) return night;
+      }
+    }
+    const evSet = sunEvents(now, lat, lng);
+    const nd = new Date(now); nd.setDate(nd.getDate()+1);
+    return { set: evSet.set, rise: sunEvents(nd, lat, lng).rise };
+  }
+
+  function calcMitsu(night){
+    const len = night.rise - night.set;
+    const koku = len/6;
+    const ushiStart = +night.set + 4*koku;
+    const q = koku/4;
+    return {
+      ushiStart: new Date(ushiStart),
+      ushiEnd: new Date(ushiStart + koku),
+      mitsuStart: new Date(ushiStart + 2*q),
+      mitsuEnd: new Date(ushiStart + 3*q),
+      nightLen: len
+    };
+  }
+
+  function calculateUshimitsuContext(now = new Date()){
+    const night = currentNight(now);
+    const mitsu = calcMitsu(night);
+    return { now, night, ...mitsu };
+  }
+
+  function calculateKaiiIndex(now, context){
+    const m = context;
+    const mid = (+m.mitsuStart + +m.mitsuEnd)/2;
+    const span = m.nightLen/2;
+    const koku = Math.max(0, 40*(1 - Math.abs(now - mid)/span));
+    const moon = 25*(1 - moonIllum(moonAge(+now)));
+    const d = new Date(now);
+    const seed = d.getFullYear()*1e4 + (d.getMonth()+1)*100 + d.getDate();
+    const rand = 25*mulberry32(seed)();
+    const gseed = Math.round(lat*100)*7919 ^ Math.round(lng*100)*104729;
+    const geo = 10*mulberry32(gseed)();
+    const total = Math.min(99, Math.round(koku + moon + rand + geo));
+    return { total, koku:Math.round(koku), moon:Math.round(moon), rand:Math.round(rand), geo:Math.round(geo) };
+  }
+
+  function firstMatch(lines, tests){
+    for (const line of lines){
+      const lower = line.toLowerCase();
+      if (tests.every(test => typeof test === "string" ? lower.includes(test) : test.test(lower))){
+        const value = line.split(":").slice(1).join(":").trim().replace(/^["']|["']$/g, "");
+        return value || line.trim().replace(/^[-\s]+/, "");
+      }
+    }
+    return "";
+  }
+
+  function collectMatches(lines, tests, limit = 4){
+    const out = [];
+    for (const line of lines){
+      const lower = line.toLowerCase();
+      if (tests.every(test => typeof test === "string" ? lower.includes(test) : test.test(lower))){
+        const value = line.split(":").slice(1).join(":").trim().replace(/^["']|["']$/g, "");
+        out.push(value || line.trim().replace(/^[-\s]+/, ""));
+      }
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  function parseAstroYaml(raw){
+    const text = (raw || "").trim();
+    const result = {
+      hasInput: Boolean(text),
+      urls: [],
+      natal: {},
+      transit: {},
+      acg: {},
+      found: []
+    };
+    if (!text) return result;
+
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    result.urls = [...text.matchAll(/https?:\/\/[^\s"'<>]+/g)].map(m => m[0]).slice(0, 6);
+
+    const natalLines = lines.filter(line => !/transit|経過|現在|progressed/i.test(line));
+    const transitLines = lines.filter(line => /transit|経過|現在|トランジット/i.test(line));
+    const hasAcgMarker = /acg|astrocartography|cartography|ライン|line_summary|line summary|planetary line/i.test(text);
+    const acgLines = hasAcgMarker
+      ? lines.filter(line => /acg|astrocartography|cartography|line|ライン|ic|mc|asc|desc/i.test(line))
+      : [];
+
+    result.natal.moon = firstMatch(natalLines, [/moon|月/]);
+    result.natal.neptune = firstMatch(natalLines, [/neptune|海王/]);
+    result.natal.pluto = firstMatch(natalLines, [/pluto|冥王/]);
+    result.natal.asc = firstMatch(natalLines, [/ascendant|\basc\b|上昇/]);
+    result.natal.ic = firstMatch(natalLines, [/\bic\b|imum|天底/]);
+    result.natal.twelfthHouse = collectMatches(lines, [/12th|12ハウス|第12|twelfth/], 3);
+
+    result.transit.moon = firstMatch(transitLines.length ? transitLines : lines, [/transit|経過|現在|トランジット/, /moon|月/]);
+    result.transit.neptune = firstMatch(transitLines.length ? transitLines : lines, [/transit|経過|現在|トランジット/, /neptune|海王/]);
+    result.transit.pluto = firstMatch(transitLines.length ? transitLines : lines, [/transit|経過|現在|トランジット/, /pluto|冥王/]);
+
+    if (hasAcgMarker){
+      const acgSummary = firstMatch(lines, [/acg|astrocartography|cartography|ライン|line/, /summary|概要|theme|テーマ|moon|月|neptune|海王|pluto|冥王|ic|mc/]);
+      result.acg.lineSummary = acgSummary || collectMatches(acgLines, [/moon|月|neptune|海王|pluto|冥王|ic|mc|line|ライン/], 2).join(" / ");
+    }
+
+    for (const [section, values] of Object.entries({ natal: result.natal, transit: result.transit, acg: result.acg })){
+      for (const [key, value] of Object.entries(values)){
+        if (Array.isArray(value) ? value.length : value) result.found.push(`${section}.${key}`);
+      }
+    }
+    return result;
+  }
+
+  function buildPersonalKaiiContext(parsed){
+    const context = {
+      tonightLines: [],
+      placeLines: [],
+      promptLines: []
+    };
+    if (!parsed || !parsed.hasInput) return context;
+
+    const natal = parsed.natal || {};
+    const transit = parsed.transit || {};
+    const acg = parsed.acg || {};
+
+    if (natal.moon || transit.moon){
+      context.tonightLines.push("月のテーマが強い夜です。夢・記憶・感受性に寄りやすい雰囲気があります。");
+      context.promptLines.push(`- 月テーマ: ${transit.moon || natal.moon}`);
+    }
+    if (natal.neptune || transit.neptune){
+      context.tonightLines.push("海王星の象徴が重なり、想像力や余韻が働きやすい夜として扱えます。");
+      context.promptLines.push(`- 海王星テーマ: ${transit.neptune || natal.neptune}`);
+    }
+    if (natal.pluto || transit.pluto){
+      context.tonightLines.push("冥王星の象徴は、静かな集中や深い内省の演出として控えめに反映します。");
+      context.promptLines.push(`- 冥王星テーマ: ${transit.pluto || natal.pluto}`);
+    }
+    if (natal.asc) context.promptLines.push(`- ASC: ${natal.asc}`);
+    if (natal.ic){
+      context.tonightLines.push("ICの情報は、家・記憶・内面に意識が向きやすい描写へ薄く反映します。");
+      context.promptLines.push(`- IC: ${natal.ic}`);
+    }
+    if (natal.twelfthHouse && natal.twelfthHouse.length){
+      context.tonightLines.push("12ハウスのテーマは、静けさや夢の気配として表現します。");
+      context.promptLines.push(`- 12ハウステーマ: ${natal.twelfthHouse.join(" / ")}`);
+    }
+    if (acg.lineSummary){
+      context.placeLines.push(`${acg.lineSummary}。静かな記憶や内面のテーマに寄りやすい場所として、補助的に扱います。`);
+      context.promptLines.push(`- ACG現在地テーマ: ${acg.lineSummary}`);
+    }
+    if (parsed.urls.length) context.promptLines.push(`- 参照URL候補: ${parsed.urls.join(" / ")}`);
+
+    return context;
+  }
+
+  const verdicts = [
+    [85, "今宵、出ル"],
+    [65, "気配、濃シ"],
+    [45, "油断スルナ"],
+    [25, "薄気味悪シ"],
+    [0,  "凪イデイル"]
+  ];
+
+  let lastState = null;
+  let astroParsed = parseAstroYaml("");
+  let personalContext = buildPersonalKaiiContext(astroParsed);
+
+  function renderPersonalContext(){
+    const personal = $("personalTonight");
+    const place = $("placePresence");
+    if (personalContext.tonightLines.length){
+      $("personalTonightText").textContent = personalContext.tonightLines.slice(0, 3).join(" ");
+      personal.classList.add("show");
+    } else {
+      $("personalTonightText").textContent = "";
+      personal.classList.remove("show");
+    }
+    if (personalContext.placeLines.length){
+      $("placePresenceText").textContent = personalContext.placeLines.slice(0, 2).join(" ");
+      place.classList.add("show");
+    } else {
+      $("placePresenceText").textContent = "";
+      place.classList.remove("show");
+    }
+    if (astroParsed.hasInput){
+      $("yamlMeta").textContent = astroParsed.found.length
+        ? `抽出済み：${astroParsed.found.join("、")}`
+        : "貼り付け内容から主要項目をまだ抽出できない。YAML本文またはURLを保持して、AI観測の補助情報として扱う。";
+    } else {
+      $("yamlMeta").textContent = "貼り付けると、月・海王星・冥王星・ASC・IC・12ハウス・ACGライン概要を拾える範囲で反映する。";
+    }
+  }
+
+  function render(){
+    const now = new Date();
+    const context = calculateUshimitsuContext(now);
+    const night = context.night;
+    const m = context;
+
+    let target, label;
+    let mm = m;
+    if (now >= m.mitsuStart && now < m.mitsuEnd){
+      document.body.classList.add("ushimitsu");
+      label = "丑三つ時 — 終わりまで";
+      target = m.mitsuEnd;
+      $("subLine").innerHTML = `今、<b>丑三つ時</b>です`;
+    } else {
+      document.body.classList.remove("ushimitsu");
+      if (now >= m.mitsuEnd){
+        const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate()+1);
+        tomorrow.setHours(12,0,0,0);
+        mm = calculateUshimitsuContext(tomorrow);
+      }
+      label = "丑三つ時まで";
+      target = mm.mitsuStart;
+      $("subLine").innerHTML = `今夜の丑三つ時 <b>${fmt(mm.mitsuStart)} 〜 ${fmt(mm.mitsuEnd)}</b>`;
+    }
+    $("statusLabel").textContent = label;
+    const diff = Math.max(0, target - now);
+    const hh = String(Math.floor(diff/36e5)).padStart(2,"0");
+    const mi = String(Math.floor(diff%36e5/6e4)).padStart(2,"0");
+    const ss = String(Math.floor(diff%6e4/1e3)).padStart(2,"0");
+    $("countdown").innerHTML = `${hh}<span class="unit">:</span>${mi}<span class="unit">:</span>${ss}`;
+
+    const barLen = night.rise - night.set;
+    const pct = t => Math.max(0, Math.min(100, (t - night.set)/barLen*100));
+    $("mitsuBand").style.left = pct(m.mitsuStart)+"%";
+    $("mitsuBand").style.width = (pct(m.mitsuEnd)-pct(m.mitsuStart))+"%";
+    const needle = $("nowNeedle");
+    if (now >= night.set && now <= night.rise){
+      needle.style.display = "block";
+      needle.style.left = pct(now)+"%";
+    } else needle.style.display = "none";
+    $("capSunset").textContent = "暮六つ " + fmt(night.set);
+    $("capSunrise").textContent = "明六つ " + fmt(night.rise);
+
+    $("tSunset").textContent = fmt(night.set);
+    $("tSunrise").textContent = fmt(night.rise);
+    $("tNight").textContent = fmtDur(m.nightLen);
+    $("tUshi").textContent = `${fmt(m.ushiStart)} 〜 ${fmt(m.ushiEnd)}`;
+    $("tMitsu").textContent = `${fmt(m.mitsuStart)} 〜 ${fmt(m.mitsuEnd)}`;
+    const age = moonAge(+now);
+    $("tMoon").textContent = `${age.toFixed(1)}（照度 ${Math.round(moonIllum(age)*100)}%）`;
+
+    const k = calculateKaiiIndex(now, m);
+    $("kaiiVal").textContent = k.total;
+    $("kaiiVerdict").textContent = verdicts.find(v => k.total >= v[0])[1];
+    const setF = (id, v, max) => { $(id).style.width = (v/max*100)+"%"; $(id+"V").textContent = `${v} / ${max}`; };
+    setF("fKoku", k.koku, 40);
+    setF("fMoon", k.moon, 25);
+    setF("fRand", k.rand, 25);
+    setF("fGeo",  k.geo, 10);
+
+    renderPersonalContext();
+    lastState = { now, m: mm, k, age, personalContext };
+  }
+
+  // ───────── AI観測（閲覧者のClaudeで生成） ─────────
+  const loadingMsgs = ["気配ヲ探ッテイル…","耳ヲ澄マセテイル…","筆ヲ執ッテイル…"];
+  let loadingTimer = null;
+
+  function buildKaiiPrompt(state){
+    const { now, m, k, age, personalContext } = state;
+    const inUshimitsu = now >= m.mitsuStart && now < m.mitsuEnd;
+    const personalSection = personalContext && personalContext.promptLines.length
+      ? `
+# ユーザー占術コンテキスト
+${personalContext.promptLines.join("\n")}
+
+上記は怪談・民俗学・夜の雰囲気を個人向けに演出する補助情報です。占いとして断定せず、心霊現象や不幸の予告に使わないこと。`
+      : "";
+
+    return `あなたは「怪異探知機」という和風ホラーエンターテインメントアプリの語り手です。
+民俗学・怪談の伝統に基づいた、静かで上品な夜の演出文を生成してください。
+
+# 厳守事項
+- 心霊現象の実在を断定しない。「〜な気がする夜」「〜と昔から言われる」のような伝聞・雰囲気の表現に留める。
+- 呪い・祟り・死を予告するような文は書かない。読者個人に不幸が起きると示唆しない。
+- 占術情報は象徴表現として扱い、運命・危険・不幸を断定しない。
+- 禁忌は民俗学的な型（鏡・振り返る・呼ばれても返事をしない・敷居・夜口笛など）に限定する。現実の安全行動を妨げる内容(施錠しない、火を確認しない等)は絶対に書かない。
+- 実在の地名・事件・人物は使わない。
+- 文体は簡潔な和風。過度な絵文字・感嘆符は使わない。
+
+# 今夜の観測データ
+- 現在時刻: ${now.toLocaleString("ja-JP")}
+- 丑三つ時: ${fmt(m.mitsuStart)}〜${fmt(m.mitsuEnd)}（不定時法による本日の算出値）
+- 丑三つ時${inUshimitsu ? "の最中である" : "まで待機中"}
+- 月齢: ${age.toFixed(1)}（照度${Math.round(moonIllum(age)*100)}%）
+- 怪異指数: ${k.total}%（演出値）
+${personalSection}
+
+# 出力形式
+以下のJSONのみを出力すること。Markdownのコードブロック記号や前置きは一切不要。
+{
+  "kaii": "今夜の怪異。どんな気配の夜かを2〜3文で。怪異指数、月齢、ユーザー占術コンテキストがあればその雰囲気を反映する。ただし断定しない。",
+  "kinki": ["禁忌1（15字以内）", "禁忌2（15字以内）", "禁忌3（15字以内）"],
+  "kaidan": "150〜250字の短い怪談。今夜の月齢や時刻の雰囲気を織り込む。結末は断定せず、余韻で終える。"
+}`;
+  }
+
+  async function kansoku(){
+    if (!lastState) return;
+    const btn = $("kansokuBtn");
+    btn.disabled = true;
+    let i = 0;
+    $("aiStatus").textContent = loadingMsgs[0];
+    loadingTimer = setInterval(() => { $("aiStatus").textContent = loadingMsgs[++i % loadingMsgs.length]; }, 2500);
+
+    const prompt = buildKaiiPrompt(lastState);
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content
+        .filter(b => b.type === "text")
+        .map(b => b.text).join("\n")
+        .replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(text);
+
+      $("aiKaii").textContent = parsed.kaii || "";
+      const ul = $("aiKinki");
+      ul.innerHTML = "";
+      (parsed.kinki || []).slice(0,3).forEach(t => {
+        const li = document.createElement("li");
+        li.textContent = t;
+        ul.appendChild(li);
+      });
+      $("aiKaidan").textContent = parsed.kaidan || "";
+      $("aiBlock").classList.add("show");
+      $("aiStatus").textContent = "※AI観測は演出です";
+    } catch (err) {
+      $("aiStatus").textContent = "観測に失敗した。夜が深すぎるのかもしれない。もう一度試すこと。";
+      console.error(err);
+    } finally {
+      clearInterval(loadingTimer);
+      btn.disabled = false;
+      btn.textContent = "再ビ観測スル";
+    }
+  }
+  $("kansokuBtn").addEventListener("click", kansoku);
+
+  $("astroYaml").addEventListener("input", e => {
+    astroParsed = parseAstroYaml(e.target.value);
+    personalContext = buildPersonalKaiiContext(astroParsed);
+    renderPersonalContext();
+    if (lastState) lastState.personalContext = personalContext;
+  });
+
+  $("locBtn").addEventListener("click", () => {
+    if (!navigator.geolocation){ $("locLabel").textContent = "この端末では位置情報が使えない"; return; }
+    $("locLabel").textContent = "測位中…";
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        lat = p.coords.latitude; lng = p.coords.longitude;
+        $("locLabel").textContent = `現在地：北緯${lat.toFixed(2)} 東経${lng.toFixed(2)}`;
+        render();
+      },
+      () => { $("locLabel").textContent = "測位に失敗。既定地点で算出中"; }
+    );
+  });
+
+  render();
+  setInterval(render, 1000);
+})();
+</script>
+</body>
+</html>

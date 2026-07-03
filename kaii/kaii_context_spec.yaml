@@ -1,0 +1,46 @@
+schema_version: "kaii-context-v1"
+
+ushimitsu:
+  method: "futeijiho"
+  night_divisions: 6
+  ushi_index: 5
+  ushi_subdivisions: 4
+  mitsu_segment: 3
+
+kaii_index:
+  weights:
+    time_depth: 40
+    moon_darkness: 25
+    nightly_fluctuation: 25
+    geo_phase: 10
+  max_score: 99
+
+channels:
+  web:
+    calculation: "client_js"
+    ai_generation: false
+  artifact:
+    calculation: "client_js"
+    ai_generation: "viewer_claude"
+  mcp:
+    calculation: "server_python"
+    ai_generation: "user_chat_claude"
+
+personalization:
+  natal:
+    primary:
+      - Moon
+      - Neptune
+      - Pluto
+      - ASC
+      - IC
+      - 12th_house
+    purpose: "夜の雰囲気を個人向けに演出する"
+  transit:
+    primary:
+      - Moon
+      - Neptune
+      - Pluto
+    purpose: "今夜の変化を出す"
+  acg:
+    purpose: "現在地の雰囲気を補助する"
