@@ -254,7 +254,7 @@
         <h2>この地点の近くの線</h2>
         <p id="nearby-title"></p>
         <ul id="nearby-list"></ul>
-        <button class="action-btn" id="btn-copy-yaml" type="button">AIに渡す用YAMLをコピー</button>
+        <button class="action-btn" id="btn-copy-yaml" type="button">AIへ場所コンテキストをコピー</button>
       </div>
 
       <div class="panel">
@@ -453,6 +453,7 @@
     var currentMode = "mundane";
     var currentDate = "";      // マンデンの対象日
     var personalContext = null;
+    var hasPersonalYaml = false;
     var planetState = {};
     var angleState = {};
     var lastQuery = null;      // 直近の逆引き結果（YAMLコピー用）
@@ -565,6 +566,7 @@
         .then(function (res) {
           if (!res.ok) { throw new Error(res.body.error || "取得に失敗しました。"); }
           personalContext = (res.body.meta && res.body.meta.personal_context) || null;
+          hasPersonalYaml = true;
           applyGeojson(res.body, "personal");
           setStatus("あなたのネイタル天空線を表示しています。");
         })
@@ -673,7 +675,7 @@
       if (!lastQuery) { return ""; }
       var today = new Date().toISOString().slice(0, 10);
       var reportDate = currentDate || today;
-      var combined = !!lastQuery.has_personal;
+      var combined = hasPersonalYaml;
       var lines = [
         "acg_location_report:",
         "  generated_by: nanami-astro ACG",
@@ -688,21 +690,26 @@
         appendPersonalContext(lines);
         appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results, "本人にとって、この土地が持ちやすいテーマ");
         appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results, "その日の社会的・集合的な空気");
-        lines.push("  interpretation_prompt:");
-        lines.push("    task: >");
-        lines.push("      上記の personal_lines_nearby と mundane_lines_nearby を、");
-        lines.push("      本人の出生図YAMLと照合して、この場所の使い方として解釈してください。");
-        lines.push("    rules:");
+        lines.push("  context_for_ai:");
+        lines.push("    reading_mode: location_context");
+        lines.push("    interpretation_policy:");
         lines.push("      - 吉凶や安全性は断定しない");
-        lines.push("      - 旅行、移住、仕事、発信、振り返りの材料として読む");
-        lines.push("      - mundane は今日の空気、personal は本人にとっての土地テーマとして分けて扱う");
+        lines.push("      - personal_lines_nearby は本人にとってその土地が持ちやすいテーマとして扱う");
+        lines.push("      - mundane_lines_nearby はその日の社会的・集合的な空気として扱う");
+        lines.push("      - 本人の出生図YAML、滞在目的、過去の体験と照合して読む");
+        lines.push("      - 近い線同士がある場合は、本人テーマと今日の空気の重なりとして読む");
+        lines.push("  suggested_questions:");
+        lines.push('    - この場所は、今日の空と私の出生図を重ねるとどんなテーマがありますか？');
+        lines.push('    - この場所に今日行くなら、どんな使い方が向いていますか？');
+        lines.push('    - 仕事・発信・人間関係の観点で読むとどうですか？');
+        lines.push('    - 過去にこの地域へ行った経験がある場合、どんな振り返りができますか？');
       } else {
         appendLineList(lines, "lines_nearby", lastQuery.results, currentMode === "mundane" ? "その日の社会的・集合的な空気" : "本人にとって、この土地が持ちやすいテーマ");
       }
       lines.push("  usage_note: >-");
-      lines.push("    このYAMLは、この土地の「向き・テーマ」をAIが解釈するための参考情報です。");
+      lines.push("    このYAMLは、この土地の「向き・テーマ」をAIが解釈するための場所コンテキストです。");
       lines.push("    吉凶や安全性の判断には使えません。");
-      lines.push("    過去の滞在経験との照合、旅行・移住・活動場所の検討材料として使ってください。");
+      lines.push("    旅行・移住・活動場所の検討、過去の滞在経験との照合に使ってください。");
       return lines.join("\n") + "\n";
     }
 
@@ -766,7 +773,7 @@
     document.getElementById("btn-copy-yaml").addEventListener("click", function () {
       var text = buildExportYaml();
       if (!text) { return; }
-      function done() { setStatus("AIに渡す用YAMLをコピーしました。"); }
+      function done() { setStatus("AIへ場所コンテキストをコピーしました。"); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
       } else {
