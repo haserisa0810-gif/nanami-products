@@ -23,8 +23,16 @@ def test_acg_lines_render_above_tile_map() -> None:
 
     assert 'map.createPane("acg-lines").style.zIndex = 450;' in template
     assert 'pane: "acg-lines"' in template
+    assert "var ROLE_COLOR = {" in template
+    assert 'mundane: {' in template
+    assert 'natal: {' in template
+    assert 'var weight = style.weight + (props.mode === "natal" ? 1 : 0);' in template
+    assert 'opacity: 0.84' in template
     assert 'switchBaseLayer("osm");' in template
     assert 'switchBaseLayer("gsi");' in template
+    assert '<div class="map-legend" aria-hidden="true">' in template
+    assert '青線: 今日の空（マンデン）' in template
+    assert '橙線: あなたの出生図（ACG）' in template
 
 
 def test_acg_map_no_longer_fetches_natural_earth_as_base_map() -> None:
@@ -54,15 +62,19 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     assert 'featureSets[mode] = features;' in template
     assert 'mode: " + (combined ? "combined"' in template
     assert "appendPersonalContext(lines);" in template
-    assert 'appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results, "本人にとって、この土地が持ちやすいテーマ");' in template
-    assert 'appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results, "その日の社会的・集合的な空気");' in template
+    assert 'appendLineList(lines, "personal_lines_nearby", lastQuery.personal_results, preset, "personal");' in template
+    assert 'appendLineList(lines, "mundane_lines_nearby", lastQuery.mundane_results, preset, "mundane");' in template
     assert "personal_context:" in template
     assert "context_for_ai:" in template
     assert "reading_mode: location_context" in template
-    assert "personal_lines_nearby は本人にとってその土地が持ちやすいテーマとして扱う" in template
-    assert "mundane_lines_nearby はその日の社会的・集合的な空気として扱う" in template
+    assert "selected_theme:" in template
+    assert "selected_preset:" in template
+    assert "included_line_rules:" in template
+    assert "category_match:" in template
+    assert "work: {" in template
+    assert "relation: {" in template
     assert "suggested_questions:" in template
-    assert "このYAMLは、この土地の「向き・テーマ」をAIが解釈するための場所コンテキストです。" in template
+    assert "このYAMLは、ACG地図上の地点と選択中プリセットをもとにしたAI解釈用の場所コンテキストです。" in template
     assert "keywords:" in template
     assert "ai_hint:" in template
     assert "function yamlString(value)" in template
