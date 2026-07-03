@@ -75,7 +75,7 @@ class YamlIntegrityTest(unittest.TestCase):
         self.assertIn("mundane_house", without_asteroids)
 
     def test_light_detail_full_variants_preserve_addon_role_and_variant(self) -> None:
-        full_yaml, _prompt_text, full_doc = build_product_yaml(
+        _full_yaml, _prompt_text, full_doc = build_product_yaml(
             **COMMON_ARGS,
             include_asteroids=True,
             include_transit=True,
@@ -83,12 +83,33 @@ class YamlIntegrityTest(unittest.TestCase):
             transit_days=38,
             data_role="addon",
         )
-        lite = yaml.safe_load(build_light_astrology_yaml(full_yaml, doc=full_doc))
-        detail = yaml.safe_load(build_detail_astrology_yaml(full_yaml))
+        lite = yaml.safe_load(build_light_astrology_yaml(_full_yaml, doc=full_doc))
+        detail = yaml.safe_load(build_detail_astrology_yaml(_full_yaml))
 
         for name, doc in (("lite", lite), ("detail", detail), ("full", full_doc)):
             self.assertEqual(doc["meta"]["yaml_variant"], name)
             self.assertEqual(doc["meta"]["data_role"], "addon")
+
+    def test_light_yaml_normalizes_addon_type_to_addon_role(self) -> None:
+        full_yaml, _prompt_text, full_doc = build_product_yaml(
+            **COMMON_ARGS,
+            include_asteroids=True,
+            include_transit=True,
+            transit_start_date=datetime(2026, 7, 1, tzinfo=ZoneInfo("Asia/Tokyo")),
+            transit_days=38,
+        )
+        full_doc["meta"]["addon_type"] = "western_31days_transit"
+        full_doc["meta"]["data_role"] = "base_chart"
+
+        light_yaml = yaml.safe_dump(full_doc, allow_unicode=True, sort_keys=False)
+        light = yaml.safe_load(
+            build_detail_astrology_yaml(
+                light_yaml,
+                current_date=datetime(2026, 7, 1, tzinfo=ZoneInfo("Asia/Tokyo")).date(),
+            )
+        )
+        self.assertEqual(light["meta"]["data_role"], "addon")
+        self.assertEqual(light["meta"]["addon_type"], "western_31days_transit")
 
     def test_lite_natal_aspects_only_reference_output_bodies_and_keep_sun_moon(self) -> None:
         chart_args = {
@@ -146,6 +167,20 @@ class YamlIntegrityTest(unittest.TestCase):
         self.assertIsNotNone(western["natal"])
         self.assertIsNotNone(western["asteroids"])
         self.assertIsNotNone(western["transit"])
+
+    def test_validator_rejects_addon_type_with_base_chart_role(self) -> None:
+        doc = build_product_yaml(
+            **COMMON_ARGS,
+            include_asteroids=True,
+            include_transit=True,
+            transit_start_date=datetime(2026, 7, 1, tzinfo=ZoneInfo("Asia/Tokyo")),
+            transit_days=38,
+        )[2]
+        doc["meta"]["addon_type"] = "western_31days_transit"
+        doc["meta"]["data_role"] = "base_chart"
+
+        with self.assertRaises(ValueError):
+            validate_yaml_option_section_consistency(doc)
 
 
 if __name__ == "__main__":

@@ -176,6 +176,8 @@ def validate_yaml_option_section_consistency(doc: dict[str, Any]) -> None:
     }
     if product_type in addon_product_types and data_role != "addon":
         raise ValueError(f"Invalid YAML metadata: {product_type} requires data_role=addon")
+    if addon_type and data_role != "addon":
+        raise ValueError(f"Invalid YAML metadata: {product_type} with addon_type requires data_role=addon")
     if data_role == "addon" and not addon_type and product_type in addon_product_types - {"personal_ai_astrology_yaml_transit"}:
         raise ValueError(f"Invalid YAML metadata: {product_type} requires addon_type")
     if yaml_variant == "transit" and data_role != "addon":

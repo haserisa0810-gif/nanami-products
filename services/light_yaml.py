@@ -66,6 +66,8 @@ def _copy_common_blocks(
 ) -> dict[str, Any]:
     source_meta = doc.get("meta") or {}
     resolved_data_role = data_role or source_meta.get("data_role") or "base_chart"
+    if resolved_data_role == "base_chart" and source_meta.get("addon_type"):
+        resolved_data_role = "addon"
     meta = {
         **source_meta,
         "schema_version": source_meta.get("schema_version") or "1.1",
