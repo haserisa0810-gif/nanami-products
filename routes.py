@@ -58,7 +58,7 @@ from services.note_transit import (
     get_note_transit_campaign_by_access_key,
 )
 from services.post_chart import build_post_chart
-from services.prompt_builder import ensure_transit_date_guidance
+from services.prompt_builder import build_prompt, ensure_transit_date_guidance
 from services.shichu_chart import (
     build_shichusuimei_svg_from_yaml,
     is_shichusuimei_png_renderer_available,
@@ -70,8 +70,8 @@ from services.yaml_exporter import (
     build_31days_transit_addon_yaml,
     build_asteroid_addon_yaml,
     build_product_yaml,
-    refresh_dynamic_transit_yaml,
     build_shichu_fortune_cycles_addon_yaml,
+    validate_yaml_option_section_consistency,
 )
 
 app = FastAPI(title="nanami-products")
@@ -3435,10 +3435,7 @@ def redeem_post(
 @app.get("/chart/{token}.yaml", response_class=PlainTextResponse)
 def chart_yaml(token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
-    try:
-        yaml_text = refresh_dynamic_transit_yaml(chart["yaml_text"])
-    except Exception as exc:
-        _raise_chart_yaml_generation_error(token, "chart.yaml", exc)
+    yaml_text = chart["yaml_text"]
     response = PlainTextResponse(yaml_text, media_type="text/yaml; charset=utf-8")
     _apply_public_chart_headers(response, chart, max_age=0)
     return response
@@ -3689,6 +3686,7 @@ def chart_page(request: Request, token: str):
             except Exception:
                 birth_time_notice = {"show": False}
         share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
+        share_prompt_text = _chart_prompt_for_yaml_text(chart, share_yaml_text, fallback_doc=chart_doc)
         asteroid_yaml_text = None
         expires_at = _chart_expiry(chart)
         expires_label = _chart_expiry_label(expires_at)
@@ -3721,6 +3719,7 @@ def chart_page(request: Request, token: str):
                 "has_asteroid_svg_data": has_asteroids,
                 "birth_time_notice": birth_time_notice,
                 "share_yaml_text": share_yaml_text,
+                "share_prompt_text": share_prompt_text,
                 "asteroid_yaml_text": asteroid_yaml_text,
                 "chart_url": chart_url,
                 "yaml_url": f"{base_url}/chart/{token}.yaml",
@@ -4579,7 +4578,7 @@ def _build_asteroid_addon_from_base(doc: dict) -> tuple[str, str, dict, str, str
 
     meta = chart_doc.setdefault("meta", {})
     meta["product_type"] = "western_asteroids_addon"
-    meta["data_role"] = "base_chart"
+    meta["data_role"] = "addon"
     meta["addon_type"] = "western_asteroids"
     chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
 
@@ -4588,6 +4587,7 @@ def _build_asteroid_addon_from_base(doc: dict) -> tuple[str, str, dict, str, str
         "available": True,
         "file_name": "natal-asteroids.yaml",
     }
+    validate_yaml_option_section_consistency(chart_doc)
     chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
     chart_prompt_text = ASTEROID_ADDON_CHART_PROMPT.strip() + "\n"
     return addon_yaml_text, addon_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
@@ -4616,6 +4616,7 @@ def _build_transit_addon_from_base(
         addon_prompt_text = addon_prompt_text.replace("38日", f"{transit_days}日")
     addon_meta = addon_doc.setdefault("meta", {})
     addon_meta["product_type"] = product_type
+    addon_meta["data_role"] = "addon"
     addon_meta["addon_type"] = addon_type
     addon_meta.update(extra_meta or {})
     addon_product = addon_doc.setdefault("product", {})
@@ -4654,15 +4655,16 @@ def _build_transit_addon_from_base(
     product_options.update(extra_options or {})
     if "western_natal" not in product_options:
         product_options["western_natal"] = True
-    if "asteroids" not in product_options:
-        product_options["asteroids"] = has_asteroids
+    product_options["asteroids"] = has_asteroids
     meta = chart_doc.setdefault("meta", {})
     meta["product_type"] = product_type
-    meta["data_role"] = "base_chart"
+    meta["data_role"] = "addon"
     meta["addon_type"] = addon_type
     meta.update(extra_meta or {})
     chart_doc.update(copy.deepcopy(extra_root or {}))
     chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
+    validate_yaml_option_section_consistency(addon_doc)
+    validate_yaml_option_section_consistency(chart_doc)
     chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
     return addon_yaml_text, addon_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
 
@@ -4726,7 +4728,7 @@ def _build_long_term_transits_addon_from_base(
 
     meta = chart_doc.setdefault("meta", {})
     meta["product_type"] = "western_long_term_transits_addon"
-    meta["data_role"] = "base_chart"
+    meta["data_role"] = "addon"
     meta["addon_type"] = "western_long_term_transits"
     chart_doc["generated_at"] = addon_doc.get("generated_at") or chart_doc.get("generated_at")
 
@@ -4737,6 +4739,7 @@ def _build_long_term_transits_addon_from_base(
         "merge_path": "systems.western.transit_long_term",
     }
 
+    validate_yaml_option_section_consistency(chart_doc)
     chart_yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
     chart_prompt_text = LONG_TERM_TRANSITS_ADDON_CHART_PROMPT.strip() + "\n"
     return addon_yaml_text, chart_prompt_text, addon_doc, chart_yaml_text, chart_prompt_text, chart_doc
@@ -5908,10 +5911,37 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
 
 
 def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None, *, doc: dict | None = None) -> str:
-    prompt_text = _chart_prompt_text(chart, doc=doc).rstrip()
     yaml_text = share_yaml_text or chart.get("share_yaml_text") or chart.get("yaml_text") or ""
+    prompt_text = _chart_prompt_for_yaml_text(chart, str(yaml_text), fallback_doc=doc).rstrip()
     parts = [prompt_text, "", "---", "", "以下がYAMLデータです。", "", "```yaml", str(yaml_text), "```"]
     return "\n".join(parts).rstrip() + "\n"
+
+
+def _chart_prompt_for_yaml_text(chart: dict, yaml_text: str, *, fallback_doc: dict | None = None) -> str:
+    try:
+        loaded_doc = yaml.safe_load(yaml_text) or {}
+        prompt_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+    except Exception:
+        prompt_doc = fallback_doc if isinstance(fallback_doc, dict) else {}
+    product_options = ((prompt_doc.get("product") or {}).get("options") or {}) if isinstance(prompt_doc, dict) else {}
+    western = (((prompt_doc.get("systems") or {}).get("western") or {}) if isinstance(prompt_doc, dict) else {})
+    if isinstance(product_options, dict) and isinstance(western, dict) and product_options:
+        include_transit = bool(
+            product_options.get("transit")
+            or product_options.get("transit_today")
+            or product_options.get("transit_31days_summary")
+            or western.get("transit")
+        )
+        include_asteroids = bool(product_options.get("asteroids") and western.get("asteroids"))
+        include_shichusuimei = bool(product_options.get("shichusuimei"))
+        return build_prompt(
+            include_shichusuimei=include_shichusuimei,
+            include_asteroids=include_asteroids,
+            include_transit=include_transit,
+            birth_time_accuracy=str((prompt_doc.get("birth_time") or {}).get("accuracy") or "exact"),
+            interpretation_flags=prompt_doc.get("interpretation_flags") or {},
+        )
+    return _chart_prompt_text(chart, doc=fallback_doc)
 
 
 def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:

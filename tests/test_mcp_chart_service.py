@@ -83,6 +83,19 @@ class McpChartServiceTest(unittest.TestCase):
         self.assertIn("asteroids", loaded["systems"]["western"])
         self.assertNotIn("transit", loaded["systems"]["western"])
 
+    def test_get_chart_yaml_default_returns_complete_full_yaml(self) -> None:
+        with patch("services.mcp_chart_service.pg_store.get_chart", return_value=_chart()):
+            result = get_chart_yaml_from_url(chart_url=CHART_URL)
+
+        loaded = yaml.safe_load(result["yaml"])
+        western = loaded["systems"]["western"]
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["format"], "full")
+        self.assertIsNotNone(western["natal"])
+        self.assertIsNotNone(western["asteroids"])
+        self.assertIsNotNone(western["transit"])
+        self.assertEqual(result["returned_sections"], ["natal", "transit_31days", "long_term", "asteroid", "shichu", "indian"])
+
     def test_get_chart_yaml_returns_no_yaml_when_expired(self) -> None:
         with patch("services.mcp_chart_service.pg_store.get_chart", return_value=_chart(expires_delta=timedelta(seconds=-1))):
             result = get_chart_yaml_from_url(chart_url=CHART_URL)

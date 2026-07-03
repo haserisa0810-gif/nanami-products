@@ -31,6 +31,24 @@ PLANET_JA = {
     "Neptune": "海王星",
     "Pluto": "冥王星",
 }
+PLANET_THEME = {
+    "Sun": "自己表現・生命力・存在感",
+    "Moon": "感情・安心感・生活リズム",
+    "Mercury": "言葉・情報・学び",
+    "Venus": "魅力・調和・楽しみ",
+    "Mars": "行動力・決断・熱量",
+    "Jupiter": "発展・可能性・広がり",
+    "Saturn": "責任・継続・安定化",
+    "Uranus": "変化・独自性・刷新",
+    "Neptune": "感性・想像力・癒やし",
+    "Pluto": "集中・再構築・深い変容",
+}
+ANGLE_THEME = {
+    "ASC": "自分の出方・第一印象・新しい始まり",
+    "DSC": "出会い・対人関係・協力関係",
+    "MC": "仕事・肩書き・社会的な見え方",
+    "IC": "住まい・家族・内面の土台",
+}
 
 # ASC/DSC 曲線のサンプリング間隔（緯度・度）
 LAT_STEP = 1.0
@@ -138,11 +156,14 @@ def _line_features(
 ) -> list[dict[str, Any]]:
     """1本の論理線を、またぎ分割済みの LineString Feature 群にする。"""
     planet_ja = PLANET_JA.get(planet, planet)
+    line_type = "meridian" if angle in {"MC", "IC"} else "horizon"
     properties = {
         "planet": planet,
         "angle": angle,
+        "line_type": line_type,
         "mode": mode,
         "label": f"{planet_ja}{angle}線",
+        "meaning": f"{PLANET_THEME.get(planet, planet)}が、{ANGLE_THEME.get(angle, angle)}のテーマに表れやすいラインです。",
         "line_group": f"{planet}_{angle}",
     }
     features: list[dict[str, Any]] = []

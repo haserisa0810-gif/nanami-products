@@ -955,6 +955,7 @@
 
     <script>
     const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
+    const SHARE_PROMPT = {{ share_prompt_text | tojson }};
     const SHARE_YAML = {{ share_yaml_text | tojson }};
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
@@ -1172,9 +1173,10 @@
       return SHARE_YAML;
     }
 
-    function buildAiTextFromYaml(yaml) {
+    function buildAiTextFromYaml(yaml, mode = getSelectedAiMode()) {
+      const prompt = mode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;
       const parts = [
-        COMBINED_PROMPT,
+        prompt,
         '',
         '---',
         '',
@@ -1188,7 +1190,7 @@
     }
 
     async function buildAiText(mode = getSelectedAiMode()) {
-      return buildAiTextFromYaml(await getSelectedYaml(mode));
+      return buildAiTextFromYaml(await getSelectedYaml(mode), mode);
     }
 
     async function buildSelectedAiText(mode = getSelectedAiMode()) {
@@ -1338,7 +1340,7 @@
     function buildPreparedAiTextFile(mode = getSelectedAiMode()) {
       const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : SHARE_YAML);
       if (!TXT_SHARE_TEST_MODE && !yaml) return null;
-      const text = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : buildAiTextFromYaml(yaml);
+      const text = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : buildAiTextFromYaml(yaml, mode);
       return new File([text], buildAiTextFileName(mode), { type: 'text/plain' });
     }
 
@@ -1355,7 +1357,7 @@
     function getPreparedAiTextShareText(mode = getSelectedAiMode()) {
       if (TXT_SHARE_TEST_MODE) return buildSmallTxtShareTest();
       const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : SHARE_YAML);
-      return yaml ? buildAiTextFromYaml(yaml) : '';
+      return yaml ? buildAiTextFromYaml(yaml, mode) : '';
     }
 
     async function shareAiTextPayload({ shareText, file }) {

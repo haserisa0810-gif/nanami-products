@@ -43,6 +43,10 @@ def test_mundane_geojson_structure():
         assert p["mode"] == "mundane"
         assert p["line_group"] == f"{p['planet']}_{p['angle']}"
         assert p["label"].endswith(f"{p['angle']}線")
+        assert p["angle"] in {"ASC", "DSC", "MC", "IC"}
+        assert p["line_type"] in {"meridian", "horizon"}
+        assert p["meaning"]
+        assert {"planet", "angle", "line_type", "label", "meaning"} <= set(p)
 
 
 def test_labels_have_no_space():

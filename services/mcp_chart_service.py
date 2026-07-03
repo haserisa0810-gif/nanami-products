@@ -12,8 +12,6 @@ import yaml
 
 from services import pg_store
 from services.long_term_transit_yaml import has_long_term_transits
-from services.yaml_exporter import refresh_dynamic_transit_yaml
-
 
 ALLOWED_CHART_HOST = "chart.nanami-astro.com"
 CHART_ID_RE = re.compile(r"^[A-Za-z0-9_-]{5,128}$")
@@ -290,10 +288,7 @@ def get_chart_yaml_from_url(*, chart_url: str, sections: list[str] | None = None
     if requested:
         yaml_text = build_section_yaml(doc, returned) if returned else ""
     else:
-        try:
-            yaml_text = refresh_dynamic_transit_yaml(str(chart.get("yaml_text") or ""))
-        except Exception as exc:
-            raise ChartMcpError("YAMLデータの生成に失敗しました。", code="yaml_build_failed", status=500) from exc
+        yaml_text = str(chart.get("yaml_text") or "")
         returned = available
     if yaml_text:
         _enforce_yaml_size(yaml_text)

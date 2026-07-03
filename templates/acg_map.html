@@ -110,6 +110,13 @@
       white-space: nowrap;
     }
     .view-btns button:hover, .preset-btns button:hover { background: rgba(201, 162, 39, 0.12); }
+    #btn-zoom-japan {
+      background: rgba(232, 199, 90, 0.16);
+      border-color: rgba(232, 199, 90, 0.9);
+      color: #F1D66B;
+      font-weight: 700;
+      box-shadow: 0 0 0 1px rgba(232, 199, 90, 0.16), 0 0 18px rgba(232, 199, 90, 0.12);
+    }
     .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
     .toggle-grid label, .angle-row label {
       display: flex; align-items: center; gap: 6px;
@@ -159,6 +166,50 @@
       background: var(--brand-base-2) !important;
       color: var(--text-main) !important;
       border-color: var(--panel-border) !important;
+    }
+    .leaflet-control-layers {
+      background: rgba(16, 26, 60, 0.92) !important;
+      color: var(--text-main) !important;
+      border: 1px solid var(--panel-border) !important;
+      border-radius: 8px !important;
+    }
+    .leaflet-control-layers label { color: var(--text-main); font-size: 0.78rem; }
+    .leaflet-control-layers-toggle {
+      background-image: none !important;
+      width: 32px !important;
+      height: 32px !important;
+      display: grid !important;
+      place-items: center !important;
+      color: #F1D66B !important;
+      text-decoration: none !important;
+    }
+    .leaflet-control-layers-toggle::before {
+      content: "地図";
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .japan-label {
+      color: #0A1128;
+      background: rgba(232, 199, 90, 0.88);
+      border: 1px solid rgba(10, 17, 40, 0.35);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      box-shadow: 0 2px 10px rgba(10, 17, 40, 0.28);
+      white-space: nowrap;
+    }
+    .japan-guide {
+      color: var(--text-main);
+      background: rgba(16, 26, 60, 0.92);
+      border: 1px solid rgba(232, 199, 90, 0.55);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 12px;
+      box-shadow: 0 3px 14px rgba(10, 17, 40, 0.32);
+      white-space: nowrap;
     }
     @media (max-width: 760px) {
       .acg-layout { flex-direction: column; }
@@ -286,23 +337,113 @@
       relation: { planets: ["Venus", "Moon"], angles: ["ASC", "DSC"] },
       all:      { planets: PLANETS.map(function (p) { return p[0]; }), angles: ANGLES.slice() }
     };
+    var TILE_PROVIDERS = {
+      osm: {
+        name: "OpenStreetMap",
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        options: {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }
+      },
+      gsi: {
+        name: "地理院地図",
+        url: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
+        options: {
+          maxZoom: 18,
+          attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル</a>'
+        }
+      },
+      esriTopo: {
+        name: "Esri World Topo",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+        options: {
+          maxZoom: 19,
+          attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS, EPA'
+        }
+      }
+    };
 
     var map = L.map("map", {
       center: [25, 15],
       zoom: 2,
       minZoom: 1,
-      maxZoom: 8,
+      maxZoom: 18,
       worldCopyJump: false,
       maxBounds: [[-85, -180], [85, 180]],
       maxBoundsViscosity: 0.8,
       attributionControl: true
     });
     map.attributionControl.setPrefix(false);
-    map.attributionControl.addAttribution("地図データ: Natural Earth");
-
-    // ベース地図（世界）→ 高精細日本 → 天空線 の重なり順を pane で固定する
-    map.createPane("basemap").style.zIndex = 200;
-    map.createPane("japan").style.zIndex = 210;
+    map.createPane("japan-guide").style.zIndex = 430;
+    map.createPane("acg-lines").style.zIndex = 450;
+    var baseLayers = {};
+    var activeBaseLayer = null;
+    Object.keys(TILE_PROVIDERS).forEach(function (key) {
+      var provider = TILE_PROVIDERS[key];
+      baseLayers[provider.name] = L.tileLayer(provider.url, provider.options);
+    });
+    function switchBaseLayer(key) {
+      var provider = TILE_PROVIDERS[key];
+      if (!provider) { return; }
+      var next = baseLayers[provider.name];
+      if (!next || activeBaseLayer === next) { return; }
+      Object.keys(baseLayers).forEach(function (name) {
+        if (baseLayers[name] !== next && map.hasLayer(baseLayers[name])) {
+          map.removeLayer(baseLayers[name]);
+        }
+      });
+      activeBaseLayer = next.addTo(map);
+    }
+    switchBaseLayer("osm");
+    L.control.layers(baseLayers, null, { position: "topright", collapsed: true }).addTo(map);
+    map.on("baselayerchange", function (event) {
+      activeBaseLayer = event.layer;
+    });
+    var JAPAN_LABEL_LATLNG = [36.2, 148.0];
+    var TOKYO_LATLNG = [35.68, 139.76];
+    L.marker(JAPAN_LABEL_LATLNG, {
+      pane: "japan-guide",
+      interactive: false,
+      icon: L.divIcon({
+        className: "",
+        html: '<span class="japan-label">日本</span>',
+        iconSize: [48, 22],
+        iconAnchor: [24, 11]
+      })
+    }).addTo(map);
+    L.circleMarker(TOKYO_LATLNG, {
+      pane: "japan-guide",
+      radius: 6,
+      color: "#0A1128",
+      weight: 1.5,
+      fillColor: "#E8C75A",
+      fillOpacity: 0.82,
+      opacity: 0.75,
+      interactive: false
+    }).addTo(map);
+    L.circle(TOKYO_LATLNG, {
+      pane: "japan-guide",
+      radius: 850000,
+      color: "#E8C75A",
+      weight: 1,
+      fillOpacity: 0,
+      opacity: 0.32,
+      interactive: false
+    }).addTo(map);
+    var japanGuide = L.marker([32.2, 151.0], {
+      pane: "japan-guide",
+      interactive: false,
+      icon: L.divIcon({
+        className: "",
+        html: '<span class="japan-guide">日本は左側。左の「日本にズーム」でも移動できます。</span>',
+        iconSize: [260, 30],
+        iconAnchor: [0, 15]
+      })
+    }).addTo(map);
+    map.once("zoomstart movestart click", function () {
+      map.removeLayer(japanGuide);
+    });
 
     var dict = {};             // 解釈固定辞書（Venus_MC 形式のキー）
     var linesLayer = L.layerGroup().addTo(map);
@@ -313,41 +454,6 @@
     var angleState = {};
     var lastQuery = null;      // 直近の逆引き結果（YAMLコピー用）
     var clickMarker = null;
-
-    var JAPAN_FILL = "#2A3A6E";
-    var JAPAN_BORDER = "rgba(201, 162, 39, 0.9)";
-
-    fetch("{{ asset_url('geo/ne_110m_admin_0_countries.geojson') }}")
-      .then(function (r) { return r.json(); })
-      .then(function (geo) {
-        L.geoJSON(geo, {
-          pane: "basemap",
-          style: function (feature) {
-            // 日本だけ塗りと縁取りを明るくして見つけやすくする
-            if (feature.properties && feature.properties.name === "日本") {
-              return { color: JAPAN_BORDER, weight: 1.2, fillColor: JAPAN_FILL, fillOpacity: 1 };
-            }
-            return {
-              color: "rgba(201, 162, 39, 0.35)",
-              weight: 0.6,
-              fillColor: "#1B2547",
-              fillOpacity: 1
-            };
-          },
-          interactive: false
-        }).addTo(map);
-      });
-
-    // ズームイン時に海岸線がきれいに見えるよう、高精細（10m）の日本を重ねる
-    fetch("{{ asset_url('geo/japan_10m.geojson') }}")
-      .then(function (r) { return r.json(); })
-      .then(function (geo) {
-        L.geoJSON(geo, {
-          pane: "japan",
-          style: { color: JAPAN_BORDER, weight: 1, fillColor: JAPAN_FILL, fillOpacity: 1 },
-          interactive: false
-        }).addTo(map);
-      });
 
     fetch("{{ asset_url('acg_interpretations.json') }}")
       .then(function (r) { return r.json(); })
@@ -366,7 +472,7 @@
     function popupHtml(props) {
       var entry = dictEntry(props.line_group);
       var label = (entry && entry.label) || props.label;
-      var meaning = (entry && entry.meaning) || "";
+      var meaning = (entry && entry.meaning) || props.meaning || "";
       return '<div class="acg-popup"><strong>' + label + "</strong>" + meaning + "</div>";
     }
 
@@ -396,11 +502,12 @@
         var color = PLANET_COLOR[props.planet] || "#C9A227";
         var fc = { type: "FeatureCollection", features: features };
         var visible = L.geoJSON(fc, {
+          pane: "acg-lines",
           interactive: false,
           style: { color: color, weight: style.weight, dashArray: style.dashArray, opacity: 0.85 }
         });
         // タップしやすいよう、透明の太い当たり判定レイヤーを重ねる
-        var hit = L.geoJSON(fc, { style: { color: color, weight: 14, opacity: 0 } });
+        var hit = L.geoJSON(fc, { pane: "acg-lines", style: { color: color, weight: 14, opacity: 0 } });
         // 辞書フェッチ完了前に描画されても、開いた時点の内容で表示されるよう関数で渡す
         hit.bindPopup(function () { return popupHtml(props); }, { maxWidth: 260 });
         hit.on("mouseover", function () { visible.setStyle({ weight: style.weight + 1.2, opacity: 1 }); });
@@ -480,8 +587,9 @@
           results.push({
             planet: props.planet,
             angle: props.angle,
+            line_type: props.line_type,
             label: (entry && entry.label) || props.label,
-            meaning_hint: (entry && entry.meaning_hint) || "",
+            meaning_hint: (entry && entry.meaning_hint) || props.meaning || "",
             distance_km: Math.round(minKm),
             strength: strengthOf(minKm)
           });
@@ -562,6 +670,7 @@
         lastQuery.results.forEach(function (r) {
           lines.push("    - planet: " + r.planet);
           lines.push("      angle: " + r.angle);
+          lines.push("      line_type: " + r.line_type);
           lines.push("      distance_km: " + r.distance_km);
           lines.push("      strength: " + r.strength);
           lines.push("      meaning_hint: " + r.meaning_hint);
@@ -674,6 +783,7 @@
     // --- 表示範囲 ---
     var JAPAN_BOUNDS = [[24.0, 122.5], [45.8, 146.5]];
     document.getElementById("btn-zoom-japan").addEventListener("click", function () {
+      switchBaseLayer("gsi");
       map.fitBounds(JAPAN_BOUNDS);
     });
     document.getElementById("btn-zoom-world").addEventListener("click", function () {

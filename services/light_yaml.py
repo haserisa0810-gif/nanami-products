@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import yaml
 
 from services.long_term_transit_yaml import compact_long_term_transits_for_ai
+from services.yaml_exporter import validate_yaml_option_section_consistency
 
 logger = logging.getLogger(__name__)
 
@@ -55,15 +56,27 @@ def _today_for_doc(doc: dict[str, Any], today: date | None = None) -> date:
         return date.today()
 
 
-def _copy_common_blocks(doc: dict[str, Any], *, product_type: str, yaml_variant: str) -> dict[str, Any]:
+def _copy_common_blocks(
+    doc: dict[str, Any],
+    *,
+    product_type: str,
+    yaml_variant: str,
+    data_role: str | None = None,
+    addon_type: str | None = None,
+) -> dict[str, Any]:
+    source_meta = doc.get("meta") or {}
+    resolved_data_role = data_role or source_meta.get("data_role") or "base_chart"
+    meta = {
+        **source_meta,
+        "schema_version": source_meta.get("schema_version") or "1.1",
+        "product_type": product_type,
+        "data_role": resolved_data_role,
+        "yaml_variant": yaml_variant,
+    }
+    if addon_type:
+        meta["addon_type"] = addon_type
     return {
-        "meta": {
-            **(doc.get("meta") or {}),
-            "schema_version": (doc.get("meta") or {}).get("schema_version") or "1.1",
-            "product_type": product_type,
-            "data_role": "base_chart",
-            "yaml_variant": yaml_variant,
-        },
+        "meta": meta,
         "base": doc.get("base"),
         "generated_at": doc.get("generated_at"),
         "calculation": doc.get("calculation") or {},
@@ -139,6 +152,18 @@ def _compact_aspect(item: dict[str, Any], *, include_date: str | None = None) ->
             out[key] = item[key]
     out["meaning_hint"] = _meaning_hint(item)
     return out
+
+
+def _natal_aspects_for_output(natal: dict[str, Any]) -> list[dict[str, Any]]:
+    body_names = set((natal.get("bodies") or {}).keys())
+    aspects = []
+    for item in natal.get("aspects", []):
+        if not isinstance(item, dict):
+            continue
+        if item.get("body1") not in body_names or item.get("body2") not in body_names:
+            continue
+        aspects.append(item)
+    return aspects
 
 
 def _day_score(aspects: list[dict[str, Any]]) -> tuple[int, int]:
@@ -446,7 +471,7 @@ def build_light_astrology_yaml(
     daily = transit.get("daily") or []
     today, selected_date, selection_status = _select_today_entry(daily, doc, today=current_date)
 
-    natal_aspects = [item for item in natal.get("aspects", []) if isinstance(item, dict) and _is_key_aspect(item)]
+    natal_aspects = _natal_aspects_for_output(natal)
     today_aspects = [item for item in today.get("natal_aspects", []) if isinstance(item, dict) and _is_key_aspect(item)]
 
     key_aspects: list[dict[str, Any]] = []
@@ -565,6 +590,7 @@ def build_light_astrology_yaml(
         bool(light["product"]["options"].get("transit_31days_summary")),
         _summary_log_shape(final_summary),
     )
+    validate_yaml_option_section_consistency(light)
     return yaml.safe_dump(light, allow_unicode=True, sort_keys=False, width=120)
 
 
@@ -625,6 +651,7 @@ def _build_natal_yaml(full_yaml_text: str, *, include_asteroids: bool, version: 
             "shichusuimei": None,
         },
     }
+    validate_yaml_option_section_consistency(base)
     return yaml.safe_dump(base, allow_unicode=True, sort_keys=False, width=120)
 
 
@@ -656,6 +683,8 @@ def build_transit_astrology_yaml(full_yaml_text: str) -> str:
             doc,
             product_type="personal_ai_astrology_yaml_transit",
             yaml_variant="transit",
+            data_role="addon",
+            addon_type="western_31days_transit",
         ),
         "product": {
             "type": "personal_ai_astrology_yaml_transit",
@@ -679,4 +708,5 @@ def build_transit_astrology_yaml(full_yaml_text: str) -> str:
             "shichusuimei": None,
         },
     }
+    validate_yaml_option_section_consistency(out)
     return yaml.safe_dump(out, allow_unicode=True, sort_keys=False, width=120)

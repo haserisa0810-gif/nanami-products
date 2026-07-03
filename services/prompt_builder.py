@@ -30,18 +30,19 @@ WESTERN_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAM
 以下のYAMLを読み込んで鑑定してください。
 """
 
-WESTERN_FULL_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図・小惑星・31日分のトランジットを含む計算済みデータです。
+WESTERN_TRANSIT_PROMPT_TEMPLATE = """あなたは西洋占星術の鑑定者です。以下のYAMLは、{data_description}を含む計算済みデータです。
 
 重要ルール:
 - 天体位置・ハウス・アスペクト・トランジットの計算結果は変更しないでください。
 - 生年月日から再計算しないでください。
 - YAML内の計算結果を唯一の根拠として解釈してください。
 - 断定しすぎず、傾向・使い方・活かし方として表現してください。
-- 出生図を土台に、小惑星と今後31日分のトランジットをつなげて読んでください。
+- 出生図を土台に、{transit_instruction}をつなげて読んでください。
 - 月は朝・昼・夜の動きが入っています。日内の変化を読む時に参照してください。
 - transitデータは「現在の流れ」の根拠として使ってください。
 - moon_timepoints は「朝・昼・夜」の日内の使い方の根拠として使ってください。
 - 今後数日の動きは、トランジットのタイトなアスペクトを優先して判断してください。
+- transiting_bodies[].natal_house は出生図カスプに対する在住ハウスです。mundane_house はその時刻のマンデンハウスなので、出生図への解釈根拠にしないでください。
 - today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。
 - 「動きやすい日」「注意したい日」には、today.selected_date 以降の日付を優先して出力してください。
 - next_31_days_summary に過去日しか存在しない場合は、過去日を無理に未来の予定として書かず、「この期間に出た違和感や発想は今後の参考になる」などの振り返り表現にしてください。
@@ -64,6 +65,11 @@ WESTERN_FULL_PROMPT = """あなたは西洋占星術の鑑定者です。以下�
 
 以下のYAMLを読み込んで鑑定してください。
 """
+
+WESTERN_FULL_PROMPT = WESTERN_TRANSIT_PROMPT_TEMPLATE.format(
+    data_description="出生図・小惑星・31日分のトランジット",
+    transit_instruction="小惑星と今後31日分のトランジット",
+)
 
 SHICHUSUIMEI_PROMPT = """あなたは四柱推命の鑑定者です。以下のYAMLは、四柱・蔵干・十神・十二運・五行バランス・大運・流年・刑冲合害・神殺を含む計算済みデータです。
 
@@ -115,7 +121,16 @@ def build_prompt(
     if include_shichusuimei and not include_asteroids and not include_transit:
         prompt = SHICHUSUIMEI_PROMPT
     elif include_transit:
-        prompt = WESTERN_FULL_PROMPT
+        if include_asteroids:
+            data_description = "出生図・小惑星・31日分のトランジット"
+            transit_instruction = "小惑星と今後31日分のトランジット"
+        else:
+            data_description = "出生図・31日分のトランジット"
+            transit_instruction = "今後31日分のトランジット"
+        prompt = WESTERN_TRANSIT_PROMPT_TEMPLATE.format(
+            data_description=data_description,
+            transit_instruction=transit_instruction,
+        )
     else:
         prompt = WESTERN_PROMPT
     flags = interpretation_flags or {}

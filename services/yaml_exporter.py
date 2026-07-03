@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import yaml
 
 from services.location import resolve_prefecture
-from services.western_calc import calc_western_from_payload
+from services.western_calc import calc_western_from_payload, house_of
 from services.prompt_builder import build_prompt
 
 SIGN_JA = {
@@ -124,6 +124,63 @@ def _format_body(p: dict[str, Any]) -> dict[str, Any]:
         "retrograde": bool(p.get("retrograde", False)),
     }
 
+def _natal_cusps_from_houses(houses: dict[str, Any]) -> list[float]:
+    cusps: list[float] = []
+    for house_no in range(1, 13):
+        house = houses.get(str(house_no)) or {}
+        lon = house.get("absolute_longitude")
+        if lon is None:
+            return []
+        cusps.append(float(lon))
+    return cusps
+
+def _format_transit_body(p: dict[str, Any], natal_cusps: list[float]) -> dict[str, Any]:
+    body = _format_body(p)
+    body["mundane_house"] = body.pop("house", None)
+    lon = body.get("absolute_longitude")
+    body["natal_house"] = house_of(float(lon), natal_cusps) if lon is not None and natal_cusps else None
+    return body
+
+def validate_yaml_option_section_consistency(doc: dict[str, Any]) -> None:
+    product = doc.get("product") or {}
+    options = product.get("options") or {}
+    systems = doc.get("systems") or {}
+    western = systems.get("western") if isinstance(systems, dict) else None
+    western = western if isinstance(western, dict) else {}
+
+    section_checks = {
+        "western_natal": bool(western.get("natal")),
+        "asteroids": bool(western.get("asteroids")),
+        "transit": bool(western.get("transit")),
+    }
+    for option_key, section_present in section_checks.items():
+        if option_key in options and bool(options.get(option_key)) != section_present:
+            raise ValueError(
+                f"YAML option/section mismatch: product.options.{option_key}="
+                f"{bool(options.get(option_key))} but systems.western.{option_key if option_key != 'western_natal' else 'natal'} "
+                f"present={section_present}"
+            )
+
+    meta = doc.get("meta") or {}
+    product_type = str(meta.get("product_type") or product.get("type") or "")
+    data_role = str(meta.get("data_role") or "")
+    addon_type = meta.get("addon_type")
+    yaml_variant = meta.get("yaml_variant")
+    addon_product_types = {
+        "western_asteroids_addon",
+        "western_31days_transit_addon",
+        "western_long_term_transits_addon",
+        "shichu_fortune_cycles_addon",
+        "personal_ai_astrology_yaml_transit",
+        "western_note_transit_addon",
+    }
+    if product_type in addon_product_types and data_role != "addon":
+        raise ValueError(f"Invalid YAML metadata: {product_type} requires data_role=addon")
+    if data_role == "addon" and not addon_type and product_type in addon_product_types - {"personal_ai_astrology_yaml_transit"}:
+        raise ValueError(f"Invalid YAML metadata: {product_type} requires addon_type")
+    if yaml_variant == "transit" and data_role != "addon":
+        raise ValueError("Invalid YAML metadata: yaml_variant=transit requires data_role=addon")
+
 def _format_aspect(a: dict[str, Any]) -> dict[str, Any]:
     return {
         "body1": a.get("planet1"),
@@ -172,6 +229,7 @@ def _build_transit_block(
     pref_name: str,
     tz_name: str,
     natal_bodies: dict[str, Any],
+    natal_houses: dict[str, Any],
 ) -> dict[str, Any]:
     daily: list[dict[str, Any]] = []
     tz = ZoneInfo(tz_name)
@@ -198,8 +256,9 @@ def _build_transit_block(
             "include_vertex": False,
         }
         raw = calc_western_from_payload(transit_payload)
+        natal_cusps = _natal_cusps_from_houses(natal_houses)
         transiting = {
-            p["name"]: _format_body(p)
+            p["name"]: _format_transit_body(p, natal_cusps)
             for p in raw.get("planets", [])
             if p.get("name") in TRANSIT_BODIES
         }
@@ -213,7 +272,7 @@ def _build_transit_block(
             moon = next((p for p in moon_raw.get("planets", []) if p.get("name") == "Moon"), None)
             if not moon:
                 continue
-            moon_body = _format_body(moon)
+            moon_body = _format_transit_body(moon, natal_cusps)
             moon_timepoints.append({
                 "label": label,
                 "time": f"{hour:02d}:00",
@@ -248,6 +307,7 @@ def _build_long_term_transit_block(
     pref_name: str,
     tz_name: str,
     natal_bodies: dict[str, Any],
+    natal_houses: dict[str, Any],
 ) -> dict[str, Any]:
     samples: list[dict[str, Any]] = []
     tz = ZoneInfo(tz_name)
@@ -274,8 +334,9 @@ def _build_long_term_transit_block(
             "include_lilith": False,
             "include_vertex": False,
         })
+        natal_cusps = _natal_cusps_from_houses(natal_houses)
         transiting = {
-            p["name"]: _format_body(p)
+            p["name"]: _format_transit_body(p, natal_cusps)
             for p in raw.get("planets", [])
             if p.get("name") in selected_bodies
         }
@@ -308,6 +369,7 @@ def _build_transit_for_profile(
     pref_name: str,
     tz_name: str,
     natal_bodies: dict[str, Any],
+    natal_houses: dict[str, Any],
 ) -> dict[str, Any]:
     builder = {
         "standard": _build_transit_block,
@@ -323,6 +385,7 @@ def _build_transit_for_profile(
         pref_name=pref_name,
         tz_name=tz_name,
         natal_bodies=natal_bodies,
+        natal_houses=natal_houses,
     )
 
 def _summaries(planets: list[dict[str, Any]]) -> dict[str, Any]:
@@ -437,6 +500,7 @@ def build_product_yaml(
                 pref_name=pref_name,
                 tz_name=tz_name,
                 natal_bodies=core,
+                natal_houses=houses,
             ) if include_transit else None,
         }
 
@@ -513,6 +577,7 @@ def build_product_yaml(
             "chart_id": chart_id,
             "generated_at": generated_at.isoformat(),
             "data_role": data_role,
+            "yaml_variant": "full",
         },
         "base": base,
         "product": {
@@ -564,6 +629,7 @@ def build_product_yaml(
         },
         "systems": systems,
     }
+    validate_yaml_option_section_consistency(doc)
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
     prompt_text = build_prompt(
         include_shichusuimei=include_shichusuimei,
@@ -680,6 +746,7 @@ def build_asteroid_addon_yaml(
             "shichusuimei": None,
         },
     }
+    validate_yaml_option_section_consistency(doc)
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
     return yaml_text, ASTEROID_ADDON_PROMPT.strip() + "\n", doc
 
@@ -823,6 +890,7 @@ def build_31days_transit_addon_yaml(
             "shichusuimei": None,
         },
     }
+    validate_yaml_option_section_consistency(doc)
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
     return yaml_text, addon_prompt_text, doc
 
@@ -963,5 +1031,6 @@ def build_shichu_fortune_cycles_addon_yaml(
             },
         },
     }
+    validate_yaml_option_section_consistency(doc)
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
     return yaml_text, SHICHU_FORTUNE_CYCLES_ADDON_PROMPT.strip() + "\n", doc
