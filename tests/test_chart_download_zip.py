@@ -14,11 +14,25 @@ from tests.test_long_term_transit_addon_chart import _samples_long_term_doc
 
 class ChartDownloadZipTest(unittest.TestCase):
     def test_zip_regenerates_ai_files_from_full_yaml_when_stored_share_yaml_is_stale(self) -> None:
-        full_yaml = yaml.safe_dump(_full_doc(), allow_unicode=True, sort_keys=False)
+        full_doc = _full_doc()
+        full_doc["meta"] = {
+            "schema_version": "1.1",
+            "product_type": "personal_ai_astrology_yaml_detail",
+            "data_role": "base_chart",
+            "addon_type": "western_31days_transit",
+            "yaml_variant": "detail",
+        }
+        full_yaml = yaml.safe_dump(full_doc, allow_unicode=True, sort_keys=False)
         stale_share_yaml = """
-version: nanami-products-yaml-light-v1
+version: nanami-products-yaml-detail-v1
+meta:
+  data_role: base_chart
+  addon_type: western_31days_transit
+  yaml_variant: detail
 product:
   options:
+    western_natal: true
+    asteroids: true
     transit_today: true
     transit_31days_summary: true
 systems:
@@ -49,6 +63,9 @@ systems:
         self.assertEqual(yaml.safe_load(full_yaml_in_zip), yaml.safe_load(full_yaml))
         self.assertNotIn("next_31_days_summary: {}", detail_yaml)
         self.assertNotIn("next_31_days_summary: {}", ai_paste)
+        self.assertNotIn("data_role: base_chart", ai_paste)
+        self.assertIn("data_role: addon", ai_paste)
+        self.assertIn("addon_type: western_31days_transit", ai_paste)
         self.assertIn("overall_theme", detail_yaml)
         self.assertIn("overall_theme", ai_paste)
         self.assertIn("key_dates", detail_yaml)

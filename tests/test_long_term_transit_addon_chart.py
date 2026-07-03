@@ -138,6 +138,7 @@ class LongTermTransitAddonChartTest(unittest.TestCase):
             pref_name="東京都",
             tz_name="Asia/Tokyo",
             natal_bodies={"Sun": {"absolute_longitude": 92}},
+            natal_houses={"1": {"absolute_longitude": 0}},
         )
 
         self.assertEqual(len(block["samples"]), 53)
@@ -168,6 +169,7 @@ class LongTermTransitAddonChartTest(unittest.TestCase):
             pref_name="東京都",
             tz_name="Asia/Tokyo",
             natal_bodies={"Sun": {"absolute_longitude": 92}},
+            natal_houses={"1": {"absolute_longitude": 0}},
         )
 
         self.assertEqual(len(block["daily"]), 31)

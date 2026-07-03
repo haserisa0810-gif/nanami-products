@@ -5887,11 +5887,11 @@ def _chart_zip_filename(token: str) -> str:
 
 
 def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
-    share_yaml_text = chart.get("share_yaml_text") or chart["yaml_text"]
+    yaml_text = chart["yaml_text"]
     chart_doc = doc if isinstance(doc, dict) else None
     if chart_doc is None:
         try:
-            loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+            loaded_doc = yaml.safe_load(yaml_text) or {}
             chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
         except Exception:
             chart_doc = None
@@ -5903,11 +5903,11 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
     asteroid_like_western = has_western_natal and has_western_asteroids
     if full_like_western or long_term_like_western:
         return build_light_astrology_yaml(
-            chart["yaml_text"],
+            yaml_text,
             doc=chart_doc,
             include_asteroids=long_term_like_western and has_western_asteroids,
         )
-    return share_yaml_text
+    return yaml_text
 
 
 def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None, *, doc: dict | None = None) -> str:
