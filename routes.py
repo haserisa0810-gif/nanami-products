@@ -2722,6 +2722,145 @@ def _api_chart_snapshot(chart_id: str, x_api_key: str | None) -> tuple[dict | No
     return snapshot, None
 
 
+# ─── Astro Travel（旅行先診断 MVP） ──────────────────────────
+# 既存の鑑定・ACG・マンデンとは分離した導線。出生YAML・旅行先・日程・目的から
+# travel_report YAML を生成し、charts テーブル（product_type=travel）に保存する。
+
+def _travel_default_dates() -> tuple[str, str]:
+    base = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+    arrival = base + timedelta(days=30)
+    departure = arrival + timedelta(days=3)
+    return arrival.isoformat(), departure.isoformat()
+
+
+def _travel_form_response(request: Request, *, form: dict | None, error: str | None, status_code: int = 200):
+    from services.travel.travel_schema import TRAVEL_PURPOSES
+
+    default_arrival, default_departure = _travel_default_dates()
+    response = templates.TemplateResponse(
+        "travel_form.html",
+        {
+            "request": request,
+            "purposes": list(TRAVEL_PURPOSES.items()),
+            "default_arrival": default_arrival,
+            "default_departure": default_departure,
+            "form": form,
+            "error": error,
+        },
+        status_code=status_code,
+    )
+    return _mark_no_store(response)
+
+
+@app.get("/travel", response_class=HTMLResponse)
+def travel_form(request: Request):
+    return _travel_form_response(request, form=None, error=None)
+
+
+@app.post("/travel/generate")
+def travel_generate(
+    request: Request,
+    natal_yaml: str = Form(""),
+    purpose: str = Form(""),
+    location_name: str = Form(""),
+    country: str = Form(""),
+    latitude: str = Form(""),
+    longitude: str = Form(""),
+    timezone: str = Form(""),
+    arrival_date: str = Form(""),
+    departure_date: str = Form(""),
+):
+    from services.travel.travel_generator import build_travel_report
+
+    form_values = {
+        "natal_yaml": natal_yaml,
+        "purpose": purpose,
+        "location_name": location_name,
+        "country": country,
+        "latitude": latitude,
+        "longitude": longitude,
+        "timezone": timezone,
+        "arrival_date": arrival_date,
+        "departure_date": departure_date,
+    }
+    try:
+        result = build_travel_report(
+            natal_yaml_text=natal_yaml,
+            purpose_key=purpose,
+            location_name=location_name,
+            country=country,
+            latitude=latitude,
+            longitude=longitude,
+            timezone_name=timezone,
+            arrival_date=arrival_date,
+            departure_date=departure_date,
+        )
+    except ValueError as exc:
+        # 入力起因（日付・目的・緯度経度・YAML形式）はフォームへ差し戻す。
+        return _travel_form_response(request, form=form_values, error=str(exc), status_code=400)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("travel_generate_failed error_type=%s", type(exc).__name__)
+        return _travel_form_response(
+            request,
+            form=form_values,
+            error=_public_error_message(exc, fallback="診断の生成に失敗しました。時間をおいて再試行してください。"),
+            status_code=500,
+        )
+
+    stay = result["doc"]["input"]["stay"]
+    loc = result["doc"]["input"]["location"]
+    token = secrets.token_urlsafe(18)
+    try:
+        pg_store.save_chart(
+            token=token,
+            order_code=None,
+            buyer_name=loc.get("name") or None,
+            birth_date=stay["arrival_date"],
+            birth_time=None,
+            birth_place=", ".join(p for p in [loc.get("name"), loc.get("country")] if p) or None,
+            options={"product_type": "travel", "app": "astro_travel"},
+            yaml_text=result["yaml_text"],
+            prompt_text=result["prompt_text"],
+            expires_at=_chart_expires_at(),
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("travel_save_failed error_type=%s", type(exc).__name__)
+        return _travel_form_response(
+            request,
+            form=form_values,
+            error=_public_error_message(exc, fallback="診断結果の保存に失敗しました。時間をおいて再試行してください。"),
+            status_code=500,
+        )
+    return RedirectResponse(f"/travel/result/{token}", status_code=303)
+
+
+@app.get("/travel/result/{token}", response_class=HTMLResponse)
+def travel_result(request: Request, token: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    options = chart.get("options") or {}
+    if options.get("product_type") != "travel":
+        raise HTTPException(status_code=404, detail="travel result not found")
+    try:
+        loaded = yaml.safe_load(chart["yaml_text"]) or {}
+    except Exception:
+        loaded = {}
+    doc = (loaded.get("travel_report") if isinstance(loaded, dict) else None) or {}
+    expires_at = _chart_expiry(chart)
+    expires_label = _chart_expiry_label(expires_at)
+    response = templates.TemplateResponse(
+        "travel_result.html",
+        {
+            "request": request,
+            "doc": doc,
+            "yaml_text": chart["yaml_text"],
+            "prompt_text": chart.get("prompt_text") or "",
+            "expires_label": expires_label,
+        },
+    )
+    _apply_public_chart_headers(response, chart, max_age=300)
+    return response
+
+
 def _api_chart_svg_response(chart_id: str, x_api_key: str | None) -> PlainTextResponse | JSONResponse:
     snapshot, error_response = _api_chart_snapshot(chart_id, x_api_key)
     if error_response:

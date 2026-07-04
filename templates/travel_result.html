@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Astro Travel｜{{ doc.input.location.name }} の旅診断</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+  <style>
+    .score-line { font-size: 1.6rem; letter-spacing: 2px; }
+    .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 6px 0; }
+    .kv .k { opacity: .7; }
+    .chip-list { list-style: none; padding: 0; margin: 6px 0; }
+    .chip-list li { padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,.12); }
+    .copyrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    textarea.share { width: 100%; min-height: 180px; font-family: ui-monospace, monospace; font-size: .82rem; }
+    .section { margin-top: 22px; }
+    .muted { opacity: .75; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <p class="eyebrow">Astro Travel</p>
+      <h1>{{ doc.input.location.name }}{% if doc.input.location.country %}（{{ doc.input.location.country }}）{% endif %}</h1>
+      <div class="kv">
+        <span class="k">旅行期間</span><span>{{ doc.input.stay.arrival_date }} 〜 {{ doc.input.stay.departure_date }}（{{ doc.input.stay.days }}日）</span>
+        <span class="k">目的</span><span>{{ doc.input.purpose.label }}</span>
+      </div>
+
+      <div class="section">
+        <h2>総合評価</h2>
+        <p class="score-line">{{ doc.scoring.score_label }}（{{ doc.scoring.total_score }}/{{ doc.scoring.max_score }}）</p>
+        <ul class="chip-list">
+          {% for note in doc.scoring.notes %}<li>{{ note }}</li>{% endfor %}
+        </ul>
+        <p class="muted">スコアは娯楽的な目安です。「良い／悪い」ではなく「この旅で使いやすいテーマ」としてご覧ください。</p>
+      </div>
+
+      <div class="section">
+        <h2>この場所で出やすいテーマ</h2>
+        <ul class="chip-list">
+          {% for theme in doc.interpretation.themes %}<li>{{ theme }}</li>{% endfor %}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>おすすめの過ごし方</h2>
+        <ul class="chip-list">
+          {% for action in doc.interpretation.recommended_actions %}<li>{{ action }}</li>{% endfor %}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>気をつけたいこと</h2>
+        <ul class="chip-list">
+          {% for caution in doc.interpretation.cautions %}<li>{{ caution }}</li>{% endfor %}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>ACGライン（旅行先に近い天空線）</h2>
+        <ul class="chip-list">
+          {% for line in doc.acg.nearest_lines %}
+            <li>{{ line.planet }}{{ line.angle }}線 — 約{{ line.distance_km }}km｜{{ line.meaning_hint }}</li>
+          {% else %}
+            <li class="muted">近いラインは検出されませんでした。</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>リロケーション要約</h2>
+        <div class="kv">
+          {% if doc.relocation.ascendant %}<span class="k">上昇点（ASC）</span><span>{{ doc.relocation.ascendant.sign }} {{ doc.relocation.ascendant.degree }}°</span>{% endif %}
+          {% if doc.relocation.midheaven %}<span class="k">南中点（MC）</span><span>{{ doc.relocation.midheaven.sign }} {{ doc.relocation.midheaven.degree }}°</span>{% endif %}
+        </div>
+        <ul class="chip-list">
+          {% for h in doc.relocation.house_emphasis %}
+            <li>{{ h.house }}ハウス（{{ h.theme }}）に出生天体が{{ h.natal_body_count }}個</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>トランジット要約（滞在期間中）</h2>
+        <ul class="chip-list">
+          {% for hl in doc.transit.highlights %}
+            <li>{{ hl.date }}：{{ hl.body }} {{ hl.aspect }} {{ hl.target }}（orb {{ hl.orb }}°）｜{{ hl.meaning_hint }}</li>
+          {% else %}
+            <li class="muted">目立つトランジットは検出されませんでした。</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>AIに渡せるYAML</h2>
+        <p class="muted">下のデータ（またはプロンプト＋YAML）をコピーして、Claude などに貼り付けると、より詳しい旅の読み解きが得られます。計算結果はAIに再計算させない指示が含まれています。</p>
+        <div class="copyrow">
+          <button type="button" onclick="copyText(SHARE_PROMPT + '\n\n' + SHARE_YAML, this)">プロンプト＋YAMLをコピー</button>
+          <button type="button" onclick="copyText(SHARE_YAML, this)">YAMLだけコピー</button>
+          <button type="button" onclick="copyText(SHARE_PROMPT, this)">プロンプトだけコピー</button>
+        </div>
+        <textarea class="share" readonly>{{ yaml_text }}</textarea>
+      </div>
+
+      <p class="muted">このページはURLを知っている人が開けます。有効期限：{{ expires_label }}</p>
+      <p><a href="/travel">別の旅行先で診断する</a></p>
+    </div>
+  </main>
+
+  <script>
+    const SHARE_YAML = {{ yaml_text | tojson }};
+    const SHARE_PROMPT = {{ prompt_text | tojson }};
+    function copyText(text, btn) {
+      var done = function (ok) {
+        if (!btn) return;
+        var original = btn.dataset.label || btn.textContent;
+        btn.dataset.label = original;
+        btn.textContent = ok ? 'コピーしました' : 'コピーに失敗しました';
+        setTimeout(function () { btn.textContent = btn.dataset.label; }, 1800);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        return;
+      }
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        var ok = document.execCommand('copy'); document.body.removeChild(ta); done(ok);
+      } catch (e) { done(false); }
+    }
+  </script>
+</body>
+</html>

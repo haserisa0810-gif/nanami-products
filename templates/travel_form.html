@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Astro Travel｜星で選ぶ旅</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+  <style>
+    #travel-map { height: 320px; border-radius: 12px; margin: 8px 0 4px; }
+    .purpose-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 6px; }
+    .purpose-grid label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.15); border-radius: 10px; cursor: pointer; }
+    .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .map-hint { font-size: .82rem; opacity: .8; margin: 2px 0 0; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <p class="eyebrow">Astro Travel</p>
+      <h1>次の旅行先、星で選んでみる？</h1>
+      <p class="lead">
+        あなたの出生図と旅先の空をもとに、その場所でどんな体験が起こりやすいかを読み解きます。<br>
+        出生YAML・旅行先・日程・目的を入力すると、AIに渡せる旅行診断データ（travel_report YAML）を作成します。
+      </p>
+
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+      <form method="post" action="/travel/generate" class="form">
+        <label>出生YAML（貼り付け）
+          <textarea name="natal_yaml" rows="8" required placeholder="出生図YAMLをそのまま貼り付けてください">{{ form.natal_yaml if form else '' }}</textarea>
+          <small>ホロスコープYAML（出生日時を含むもの）に対応しています。本文はサーバーに保存されますが、AI解釈用途にのみ使われます。</small>
+        </label>
+
+        <label>旅行先（地図をクリックして選択）</label>
+        <div id="travel-map"></div>
+        <p class="map-hint">地図をクリックすると緯度・経度が自動で入ります。都市名は手入力してください。</p>
+
+        <label>都市名
+          <input type="text" name="location_name" value="{{ form.location_name if form else '' }}" placeholder="例：Barcelona / バルセロナ" required>
+        </label>
+        <label>国名（任意）
+          <input type="text" name="country" value="{{ form.country if form else '' }}" placeholder="例：Spain">
+        </label>
+        <div class="coord-row">
+          <label>緯度
+            <input type="text" id="latitude" name="latitude" value="{{ form.latitude if form else '' }}" placeholder="41.3874" required>
+          </label>
+          <label>経度
+            <input type="text" id="longitude" name="longitude" value="{{ form.longitude if form else '' }}" placeholder="2.1686" required>
+          </label>
+        </div>
+        <label>タイムゾーン（任意）
+          <input type="text" name="timezone" value="{{ form.timezone if form else '' }}" placeholder="例：Europe/Madrid（空欄なら経度から推定）">
+        </label>
+
+        <div class="date-row">
+          <label>出発日
+            <input type="date" name="arrival_date" value="{{ form.arrival_date if form else default_arrival }}" required>
+          </label>
+          <label>帰着日
+            <input type="date" name="departure_date" value="{{ form.departure_date if form else default_departure }}" required>
+          </label>
+        </div>
+
+        <label>旅行目的</label>
+        <div class="purpose-grid">
+          {% for key, label in purposes %}
+            <label><input type="radio" name="purpose" value="{{ key }}" {% if (form and form.purpose == key) or (not form and key == 'healing') %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </div>
+
+        <button type="submit">診断する</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="{{ asset_url('vendor/leaflet/leaflet.js') }}"></script>
+  <script>
+    (function () {
+      try {
+        var latInput = document.getElementById('latitude');
+        var lonInput = document.getElementById('longitude');
+        var startLat = parseFloat(latInput.value) || 35.68;
+        var startLon = parseFloat(lonInput.value) || 139.69;
+        var map = L.map('travel-map').setView([startLat, startLon], (latInput.value ? 6 : 2));
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 12,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        var marker = null;
+        if (latInput.value && lonInput.value) {
+          marker = L.marker([startLat, startLon]).addTo(map);
+        }
+        map.on('click', function (e) {
+          var lat = Math.round(e.latlng.lat * 1e6) / 1e6;
+          var lon = Math.round(e.latlng.lng * 1e6) / 1e6;
+          latInput.value = lat;
+          lonInput.value = lon;
+          if (marker) { marker.setLatLng(e.latlng); } else { marker = L.marker(e.latlng).addTo(map); }
+        });
+      } catch (err) {
+        /* 地図が使えなくても、緯度経度の手入力で診断は可能 */
+      }
+    })();
+  </script>
+</body>
+</html>
