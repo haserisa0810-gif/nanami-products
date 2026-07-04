@@ -12,6 +12,7 @@ import routes
 from services.mcp_chart_service import (
     ChartMcpError,
     available_sections_for_doc,
+    chart_expiry,
     extract_chart_id_from_url,
     get_astrology_prompt,
     get_chart_yaml_from_url,
@@ -104,6 +105,13 @@ class McpChartServiceTest(unittest.TestCase):
         self.assertEqual(result["yaml"], "")
         self.assertEqual(result["error_code"], "chart_expired")
         self.assertIn("期限切れ", result["notice"])
+
+    def test_chart_expiry_allows_explicit_no_expiry_policy(self) -> None:
+        chart = _chart(expires_delta=timedelta(seconds=-1))
+        chart["expires_at"] = None
+        chart["options"] = {"product_type": "western_full", "expires_policy": "no_expiry"}
+
+        self.assertIsNone(chart_expiry(chart))
 
     def test_notice_changes_for_near_expiry(self) -> None:
         with patch("services.mcp_chart_service.pg_store.get_chart", return_value=_chart(expires_delta=timedelta(days=6))):

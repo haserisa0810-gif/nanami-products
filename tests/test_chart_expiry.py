@@ -77,6 +77,19 @@ class ChartExpiryTests(unittest.TestCase):
 
         self.assertEqual(expires_at, created_at + timedelta(days=90))
 
+    def test_chart_expiry_allows_explicit_no_expiry_policy(self) -> None:
+        created_at = datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc)
+
+        expires_at = routes._chart_expiry(
+            {
+                "created_at": created_at,
+                "expires_at": None,
+                "options": {"expires_policy": routes.NO_EXPIRY_CHART_POLICY},
+            }
+        )
+
+        self.assertIsNone(expires_at)
+
     def test_load_chart_returns_unexpired_chart(self) -> None:
         chart = {
             "token": "tok",

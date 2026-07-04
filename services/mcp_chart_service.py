@@ -92,6 +92,9 @@ def extract_chart_id_from_url(chart_url: str) -> str:
 
 
 def chart_expiry(chart: dict[str, Any]) -> datetime | None:
+    options = chart.get("options") or {}
+    if isinstance(options, dict) and options.get("expires_policy") == "no_expiry":
+        return None
     expires_at = chart.get("expires_at")
     if isinstance(expires_at, datetime):
         return expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)

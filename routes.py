@@ -4511,6 +4511,8 @@ def yaml_generate(
     if auth_error:
         return auth_error
 
+    if not isinstance(url_expiry_policy, str):
+        url_expiry_policy = NO_EXPIRY_CHART_POLICY
     url_expiry_policy = url_expiry_policy if url_expiry_policy == NO_EXPIRY_CHART_POLICY else "standard"
     token = secrets.token_urlsafe(18)
     try:

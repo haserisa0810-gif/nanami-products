@@ -81,8 +81,6 @@ def test_admin_yaml_generate_accepts_basic_auth(monkeypatch) -> None:
         ),
     )
     monkeypatch.setattr(routes, "_build_chart_artifacts", lambda **_kwargs: {})
-    monkeypatch.setattr(routes, "_chart_expires_at", lambda: datetime.now(timezone.utc))
-
     saved: dict[str, object] = {}
 
     def fake_save_chart(**kwargs):
@@ -106,6 +104,47 @@ def test_admin_yaml_generate_accepts_basic_auth(monkeypatch) -> None:
     assert response.status_code == 303
     assert response.headers["location"].startswith("/admin/yaml/result/")
     assert saved["order_code"] is None
+    assert saved["expires_at"] is None
+    assert saved["options"]["expires_policy"] == routes.NO_EXPIRY_CHART_POLICY
+    assert saved["options"]["url_purpose"] == "post_sample"
+
+
+def test_admin_yaml_generate_can_use_standard_90_day_expiry(monkeypatch) -> None:
+    monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
+    monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")
+    monkeypatch.setattr(
+        routes,
+        "build_product_yaml",
+        lambda **_kwargs: (
+            "product:\n  options: {}\n",
+            "prompt text",
+            {"product": {"options": {}}},
+        ),
+    )
+    monkeypatch.setattr(routes, "_build_chart_artifacts", lambda **_kwargs: {})
+    standard_expiry = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    monkeypatch.setattr(routes, "_chart_expires_at", lambda: standard_expiry)
+
+    saved: dict[str, object] = {}
+    monkeypatch.setattr(routes.pg_store, "save_chart", lambda **kwargs: saved.update(kwargs))
+
+    response = routes.yaml_generate(
+        _request(_basic_auth()),
+        title="admin test",
+        birth_date="1990-01-01",
+        birth_time="12:00",
+        prefecture="東京都",
+        gender="unknown",
+        include_asteroids=None,
+        include_shichusuimei=None,
+        include_transit=None,
+        day_change_at_23=None,
+        url_expiry_policy="standard",
+    )
+
+    assert response.status_code == 303
+    assert saved["expires_at"] is standard_expiry
+    assert "expires_policy" not in saved["options"]
 
 
 def test_admin_yaml_result_requires_basic_auth_before_loading_chart(monkeypatch) -> None:

@@ -745,7 +745,7 @@
           <strong>{{ birth_time_notice.short }}</strong>
         </section>
         {% endif %}
-        <p class="hint">{{ t.page_expiry.format(expires_label=expires_label) }}</p>
+        <p class="hint">{% if chart_has_no_expiry %}{{ t.page_no_expiry }}{% else %}{{ t.page_expiry.format(expires_label=expires_label) }}{% endif %}</p>
       </div>
 
       <section class="notice-box">

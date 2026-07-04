@@ -198,6 +198,7 @@ def init_db() -> None:
                 UPDATE {SCHEMA}.charts
                 SET expires_at = created_at + INTERVAL '90 days'
                 WHERE expires_at IS NULL
+                  AND COALESCE(options->>'expires_policy', '') <> 'no_expiry'
             """)
             cur.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_charts_expires_at
@@ -310,7 +311,10 @@ def _insert_chart(
 
     if "expires_at" in available:
         columns.append("expires_at")
-        placeholders.append("COALESCE(%s, NOW() + INTERVAL '90 days')")
+        if isinstance(options, dict) and options.get("expires_policy") == "no_expiry":
+            placeholders.append("%s")
+        else:
+            placeholders.append("COALESCE(%s, NOW() + INTERVAL '90 days')")
         values.append(expires_at)
 
     conflict_clause = " ON CONFLICT (token) DO NOTHING" if on_conflict_do_nothing else ""
