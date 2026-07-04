@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KAII SCANNER — A Statistically Honest Ghost Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yoru:#141B29;      /* 夜藍 */
+  --sumi:#0C1018;      /* 墨 */
+  --washi:#E9E0C9;     /* 和紙 */
+  --washi-dim:#9A937E; /* 和紙・翳り */
+  --shu:#C43A2F;       /* 朱 */
+  --rin:#9CC7D4;       /* 燐光 */
+  --kin:#C9A15A;       /* 金茶 */
+  --line:rgba(233,224,201,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:
+    radial-gradient(120% 70% at 50% -10%, #1B2436 0%, var(--yoru) 55%, var(--sumi) 100%);
+  color:var(--washi);
+  font-family:"Shippori Mincho",serif;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:max(20px, env(safe-area-inset-top)) 20px 48px;
+}
+.mono{font-family:"IBM Plex Mono",monospace}
+
+/* ── 頭書き ── */
+header{
+  width:100%;max-width:420px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1px solid var(--line);
+  padding-bottom:14px;margin-bottom:26px;
+}
+.title-block h1{
+  font-size:24px;font-weight:800;letter-spacing:.3em;line-height:1.25;
+}
+.title-block .sub{
+  margin-top:8px;font-size:11px;letter-spacing:.18em;color:var(--washi-dim);
+}
+.clock{
+  text-align:right;font-size:11px;color:var(--washi-dim);letter-spacing:.08em;line-height:1.7;
+}
+.clock b{color:var(--washi);font-weight:600}
+
+/* ── 検知釦 ── */
+.scanner{position:relative;width:230px;height:230px;margin:6px auto 8px}
+.ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid var(--line);
+}
+.ring.r2{inset:16px;border-style:dashed;opacity:.7}
+.ring.r3{inset:32px;opacity:.5}
+#scanBtn{
+  position:absolute;inset:46px;border-radius:50%;
+  background:radial-gradient(circle at 50% 38%, #202A3E 0%, #121926 70%);
+  border:1px solid rgba(233,224,201,.28);
+  color:var(--washi);
+  font-family:"Shippori Mincho",serif;font-size:30px;font-weight:800;letter-spacing:.3em;text-indent:.3em;
+  cursor:pointer;
+  box-shadow:0 0 0 6px rgba(233,224,201,.03), 0 10px 34px rgba(0,0,0,.55);
+  transition:transform .12s ease, box-shadow .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+#scanBtn:active{transform:scale(.96)}
+#scanBtn:focus-visible{outline:2px solid var(--rin);outline-offset:4px}
+#scanBtn:disabled{opacity:.55;cursor:wait}
+.scanner.busy .ring{animation:spin 3s linear infinite}
+.scanner.busy .ring.r2{animation-direction:reverse;animation-duration:4.5s}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.scanner.busy .ring{animation:none}}
+
+.stream{
+  height:20px;margin:2px 0 20px;text-align:center;
+  font-size:11px;color:var(--washi-dim);letter-spacing:.14em;
+  min-width:100%;
+}
+
+/* ── 判定札 ── */
+.card{
+  width:100%;max-width:420px;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(233,224,201,.05), rgba(233,224,201,.015));
+  padding:22px 20px;
+  display:none;
+  position:relative;
+}
+.card.show{display:flex;gap:18px;align-items:stretch}
+.ofuda{
+  writing-mode:vertical-rl;
+  font-size:34px;font-weight:800;letter-spacing:.3em;
+  padding:14px 10px;
+  border:1px solid var(--line);
+  background:rgba(12,16,24,.5);
+  display:flex;align-items:center;justify-content:center;
+  min-height:150px;
+}
+.card.ok .ofuda{color:var(--rin);text-shadow:0 0 18px rgba(156,199,212,.35)}
+.card.mild .ofuda{color:var(--kin)}
+.card.dev .ofuda{color:var(--shu);text-shadow:0 0 14px rgba(196,58,47,.3)}
+.result{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.verdict-line{font-size:15px;font-weight:600;line-height:1.7}
+.honest{
+  font-size:12px;color:var(--washi-dim);line-height:1.8;
+  border-top:1px dashed var(--line);padding-top:10px;
+}
+.stats{
+  font-size:11.5px;line-height:2;color:var(--washi-dim);
+}
+.stats b{color:var(--washi);font-weight:600}
+.seal{
+  position:absolute;top:-13px;right:14px;
+  width:44px;height:44px;border-radius:50%;
+  border:2px solid var(--shu);color:var(--shu);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;
+  background:var(--sumi);
+  transform:rotate(8deg);
+}
+
+/* ── 記録 ── */
+.log-wrap{width:100%;max-width:420px;margin-top:30px}
+.log-wrap h2{
+  font-size:12px;letter-spacing:.3em;color:var(--washi-dim);font-weight:600;
+  border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:4px;
+}
+#log{list-style:none}
+#log li{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:12px;padding:9px 2px;border-bottom:1px dashed var(--line);
+  color:var(--washi-dim);
+}
+#log li .v-ok{color:var(--rin)} #log li .v-mild{color:var(--kin)} #log li .v-dev{color:var(--shu)}
+.log-empty{font-size:12px;color:var(--washi-dim);padding:12px 2px;letter-spacing:.06em}
+
+/* ── 断り書き ── */
+footer{
+  width:100%;max-width:420px;margin-top:34px;
+  font-size:10.5px;line-height:1.9;color:var(--washi-dim);letter-spacing:.04em;
+  border-top:1px solid var(--line);padding-top:14px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>KAII<br>SCANNER</h1>
+    <div class="sub">怪異検知盤 — A STATISTICALLY HONEST GHOST DETECTOR</div>
+  </div>
+  <div class="clock">
+    CURRENT TIME<br><b id="now" class="mono">--:--:--</b>
+  </div>
+</header>
+
+<div class="scanner" id="scanner">
+  <div class="ring"></div>
+  <div class="ring r2"></div>
+  <div class="ring r3"></div>
+  <button id="scanBtn" aria-label="Scan for anomalies">SCAN</button>
+</div>
+<div class="stream mono" id="stream" aria-live="polite">Press to test 65,536 bits of randomness</div>
+
+<div class="card" id="card" role="status">
+  <div class="seal" id="seal" aria-hidden="true">検</div>
+  <div class="ofuda" id="ofuda"></div>
+  <div class="result">
+    <div class="verdict-line" id="verdict"></div>
+    <div class="stats mono" id="stats"></div>
+    <div class="honest" id="honest"></div>
+  </div>
+</div>
+
+<div class="log-wrap">
+  <h2>SCAN LOG</h2>
+  <ul id="log"></ul>
+  <div class="log-empty" id="logEmpty">No scans recorded yet.</div>
+</div>
+
+<footer>
+  This device draws 65,536 bits from your device’s cryptographic random number generator (CSPRNG) and evaluates the proportion of 1s with a two-sided binomial test. The idea of treating RNG bias as an “anomaly” comes from commercial ghost-hunting gadgets and past research projects on randomness and consciousness (PEAR at Princeton, the Global Consciousness Project). There is no established scientific evidence that spirits influence random numbers. A small p-value WILL appear by pure chance if you keep pressing the button. Entertainment only — enjoy responsibly.
+</footer>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const N_BYTES=8192, N_BITS=N_BYTES*8;
+
+  /* 時計 */
+  function tick(){
+    const d=new Date();
+    $("now").textContent=[d.getHours(),d.getMinutes(),d.getSeconds()]
+      .map(v=>String(v).padStart(2,"0")).join(":");
+  }
+  tick(); setInterval(tick,1000);
+
+  /* popcount 表 */
+  const POP=new Uint8Array(256);
+  for(let i=0;i<256;i++){let c=0,v=i;while(v){c+=v&1;v>>=1}POP[i]=c}
+
+  /* 相補誤差関数（Abramowitz–Stegun 7.1.26） */
+  function erfc(x){
+    const z=Math.abs(x), t=1/(1+0.5*z);
+    const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+
+      t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+
+      t*(-0.82215223+t*0.17087277)))))))));
+    return x>=0?r:2-r;
+  }
+
+  function judge(){
+    const buf=new Uint8Array(N_BYTES);
+    crypto.getRandomValues(buf);
+    let ones=0;
+    for(let i=0;i<N_BYTES;i++) ones+=POP[buf[i]];
+    const z=(ones-N_BITS/2)/Math.sqrt(N_BITS/4);
+    const p=erfc(Math.abs(z)/Math.SQRT2);
+    return {ones,z,p};
+  }
+
+  const card=$("card"), stream=$("stream"), btn=$("scanBtn");
+  const logUl=$("log"), logEmpty=$("logEmpty");
+  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function verdictOf(p){
+    if(p<0.01) return {cls:"dev", tag:"v-dev", ofuda:"偏 り", seal:"偏",
+      line:"Significant bias detected — 偏り. But stay calm.",
+      honest:"A p<0.01 result appears by pure chance about once every hundred presses. Scan again in the same spot. If it doesn’t replicate, it was just probability."};
+    if(p<0.05) return {cls:"mild", tag:"v-mild", ofuda:"微 弱", seal:"微",
+      line:"A faint bias — 微弱 — is present.",
+      honest:"Bias at this level shows up about once in twenty scans, even in a perfectly empty room. Statistically, nothing to worry about."};
+    return {cls:"ok", tag:"v-ok", ofuda:"異常なし", seal:"無",
+      line:"Within pure chance — 異常なし. The only one here is you.",
+      honest:"The random bits are scattered exactly as expected. For tonight, at least."};
+  }
+
+  function addLog(time,p,v){
+    logEmpty.style.display="none";
+    const li=document.createElement("li");
+    li.innerHTML='<span class="mono">'+time+'</span>'+
+      '<span class="mono">p = '+p.toFixed(3)+'</span>'+
+      '<span class="'+v.tag+'">'+v.ofuda.replace(/\s/g,"")+'</span>';
+    logUl.prepend(li);
+  }
+
+  const GLYPHS="0123456789ABCDEF";
+  function noiseLine(){
+    let s="";
+    for(let i=0;i<26;i++) s+=GLYPHS[Math.random()*16|0];
+    return s;
+  }
+
+  btn.addEventListener("click",()=>{
+    btn.disabled=true;
+    card.className="card";
+    $("scanner").classList.add("busy");
+    const t0=Date.now(), dur=reduced?400:2400;
+    const iv=setInterval(()=>{ stream.textContent="TESTING  "+noiseLine(); },80);
+
+    setTimeout(()=>{
+      clearInterval(iv);
+      $("scanner").classList.remove("busy");
+      const r=judge(), v=verdictOf(r.p);
+      stream.textContent="TEST COMPLETE";
+      card.className="card show "+v.cls;
+      $("ofuda").textContent=v.ofuda;
+      $("seal").textContent=v.seal;
+      $("verdict").textContent=v.line;
+      $("stats").innerHTML=
+        "Sample&nbsp;<b>"+N_BITS.toLocaleString()+"</b>&nbsp;bits &middot; ones&nbsp;<b>"+r.ones.toLocaleString()+"</b>"+
+        "<br>expected&nbsp;"+(N_BITS/2).toLocaleString()+" &middot; z = <b>"+r.z.toFixed(2)+"</b> &middot; p = <b>"+r.p.toFixed(4)+"</b>";
+      $("honest").textContent=v.honest;
+      const d=new Date();
+      addLog([d.getHours(),d.getMinutes()].map(x=>String(x).padStart(2,"0")).join(":"), r.p, v);
+      btn.disabled=false;
+    }, dur);
+  });
+})();
+</script>
+</body>
+</html>
