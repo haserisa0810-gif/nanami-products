@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import io
@@ -2012,6 +2013,44 @@ def _is_local_request(request: Request) -> bool:
     return host in {"127.0.0.1", "::1", "localhost"}
 
 
+ADMIN_BASIC_REALM = "nanami-products admin"
+
+
+def _admin_basic_unauthorized(message: str = "Unauthorized") -> HTMLResponse:
+    return HTMLResponse(
+        message,
+        status_code=401,
+        headers={"WWW-Authenticate": f'Basic realm="{ADMIN_BASIC_REALM}", charset="UTF-8"'},
+    )
+
+
+def _admin_basic_auth_error(request: Request) -> HTMLResponse | None:
+    expected_user = os.getenv("ADMIN_BASIC_USER", "").strip()
+    expected_password = os.getenv("ADMIN_BASIC_PASSWORD", "")
+    if not expected_user or not expected_password:
+        if _is_local_request(request):
+            return None
+        return _admin_basic_unauthorized("Admin authentication is not configured")
+
+    auth = request.headers.get("Authorization", "")
+    scheme, _, encoded = auth.partition(" ")
+    if scheme.lower() != "basic" or not encoded:
+        return _admin_basic_unauthorized()
+    try:
+        decoded = base64.b64decode(encoded, validate=True).decode("utf-8")
+    except Exception:
+        return _admin_basic_unauthorized()
+    username, separator, password = decoded.partition(":")
+    if not separator:
+        return _admin_basic_unauthorized()
+    if not (
+        secrets.compare_digest(username, expected_user)
+        and secrets.compare_digest(password, expected_password)
+    ):
+        return _admin_basic_unauthorized()
+    return None
+
+
 def _admin_access_error(request: Request) -> JSONResponse | None:
     expected = _admin_token_from_env()
     if expected:
@@ -3796,6 +3835,9 @@ def test_site_legacy_admin_path(request: Request):
 
 @app.get("/admin/yaml/new", response_class=HTMLResponse)
 def yaml_new(request: Request):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
     return templates.TemplateResponse(
         "yaml_form.html",
         {"request": request, "prefectures": PREFECTURE_OPTIONS},
@@ -4240,6 +4282,10 @@ def yaml_generate(
     include_transit: str | None = Form(None),
     day_change_at_23: str | None = Form(None),
 ):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+
     token = secrets.token_urlsafe(18)
     try:
         yaml_text, prompt_text, doc = build_product_yaml(
@@ -4322,6 +4368,9 @@ def yaml_generate(
 
 @app.get("/admin/yaml/result/{token}", response_class=HTMLResponse)
 def admin_yaml_result(request: Request, token: str):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
     chart = _load_chart_or_404(token)
     base_url = _public_base_url(request)
     return templates.TemplateResponse(
