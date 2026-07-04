@@ -50,7 +50,7 @@
             <option value="no_expiry" {% if not form or form.url_expiry_policy != 'standard' %}selected{% endif %}>有効期限なし（デフォルト）</option>
             <option value="standard" {% if form and form.url_expiry_policy == 'standard' %}selected{% endif %}>通常どおり90日</option>
           </select>
-          <small>note等から長期参照する投稿用サンプルは「有効期限なし」で発行します。通常の購入者フローには影響しません。</small>
+          <small>note等から長期参照する投稿用サンプルは「有効期限なし」で発行します。この場合は出生図・当日トランジット・31日トランジットサマリーを含めます。通常の購入者フローには影響しません。</small>
         </label>
         <button type="submit">YAML URLを発行</button>
       </form>

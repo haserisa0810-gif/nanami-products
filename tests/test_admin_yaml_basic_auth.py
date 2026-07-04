@@ -71,14 +71,29 @@ def test_admin_yaml_new_accepts_basic_auth(monkeypatch) -> None:
 def test_admin_yaml_generate_accepts_basic_auth(monkeypatch) -> None:
     monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
     monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")
+    build_calls: list[dict[str, object]] = []
+
+    def fake_build_product_yaml(**kwargs):
+        build_calls.append(kwargs)
+        return (
+            "product:\n  options:\n    western_natal: true\n    transit: true\n    transit_today: true\n    transit_31days_summary: true\n",
+            "prompt text",
+            {
+                "product": {
+                    "options": {
+                        "western_natal": True,
+                        "transit": True,
+                        "transit_today": True,
+                        "transit_31days_summary": True,
+                    }
+                }
+            },
+        )
+
     monkeypatch.setattr(
         routes,
         "build_product_yaml",
-        lambda **_kwargs: (
-            "product:\n  options: {}\n",
-            "prompt text",
-            {"product": {"options": {}}},
-        ),
+        fake_build_product_yaml,
     )
     monkeypatch.setattr(routes, "_build_chart_artifacts", lambda **_kwargs: {})
     saved: dict[str, object] = {}
@@ -107,19 +122,30 @@ def test_admin_yaml_generate_accepts_basic_auth(monkeypatch) -> None:
     assert saved["expires_at"] is None
     assert saved["options"]["expires_policy"] == routes.NO_EXPIRY_CHART_POLICY
     assert saved["options"]["url_purpose"] == "post_sample"
+    assert saved["options"]["product_type"] == "western_full"
+    assert saved["options"]["transit"] is True
+    assert saved["options"]["transit_today"] is True
+    assert saved["options"]["transit_31days_summary"] is True
+    assert build_calls[0]["include_transit"] is True
 
 
 def test_admin_yaml_generate_can_use_standard_90_day_expiry(monkeypatch) -> None:
     monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
     monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")
-    monkeypatch.setattr(
-        routes,
-        "build_product_yaml",
-        lambda **_kwargs: (
+    build_calls: list[dict[str, object]] = []
+
+    def fake_build_product_yaml(**kwargs):
+        build_calls.append(kwargs)
+        return (
             "product:\n  options: {}\n",
             "prompt text",
             {"product": {"options": {}}},
-        ),
+        )
+
+    monkeypatch.setattr(
+        routes,
+        "build_product_yaml",
+        fake_build_product_yaml,
     )
     monkeypatch.setattr(routes, "_build_chart_artifacts", lambda **_kwargs: {})
     standard_expiry = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -145,6 +171,8 @@ def test_admin_yaml_generate_can_use_standard_90_day_expiry(monkeypatch) -> None
     assert response.status_code == 303
     assert saved["expires_at"] is standard_expiry
     assert "expires_policy" not in saved["options"]
+    assert saved["options"]["product_type"] == "western_basic"
+    assert build_calls[0]["include_transit"] is False
 
 
 def test_admin_yaml_result_requires_basic_auth_before_loading_chart(monkeypatch) -> None:

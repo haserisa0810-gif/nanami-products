@@ -4514,6 +4514,8 @@ def yaml_generate(
     if not isinstance(url_expiry_policy, str):
         url_expiry_policy = NO_EXPIRY_CHART_POLICY
     url_expiry_policy = url_expiry_policy if url_expiry_policy == NO_EXPIRY_CHART_POLICY else "standard"
+    is_post_sample_url = url_expiry_policy == NO_EXPIRY_CHART_POLICY
+    effective_include_transit = bool(include_transit) or is_post_sample_url
     token = secrets.token_urlsafe(18)
     try:
         yaml_text, prompt_text, doc = build_product_yaml(
@@ -4524,7 +4526,7 @@ def yaml_generate(
             gender=gender.strip() or "unknown",
             include_asteroids=bool(include_asteroids),
             include_shichusuimei=bool(include_shichusuimei),
-            include_transit=bool(include_transit),
+            include_transit=effective_include_transit,
             day_change_at_23=bool(day_change_at_23),
         )
     except Exception as e:
@@ -4546,9 +4548,9 @@ def yaml_generate(
             status_code=400,
         )
 
-    if include_shichusuimei and not include_asteroids and not include_transit:
+    if include_shichusuimei and not include_asteroids and not effective_include_transit:
         admin_product_type = "shichu"
-    elif include_transit or include_asteroids:
+    elif effective_include_transit or include_asteroids:
         admin_product_type = "western_full"
     else:
         admin_product_type = "western_basic"
