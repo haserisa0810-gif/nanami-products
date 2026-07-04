@@ -1860,11 +1860,15 @@ def _parse_optional_float(value: str, field_name: str) -> float | None:
         raise ValueError(f"{field_name}は数値で入力してください。") from exc
 
 
-def _validate_lat_lon(lat: float, lon: float) -> None:
+def _validate_lat_lon(lat: float, lon: float) -> tuple[float, float]:
     if not (-90 <= lat <= 90):
         raise ValueError("緯度は -90 から 90 の範囲で入力してください。")
-    if not (-180 <= lon <= 180):
-        raise ValueError("経度は -180 から 180 の範囲で入力してください。")
+    # 経度は周期的なので、範囲外（地図クリックで世界地図が横に繰り返し表示された
+    # 箇所を選んだ場合など）は弾かずに ±180 へ正規化する。範囲内の値は
+    # 浮動小数の誤差を出さないようそのまま返す。
+    if lon < -180.0 or lon > 180.0:
+        lon = ((lon + 180.0) % 360.0 + 360.0) % 360.0 - 180.0
+    return lat, lon
 
 
 def _validate_birth_date(value: str, lang: str = "ja") -> str:
@@ -1920,7 +1924,7 @@ def _build_birth_location(
         lon = _parse_optional_float(birth_lng, "経度")
         if lat is None or lon is None:
             raise ValueError("海外出生の場合は緯度・経度を入力してください。")
-        _validate_lat_lon(lat, lon)
+        lat, lon = _validate_lat_lon(lat, lon)
         return {
             "kind": "overseas",
             "birth_place": place,
@@ -1940,7 +1944,7 @@ def _build_birth_location(
     if (lat is None) != (lon is None):
         raise ValueError("緯度・経度を指定する場合は、両方入力してください。")
     if lat is not None and lon is not None:
-        _validate_lat_lon(lat, lon)
+        lat, lon = _validate_lat_lon(lat, lon)
     city_name = birth_place_city.strip()
     place_label = f"{pref_name} {city_name}" if city_name else pref_name
     if lat is None and lon is None and city_name:
@@ -3368,7 +3372,7 @@ def redeem_post(
             lng = _parse_optional_float(event_lng, "経度")
             if lat is None or lng is None:
                 raise ValueError("緯度・経度を入力してください。")
-            _validate_lat_lon(lat, lng)
+            lat, lng = _validate_lat_lon(lat, lng)
             if not event_name.strip():
                 raise ValueError("イベント名を入力してください。")
             if not event_date.strip():

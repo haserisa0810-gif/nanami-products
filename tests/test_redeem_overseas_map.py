@@ -60,3 +60,19 @@ def test_shared_map_script_sets_coordinates():
     assert 'map.on("click"' in js
     # タイムゾーンは触らない（自動化しすぎない）
     assert "birth_timezone" not in js
+    # 経度は ±180 に正規化し、世界地図の繰り返しクリックを防ぐ
+    assert "wrapLon" in js
+    assert "noWrap" in js
+
+
+def test_validate_lat_lon_wraps_longitude():
+    # 範囲外の経度は弾かず ±180 に正規化して返す（地図クリック対策）。
+    assert routes._validate_lat_lon(35.0, 200.0) == (35.0, -160.0)
+    assert routes._validate_lat_lon(0.0, -181.0) == (0.0, 179.0)
+    # 範囲内はそのまま（浮動小数誤差を出さない）
+    assert routes._validate_lat_lon(35.6895, 139.6917) == (35.6895, 139.6917)
+    # 緯度は従来通り範囲外を拒否
+    import pytest
+
+    with pytest.raises(ValueError):
+        routes._validate_lat_lon(95.0, 10.0)

@@ -95,6 +95,20 @@ def test_invalid_coordinates_are_rejected():
         build_travel_report(**_valid_kwargs(latitude=200))
 
 
+def test_out_of_range_longitude_is_wrapped_not_rejected():
+    # 地図クリックで世界地図の2枚目を選ぶと経度が ±180 を超えることがある。
+    # 弾かず ±180 に正規化する。
+    from services.travel.location_engine import normalize_lat_lon
+
+    assert normalize_lat_lon(41.0, 200.0) == (41.0, -160.0)
+    assert normalize_lat_lon(0.0, -190.0) == (0.0, 170.0)
+    # 範囲内はそのまま（浮動小数誤差を出さない）
+    assert normalize_lat_lon(35.6895, 139.6917) == (35.6895, 139.6917)
+    # 生成も成功する
+    doc = yaml.safe_load(build_travel_report(**_valid_kwargs(longitude=200.0))["yaml_text"])["travel_report"]
+    assert doc["input"]["location"]["longitude"] == -160.0
+
+
 # ─── ルート結線（DBモック） ────────────────────────────────
 
 @pytest.fixture

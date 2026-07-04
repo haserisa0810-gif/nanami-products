@@ -20,14 +20,24 @@
     var startLng = parseFloat(lngInput.value);
     var hasStart = !isNaN(startLat) && !isNaN(startLng);
 
-    var map = L.map(mount).setView(
+    var map = L.map(mount, { worldCopyJump: true }).setView(
       hasStart ? [startLat, startLng] : [20, 0],
       hasStart ? 6 : 2
     );
+    // noWrap: 世界地図を横に繰り返さない。繰り返し表示された2枚目の世界を
+    // クリックして経度が ±180 を超える値になるのを防ぐ。
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 12,
+      noWrap: true,
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
+
+    function wrapLon(lon) {
+      return ((lon + 180) % 360 + 360) % 360 - 180;
+    }
+    function clampLat(lat) {
+      return Math.max(-90, Math.min(90, lat));
+    }
 
     var marker = hasStart ? L.marker([startLat, startLng]).addTo(map) : null;
 
@@ -38,8 +48,8 @@
     }
 
     map.on("click", function (e) {
-      var lat = Math.round(e.latlng.lat * 1e6) / 1e6;
-      var lng = Math.round(e.latlng.lng * 1e6) / 1e6;
+      var lat = Math.round(clampLat(e.latlng.lat) * 1e6) / 1e6;
+      var lng = Math.round(wrapLon(e.latlng.lng) * 1e6) / 1e6;
       setInput(latInput, lat);
       setInput(lngInput, lng);
       if (marker) {

@@ -29,13 +29,17 @@ def parse_coordinate(value: Any, *, kind: str) -> float:
 
 
 def normalize_lat_lon(lat: Any, lon: Any) -> tuple[float, float]:
-    """緯度経度を検証して (lat, lon) を返す。範囲外は 400。"""
+    """緯度経度を検証して (lat, lon) を返す。
+
+    緯度は -90〜90 を超えたら 400。経度は周期的なので、範囲外（地図クリックで
+    世界地図が横に繰り返し表示された箇所を選んだ場合など）は弾かず ±180 へ正規化する。
+    """
     lat_f = parse_coordinate(lat, kind="緯度")
     lon_f = parse_coordinate(lon, kind="経度")
     if not (-90.0 <= lat_f <= 90.0):
         raise LocationInputError("緯度は -90〜90 の範囲で入力してください。")
-    if not (-180.0 <= lon_f <= 180.0):
-        raise LocationInputError("経度は -180〜180 の範囲で入力してください。")
+    if lon_f < -180.0 or lon_f > 180.0:
+        lon_f = ((lon_f + 180.0) % 360.0 + 360.0) % 360.0 - 180.0
     return lat_f, lon_f
 
 

@@ -97,21 +97,26 @@
         var lonInput = document.getElementById('longitude');
         var startLat = parseFloat(latInput.value) || 35.68;
         var startLon = parseFloat(lonInput.value) || 139.69;
-        var map = L.map('travel-map').setView([startLat, startLon], (latInput.value ? 6 : 2));
+        var map = L.map('travel-map', { worldCopyJump: true }).setView([startLat, startLon], (latInput.value ? 6 : 2));
+        // noWrap: 世界地図を横に繰り返さない（2枚目の世界をクリックして経度が
+        // ±180 を超えるのを防ぐ）。
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 12,
+          noWrap: true,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
+        var wrapLon = function (lon) { return ((lon + 180) % 360 + 360) % 360 - 180; };
+        var clampLat = function (lat) { return Math.max(-90, Math.min(90, lat)); };
         var marker = null;
         if (latInput.value && lonInput.value) {
           marker = L.marker([startLat, startLon]).addTo(map);
         }
         map.on('click', function (e) {
-          var lat = Math.round(e.latlng.lat * 1e6) / 1e6;
-          var lon = Math.round(e.latlng.lng * 1e6) / 1e6;
+          var lat = Math.round(clampLat(e.latlng.lat) * 1e6) / 1e6;
+          var lon = Math.round(wrapLon(e.latlng.lng) * 1e6) / 1e6;
           latInput.value = lat;
           lonInput.value = lon;
-          if (marker) { marker.setLatLng(e.latlng); } else { marker = L.marker(e.latlng).addTo(map); }
+          if (marker) { marker.setLatLng([lat, lon]); } else { marker = L.marker([lat, lon]).addTo(map); }
         });
       } catch (err) {
         /* 地図が使えなくても、緯度経度の手入力で診断は可能 */
