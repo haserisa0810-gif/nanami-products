@@ -40,6 +40,12 @@
     .pt-details { margin: 12px 0; }
     .pt-details summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
     .pt-details h4 { margin: 12px 0 4px; font-size: .86rem; }
+    .geo-search { margin: 12px 0; }
+    .geo-row { display: flex; gap: 8px; }
+    .geo-row input { flex: 1; }
+    .geo-results { list-style: none; padding: 0; margin: 6px 0; }
+    .geo-results li { padding: 7px 10px; border: 1px solid rgba(0,0,0,.12); border-radius: 8px; margin: 4px 0; cursor: pointer; font-size: .88rem; }
+    .geo-results li:hover { background: #f4f1e8; }
   </style>
 </head>
 <body>
@@ -59,6 +65,17 @@
           </label>
           <button type="button" id="render-btn">地球儀に表示</button>
           <p id="status" class="status"></p>
+
+          <div class="geo-search">
+            <label>地名で探す
+              <div class="geo-row">
+                <input type="text" id="geo-q" placeholder="東京 / London / New York" autocomplete="off">
+                <button type="button" id="geo-btn">検索</button>
+              </div>
+            </label>
+            <p id="geo-status" class="status"></p>
+            <ul class="geo-results" id="geo-results"></ul>
+          </div>
 
           <div id="point-result" hidden>
             <h2>選択地点</h2>
@@ -267,7 +284,16 @@
       var local = earthGroup.worldToLocal(hits[0].point.clone());
       var ll = vecToLL(local);
       setMarker(ll.lat, ll.lon);
-      fetchPoint(ll.lat, ll.lon);
+      fetchPoint(ll.lat, ll.lon, { source: "globe_click" });
+    }
+
+    // 検索地点などを正面に向ける（回転を合わせる）。任意機能。
+    function focusOn(lat, lon) {
+      var v = llToVec(lat, lon, 1).normalize();
+      var q = new THREE.Quaternion().setFromUnitVectors(v, new THREE.Vector3(0, 0, 1));
+      earthGroup.quaternion.copy(q);
+      rotY = earthGroup.rotation.y;
+      rotX = earthGroup.rotation.x;
     }
 
     // ── レンダリング ──
@@ -308,12 +334,25 @@
       }).catch(function () { setStatus("通信に失敗しました。時間をおいて再試行してください。", true); });
     });
 
-    function fetchPoint(lat, lon) {
+    function getYaml() {
+      if (currentYaml) return currentYaml;
+      return document.getElementById("yaml-in").value.trim();
+    }
+
+    function fetchPoint(lat, lon, opts) {
+      opts = opts || {};
+      var yaml = getYaml();
+      if (!yaml) { setStatus("先に出生YAMLを入力してください。", true); return; }
+      currentYaml = yaml;
       setStatus("地点を計算中…");
       fetch("/api/astro-earth/point", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ yaml_text: currentYaml, lat: lat, lon: lon })
+        body: JSON.stringify({
+          yaml_text: yaml, lat: lat, lon: lon,
+          source: opts.source || "globe_click",
+          location_name: opts.location_name || ""
+        })
       }).then(function (r) {
         return r.json().then(function (b) { return { ok: r.ok, body: b }; });
       }).then(function (res) {
@@ -416,6 +455,51 @@
     });
     document.getElementById("copy-both").addEventListener("click", function () {
       copyText((window.__ptPrompt || "") + "\n\n" + document.getElementById("pt-yaml").value, this);
+    });
+
+    // ── 地名検索 ──
+    var geoStatus = document.getElementById("geo-status");
+    var geoResults = document.getElementById("geo-results");
+
+    function setGeoStatus(msg, isError) {
+      geoStatus.textContent = msg || "";
+      geoStatus.className = "status" + (isError ? " error" : "");
+    }
+
+    function runGeocode() {
+      var q = document.getElementById("geo-q").value.trim();
+      geoResults.innerHTML = "";
+      if (!q) { setGeoStatus("検索する地名を入力してください。", true); return; }
+      if (q.length < 2) { setGeoStatus("地名をもう少し具体的に入力してください（2文字以上）。", true); return; }
+      setGeoStatus("検索中…");
+      fetch("/api/geocode?q=" + encodeURIComponent(q))
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          var body = res.body || {};
+          var results = body.results || [];
+          if (!results.length) { setGeoStatus(body.error || "地点が見つかりませんでした。", true); return; }
+          setGeoStatus("候補をクリックすると、その地点で解析します。");
+          results.forEach(function (item) {
+            var li = document.createElement("li");
+            li.textContent = item.display_name || item.name || "(名称不明)";
+            li.addEventListener("click", function () { selectGeoResult(item); });
+            geoResults.appendChild(li);
+          });
+        })
+        .catch(function () { setGeoStatus("通信に失敗しました。時間をおいて再試行してください。", true); });
+    }
+
+    function selectGeoResult(item) {
+      var lat = Number(item.latitude), lon = Number(item.longitude);
+      if (isNaN(lat) || isNaN(lon)) { setGeoStatus("座標を取得できませんでした。", true); return; }
+      focusOn(lat, lon);
+      setMarker(lat, lon);
+      fetchPoint(lat, lon, { source: "manual_search", location_name: item.name || item.display_name || "" });
+    }
+
+    document.getElementById("geo-btn").addEventListener("click", runGeocode);
+    document.getElementById("geo-q").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); runGeocode(); }
     });
   })();
   </script>

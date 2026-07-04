@@ -514,6 +514,7 @@ PRODUCT_SLUGS = {
 }
 PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
 CHART_EXPIRES_DAYS = 90
+NO_EXPIRY_CHART_POLICY = "no_expiry"
 SUPPORTED_LANGS = {"ja", "en"}
 
 I18N = {
@@ -668,6 +669,7 @@ I18N = {
         "birth_place": "出生地",
         "unknown": "不明",
         "page_expiry": "このページはURLを知っている人が開けます。有効期限は{expires_label}（発行から90日間）です。",
+        "page_no_expiry": "このページはURLを知っている人が開けます。有効期限はありません。",
         "steps_title": "3ステップで鑑定をはじめる",
         "step1_title": "データをAIに渡す",
         "step1_desc": "下のボタンから、鑑定用データをAIへ送ります。",
@@ -1031,6 +1033,7 @@ I18N = {
         "birth_place": "Place of birth",
         "unknown": "Unknown",
         "page_expiry": "Anyone with this URL can open the page. It expires on {expires_label} (90 days after issue).",
+        "page_no_expiry": "Anyone with this URL can open the page. It does not expire.",
         "steps_title": "Start in 3 steps",
         "step1_title": "Send the data to AI",
         "step1_desc": "Use the button below to send the AI-readable astrology data to an AI tool.",
@@ -1388,6 +1391,11 @@ def _product_context(product_type: str, lang: str = "ja") -> dict:
 
 def _chart_expires_at() -> datetime:
     return datetime.now(timezone.utc) + timedelta(days=CHART_EXPIRES_DAYS)
+
+
+def _chart_has_no_expiry(chart: dict) -> bool:
+    options = chart.get("options") or {}
+    return isinstance(options, dict) and options.get("expires_policy") == NO_EXPIRY_CHART_POLICY
 
 
 def _build_chart_artifacts(
@@ -2394,6 +2402,32 @@ def acg_globe_demo_page(request: Request):
 @app.get("/astro-earth", response_class=HTMLResponse)
 def astro_earth_page(request: Request):
     return templates.TemplateResponse("astro_earth.html", {"request": request})
+
+
+@app.get("/api/geocode")
+def api_geocode(q: str = ""):
+    """地名検索（source=manual_search）。結果は内部共通形式の配列で返す。
+
+    プロバイダ（MVP: Nominatim）は services/geocoding_service に分離。
+    """
+    from services.geocoding_service import GeocodingError, search
+
+    query = (q or "").strip()
+    if not query:
+        return JSONResponse({"results": [], "error": "検索する地名を入力してください。"}, status_code=400)
+    if len(query) < 2:
+        return JSONResponse({"results": [], "error": "地名をもう少し具体的に入力してください（2文字以上）。"}, status_code=400)
+
+    try:
+        results = search(query)
+    except GeocodingError:
+        return JSONResponse(
+            {"results": [], "error": "地名の検索に失敗しました。時間をおいて再試行してください。"},
+            status_code=502,
+        )
+    if not results:
+        return _mark_no_store(JSONResponse({"results": [], "error": "地点が見つかりませんでした。"}))
+    return _mark_no_store(JSONResponse({"results": results}))
 
 
 @app.post("/api/astro-earth/point")
@@ -3971,6 +4005,7 @@ def chart_page(request: Request, token: str):
                 "next_transit_url": next_transit_url,
                 "expires_at": expires_at,
                 "expires_label": expires_label,
+                "chart_has_no_expiry": _chart_has_no_expiry(chart),
             },
         )
         html_bytes = len(response.body or b"")
@@ -4470,11 +4505,13 @@ def yaml_generate(
     include_shichusuimei: str | None = Form(None),
     include_transit: str | None = Form(None),
     day_change_at_23: str | None = Form(None),
+    url_expiry_policy: str = Form(NO_EXPIRY_CHART_POLICY),
 ):
     auth_error = _admin_basic_auth_error(request)
     if auth_error:
         return auth_error
 
+    url_expiry_policy = url_expiry_policy if url_expiry_policy == NO_EXPIRY_CHART_POLICY else "standard"
     token = secrets.token_urlsafe(18)
     try:
         yaml_text, prompt_text, doc = build_product_yaml(
@@ -4501,6 +4538,7 @@ def yaml_generate(
                     "birth_time": birth_time,
                     "prefecture": prefecture,
                     "gender": gender,
+                    "url_expiry_policy": url_expiry_policy,
                 },
             },
             status_code=400,
@@ -4513,8 +4551,14 @@ def yaml_generate(
     else:
         admin_product_type = "western_basic"
     chart_options = {**doc.get("product", {}).get("options", {}), "product_type": admin_product_type}
+    if url_expiry_policy == NO_EXPIRY_CHART_POLICY:
+        chart_options = {
+            **chart_options,
+            "expires_policy": NO_EXPIRY_CHART_POLICY,
+            "url_purpose": "post_sample",
+        }
     artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=admin_product_type)
-    expires_at = _chart_expires_at()
+    expires_at = None if url_expiry_policy == NO_EXPIRY_CHART_POLICY else _chart_expires_at()
 
     try:
         pg_store.save_chart(
@@ -4548,6 +4592,7 @@ def yaml_generate(
                     "birth_time": birth_time,
                     "prefecture": prefecture,
                     "gender": gender,
+                    "url_expiry_policy": url_expiry_policy,
                 },
             },
             status_code=500,
@@ -4562,12 +4607,14 @@ def admin_yaml_result(request: Request, token: str):
         return auth_error
     chart = _load_chart_or_404(token)
     base_url = _public_base_url(request)
+    expires_at = _chart_expiry(chart)
     return templates.TemplateResponse(
         "admin_result.html",
         {
             "request": request,
             "token": token,
             "chart": chart,
+            "expires_label": "有効期限なし" if _chart_has_no_expiry(chart) else _chart_expiry_label(expires_at),
             "chart_url": f"{base_url}/chart/{token}",
             "yaml_url": f"{base_url}/chart/{token}.yaml",
             "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
@@ -6096,6 +6143,8 @@ def _chart_has_western_asteroids(chart: dict, *, doc: dict | None = None) -> boo
 
 
 def _chart_expiry(chart: dict) -> datetime | None:
+    if _chart_has_no_expiry(chart):
+        return None
     expires_at = chart.get("expires_at")
     if isinstance(expires_at, datetime):
         return expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
@@ -6207,7 +6256,13 @@ def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
 
 
 def _chart_zip_readme(chart: dict) -> str:
-    expires_label = _chart_expiry_label(_chart_expiry(chart))
+    no_expiry = _chart_has_no_expiry(chart)
+    expires_label = "有効期限なし" if no_expiry else _chart_expiry_label(_chart_expiry(chart))
+    expiry_line = (
+        "共有URLに有効期限はありません。"
+        if no_expiry
+        else f"共有URLの有効期限は発行から90日間です。このデータページは {expires_label} に開けなくなります。"
+    )
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
     try:
@@ -6256,7 +6311,7 @@ def _chart_zip_readme(chart: dict) -> str:
     return f"""nanami-products 鑑定データ保存用ZIP
 
 このZIPは鑑定データを手元に保存するためのファイルです。
-共有URLの有効期限は発行から90日間です。このデータページは {expires_label} に開けなくなります。
+{expiry_line}
 
 このZIPに入っているファイル:
 {file_lines}
