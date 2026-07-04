@@ -17,10 +17,15 @@
     textarea.share { width: 100%; min-height: 180px; font-family: ui-monospace, monospace; font-size: .82rem; }
     .section { margin-top: 22px; }
     .muted { opacity: .75; font-size: .85rem; }
+    /* PC（幅広）では読み物セクションを2カラムに。YAML欄は全幅のまま。 */
+    @media (min-width: 900px) {
+      .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 34px; }
+      .result-grid .section { margin-top: 18px; }
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
+  <main class="wrap wide">
     <div class="card">
       <p class="eyebrow">Astro Travel</p>
       <h1>{{ doc.input.location.name }}{% if doc.input.location.country %}（{{ doc.input.location.country }}）{% endif %}</h1>
@@ -29,6 +34,7 @@
         <span class="k">目的</span><span>{{ doc.input.purpose.label }}</span>
       </div>
 
+      <div class="result-grid">
       <div class="section">
         <h2>総合評価</h2>
         <p class="score-line">{{ doc.scoring.score_label }}（{{ doc.scoring.total_score }}/{{ doc.scoring.max_score }}）</p>
@@ -93,6 +99,8 @@
           {% endfor %}
         </ul>
       </div>
+
+      </div><!-- /result-grid -->
 
       <div class="section">
         <h2>AIに渡せるYAML</h2>

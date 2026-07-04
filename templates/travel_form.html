@@ -9,16 +9,21 @@
   <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
   <!-- asset_version: {{ asset_version }} -->
   <style>
-    #travel-map { height: 320px; border-radius: 12px; margin: 8px 0 4px; }
+    #travel-map { height: 340px; border-radius: 12px; margin: 8px 0 4px; }
     .purpose-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 6px; }
     .purpose-grid label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.15); border-radius: 10px; cursor: pointer; }
     .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .map-hint { font-size: .82rem; opacity: .8; margin: 2px 0 0; }
+    /* PC（幅広）では地図と入力欄を2カラムにして余白を活かす */
+    @media (min-width: 900px) {
+      #travel-map { height: 420px; }
+      .travel-cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; align-items: start; }
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
+  <main class="wrap wide">
     <div class="card">
       <p class="eyebrow">Astro Travel</p>
       <h1>次の旅行先、星で選んでみる？</h1>
@@ -30,6 +35,8 @@
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
       <form method="post" action="/travel/generate" class="form">
+        <div class="travel-cols">
+        <div class="col-left">
         <label>出生YAML（貼り付け）
           <textarea name="natal_yaml" rows="8" required placeholder="出生図YAMLをそのまま貼り付けてください">{{ form.natal_yaml if form else '' }}</textarea>
           <small>ホロスコープYAML（出生日時を含むもの）に対応しています。本文はサーバーに保存されますが、AI解釈用途にのみ使われます。</small>
@@ -38,7 +45,9 @@
         <label>旅行先（地図をクリックして選択）</label>
         <div id="travel-map"></div>
         <p class="map-hint">地図をクリックすると緯度・経度が自動で入ります。都市名は手入力してください。</p>
+        </div>
 
+        <div class="col-right">
         <label>都市名
           <input type="text" name="location_name" value="{{ form.location_name if form else '' }}" placeholder="例：Barcelona / バルセロナ" required>
         </label>
@@ -74,6 +83,8 @@
         </div>
 
         <button type="submit">診断する</button>
+        </div>
+        </div>
       </form>
     </div>
   </main>
