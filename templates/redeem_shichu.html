@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>四柱推命鑑定 入力 | nanami-products</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
 <body>
@@ -104,6 +105,10 @@
           </label>
           <div class="overseas-fields" id="overseas-fields">
             <div class="location-grid">
+              <div class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>
+                <div id="overseas-map" style="height:300px;border-radius:12px;margin:4px 0 6px;"></div>
+                <small class="coordinate-note">地図をクリックすると緯度・経度が自動入力されます（手入力も可能）。</small>
+              </div>
               <label class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>出生地名（国・都市）
                 <input type="text" name="birth_place_overseas"
                        value="{{ form.birth_place_overseas if form else '' }}"
@@ -398,5 +403,7 @@
       });
     });
   </script>
+  <script src="{{ asset_url('vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ asset_url('redeem_overseas_map.js') }}"></script>
 </body>
 </html>

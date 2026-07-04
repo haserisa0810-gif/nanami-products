@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ product.label }} | nanami-products</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
   <!-- asset_version: {{ asset_version }} -->
 </head>
 <body>
@@ -147,6 +148,8 @@
           </div>
 
           <div class="place-panel" id="overseas-place-panel" {% if birth_place_kind != 'overseas' %}hidden{% endif %}>
+            <div id="overseas-map" style="height:300px;border-radius:12px;margin:4px 0 10px;"></div>
+            <p class="place-note">地図をクリックすると緯度・経度が自動入力されます（手入力も可能）／ Click the map to auto-fill latitude and longitude.</p>
             <label>{{ t.birth_place_country_city }}<span class="required">{{ t.required }}</span>
               <input type="text" name="birth_place_overseas" id="birth_place_overseas"
                      value="{{ form.birth_place_overseas if form else '' }}"
@@ -549,5 +552,7 @@
       validateBirthDateField();
     });
   </script>
+  <script src="{{ asset_url('vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ asset_url('redeem_overseas_map.js') }}"></script>
 </body>
 </html>
