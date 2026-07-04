@@ -2387,6 +2387,51 @@ def acg_globe_demo_page(request: Request):
     return templates.TemplateResponse("acg_globe_demo.html", {"request": request})
 
 
+# ─── Astro Earth（3Dアストロカートグラフィ地球儀ビューア） ──────────────
+# 3D用JS/CSS（Three.js）はこの astro_earth.html にだけ読み込む。
+# ACGラインは既存 /api/acg/personal を流用し、クリック地点の洞察のみ下記APIで返す。
+
+@app.get("/astro-earth", response_class=HTMLResponse)
+def astro_earth_page(request: Request):
+    return templates.TemplateResponse("astro_earth.html", {"request": request})
+
+
+@app.post("/api/astro-earth/point")
+async def astro_earth_point(request: Request):
+    """出生YAML＋緯度経度から、近いACGライン・リロケーション概要・AI用YAMLを返す。
+
+    ステートレス（保存しない・本文をログに出さない）。ACGライン全体は
+    /api/acg/personal を使う想定で、ここは1地点の洞察に絞る。
+    """
+    from services.acg_api import AcgInputError, AcgYamlFormatError
+    from services.astro_earth.earth_service import build_point_insight
+
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    yaml_text = payload.get("yaml_text")
+    if not isinstance(yaml_text, str) or not yaml_text.strip():
+        return JSONResponse({"ok": False, "error": "出生YAMLを貼り付けてください。"}, status_code=400)
+
+    try:
+        result = build_point_insight(
+            natal_yaml_text=yaml_text,
+            latitude=payload.get("lat"),
+            longitude=payload.get("lon"),
+            location_name=str(payload.get("location_name") or ""),
+        )
+    except AcgYamlFormatError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=422)
+    except (AcgInputError, ValueError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+    return _mark_no_store(JSONResponse({"ok": True, **result}))
+
+
 @app.get("/api/acg/mundane")
 def acg_mundane(date: str = ""):
     """指定日のマンデン ACG 線 GeoJSON。認証なし・日付単位で全ユーザー共通。

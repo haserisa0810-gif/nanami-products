@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Astro Earth｜3Dアストロカートグラフィ地球儀</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+  <!-- 3D用ライブラリはこのページだけで読み込む -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    .earth-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 860px) { .earth-layout { grid-template-columns: 1fr; } }
+    #globe-wrap { position: relative; background: #070b14; border-radius: 16px; overflow: hidden; min-height: 460px; }
+    #globe-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    #globe-canvas:active { cursor: grabbing; }
+    .globe-hint { position: absolute; left: 12px; bottom: 10px; color: #9fb0cc; font-size: .78rem; }
+    .earth-yaml { width: 100%; min-height: 150px; font-family: ui-monospace, monospace; font-size: .82rem; }
+    .status { font-size: .85rem; margin: 6px 0; min-height: 1.2em; }
+    .status.error { color: #d66; }
+    .chip-list { list-style: none; padding: 0; margin: 6px 0; }
+    .chip-list li { padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,.12); font-size: .88rem; }
+    .result-yaml { width: 100%; min-height: 150px; font-family: ui-monospace, monospace; font-size: .8rem; }
+    .copyrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .muted { opacity: .72; font-size: .82rem; }
+    .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 4px 0; font-size: .88rem; }
+    .kv .k { opacity: .65; }
+    #point-result[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">Astro Earth</p>
+      <h1>3D地球儀でアストロカートグラフィ</h1>
+      <p class="lead">
+        出生YAMLを貼り付けると、ACG（アストロカートグラフィ）ラインを3D地球儀に描きます。<br>
+        ドラッグで回転・ホイールで拡大。地球儀をクリックすると、その地点に近いラインとリロケーション概要、AIに渡せるYAMLを表示します。
+      </p>
+
+      <div class="earth-layout">
+        <div>
+          <label>出生YAML（貼り付け）
+            <textarea id="yaml-in" class="earth-yaml" placeholder="出生図YAMLをそのまま貼り付けてください"></textarea>
+          </label>
+          <button type="button" id="render-btn">地球儀に表示</button>
+          <p id="status" class="status"></p>
+
+          <div id="point-result" hidden>
+            <h2>クリック地点</h2>
+            <div class="kv">
+              <span class="k">緯度経度</span><span id="pt-latlon"></span>
+            </div>
+
+            <h3>近いACGライン</h3>
+            <ul class="chip-list" id="pt-lines"></ul>
+
+            <h3>リロケーション概要</h3>
+            <div class="kv" id="pt-reloc"></div>
+            <ul class="chip-list" id="pt-houses"></ul>
+
+            <h3>AIに渡せるYAML</h3>
+            <p class="muted">下のデータ（またはプロンプト＋YAML）をコピーしてClaude等に貼り付けると、この地点の読み解きが得られます。計算結果は再計算させない指示入りです。</p>
+            <div class="copyrow">
+              <button type="button" id="copy-both">プロンプト＋YAMLをコピー</button>
+              <button type="button" id="copy-yaml">YAMLだけコピー</button>
+            </div>
+            <textarea id="pt-yaml" class="result-yaml" readonly></textarea>
+          </div>
+        </div>
+
+        <div id="globe-wrap">
+          <canvas id="globe-canvas"></canvas>
+          <div class="globe-hint">ドラッグで回転 / ホイールで拡大 / クリックで地点を選択</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    var PLANET_COLOR = {
+      Sun: 0xffcf5c, Moon: 0xcfd6e6, Mercury: 0x8fd0c0, Venus: 0xf2a6c6, Mars: 0xe4643c,
+      Jupiter: 0xe0b24e, Saturn: 0x9aa7bd, Uranus: 0x5fc9e0, Neptune: 0x6f8be0, Pluto: 0xb07de0
+    };
+    var R = 1.0;
+    var LINE_R = R * 1.004;
+
+    var canvas = document.getElementById("globe-canvas");
+    var wrap = document.getElementById("globe-wrap");
+    var statusEl = document.getElementById("status");
+
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x070b14);
+    var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 0, 3.0);
+
+    var earthGroup = new THREE.Group();
+    scene.add(earthGroup);
+
+    var earthMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(R, 64, 48),
+      new THREE.MeshPhongMaterial({ color: 0x102a4c, shininess: 6 })
+    );
+    earthGroup.add(earthMesh);
+
+    scene.add(new THREE.AmbientLight(0x8090b0, 0.9));
+    var dir = new THREE.DirectionalLight(0xfff2d0, 0.7);
+    dir.position.set(3, 2, 4);
+    scene.add(dir);
+
+    function llToVec(lat, lon, r) {
+      var phi = lat * Math.PI / 180, lam = lon * Math.PI / 180;
+      return new THREE.Vector3(
+        r * Math.cos(phi) * Math.cos(lam),
+        r * Math.sin(phi),
+        -r * Math.cos(phi) * Math.sin(lam)
+      );
+    }
+    function vecToLL(v) {
+      var r = v.length();
+      var lat = Math.asin(v.y / r) * 180 / Math.PI;
+      var lon = Math.atan2(-v.z, v.x) * 180 / Math.PI;
+      return { lat: lat, lon: lon };
+    }
+
+    // 経緯線グリッド
+    (function graticule() {
+      var mat = new THREE.LineBasicMaterial({ color: 0x2a3a58, transparent: true, opacity: 0.6 });
+      for (var lat = -60; lat <= 60; lat += 30) {
+        var pts = [];
+        for (var lon = -180; lon <= 180; lon += 4) pts.push(llToVec(lat, lon, R * 1.001));
+        earthGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+      }
+      for (var lon2 = -180; lon2 < 180; lon2 += 30) {
+        var pts2 = [];
+        for (var la = -90; la <= 90; la += 4) pts2.push(llToVec(la, lon2, R * 1.001));
+        earthGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2), mat));
+      }
+    })();
+
+    // 陸地（Natural Earth 110m 国境）。読み込めなくても地球儀は動く。
+    fetch("{{ asset_url('geo/ne_110m_admin_0_countries.geojson') }}")
+      .then(function (r) { return r.json(); })
+      .then(function (geo) {
+        var mat = new THREE.LineBasicMaterial({ color: 0x3d5a86, transparent: true, opacity: 0.85 });
+        (geo.features || []).forEach(function (f) {
+          var g = f.geometry; if (!g) return;
+          var polys = g.type === "Polygon" ? [g.coordinates] : (g.type === "MultiPolygon" ? g.coordinates : []);
+          polys.forEach(function (poly) {
+            poly.forEach(function (ring) {
+              var pts = ring.map(function (c) { return llToVec(c[1], c[0], R * 1.002); });
+              if (pts.length > 1) earthGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+            });
+          });
+        });
+      })
+      .catch(function () { /* 陸地なしでも可 */ });
+
+    var acgGroup = new THREE.Group();
+    earthGroup.add(acgGroup);
+    var marker = null;
+
+    function clearAcg() {
+      while (acgGroup.children.length) {
+        var c = acgGroup.children.pop();
+        if (c.geometry) c.geometry.dispose();
+        if (c.material) c.material.dispose();
+      }
+    }
+
+    function drawAcg(geojson) {
+      clearAcg();
+      (geojson.features || []).forEach(function (f) {
+        var coords = (f.geometry || {}).coordinates || [];
+        var planet = (f.properties || {}).planet;
+        if (coords.length < 2) return;
+        var pts = coords.map(function (c) { return llToVec(c[1], c[0], LINE_R); });
+        var mat = new THREE.LineBasicMaterial({ color: PLANET_COLOR[planet] || 0xffffff, transparent: true, opacity: 0.9 });
+        acgGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+      });
+    }
+
+    function setMarker(lat, lon) {
+      if (marker) { earthGroup.remove(marker); marker.geometry.dispose(); marker.material.dispose(); }
+      marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.02, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      marker.position.copy(llToVec(lat, lon, LINE_R));
+      earthGroup.add(marker);
+    }
+
+    // ── 操作（回転・ズーム・クリック） ──
+    var dragging = false, lastX = 0, lastY = 0, moved = 0;
+    var rotY = 0, rotX = 0;
+    function applyRot() {
+      earthGroup.rotation.y = rotY;
+      earthGroup.rotation.x = rotX;
+    }
+    canvas.addEventListener("pointerdown", function (e) { dragging = true; moved = 0; lastX = e.clientX; lastY = e.clientY; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+      rotY += dx * 0.005;
+      rotX += dy * 0.005;
+      rotX = Math.max(-1.3, Math.min(1.3, rotX));
+      applyRot();
+    });
+    canvas.addEventListener("pointerup", function (e) {
+      dragging = false;
+      if (moved < 6) handleClick(e);
+    });
+    canvas.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      camera.position.z = Math.max(1.6, Math.min(5.5, camera.position.z + (e.deltaY > 0 ? 0.3 : -0.3)));
+    }, { passive: false });
+
+    var raycaster = new THREE.Raycaster();
+    var currentYaml = "";
+
+    function handleClick(e) {
+      if (!currentYaml) return;
+      var rect = canvas.getBoundingClientRect();
+      var mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      raycaster.setFromCamera(mouse, camera);
+      var hits = raycaster.intersectObject(earthMesh);
+      if (!hits.length) return;
+      var local = earthGroup.worldToLocal(hits[0].point.clone());
+      var ll = vecToLL(local);
+      setMarker(ll.lat, ll.lon);
+      fetchPoint(ll.lat, ll.lon);
+    }
+
+    // ── レンダリング ──
+    function resize() {
+      var w = wrap.clientWidth, h = Math.max(460, Math.round(w * 0.72));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", resize);
+    resize();
+    (function loop() { requestAnimationFrame(loop); renderer.render(scene, camera); })();
+
+    // ── データ取得 ──
+    function setStatus(msg, isError) {
+      statusEl.textContent = msg || "";
+      statusEl.className = "status" + (isError ? " error" : "");
+    }
+
+    document.getElementById("render-btn").addEventListener("click", function () {
+      var yaml = document.getElementById("yaml-in").value.trim();
+      if (!yaml) { setStatus("出生YAMLを貼り付けてください。", true); return; }
+      setStatus("ACGラインを計算中…");
+      fetch("/api/acg/personal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yaml_text: yaml })
+      }).then(function (r) {
+        return r.json().then(function (b) { return { ok: r.ok, body: b }; });
+      }).then(function (res) {
+        if (!res.ok) { setStatus((res.body && res.body.error) || "YAMLを読み取れませんでした。", true); return; }
+        currentYaml = yaml;
+        drawAcg(res.body);
+        setStatus("表示しました。地球儀をクリックすると地点情報が出ます。");
+      }).catch(function () { setStatus("通信に失敗しました。時間をおいて再試行してください。", true); });
+    });
+
+    function fetchPoint(lat, lon) {
+      setStatus("地点を計算中…");
+      fetch("/api/astro-earth/point", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yaml_text: currentYaml, lat: lat, lon: lon })
+      }).then(function (r) {
+        return r.json().then(function (b) { return { ok: r.ok, body: b }; });
+      }).then(function (res) {
+        if (!res.ok || !res.body.ok) { setStatus((res.body && res.body.error) || "地点情報を取得できませんでした。", true); return; }
+        renderPoint(lat, lon, res.body);
+        setStatus("");
+      }).catch(function () { setStatus("通信に失敗しました。", true); });
+    }
+
+    function renderPoint(lat, lon, data) {
+      document.getElementById("point-result").hidden = false;
+      document.getElementById("pt-latlon").textContent = lat.toFixed(4) + ", " + lon.toFixed(4);
+
+      var lines = document.getElementById("pt-lines");
+      lines.innerHTML = "";
+      (data.nearest_lines || []).forEach(function (l) {
+        var li = document.createElement("li");
+        li.textContent = l.planet + l.angle + "線 — 約" + l.distance_km + "km｜" + l.meaning_hint;
+        lines.appendChild(li);
+      });
+      if (!lines.children.length) { var li0 = document.createElement("li"); li0.textContent = "近いラインは検出されませんでした。"; lines.appendChild(li0); }
+
+      var reloc = data.relocation || {};
+      var kv = document.getElementById("pt-reloc");
+      kv.innerHTML = "";
+      function addKv(k, v) {
+        var a = document.createElement("span"); a.className = "k"; a.textContent = k;
+        var b = document.createElement("span"); b.textContent = v;
+        kv.appendChild(a); kv.appendChild(b);
+      }
+      if (reloc.ascendant) addKv("上昇点(ASC)", reloc.ascendant.sign + " " + reloc.ascendant.degree + "°");
+      if (reloc.midheaven) addKv("南中点(MC)", reloc.midheaven.sign + " " + reloc.midheaven.degree + "°");
+
+      var houses = document.getElementById("pt-houses");
+      houses.innerHTML = "";
+      (reloc.house_emphasis || []).forEach(function (h) {
+        var li = document.createElement("li");
+        li.textContent = h.house + "ハウス（" + h.theme + "）に出生天体が" + h.natal_body_count + "個";
+        houses.appendChild(li);
+      });
+
+      document.getElementById("pt-yaml").value = data.yaml_text || "";
+      window.__ptPrompt = data.prompt_text || "";
+    }
+
+    function copyText(text, btn) {
+      var done = function (ok) {
+        if (!btn) return;
+        var label = btn.dataset.label || btn.textContent;
+        btn.dataset.label = label;
+        btn.textContent = ok ? "コピーしました" : "コピーに失敗";
+        setTimeout(function () { btn.textContent = btn.dataset.label; }, 1600);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        return;
+      }
+      try {
+        var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+        var ok = document.execCommand("copy"); document.body.removeChild(ta); done(ok);
+      } catch (err) { done(false); }
+    }
+    document.getElementById("copy-yaml").addEventListener("click", function () {
+      copyText(document.getElementById("pt-yaml").value, this);
+    });
+    document.getElementById("copy-both").addEventListener("click", function () {
+      copyText((window.__ptPrompt || "") + "\n\n" + document.getElementById("pt-yaml").value, this);
+    });
+  })();
+  </script>
+</body>
+</html>
