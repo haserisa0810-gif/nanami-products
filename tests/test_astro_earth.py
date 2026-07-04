@@ -60,6 +60,72 @@ def test_astro_earth_page_loads_three_only_here():
         assert "three.min.js" not in client.get(path).text, path
 
 
+def test_location_has_source_and_labels_in_yaml():
+    result = build_point_insight(
+        natal_yaml_text=NATAL_YAML, latitude=43.96, longitude=-26.95, source="globe_click"
+    )
+    loc = yaml.safe_load(result["yaml_text"])["astro_earth_point"]["location"]
+    # 1 & 2: source と source_label が YAML に出る
+    assert loc["source"] == "globe_click"
+    assert loc["source_label"] == "地球儀でクリックした地点"
+    # 3: name が null でも display 用の名称がある
+    assert loc["name"] is None
+    assert loc["name_resolved"] is False
+    assert "名称未取得の地点" in loc["display_name"]
+    assert "北緯43.96" in loc["display_name"] and "西経26.95" in loc["display_name"]
+
+
+def test_ai_prompt_states_point_context():
+    # 4: AI貼り付け文の冒頭に「出生地ではなく選択地点」等の前提が入る
+    globe = build_point_insight(natal_yaml_text=NATAL_YAML, latitude=40.0, longitude=-70.0, source="globe_click")
+    assert "出生地ではなく" in globe["prompt_text"]
+    assert "選択した地点" in globe["prompt_text"]
+
+    birth = build_point_insight(natal_yaml_text=NATAL_YAML, latitude=40.0, longitude=-70.0, source="birth_place")
+    assert "出生地を基準" in birth["prompt_text"]
+
+    manual = build_point_insight(natal_yaml_text=NATAL_YAML, latitude=40.0, longitude=-70.0, source="manual_search")
+    assert "検索または手入力" in manual["prompt_text"]
+
+
+def test_interpretation_summary_and_theme_scores():
+    result = build_point_insight(natal_yaml_text=NATAL_YAML, latitude=43.96, longitude=-26.95)
+    it = result["interpretation"]
+    # 5: summary が空ではない
+    assert it["summary"].strip()
+    # 6: テーマ別スコアが出る（1〜5）
+    assert it["themes"]
+    for theme in it["themes"]:
+        assert 1 <= theme["score"] <= 5
+        assert theme["label"] and theme["reason"]
+    assert it["how_to_use"]
+
+
+def test_existing_acg_and_relocation_are_still_present():
+    # 7: 既存のACGライン・リロケーション計算結果はそのまま含まれる（計算は変更しない）
+    result = build_point_insight(natal_yaml_text=NATAL_YAML, latitude=40.71, longitude=-74.0)
+    assert result["nearest_lines"] and "distance_km" in result["nearest_lines"][0]
+    assert result["relocation"]["ascendant"]["sign"]
+    assert "house_emphasis" in result["relocation"]
+
+
+def test_unknown_source_falls_back():
+    result = build_point_insight(natal_yaml_text=NATAL_YAML, latitude=1.0, longitude=1.0, source="banana")
+    assert result["location"]["source"] == "unknown"
+    assert result["location"]["source_label"]
+
+
+def test_point_api_returns_source_and_interpretation():
+    resp = client.post(
+        "/api/astro-earth/point",
+        json={"yaml_text": NATAL_YAML, "lat": 43.96, "lon": -26.95, "source": "globe_click"},
+    ).json()
+    assert resp["location"]["source"] == "globe_click"
+    assert resp["location"]["source_label"] == "地球儀でクリックした地点"
+    assert resp["interpretation"]["summary"]
+    assert resp["interpretation"]["themes"]
+
+
 def test_point_api_success_and_errors():
     ok = client.post("/api/astro-earth/point", json={"yaml_text": NATAL_YAML, "lat": 40.71, "lon": -74.0})
     assert ok.status_code == 200

@@ -2423,6 +2423,7 @@ async def astro_earth_point(request: Request):
             latitude=payload.get("lat"),
             longitude=payload.get("lon"),
             location_name=str(payload.get("location_name") or ""),
+            source=str(payload.get("source") or "globe_click"),
         )
     except AcgYamlFormatError as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=422)

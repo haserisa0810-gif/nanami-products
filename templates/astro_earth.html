@@ -30,6 +30,16 @@
     .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 4px 0; font-size: .88rem; }
     .kv .k { opacity: .65; }
     #point-result[hidden] { display: none; }
+    .oneword-card { background: #f4f1e8; border: 1px solid #e3ddcc; border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+    .oneword-label { font-size: .78rem; opacity: .7; margin: 0 0 4px; }
+    .oneword-text { font-size: 1.02rem; font-weight: 600; margin: 0; line-height: 1.6; }
+    .theme-list { list-style: none; padding: 0; margin: 6px 0; }
+    .theme-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,.12); }
+    .theme-list .theme-label { font-size: .92rem; }
+    .theme-list .theme-stars { color: #d0a84a; letter-spacing: 1px; white-space: nowrap; }
+    .pt-details { margin: 12px 0; }
+    .pt-details summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
+    .pt-details h4 { margin: 12px 0 4px; font-size: .86rem; }
   </style>
 </head>
 <body>
@@ -51,25 +61,44 @@
           <p id="status" class="status"></p>
 
           <div id="point-result" hidden>
-            <h2>クリック地点</h2>
-            <div class="kv">
-              <span class="k">緯度経度</span><span id="pt-latlon"></span>
+            <h2>選択地点</h2>
+            <p id="pt-display-name" style="font-weight:600;margin:2px 0;"></p>
+            <p class="muted" id="pt-source"></p>
+            <div class="notice-box warn" id="pt-name-warning" hidden>
+              <p>この地点は名称が取得できていません。意図した場所と異なる場合は、地図上でもう一度選択してください。</p>
             </div>
 
-            <h3>近いACGライン</h3>
-            <ul class="chip-list" id="pt-lines"></ul>
+            <div class="oneword-card">
+              <p class="oneword-label">この地点の一言</p>
+              <p class="oneword-text" id="pt-summary"></p>
+            </div>
 
-            <h3>リロケーション概要</h3>
-            <div class="kv" id="pt-reloc"></div>
-            <ul class="chip-list" id="pt-houses"></ul>
+            <h3>テーマ</h3>
+            <ul class="theme-list" id="pt-themes"></ul>
+
+            <details class="pt-details">
+              <summary>詳しい根拠を見る</summary>
+              <h4>テーマの根拠</h4>
+              <ul class="chip-list" id="pt-theme-reasons"></ul>
+              <h4>近いACGライン</h4>
+              <ul class="chip-list" id="pt-lines"></ul>
+              <h4>リロケーション概要</h4>
+              <div class="kv" id="pt-reloc"></div>
+              <ul class="chip-list" id="pt-houses"></ul>
+            </details>
 
             <h3>AIに渡せるYAML</h3>
-            <p class="muted">下のデータ（またはプロンプト＋YAML）をコピーしてClaude等に貼り付けると、この地点の読み解きが得られます。計算結果は再計算させない指示入りです。</p>
+            <p class="muted">下のデータ（またはプロンプト＋YAML）をコピーしてClaude等に貼り付けると、この地点の読み解きが得られます。計算結果は再計算させない指示と、地点の前提（出生地ではなく選択地点など）が入っています。</p>
             <div class="copyrow">
               <button type="button" id="copy-both">プロンプト＋YAMLをコピー</button>
               <button type="button" id="copy-yaml">YAMLだけコピー</button>
             </div>
             <textarea id="pt-yaml" class="result-yaml" readonly></textarea>
+
+            <div class="notice-box soft" style="margin-top:10px">
+              <p class="muted">※出生図はあなた自身の情報です。ここでは、その出生図を「選択した地点」に重ねて読んでいます。</p>
+              <p class="muted">※表示されている地点が意図した場所と違う場合は、地図上の選択位置や座標を確認してください。</p>
+            </div>
           </div>
         </div>
 
@@ -294,9 +323,44 @@
       }).catch(function () { setStatus("通信に失敗しました。", true); });
     }
 
+    function stars(score) {
+      var s = Math.max(0, Math.min(5, score | 0));
+      return "★".repeat(s) + "☆".repeat(5 - s);
+    }
+
     function renderPoint(lat, lon, data) {
       document.getElementById("point-result").hidden = false;
-      document.getElementById("pt-latlon").textContent = lat.toFixed(4) + ", " + lon.toFixed(4);
+      var loc = data.location || {};
+      var it = data.interpretation || {};
+
+      // 地点の由来（出生地／選択地点／手入力 など）
+      document.getElementById("pt-display-name").textContent =
+        loc.display_name || ("名称未取得の地点（" + lat.toFixed(2) + ", " + lon.toFixed(2) + "）");
+      document.getElementById("pt-source").textContent = "由来: " + (loc.source_label || "地点");
+      document.getElementById("pt-name-warning").hidden = !!loc.name_resolved;
+
+      // 一言サマリー
+      document.getElementById("pt-summary").textContent = it.summary || "";
+
+      // テーマ別スコア
+      var themes = document.getElementById("pt-themes");
+      themes.innerHTML = "";
+      (it.themes || []).forEach(function (t) {
+        var li = document.createElement("li");
+        var label = document.createElement("span"); label.className = "theme-label"; label.textContent = t.label;
+        var st = document.createElement("span"); st.className = "theme-stars"; st.textContent = stars(t.score);
+        li.appendChild(label); li.appendChild(st);
+        themes.appendChild(li);
+      });
+
+      // 詳しい根拠（折りたたみ）
+      var reasons = document.getElementById("pt-theme-reasons");
+      reasons.innerHTML = "";
+      (it.themes || []).forEach(function (t) {
+        var li = document.createElement("li");
+        li.textContent = t.label + "：" + (t.reason || "");
+        reasons.appendChild(li);
+      });
 
       var lines = document.getElementById("pt-lines");
       lines.innerHTML = "";
