@@ -132,6 +132,7 @@
               <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>国内</option>
               <option value="overseas" {% if form and form.birth_place_kind == 'overseas' %}selected{% endif %}>海外</option>
             </select>
+            <small>国内の方でも緯度・経度を指定したい場合は「海外」を選び、地図から出生地を選択してください。</small>
           </label>
           <div class="overseas-fields" id="overseas-fields">
             <div class="location-grid">
