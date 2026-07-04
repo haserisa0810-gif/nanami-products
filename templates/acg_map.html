@@ -122,6 +122,15 @@
       display: flex; align-items: center; gap: 6px;
       font-size: 0.8rem; cursor: pointer; padding: 2px 0;
     }
+    .planet-dot {
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 999px;
+      display: inline-block;
+      flex: 0 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 8px currentColor;
+    }
     .angle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
     input[type="checkbox"] { accent-color: var(--brand-line); }
     .status { font-size: 0.76rem; color: var(--text-dim); margin-top: 6px; min-height: 1.2em; }
@@ -129,6 +138,8 @@
     .note { font-size: 0.72rem; color: var(--text-dim); margin: 6px 0 0; }
     .legend-samples { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 0.74rem; color: var(--text-dim); }
     .legend-samples svg { vertical-align: middle; margin-right: 4px; }
+    .planet-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 0.74rem; color: var(--text-dim); }
+    .planet-legend .legend-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
     .map-legend {
       position: absolute;
       right: 12px;
@@ -171,12 +182,21 @@
       flex: 0 0 auto;
     }
     .map-legend .mc { border-top-style: solid; }
+    .map-legend .ic { border-top-style: dashed; }
     .map-legend .asc { border-top-style: dotted; }
-    .map-legend .dsc { border-top-style: dashed; }
-    .map-legend .ic { border-top-style: solid; border-top-width: 3px; }
+    .map-legend .dsc { border-top-style: dotted; border-top-width: 3px; }
     .acg-popup { font-size: 0.82rem; line-height: 1.55; }
     .acg-popup strong { display: block; margin-bottom: 4px; }
     .acg-popup .popup-role { color: var(--text-dim); font-size: 0.74rem; margin-bottom: 2px; }
+    .acg-popup .popup-astro { margin-bottom: 6px; }
+    .acg-popup .globe-link {
+      display: inline-block;
+      margin-top: 8px;
+      color: var(--brand-line);
+      text-decoration: none;
+      border-bottom: 1px solid var(--brand-line-soft);
+      font-size: 0.76rem;
+    }
     /* 逆引きパネル */
     #nearby-panel { border: 1px solid var(--panel-border); border-radius: 8px; padding: 8px 10px; }
     #nearby-title { font-size: 0.78rem; color: var(--text-dim); margin: 0 0 6px; }
@@ -265,6 +285,14 @@
         border-right: none; border-bottom: 1px solid var(--panel-border);
       }
       .acg-map-wrap { min-height: 52vh; }
+      .map-legend {
+        right: 8px;
+        bottom: 8px;
+        max-width: min(220px, calc(100vw - 16px));
+        padding: 8px 10px;
+        font-size: 0.68rem;
+      }
+      .map-legend .planet-extra { display: none; }
     }
   </style>
 </head>
@@ -334,10 +362,10 @@
       <div class="panel">
         <h2>線の見かた</h2>
         <div class="legend-samples">
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4"/></svg>MC</span>
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4" stroke-dasharray="7 5"/></svg>IC</span>
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="1.6"/></svg>ASC</span>
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="1.6" stroke-dasharray="2 4"/></svg>DSC</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4"/></svg>MC 実線</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4" stroke-dasharray="8 5"/></svg>IC 破線</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.2" stroke-dasharray="1 5"/></svg>ASC 点線</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.2" stroke-dasharray="2 6"/></svg>DSC 点線</span>
         </div>
       </div>
     </aside>
@@ -345,12 +373,13 @@
       <div id="map"></div>
       <div class="map-legend" aria-hidden="true">
         <h3>凡例</h3>
-        <div class="legend-row"><span class="swatch" style="background:#3B82F6"></span><span>青線: 今日の空（マンデン）</span></div>
-        <div class="legend-row"><span class="swatch" style="background:#F59E0B"></span><span>橙線: あなたの出生図（ACG）</span></div>
-        <div class="legend-row"><span class="line-swatch mc"></span><span>実線: MC</span></div>
-        <div class="legend-row"><span class="line-swatch asc"></span><span>点線: ASC</span></div>
-        <div class="legend-row"><span class="line-swatch dsc"></span><span>破線: DSC</span></div>
-        <div class="legend-row"><span class="line-swatch ic"></span><span>一点鎖線: IC</span></div>
+        <div class="legend-row"><span class="line-swatch mc"></span><span>MC: 実線</span></div>
+        <div class="legend-row"><span class="line-swatch ic"></span><span>IC: 破線</span></div>
+        <div class="legend-row"><span class="line-swatch asc"></span><span>ASC: 点線</span></div>
+        <div class="legend-row"><span class="line-swatch dsc"></span><span>DSC: 点線</span></div>
+        <div class="legend-row planet-extra"><span class="swatch" style="background:#F2C04B"></span><span>太陽 MC</span></div>
+        <div class="legend-row planet-extra"><span class="swatch" style="background:#7FD0C8"></span><span>水星 IC</span></div>
+        <div class="legend-row planet-extra"><span class="swatch" style="background:#F0A3C0"></span><span>金星 ASC</span></div>
       </div>
     </div>
   </div>
@@ -361,21 +390,44 @@
   (function () {
     "use strict";
 
+    var NAME_JA = {
+      Sun: "太陽", Moon: "月", Mercury: "水星", Venus: "金星", Mars: "火星",
+      Jupiter: "木星", Saturn: "土星", Uranus: "天王星", Neptune: "海王星", Pluto: "冥王星",
+      "North Node": "ドラゴンヘッド", "South Node": "ドラゴンテイル", TrueNode: "ドラゴンヘッド",
+      MeanNode: "ドラゴンヘッド", Node: "ノード", Lilith: "リリス", Chiron: "キロン",
+      Ceres: "セレス", Pallas: "パラス", Juno: "ジュノー", Vesta: "ベスタ"
+    };
     var PLANETS = [
-      ["Sun", "太陽"], ["Moon", "月"], ["Mercury", "水星"], ["Venus", "金星"],
-      ["Mars", "火星"], ["Jupiter", "木星"], ["Saturn", "土星"],
-      ["Uranus", "天王星"], ["Neptune", "海王星"], ["Pluto", "冥王星"]
+      ["Sun", NAME_JA.Sun], ["Moon", NAME_JA.Moon], ["Mercury", NAME_JA.Mercury], ["Venus", NAME_JA.Venus],
+      ["Mars", NAME_JA.Mars], ["Jupiter", NAME_JA.Jupiter], ["Saturn", NAME_JA.Saturn],
+      ["Uranus", NAME_JA.Uranus], ["Neptune", NAME_JA.Neptune], ["Pluto", NAME_JA.Pluto]
     ];
     var ANGLES = ["MC", "IC", "ASC", "DSC"];
-    var ROLE_COLOR = {
-      mundane: "#3B82F6",
-      natal: "#F59E0B"
+    var PLANET_COLORS = {
+      Sun: "#F2C04B",
+      Moon: "#C9D4E8",
+      Mercury: "#7FD0C8",
+      Venus: "#F0A3C0",
+      Mars: "#E86A5A",
+      Jupiter: "#E8A13C",
+      Saturn: "#B0A080",
+      Uranus: "#6FC4E8",
+      Neptune: "#6A8AE8",
+      Pluto: "#9A7AB8",
+      "North Node": "#A7F3D0",
+      "South Node": "#D8B4FE",
+      TrueNode: "#A7F3D0",
+      MeanNode: "#A7F3D0",
+      Node: "#A7F3D0",
+      Lilith: "#D946EF",
+      Chiron: "#B7C26A"
     };
+    var FALLBACK_COLORS = ["#F2C04B", "#C9D4E8", "#7FD0C8", "#F0A3C0", "#E86A5A", "#E8A13C", "#B0A080", "#6FC4E8", "#6A8AE8", "#9A7AB8"];
     var ANGLE_STYLE = {
-      MC:  { weight: 2.4, dashArray: null },
-      IC:  { weight: 2.4, dashArray: "10 4 2 4" },
-      ASC: { weight: 1.8, dashArray: "1 4" },
-      DSC: { weight: 1.8, dashArray: "7 5" }
+      MC:  { weight: 2.8, dashArray: null },
+      IC:  { weight: 2.6, dashArray: "8 5" },
+      ASC: { weight: 2.2, dashArray: "1 5" },
+      DSC: { weight: 2.2, dashArray: "2 6" }
     };
     // 逆引きの強度判定（フロント定数）
     var NEARBY_MAX_KM = 500;
@@ -710,12 +762,79 @@
       return dict[group] || null;
     }
 
+    function planetLabel(planet) {
+      return NAME_JA[planet] || planet;
+    }
+
+    function lineLabel(planet, angle) {
+      return planetLabel(planet) + angle + "ライン";
+    }
+
+    function planetColor(planet) {
+      if (PLANET_COLORS[planet]) { return PLANET_COLORS[planet]; }
+      var idx = Math.abs(hashString(String(planet || ""))) % FALLBACK_COLORS.length;
+      return FALLBACK_COLORS[idx];
+    }
+
+    function hashString(value) {
+      var hash = 0;
+      for (var i = 0; i < value.length; i += 1) {
+        hash = ((hash << 5) - hash) + value.charCodeAt(i);
+        hash |= 0;
+      }
+      return hash;
+    }
+
+    function roleLabel(mode) {
+      return mode === "natal" || mode === "personal" ? "あなたの出生図（ACG）" : "今日の空（マンデン）";
+    }
+
+    function momentLabel(mode) {
+      return mode === "natal" || mode === "personal" ? "出生瞬間" : "指定日の基準時刻";
+    }
+
+    function angleAstronomyText(planet, angle, mode) {
+      var name = planetLabel(planet);
+      var when = momentLabel(mode);
+      if (angle === "MC") {
+        return "この線の近くでは、" + name + "が" + when + "に南中する地域です。";
+      }
+      if (angle === "IC") {
+        return "この線の近くでは、" + name + "が" + when + "に地下側の子午線を通過する地域です。";
+      }
+      if (angle === "ASC") {
+        return "この線の近くでは、" + name + "が" + when + "に東の地平線から昇る地域です。";
+      }
+      if (angle === "DSC") {
+        return "この線の近くでは、" + name + "が" + when + "に西の地平線へ沈む地域です。";
+      }
+      return "この線は、" + name + "と" + angle + "の位置関係を示します。";
+    }
+
+    function globeUrl(props) {
+      var params = new URLSearchParams({
+        planet: props.planet || "",
+        angle: props.angle || "",
+        mode: props.mode || currentMode || "",
+        source: "acg-map"
+      });
+      if (currentDate) { params.set("date", currentDate); }
+      return "/acg/globe-demo?" + params.toString();
+    }
+
     function popupHtml(props) {
       var entry = dictEntry(props.line_group);
-      var label = (entry && entry.label) || props.label;
+      var label = lineLabel(props.planet, props.angle);
       var meaning = (entry && entry.meaning) || props.meaning || "";
-      var role = props.mode === "natal" ? "あなたの出生図" : "今日の空（マンデン）";
-      return '<div class="acg-popup"><strong>' + label + '</strong><div class="popup-role">' + role + '</div><div>' + meaning + '</div></div>';
+      var role = roleLabel(props.mode);
+      var color = planetColor(props.planet);
+      return '<div class="acg-popup">'
+        + '<strong><span class="planet-dot" style="color:' + color + ';background:' + color + '"></span> ' + label + '</strong>'
+        + '<div class="popup-role">' + role + '</div>'
+        + '<div class="popup-astro">' + angleAstronomyText(props.planet, props.angle, props.mode) + '</div>'
+        + '<div>' + meaning + '</div>'
+        + '<a class="globe-link" href="' + globeUrl(props) + '" target="_blank" rel="noopener">3D地球儀で見る</a>'
+        + '</div>';
     }
 
     // --- 線の描画（line_group 単位でまとめる） ---
@@ -745,20 +864,22 @@
         var features = groups[group];
         var props = features[0].properties;
         var style = ANGLE_STYLE[props.angle] || ANGLE_STYLE.MC;
-        var color = ROLE_COLOR[props.mode] || ROLE_COLOR.mundane;
-        var weight = style.weight + (props.mode === "natal" ? 1 : 0);
+        var color = planetColor(props.planet);
+        var isNatal = props.mode === "natal" || props.mode === "personal";
+        var weight = style.weight + (isNatal ? 0.8 : 0);
+        var opacity = isNatal ? 0.92 : 0.78;
         var fc = { type: "FeatureCollection", features: features };
         var visible = L.geoJSON(fc, {
           pane: "acg-lines",
           interactive: false,
-          style: { color: color, weight: weight, dashArray: style.dashArray, opacity: 0.84 }
+          style: { color: color, weight: weight, dashArray: style.dashArray, opacity: opacity }
         });
         // タップしやすいよう、透明の太い当たり判定レイヤーを重ねる
         var hit = L.geoJSON(fc, { pane: "acg-lines", style: { color: color, weight: 14, opacity: 0 } });
         // 辞書フェッチ完了前に描画されても、開いた時点の内容で表示されるよう関数で渡す
         hit.bindPopup(function () { return popupHtml(props); }, { maxWidth: 260 });
         hit.on("mouseover", function () { visible.setStyle({ weight: weight + 1.2, opacity: 1 }); });
-        hit.on("mouseout", function () { visible.setStyle({ weight: weight, opacity: 0.84 }); });
+        hit.on("mouseout", function () { visible.setStyle({ weight: weight, opacity: opacity }); });
         linesLayer.addLayer(visible);
         linesLayer.addLayer(hit);
       });
@@ -843,7 +964,8 @@
             planet: props.planet,
             angle: props.angle,
             line_type: props.line_type,
-            label: (entry && entry.label) || props.label,
+            label: lineLabel(props.planet, props.angle),
+            astronomy: angleAstronomyText(props.planet, props.angle, props.mode),
             meaning_hint: (entry && entry.meaning_hint) || props.meaning || "",
             distance_km: Math.round(minKm),
             strength: strengthOf(minKm)
@@ -889,10 +1011,10 @@
         head.appendChild(name);
         head.appendChild(distText);
         li.appendChild(head);
-        if (r.meaning_hint) {
+        if (r.astronomy || r.meaning_hint) {
           var hint = document.createElement("div");
           hint.className = "line-hint";
-          hint.textContent = r.meaning_hint;
+          hint.textContent = r.astronomy ? r.astronomy + " " + r.meaning_hint : r.meaning_hint;
           li.appendChild(hint);
         }
         list.appendChild(li);
@@ -1210,7 +1332,12 @@
         renderLines();
       });
       planetChecks[key] = cb;
+      var dot = document.createElement("span");
+      dot.className = "planet-dot";
+      dot.style.color = planetColor(key);
+      dot.style.background = planetColor(key);
       label.appendChild(cb);
+      label.appendChild(dot);
       label.appendChild(document.createTextNode(ja));
       planetWrap.appendChild(label);
     });

@@ -2338,6 +2338,12 @@ def acg_map_page(request: Request):
     return templates.TemplateResponse("acg_map.html", {"request": request})
 
 
+@app.get("/acg/globe-demo", response_class=HTMLResponse)
+def acg_globe_demo_page(request: Request):
+    """ACG 3D地球儀デモ（仕組み理解用）。"""
+    return templates.TemplateResponse("acg_globe_demo.html", {"request": request})
+
+
 @app.get("/api/acg/mundane")
 def acg_mundane(date: str = ""):
     """指定日のマンデン ACG 線 GeoJSON。認証なし・日付単位で全ユーザー共通。

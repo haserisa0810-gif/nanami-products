@@ -23,16 +23,23 @@ def test_acg_lines_render_above_tile_map() -> None:
 
     assert 'map.createPane("acg-lines").style.zIndex = 450;' in template
     assert 'pane: "acg-lines"' in template
-    assert "var ROLE_COLOR = {" in template
-    assert 'mundane: "#3B82F6"' in template
-    assert 'natal: "#F59E0B"' in template
-    assert 'var weight = style.weight + (props.mode === "natal" ? 1 : 0);' in template
-    assert 'opacity: 0.84' in template
+    assert "var PLANET_COLORS = {" in template
+    assert 'Sun: "#F2C04B"' in template
+    assert 'Moon: "#C9D4E8"' in template
+    assert 'Mercury: "#7FD0C8"' in template
+    assert 'Neptune: "#6A8AE8"' in template
+    assert 'Pluto: "#9A7AB8"' in template
+    assert "var color = planetColor(props.planet);" in template
+    assert 'var isNatal = props.mode === "natal" || props.mode === "personal";' in template
     assert 'switchBaseLayer("osm");' in template
     assert 'switchBaseLayer("gsi");' in template
     assert '<div class="map-legend" aria-hidden="true">' in template
-    assert '青線: 今日の空（マンデン）' in template
-    assert '橙線: あなたの出生図（ACG）' in template
+    assert "MC: 実線" in template
+    assert "IC: 破線" in template
+    assert "ASC: 点線" in template
+    assert "DSC: 点線" in template
+    assert "太陽 MC" in template
+    assert "水星 IC" in template
 
 
 def test_acg_map_no_longer_fetches_natural_earth_as_base_map() -> None:
@@ -89,3 +96,21 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     assert "function yamlString(value)" in template
     assert "function appendFoldedScalar(lines, indent, key, text)" in template
     assert "AIへ場所コンテキストをコピー" in template
+
+
+def test_acg_map_uses_shared_planet_labels_line_styles_and_globe_link() -> None:
+    template = _template()
+
+    assert "var NAME_JA = {" in template
+    assert 'Sun: "太陽"' in template
+    assert '"North Node": "ドラゴンヘッド"' in template
+    assert 'MC:  { weight: 2.8, dashArray: null }' in template
+    assert 'IC:  { weight: 2.6, dashArray: "8 5" }' in template
+    assert 'ASC: { weight: 2.2, dashArray: "1 5" }' in template
+    assert 'DSC: { weight: 2.2, dashArray: "2 6" }' in template
+    assert "function lineLabel(planet, angle)" in template
+    assert "function angleAstronomyText(planet, angle, mode)" in template
+    assert "この線の近くでは、\" + name + \"が\" + when + \"に南中する地域です。" in template
+    assert "function globeUrl(props)" in template
+    assert 'source: "acg-map"' in template
+    assert 'href="\' + globeUrl(props) + \'"' in template
