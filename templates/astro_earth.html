@@ -10,10 +10,13 @@
   <!-- 3D用ライブラリはこのページだけで読み込む -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    .earth-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+    /* PC では画面いっぱい近くまで広げる（地球儀を大きく見せる）。 */
+    main.earth-full { max-width: 1680px; }
+    @media (min-width: 1280px) { main.earth-full { max-width: min(1680px, 95vw); } }
+    .earth-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
     @media (max-width: 860px) { .earth-layout { grid-template-columns: 1fr; } }
     #globe-wrap { position: relative; background: #070b14; border-radius: 16px; overflow: hidden; min-height: 460px; }
-    #globe-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    #globe-canvas { display: block; width: 100%; cursor: grab; }
     #globe-canvas:active { cursor: grabbing; }
     .globe-hint { position: absolute; left: 12px; bottom: 10px; color: #9fb0cc; font-size: .78rem; }
     .earth-yaml { width: 100%; min-height: 150px; font-family: ui-monospace, monospace; font-size: .82rem; }
@@ -30,7 +33,7 @@
   </style>
 </head>
 <body>
-  <main class="wrap wide">
+  <main class="wrap wide earth-full">
     <div class="card">
       <p class="eyebrow">Astro Earth</p>
       <h1>3D地球儀でアストロカートグラフィ</h1>
@@ -240,8 +243,12 @@
 
     // ── レンダリング ──
     function resize() {
-      var w = wrap.clientWidth, h = Math.max(460, Math.round(w * 0.72));
-      renderer.setSize(w, h, false);
+      var w = wrap.clientWidth;
+      // ビューポートに収まる範囲で、できるだけ大きく（縦は画面高さの約85%まで）。
+      var maxH = Math.max(460, Math.round(window.innerHeight * 0.85));
+      var h = Math.min(Math.round(w * 0.72), maxH);
+      h = Math.max(460, h);
+      renderer.setSize(w, h, true);
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
     window.addEventListener("resize", resize);
