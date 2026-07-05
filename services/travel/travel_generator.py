@@ -296,6 +296,7 @@ def build_travel_report(
 ) -> dict[str, Any]:
     """travel_report を生成し、yaml_text / prompt_text / doc / summary を返す。"""
     yaml_text = _validate_yaml_size(natal_yaml_text)
+    purpose_key = str(purpose_key or "").strip()
     if not is_valid_purpose(purpose_key):
         raise TravelInputError("旅行目的を選択してください。")
     stay = _validate_dates(arrival_date, departure_date)
@@ -341,7 +342,7 @@ def build_travel_report(
         cautions=cautions,
     )
     yaml_out = yaml.safe_dump({"travel_report": doc}, allow_unicode=True, sort_keys=False, width=120)
-    prompt_text = build_travel_prompt()
+    prompt_text = build_travel_prompt(purpose_selected=bool(purpose_key))
 
     summary = {
         "location": location.to_dict(),
@@ -376,6 +377,7 @@ def _build_doc(
         "generated_at": datetime.now(timezone.utc).astimezone().isoformat(),
         "input": {
             "purpose": travel_input.purpose.to_dict(),
+            "purpose_tags": [travel_input.purpose.key] if travel_input.purpose.key else [],
             "stay": stay.to_dict(),
             "location": travel_input.location.to_dict(),
         },

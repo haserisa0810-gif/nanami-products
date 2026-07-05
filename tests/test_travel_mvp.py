@@ -16,6 +16,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 import routes
+from services.travel.travel_schema import TRAVEL_PURPOSES
 from services.travel.travel_generator import build_travel_report
 
 NATAL_YAML = """
@@ -53,6 +54,7 @@ def test_build_travel_report_produces_full_yaml():
     assert doc["schema_version"] == "1.0"
     assert doc["app"] == "astro_travel"
     assert doc["input"]["purpose"]["key"] == "creativity"
+    assert doc["input"]["purpose_tags"] == ["creativity"]
     assert doc["input"]["stay"]["days"] == 8
     assert doc["input"]["location"]["latitude"] == 41.3874
     # ACG / Relocation / Transit が含まれる
@@ -79,9 +81,19 @@ def test_departure_before_arrival_is_rejected():
     assert "帰着日" in str(exc.value)
 
 
-def test_missing_purpose_is_rejected():
+def test_invalid_purpose_is_rejected():
     with pytest.raises(ValueError):
         build_travel_report(**_valid_kwargs(purpose_key="not_a_purpose"))
+
+
+def test_empty_purpose_generates_general_travel_report():
+    result = build_travel_report(**_valid_kwargs(purpose_key=""))
+    doc = yaml.safe_load(result["yaml_text"])["travel_report"]
+
+    assert doc["input"]["purpose"] == {"key": "", "label": ""}
+    assert doc["input"]["purpose_tags"] == []
+    assert doc["interpretation"]["recommended_actions"]
+    assert "旅行目的は未選択です。全体的な旅先との相性として読んでください。" in result["prompt_text"]
 
 
 def test_empty_yaml_is_rejected():
@@ -139,6 +151,10 @@ def test_get_travel_form(client_with_mem_db):
 def test_travel_form_reuses_geocode_api_and_updates_location_fields():
     template = Path("templates/travel_form.html").read_text(encoding="utf-8")
 
+    assert "旅行目的（任意）" in template
+    assert "未選択でも診断できます。目的を選ぶと、そのテーマを少し重視して読みます。" in template
+    assert TRAVEL_PURPOSES["sightseeing"] == "観光・リフレッシュ"
+    assert "not form and key == 'healing'" not in template
     assert 'id="location-search-button"' in template
     assert "fetch('/api/geocode?q=' + encodeURIComponent(query)" in template
     assert "nameInput.value = displayName" in template

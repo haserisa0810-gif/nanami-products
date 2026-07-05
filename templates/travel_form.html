@@ -93,10 +93,11 @@
           </label>
         </div>
 
-        <label>旅行目的</label>
+        <label>旅行目的（任意）</label>
+        <p class="map-hint">未選択でも診断できます。目的を選ぶと、そのテーマを少し重視して読みます。</p>
         <div class="purpose-grid">
           {% for key, label in purposes %}
-            <label><input type="radio" name="purpose" value="{{ key }}" {% if (form and form.purpose == key) or (not form and key == 'healing') %}checked{% endif %}> {{ label }}</label>
+            <label><input type="radio" name="purpose" value="{{ key }}" {% if form and form.purpose == key %}checked{% endif %}> {{ label }}</label>
           {% endfor %}
         </div>
 

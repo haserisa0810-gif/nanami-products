@@ -33,5 +33,15 @@ TRAVEL_PROMPT = """あなたは西洋占星術の鑑定者です。
 """
 
 
-def build_travel_prompt() -> str:
-    return TRAVEL_PROMPT.strip() + "\n"
+def build_travel_prompt(*, purpose_selected: bool = True) -> str:
+    prompt = TRAVEL_PROMPT
+    if not purpose_selected:
+        prompt = prompt.replace(
+            "- 旅行目的（input.purpose）に沿って読んでください。",
+            "- 旅行目的は未選択です。全体的な旅先との相性として読んでください。",
+        )
+        prompt = prompt.replace(
+            "3. 旅行目的に対する読み解き",
+            "3. 全体的な旅先との相性",
+        )
+    return prompt.strip() + "\n"

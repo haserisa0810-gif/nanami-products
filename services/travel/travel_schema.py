@@ -16,6 +16,7 @@ APP_NAME = "astro_travel"
 # 旅行目的（内部キー: 表示ラベル）。UI・スコアリング・YAML すべてでこの辞書を唯一の
 # 出典にする。順序は画面表示順。
 TRAVEL_PURPOSES: dict[str, str] = {
+    "sightseeing": "観光・リフレッシュ",
     "healing": "癒やし",
     "love": "恋愛",
     "work": "仕事",
@@ -34,7 +35,8 @@ def purpose_label(key: str | None) -> str:
 
 
 def is_valid_purpose(key: str | None) -> bool:
-    return str(key or "").strip() in TRAVEL_PURPOSES
+    clean_key = str(key or "").strip()
+    return not clean_key or clean_key in TRAVEL_PURPOSES
 
 
 @dataclass
