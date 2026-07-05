@@ -24,9 +24,12 @@
     /* PC（幅広）ではカード幅を広げ、入力欄と地図を2カラムでゆったり見せる。
        スマホ（〜899px）は縦積み・幅100%を維持。 */
     @media (min-width: 900px) {
-      main.wrap.wide.travel-full { max-width: 1240px; }
-      #travel-map { min-height: 520px; height: 520px; }
-      .travel-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 28px; align-items: start; }
+      /* 画面幅ほぼいっぱいに（超ワイドモニタでは 1760px で頭打ち）。 */
+      main.wrap.wide.travel-full { max-width: 1760px; }
+      /* 地図の高さはビューポート基準で拡大（Leaflet は ResizeObserver で追従済み）。 */
+      #travel-map { height: clamp(520px, 64vh, 780px); min-height: 0; }
+      /* 右カラム（フォーム）は 340〜460px に抑え、余った幅を地図側に渡す。 */
+      .travel-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 460px); gap: 32px; align-items: start; }
     }
   </style>
 </head>

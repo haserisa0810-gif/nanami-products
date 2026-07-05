@@ -17,9 +17,12 @@
     /* PC ではカード幅を広げ、2カラムを画面いっぱい寄りにする。地球儀を大きく。
        （.wrap.wide の 960px を上書きするため詳細度を .wrap.wide.earth-full にそろえる） */
     @media (min-width: 900px) {
-      main.wrap.wide.earth-full { max-width: 1240px; }
-      .earth-layout { grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.3fr); gap: 28px; }
-      #globe-wrap { min-height: 520px; }
+      /* 画面幅ほぼいっぱいに（超ワイドモニタでは 1760px で頭打ち）。 */
+      main.wrap.wide.earth-full { max-width: 1760px; }
+      /* 左カラム（入力欄）は 340〜440px に抑え、残りの幅を全部地球儀に渡す。 */
+      .earth-layout { grid-template-columns: minmax(340px, 440px) minmax(0, 1fr); gap: 32px; }
+      /* 高さもビューポート基準で確保（JS 側の resize が最終的に上書きする）。 */
+      #globe-wrap { min-height: min(78vh, 780px); }
     }
     #globe-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
     #globe-canvas:active { cursor: grabbing; }
