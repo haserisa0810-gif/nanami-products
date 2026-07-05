@@ -16,7 +16,7 @@
     .earth-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
     @media (max-width: 860px) { .earth-layout { grid-template-columns: 1fr; } }
     #globe-wrap { position: relative; background: #070b14; border-radius: 16px; overflow: hidden; min-height: 460px; }
-    #globe-canvas { display: block; width: 100%; cursor: grab; }
+    #globe-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
     #globe-canvas:active { cursor: grabbing; }
     .globe-hint { position: absolute; left: 12px; bottom: 10px; color: #9fb0cc; font-size: .78rem; }
     .earth-yaml { width: 100%; min-height: 150px; font-family: ui-monospace, monospace; font-size: .82rem; }
@@ -41,8 +41,9 @@
     .pt-details summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
     .pt-details h4 { margin: 12px 0 4px; font-size: .86rem; }
     .geo-search { margin: 12px 0; }
-    .geo-row { display: flex; gap: 8px; }
-    .geo-row input { flex: 1; }
+    .geo-row { display: flex; gap: 8px; align-items: stretch; }
+    .geo-row input { flex: 1 1 auto; min-width: 0; }
+    .geo-row button { flex: 0 0 auto; width: auto; white-space: nowrap; }
     .geo-results { list-style: none; padding: 0; margin: 6px 0; }
     .geo-results li { padding: 7px 10px; border: 1px solid rgba(0,0,0,.12); border-radius: 8px; margin: 4px 0; cursor: pointer; font-size: .88rem; }
     .geo-results li:hover { background: #f4f1e8; }
@@ -297,17 +298,24 @@
     }
 
     // ── レンダリング ──
+    var lastW = 0, lastH = 0;
     function resize() {
-      var w = wrap.clientWidth;
+      var w = wrap.clientWidth || 600;
       // ビューポートに収まる範囲で、できるだけ大きく（縦は画面高さの約85%まで）。
       var maxH = Math.max(460, Math.round(window.innerHeight * 0.85));
-      var h = Math.min(Math.round(w * 0.72), maxH);
-      h = Math.max(460, h);
-      renderer.setSize(w, h, true);
+      var h = Math.max(460, Math.min(Math.round(w * 0.72), maxH));
+      if (w === lastW && h === lastH) return;  // 変化なし（ResizeObserver の無限ループ防止）
+      lastW = w; lastH = h;
+      // 描画バッファ = 表示サイズ（CSS で canvas は wrap を 100% 充填）。
+      wrap.style.height = h + "px";
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h, false);
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
     window.addEventListener("resize", resize);
-    resize();
+    // レイアウト確定後にサイズを合わせる（初期表示のズレ対策）。
+    if (window.ResizeObserver) { new ResizeObserver(resize).observe(wrap); }
+    requestAnimationFrame(function () { resize(); requestAnimationFrame(resize); });
     (function loop() { requestAnimationFrame(loop); renderer.render(scene, camera); })();
 
     // ── データ取得 ──
