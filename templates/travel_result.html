@@ -17,15 +17,18 @@
     textarea.share { width: 100%; min-height: 180px; font-family: ui-monospace, monospace; font-size: .82rem; }
     .section { margin-top: 22px; }
     .muted { opacity: .75; font-size: .85rem; }
-    /* PC（幅広）では読み物セクションを2カラムに。YAML欄は全幅のまま。 */
+    textarea, input, button { max-width: 100%; }
+    /* PC（幅広）ではカード幅を広げ、読み物セクションを2カラムに。YAML欄は全幅のまま。
+       スマホ（〜899px）は縦1カラムを維持。 */
     @media (min-width: 900px) {
+      main.wrap.wide.travel-full { max-width: 1240px; }
       .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 34px; }
       .result-grid .section { margin-top: 18px; }
     }
   </style>
 </head>
 <body>
-  <main class="wrap wide">
+  <main class="wrap wide travel-full">
     <div class="card">
       <p class="eyebrow">Astro Travel</p>
       <h1>{{ doc.input.location.name }}{% if doc.input.location.country %}（{{ doc.input.location.country }}）{% endif %}</h1>

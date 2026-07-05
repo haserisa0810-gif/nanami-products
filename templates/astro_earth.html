@@ -10,12 +10,17 @@
   <!-- 3D用ライブラリはこのページだけで読み込む -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    /* PC では画面いっぱい近くまで広げる（地球儀を大きく見せる）。 */
-    main.earth-full { max-width: 1680px; }
-    @media (min-width: 1280px) { main.earth-full { max-width: min(1680px, 95vw); } }
-    .earth-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
-    @media (max-width: 860px) { .earth-layout { grid-template-columns: 1fr; } }
+    /* スマホは縦1カラム・幅100%（現状維持）。 */
+    .earth-layout { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
     #globe-wrap { position: relative; background: #070b14; border-radius: 16px; overflow: hidden; min-height: 460px; }
+    textarea, input, button { max-width: 100%; }
+    /* PC ではカード幅を広げ、2カラムを画面いっぱい寄りにする。地球儀を大きく。
+       （.wrap.wide の 960px を上書きするため詳細度を .wrap.wide.earth-full にそろえる） */
+    @media (min-width: 900px) {
+      main.wrap.wide.earth-full { max-width: 1240px; }
+      .earth-layout { grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.3fr); gap: 28px; }
+      #globe-wrap { min-height: 520px; }
+    }
     #globe-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
     #globe-canvas:active { cursor: grabbing; }
     .globe-hint { position: absolute; left: 12px; bottom: 10px; color: #9fb0cc; font-size: .78rem; }
@@ -302,8 +307,10 @@
     function resize() {
       var w = wrap.clientWidth || 600;
       // ビューポートに収まる範囲で、できるだけ大きく（縦は画面高さの約85%まで）。
-      var maxH = Math.max(460, Math.round(window.innerHeight * 0.85));
-      var h = Math.max(460, Math.min(Math.round(w * 0.72), maxH));
+      // PC は最低520px（スマホは従来どおり460px）で、CSS min-height と描画バッファを一致させる。
+      var minH = window.innerWidth >= 900 ? 520 : 460;
+      var maxH = Math.max(minH, Math.round(window.innerHeight * 0.85));
+      var h = Math.max(minH, Math.min(Math.round(w * 0.72), maxH));
       if (w === lastW && h === lastH) return;  // 変化なし（ResizeObserver の無限ループ防止）
       lastW = w; lastH = h;
       // 描画バッファ = 表示サイズ（CSS で canvas は wrap を 100% 充填）。

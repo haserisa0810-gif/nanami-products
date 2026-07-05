@@ -15,15 +15,18 @@
     .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .map-hint { font-size: .82rem; opacity: .8; margin: 2px 0 0; }
-    /* PC（幅広）では地図と入力欄を2カラムにして余白を活かす */
+    textarea, input, button { max-width: 100%; }
+    /* PC（幅広）ではカード幅を広げ、入力欄と地図を2カラムでゆったり見せる。
+       スマホ（〜899px）は縦積み・幅100%を維持。 */
     @media (min-width: 900px) {
-      #travel-map { height: 420px; }
-      .travel-cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; align-items: start; }
+      main.wrap.wide.travel-full { max-width: 1240px; }
+      #travel-map { min-height: 520px; height: 520px; }
+      .travel-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 28px; align-items: start; }
     }
   </style>
 </head>
 <body>
-  <main class="wrap wide">
+  <main class="wrap wide travel-full">
     <div class="card">
       <p class="eyebrow">Astro Travel</p>
       <h1>次の旅行先、星で選んでみる？</h1>
@@ -98,11 +101,11 @@
         var startLat = parseFloat(latInput.value) || 35.68;
         var startLon = parseFloat(lonInput.value) || 139.69;
         var map = L.map('travel-map', { worldCopyJump: true }).setView([startLat, startLon], (latInput.value ? 6 : 2));
-        // noWrap: 世界地図を横に繰り返さない（2枚目の世界をクリックして経度が
-        // ±180 を超えるのを防ぐ）。
+        // 経度はクリック時・サーバー側で ±180 に正規化するので、タイルは通常どおり
+        // 横方向に繰り返してよい（noWrap にすると初期中心付近でタイルが欠けて
+        // 右側にグレー余白が出るため付けない）。
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 12,
-          noWrap: true,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
         var wrapLon = function (lon) { return ((lon + 180) % 360 + 360) % 360 - 180; };
@@ -118,6 +121,12 @@
           lonInput.value = lon;
           if (marker) { marker.setLatLng([lat, lon]); } else { marker = L.marker([lat, lon]).addTo(map); }
         });
+        // コンテナ幅が確定してからサイズを再計算（2カラム化で幅が変わり、
+        // タイルが欠けて右側にグレー余白が出るのを防ぐ）。
+        var fixSize = function () { map.invalidateSize(); };
+        window.addEventListener('load', fixSize);
+        setTimeout(fixSize, 250);
+        if (window.ResizeObserver) { new ResizeObserver(fixSize).observe(document.getElementById('travel-map')); }
       } catch (err) {
         /* 地図が使えなくても、緯度経度の手入力で診断は可能 */
       }

@@ -24,11 +24,10 @@
       hasStart ? [startLat, startLng] : [20, 0],
       hasStart ? 6 : 2
     );
-    // noWrap: 世界地図を横に繰り返さない。繰り返し表示された2枚目の世界を
-    // クリックして経度が ±180 を超える値になるのを防ぐ。
+    // 経度はクリック時に ±180 へ正規化するので、タイルは通常どおり横方向に
+    // 繰り返してよい（noWrap にすると初期中心付近でタイルが欠けることがある）。
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 12,
-      noWrap: true,
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
 
