@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import copy
+import csv
 import hashlib
 import io
 import json
@@ -33,7 +34,7 @@ from services.api_demo import build_demo_response, build_demo_shichu_svg, build_
 from services.birth_time import extract_birth_time_notice, resolve_birth_time_accuracy
 from services.chart_svg import build_horoscope_svg_from_yaml, has_asteroid_svg_data
 from services.api_yaml import build_handoff_yaml
-from services.location import PREFECTURE_OPTIONS, resolve_municipality, resolve_prefecture
+from services.location import PREFECTURE_OPTIONS, prefecture_full_name, resolve_municipality, resolve_prefecture
 from services.light_yaml import (
     build_base_astrology_yaml,
     build_detail_astrology_yaml,
@@ -4080,6 +4081,213 @@ def post_chart_new(request: Request):
             "default_time": now.strftime("%H:%M"),
             "form": None,
         },
+    )
+
+
+POST_CHART_BULK_SAMPLE = """トヨタ自動車工業株式会社,1937-08-28,12:00,愛知県 豊田市
+ハイエレコン,1982-06-08,,広島県 広島市"""
+
+
+def _post_chart_bulk_context(
+    request: Request,
+    *,
+    bulk_input: str = "",
+    rows: list[dict] | None = None,
+    csv_output: str = "",
+) -> dict:
+    return {
+        "request": request,
+        "bulk_input": bulk_input,
+        "sample_input": POST_CHART_BULK_SAMPLE,
+        "rows": rows or [],
+        "csv_output": csv_output,
+    }
+
+
+def _resolve_bulk_birth_place(raw_place: str) -> dict[str, object]:
+    place = raw_place.strip()
+    if not place:
+        raise ValueError("出生地を入力してください。")
+    parts = place.split(maxsplit=1)
+    prefecture = parts[0]
+    city = parts[1] if len(parts) > 1 else ""
+    if city:
+        resolved = resolve_municipality(prefecture, city)
+        if resolved:
+            resolved_prefecture, resolved_city, lat, lng = resolved
+            return {
+                "prefecture": resolved_prefecture,
+                "birth_place_label": place,
+                "birth_lat": lat,
+                "birth_lng": lng,
+            }
+    resolved_prefecture = prefecture_full_name(prefecture)
+    resolve_prefecture(resolved_prefecture)
+    return {
+        "prefecture": resolved_prefecture,
+        "birth_place_label": place,
+        "birth_lat": None,
+        "birth_lng": None,
+    }
+
+
+def _parse_post_chart_bulk_line(line: str, line_number: int) -> dict[str, str]:
+    try:
+        fields = next(csv.reader([line]))
+    except csv.Error as exc:
+        raise ValueError(f"CSV形式が不正です: {exc}") from exc
+    if len(fields) < 4:
+        raise ValueError("カンマ区切りで 名前,生年月日,出生時間,出生地 を入力してください。")
+    if len(fields) > 4:
+        raise ValueError("カンマが多すぎます。1行は 名前,生年月日,出生時間,出生地 の4項目です。")
+    name, birth_date, birth_time, birth_place = (field.strip() for field in fields)
+    if not name:
+        raise ValueError("名前を入力してください。")
+    try:
+        datetime.strptime(birth_date, "%Y-%m-%d")
+    except ValueError as exc:
+        raise ValueError("生年月日はYYYY-MM-DDで入力してください。") from exc
+    if not birth_time:
+        birth_time = "12:00"
+    try:
+        datetime.strptime(birth_time, "%H:%M")
+    except ValueError as exc:
+        raise ValueError("出生時間はHH:MMで入力してください。") from exc
+    if not birth_place:
+        raise ValueError("出生地を入力してください。")
+    return {
+        "line": line_number,
+        "name": name,
+        "birth_date": birth_date,
+        "birth_time": birth_time,
+        "birth_place": birth_place,
+    }
+
+
+def _post_chart_bulk_line_preview(line: str) -> dict[str, str]:
+    try:
+        fields = next(csv.reader([line]))
+    except csv.Error:
+        return {}
+    if len(fields) < 4:
+        return {}
+    name, birth_date, birth_time, birth_place = (field.strip() for field in fields[:4])
+    return {
+        "name": name,
+        "birth_date": birth_date,
+        "birth_time": birth_time,
+        "birth_place": birth_place,
+    }
+
+
+def _build_post_chart_bulk_csv(rows: list[dict]) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output, lineterminator="\n")
+    writer.writerow(["line", "name", "birth_date", "birth_time", "birth_place", "url", "status", "error"])
+    for row in rows:
+        writer.writerow([
+            row.get("line", ""),
+            row.get("name", ""),
+            row.get("birth_date", ""),
+            row.get("birth_time", ""),
+            row.get("birth_place", ""),
+            row.get("url", ""),
+            row.get("status", ""),
+            row.get("error", ""),
+        ])
+    return output.getvalue()
+
+
+def _issue_post_sample_chart_url(*, request: Request, item: dict[str, str]) -> str:
+    place = _resolve_bulk_birth_place(item["birth_place"])
+    yaml_text, prompt_text, doc = build_product_yaml(
+        title=item["name"],
+        birth_date=item["birth_date"],
+        birth_time=item["birth_time"],
+        prefecture=str(place["prefecture"]),
+        birth_place_label=str(place["birth_place_label"]),
+        birth_lat=place["birth_lat"],
+        birth_lng=place["birth_lng"],
+        gender="unknown",
+        include_asteroids=False,
+        include_shichusuimei=False,
+        include_transit=True,
+    )
+    admin_product_type = "western_full"
+    chart_options = {
+        **doc.get("product", {}).get("options", {}),
+        "product_type": admin_product_type,
+        "expires_policy": NO_EXPIRY_CHART_POLICY,
+        "url_purpose": "post_sample",
+        "bulk_issue": True,
+    }
+    artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=admin_product_type)
+    token = secrets.token_urlsafe(18)
+    pg_store.save_chart(
+        token=token,
+        order_code=None,
+        buyer_name=item["name"],
+        birth_date=item["birth_date"],
+        birth_time=item["birth_time"],
+        birth_place=item["birth_place"],
+        options=chart_options,
+        yaml_text=yaml_text,
+        prompt_text=prompt_text,
+        **artifacts,
+        expires_at=None,
+    )
+    return f"{_public_base_url(request)}/chart/{token}"
+
+
+@app.get("/admin/post-chart/bulk-new", response_class=HTMLResponse)
+def post_chart_bulk_new(request: Request):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+    return templates.TemplateResponse(
+        "post_chart_bulk_form.html",
+        _post_chart_bulk_context(request),
+    )
+
+
+@app.post("/admin/post-chart/bulk-new", response_class=HTMLResponse)
+def post_chart_bulk_generate(
+    request: Request,
+    bulk_input: str = Form(""),
+):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+
+    rows: list[dict] = []
+    for line_number, raw_line in enumerate(bulk_input.splitlines(), start=1):
+        if not raw_line.strip():
+            continue
+        row = {
+            "line": line_number,
+            "name": "",
+            "birth_date": "",
+            "birth_time": "",
+            "birth_place": "",
+            "url": "",
+            "status": "error",
+            "error": "",
+        }
+        try:
+            row.update(_post_chart_bulk_line_preview(raw_line))
+            item = _parse_post_chart_bulk_line(raw_line, line_number)
+            row.update(item)
+            row["url"] = _issue_post_sample_chart_url(request=request, item=item)
+            row["status"] = "ok"
+        except Exception as exc:
+            logger.info("post_chart_bulk_row_failed line=%s error_type=%s", line_number, type(exc).__name__)
+            row["error"] = str(exc)
+        rows.append(row)
+
+    csv_output = _build_post_chart_bulk_csv(rows)
+    return templates.TemplateResponse(
+        "post_chart_bulk_form.html",
+        _post_chart_bulk_context(request, bulk_input=bulk_input, rows=rows, csv_output=csv_output),
     )
 
 

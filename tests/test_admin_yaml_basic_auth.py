@@ -68,6 +68,80 @@ def test_admin_yaml_new_accepts_basic_auth(monkeypatch) -> None:
     assert response.template.name == "yaml_form.html"
 
 
+def test_post_chart_bulk_new_requires_basic_auth(monkeypatch) -> None:
+    monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
+    monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")
+
+    response = routes.post_chart_bulk_new(_request())
+
+    assert response.status_code == 401
+
+
+def test_post_chart_bulk_generate_issues_multiple_no_expiry_transit_urls(monkeypatch) -> None:
+    monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
+    monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")
+    build_calls: list[dict[str, object]] = []
+    saved: list[dict[str, object]] = []
+    tokens = iter(["tok-one", "tok-two"])
+
+    def fake_build_product_yaml(**kwargs):
+        build_calls.append(kwargs)
+        return (
+            "product:\n  options:\n    western_natal: true\n    transit: true\n    transit_today: true\n    transit_31days_summary: true\n",
+            "prompt text",
+            {
+                "product": {
+                    "options": {
+                        "western_natal": True,
+                        "transit": True,
+                        "transit_today": True,
+                        "transit_31days_summary": True,
+                    }
+                }
+            },
+        )
+
+    monkeypatch.setattr(routes, "build_product_yaml", fake_build_product_yaml)
+    monkeypatch.setattr(routes, "_build_chart_artifacts", lambda **_kwargs: {})
+    monkeypatch.setattr(routes.secrets, "token_urlsafe", lambda _n: next(tokens))
+    monkeypatch.setattr(routes.pg_store, "save_chart", lambda **kwargs: saved.append(kwargs))
+
+    response = routes.post_chart_bulk_generate(
+        _request(_basic_auth()),
+        bulk_input=(
+            "トヨタ自動車工業株式会社,1937-08-28,12:00,愛知県 豊田市\n"
+            "\n"
+            "日付不正,1982/06/08,,広島県 広島市\n"
+            "カンマ不足,2020-01-01\n"
+            "ハイエレコン,1982-06-08,,広島県 広島市\n"
+        ),
+    )
+
+    assert response.status_code == 200
+    assert response.template.name == "post_chart_bulk_form.html"
+    rows = response.context["rows"]
+    assert len(rows) == 4
+    assert [row["status"] for row in rows] == ["ok", "error", "error", "ok"]
+    assert rows[0]["url"] == "https://chart.nanami-astro.com/chart/tok-one"
+    assert rows[1]["error"] == "生年月日はYYYY-MM-DDで入力してください。"
+    assert rows[2]["error"] == "カンマ区切りで 名前,生年月日,出生時間,出生地 を入力してください。"
+    assert rows[3]["birth_time"] == "12:00"
+    assert rows[3]["url"] == "https://chart.nanami-astro.com/chart/tok-two"
+    assert len(build_calls) == 2
+    assert all(call["include_transit"] is True for call in build_calls)
+    assert len(saved) == 2
+    assert all(item["expires_at"] is None for item in saved)
+    assert all(item["options"]["expires_policy"] == routes.NO_EXPIRY_CHART_POLICY for item in saved)
+    assert all(item["options"]["url_purpose"] == "post_sample" for item in saved)
+    assert all(item["options"]["transit"] is True for item in saved)
+    assert all(item["options"]["transit_today"] is True for item in saved)
+    assert all(item["options"]["transit_31days_summary"] is True for item in saved)
+    assert saved[1]["birth_time"] == "12:00"
+    assert "line,name,birth_date,birth_time,birth_place,url,status,error" in response.context["csv_output"]
+    assert "3,日付不正,1982/06/08,,広島県 広島市,,error,生年月日はYYYY-MM-DDで入力してください。" in response.context["csv_output"]
+    assert "4,,,,,,error,\"カンマ区切りで 名前,生年月日,出生時間,出生地 を入力してください。\"" in response.context["csv_output"]
+
+
 def test_admin_yaml_generate_accepts_basic_auth(monkeypatch) -> None:
     monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
     monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")

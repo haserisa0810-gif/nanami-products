@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>投稿用サンプルURL一括登録</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+</head>
+<body>
+  <main class="wrap wide">
+    <div class="card">
+      <p class="eyebrow">nanami-products 管理画面</p>
+      <h1>投稿用サンプルURL一括登録</h1>
+      <p class="lead">1行につき1件、名前・生年月日・出生時間・出生地をCSV形式で入力します。発行URLは有効期限なし、トランジット込みで生成されます。</p>
+
+      <section>
+        <h2>一括入力</h2>
+        <form method="post" action="/admin/post-chart/bulk-new" class="form">
+          <label>入力データ
+            <textarea name="bulk_input" rows="12" placeholder="名前,生年月日,出生時間,出生地">{{ bulk_input }}</textarea>
+            <small>形式: 名前,生年月日,出生時間,出生地 / 出生時間が空欄の場合は12:00で生成します。空行は無視します。</small>
+          </label>
+          <button type="submit">投稿用URLを一括発行</button>
+        </form>
+      </section>
+
+      <section>
+        <h2>サンプル入力例</h2>
+        <textarea readonly rows="4">{{ sample_input }}</textarea>
+      </section>
+
+      {% if rows %}
+      <section>
+        <h2>発行結果</h2>
+        <div class="table-scroll">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>行</th>
+                <th>名前</th>
+                <th>生年月日</th>
+                <th>出生時間</th>
+                <th>出生地</th>
+                <th>発行URL</th>
+                <th>ステータス</th>
+                <th>エラー内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <td>{{ row.line }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.birth_date }}</td>
+                <td>{{ row.birth_time }}</td>
+                <td>{{ row.birth_place }}</td>
+                <td>{% if row.url %}<a href="{{ row.url }}" target="_blank" rel="noopener">{{ row.url }}</a>{% endif %}</td>
+                <td>{{ row.status }}</td>
+                <td>{{ row.error }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>CSVコピー用</h2>
+        <textarea id="bulk-csv" readonly rows="8">{{ csv_output }}</textarea>
+        <button type="button" onclick="copyBulkCsv()">CSVをコピー</button>
+      </section>
+      {% endif %}
+
+      <section>
+        <div class="links">
+          <a href="/admin/yaml/new">単体URL発行へ</a>
+          <a href="/admin/post-chart/new">投稿用SVG生成へ</a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script>
+    async function copyBulkCsv() {
+      const textarea = document.getElementById('bulk-csv');
+      if (!textarea) return;
+      await navigator.clipboard.writeText(textarea.value);
+      alert('コピーしました');
+    }
+  </script>
+</body>
+</html>
