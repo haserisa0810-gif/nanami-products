@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 import yaml
@@ -133,6 +134,20 @@ def test_get_travel_form(client_with_mem_db):
     response = client.get("/travel")
     assert response.status_code == 200
     assert "次の旅行先" in response.text
+
+
+def test_travel_form_reuses_geocode_api_and_updates_location_fields():
+    template = Path("templates/travel_form.html").read_text(encoding="utf-8")
+
+    assert 'id="location-search-button"' in template
+    assert "fetch('/api/geocode?q=' + encodeURIComponent(query)" in template
+    assert "nameInput.value = displayName" in template
+    assert "countryInput.value = countryFromDisplayName(displayName)" in template
+    assert "latInput.value = lat" in template
+    assert "lonInput.value = lon" in template
+    assert "map.setView([lat, lon]" in template
+    assert "map.on('click'" in template
+    assert "地名検索に失敗しました。時間をおいて再度お試しください。" in template
 
 
 def test_post_invalid_dates_returns_form_error(client_with_mem_db):

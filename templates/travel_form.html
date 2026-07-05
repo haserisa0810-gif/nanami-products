@@ -15,6 +15,11 @@
     .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .map-hint { font-size: .82rem; opacity: .8; margin: 2px 0 0; }
+    .location-search-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+    .location-search-row button { width: auto; white-space: nowrap; margin-top: 0; padding: 11px 16px; }
+    .location-search-status { font-size: .82rem; opacity: .82; margin: 6px 0 0; min-height: 1.4em; }
+    .location-search-results { display: grid; gap: 6px; margin: 8px 0 0; }
+    .location-search-results button { width: 100%; text-align: left; margin: 0; border: 1px solid rgba(180,155,100,.2); background: rgba(255,255,255,.04); color: inherit; font-weight: 400; letter-spacing: 0; }
     textarea, input, button { max-width: 100%; }
     /* PC（幅広）ではカード幅を広げ、入力欄と地図を2カラムでゆったり見せる。
        スマホ（〜899px）は縦積み・幅100%を維持。 */
@@ -51,11 +56,18 @@
         </div>
 
         <div class="col-right">
-        <label>都市名
-          <input type="text" name="location_name" value="{{ form.location_name if form else '' }}" placeholder="例：Barcelona / バルセロナ" required>
-        </label>
+        <div>
+          <label>都市名
+            <span class="location-search-row">
+              <input type="text" id="location-name" name="location_name" value="{{ form.location_name if form else '' }}" placeholder="例：Barcelona / バルセロナ" required>
+              <button type="button" id="location-search-button">地名検索</button>
+            </span>
+          </label>
+          <p class="location-search-status" id="location-search-status" aria-live="polite"></p>
+          <div class="location-search-results" id="location-search-results"></div>
+        </div>
         <label>国名（任意）
-          <input type="text" name="country" value="{{ form.country if form else '' }}" placeholder="例：Spain">
+          <input type="text" id="country" name="country" value="{{ form.country if form else '' }}" placeholder="例：Spain">
         </label>
         <div class="coord-row">
           <label>緯度
@@ -98,6 +110,11 @@
       try {
         var latInput = document.getElementById('latitude');
         var lonInput = document.getElementById('longitude');
+        var nameInput = document.getElementById('location-name');
+        var countryInput = document.getElementById('country');
+        var searchButton = document.getElementById('location-search-button');
+        var searchStatus = document.getElementById('location-search-status');
+        var searchResults = document.getElementById('location-search-results');
         var startLat = parseFloat(latInput.value) || 35.68;
         var startLon = parseFloat(lonInput.value) || 139.69;
         var map = L.map('travel-map', { worldCopyJump: true }).setView([startLat, startLon], (latInput.value ? 6 : 2));
@@ -121,6 +138,73 @@
           lonInput.value = lon;
           if (marker) { marker.setLatLng([lat, lon]); } else { marker = L.marker([lat, lon]).addTo(map); }
         });
+        var setSearchStatus = function (message) {
+          if (searchStatus) { searchStatus.textContent = message || ''; }
+        };
+        var clearSearchResults = function () {
+          if (searchResults) { searchResults.innerHTML = ''; }
+        };
+        var countryFromDisplayName = function (displayName) {
+          var parts = String(displayName || '').split(',').map(function (part) { return part.trim(); }).filter(Boolean);
+          return parts.length ? parts[parts.length - 1] : '';
+        };
+        var applySearchResult = function (item) {
+          var lat = Math.round(clampLat(Number(item.latitude)) * 1e6) / 1e6;
+          var lon = Math.round(wrapLon(Number(item.longitude)) * 1e6) / 1e6;
+          var displayName = item.display_name || item.name || '';
+          if (nameInput) { nameInput.value = displayName; }
+          if (countryInput && !countryInput.value) { countryInput.value = countryFromDisplayName(displayName); }
+          latInput.value = lat;
+          lonInput.value = lon;
+          if (marker) { marker.setLatLng([lat, lon]); } else { marker = L.marker([lat, lon]).addTo(map); }
+          map.setView([lat, lon], Math.max(map.getZoom(), 8));
+          setSearchStatus('');
+        };
+        var renderSearchResults = function (items) {
+          clearSearchResults();
+          if (!items.length) {
+            setSearchStatus('地点が見つかりませんでした');
+            return;
+          }
+          setSearchStatus('検索結果');
+          items.forEach(function (item) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = item.display_name || item.name || '名称なし';
+            button.addEventListener('click', function () { applySearchResult(item); });
+            searchResults.appendChild(button);
+          });
+        };
+        var searchLocation = async function () {
+          var query = nameInput ? nameInput.value.trim() : '';
+          if (!query) {
+            setSearchStatus('検索する地名を入力してください');
+            clearSearchResults();
+            return;
+          }
+          setSearchStatus('検索中…');
+          clearSearchResults();
+          try {
+            var response = await fetch('/api/geocode?q=' + encodeURIComponent(query), { headers: { 'Accept': 'application/json' } });
+            var payload = await response.json();
+            if (!response.ok) {
+              throw new Error(payload && payload.error ? payload.error : 'geocode failed');
+            }
+            renderSearchResults(Array.isArray(payload.results) ? payload.results : []);
+          } catch (err) {
+            setSearchStatus('地名検索に失敗しました。時間をおいて再度お試しください。');
+            clearSearchResults();
+          }
+        };
+        if (searchButton) { searchButton.addEventListener('click', searchLocation); }
+        if (nameInput) {
+          nameInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              searchLocation();
+            }
+          });
+        }
         // コンテナ幅が確定してからサイズを再計算（2カラム化で幅が変わり、
         // タイルが欠けて右側にグレー余白が出るのを防ぐ）。
         var fixSize = function () { map.invalidateSize(); };
