@@ -383,7 +383,7 @@ async def mcp_endpoint(request: Request):
 
 @app.get("/favicon.ico")
 def favicon():
-    return Response(status_code=204)
+    return RedirectResponse("/static/favicon.svg", status_code=307)
 
 
 @app.middleware("http")

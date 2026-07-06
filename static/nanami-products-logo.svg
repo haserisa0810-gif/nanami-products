@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">nanami-products logo</title>
+  <desc id="desc">Dark navy square logo with a gold eight-point star, a thin ring, and twelve small outer stars.</desc>
+  <defs>
+    <linearGradient id="gold" x1="128" y1="96" x2="384" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F3D98A"/>
+      <stop offset="0.52" stop-color="#C9A15A"/>
+      <stop offset="1" stop-color="#8D6A2F"/>
+    </linearGradient>
+    <radialGradient id="navy" cx="50%" cy="36%" r="70%">
+      <stop offset="0" stop-color="#18213A"/>
+      <stop offset="0.62" stop-color="#0E1426"/>
+      <stop offset="1" stop-color="#070B15"/>
+    </radialGradient>
+    <symbol id="outer-star" viewBox="0 0 18 18">
+      <path d="M9 0.8 L11.2 6.8 L17.2 9 L11.2 11.2 L9 17.2 L6.8 11.2 L0.8 9 L6.8 6.8 Z"/>
+    </symbol>
+  </defs>
+
+  <rect width="512" height="512" rx="72" fill="url(#navy)"/>
+
+  <circle cx="256" cy="256" r="186" fill="none" stroke="#C9A15A" stroke-width="8" opacity="0.88"/>
+  <circle cx="256" cy="256" r="134" fill="none" stroke="#C9A15A" stroke-width="3" opacity="0.42"/>
+
+  <g fill="url(#gold)">
+    <g transform="translate(256 256)">
+      <g transform="rotate(0)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(30)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(60)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(90)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(120)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(150)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(180)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(210)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(240)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(270)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(300)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+      <g transform="rotate(330)"><use href="#outer-star" x="-9" y="-211" width="18" height="18"/></g>
+    </g>
+  </g>
+
+  <path
+    d="M256 104 L283 216 L360 152 L296 229 L408 256 L296 283 L360 360 L283 296 L256 408 L229 296 L152 360 L216 283 L104 256 L216 229 L152 152 L229 216 Z"
+    fill="url(#gold)"/>
+  <path
+    d="M256 151 L276 230 L361 256 L276 282 L256 361 L236 282 L151 256 L236 230 Z"
+    fill="#0E1426" opacity="0.86"/>
+  <circle cx="256" cy="256" r="25" fill="url(#gold)"/>
+  <circle cx="256" cy="256" r="9" fill="#0E1426"/>
+</svg>

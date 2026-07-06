@@ -140,6 +140,19 @@
   .ai-card li::before{content:"禁";position:absolute;left:0;top:0;font-size:11px;color:var(--shu)}
   .ai-card.kaidan{background:rgba(35,43,51,.25)}
   .ai-card.kaidan p{font-size:14px;color:var(--washi)}
+  .ai-card.henshubu{background:rgba(138,116,67,.06);border-color:rgba(138,116,67,.4)}
+  .ai-card.henshubu .fuda{color:var(--kin)}
+  .ai-card.henshubu p{font-size:13px;color:var(--washi-dim);line-height:2.05}
+  .ai-status{font-size:12px;color:var(--washi-dim);letter-spacing:.15em;text-align:center;margin-top:12px;min-height:1.5em}
+  .reikan-head{display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+  .reikan-num{display:flex;align-items:baseline;gap:6px;flex:none}
+  .reikan-num .val{font-size:60px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--shu);text-shadow:0 0 26px rgba(168,35,43,.3)}
+  .reikan-num .pct{font-size:16px;color:var(--washi-dim)}
+  .reikan-types{display:flex;flex-wrap:wrap;gap:8px;flex:1;min-width:120px}
+  .reikan-types span{
+    font-size:13px;letter-spacing:.18em;color:var(--washi);
+    border:1px solid var(--kin);border-radius:2px;padding:6px 12px;background:rgba(138,116,67,.08);
+  }
   .ai-status{font-size:12px;color:var(--washi-dim);letter-spacing:.15em;text-align:center;margin-top:12px;min-height:1.5em}
 
   .loc-row{display:flex;gap:10px;align-items:center;margin-top:26px;flex-wrap:wrap}
@@ -160,6 +173,10 @@
     .koku{font-size:13px}
   }
 </style>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<meta name="theme-color" content="#0A1128">
 </head>
 <body>
 <div class="wrap">
@@ -224,6 +241,26 @@
     <h2>占術YAML</h2>
     <textarea class="yaml-box" id="astroYaml" spellcheck="false" placeholder="nanami-astroのネイタルYAML、トランジットYAML、ACG地点レポートYAMLを貼る"></textarea>
     <p class="yaml-meta" id="yamlMeta">貼り付けると、月・海王星・冥王星・ASC・IC・12ハウス・ACGライン概要を拾える範囲で反映する。</p>
+  </section>
+
+  <section>
+    <h2>霊感指数</h2>
+    <button class="kansoku-btn" id="reikanBtn" disabled>霊感ヲ読ミ解ク</button>
+    <div class="ai-status" id="reikanStatus">ネイタルYAMLを貼ると読み解ける</div>
+    <div class="ai-block" id="reikanBlock">
+      <div class="reikan-head">
+        <div class="reikan-num"><span class="val" id="reikanVal">--</span><span class="pct">／100</span></div>
+        <div class="reikan-types" id="reikanTypes"></div>
+      </div>
+      <div class="ai-card">
+        <span class="fuda">読ミ解キ</span>
+        <p id="reikanYomi"></p>
+      </div>
+      <div class="ai-card henshubu">
+        <span class="fuda">AI編集部ヨリ</span>
+        <p id="reikanHenshu"></p>
+      </div>
+    </div>
   </section>
 
   <section>
@@ -671,10 +708,118 @@ ${personalSection}
   }
   $("kansokuBtn").addEventListener("click", kansoku);
 
+  // ───────── 霊感指数（ネイタルYAMLをClaudeが読み解く） ─────────
+  const reikanLoading = ["星ノ配置ヲ読ンデイル…","感受性ヲ量ッテイル…","筆ヲ執ッテイル…"];
+  let reikanTimer = null;
+
+  function buildReikanPrompt(yamlText){
+    return `あなたは西洋占星術の鑑定者です。以下は nanami-astro が計算したネイタルホロスコープのYAMLです。これを根拠に「霊感指数」をエンターテインメントとして読み解いてください。
+
+# 厳守事項
+- YAMLに書かれた天体位置を再計算しない。YAML以外の占星術情報を使わない。
+- 「霊が見える」「超能力がある」と断定しない。これは超能力ではなく、神秘的・夜的なものへの感受性の指数である。
+- 怖がらせない。運命・危険・不幸を断定しない。
+- ホロスコープの象徴のみを根拠にする。
+
+# 指数の配点（合計100。各要素をYAMLの象徴から評価し、加算して整数で出す）
+- 月（配置・状態）: 0〜25
+- 海王星（配置・アスペクト）: 0〜20
+- 冥王星: 0〜15
+- 12ハウス: 0〜15
+- IC: 0〜10
+- ASC: 0〜10
+- 主要アスペクト・エレメントバランス（水・水的要素の多寡）: 0〜5
+再現性のため、YAMLから読み取れる象徴に素直に配点すること。
+
+# 霊感タイプ（下記から1〜2個選ぶ）
+夢見型 / 直感型 / 気配察知型 / 土地共鳴型 / 物語没入型 / 静観型 / 境界探求型 / 月夜型 / 幻想型
+
+# AI編集部より（henshu）に必ず含める趣旨
+- この結果はホロスコープの象徴をAIがエンタメとして読み解いたものであること。
+- 霊感や超常現象の存在を証明・保証しない。感じ方は環境・文化・経験・信じるもので大きく変わる。
+- 【引き止め】指数が高いなら「感じやすいので、わざわざ心霊スポットへ出向かなくても十分」。低いなら「騒がしい場所に引きずられない資質。無理に確かめに行かなくていい」。どちらでも今夜は家にいるのが一番、と穏やかに伝える。
+- 【それでも行くなら】塩を一つまみとお守りを持ち、このアプリの「祓イノ音（4096Hz）」を鳴らしながら歩くこと、と装備を持たせる。
+- 温かい飲み物を片手に家で過ごす夜も、とても良い夜だと締める。
+- 説教にならず、遊び心のある静かなトーンで。
+
+# ネイタルYAML
+${yamlText.slice(0, 6000)}
+
+# 出力形式
+以下のJSONのみを出力。Markdownのコードブロック記号や前置きは一切不要。
+{
+  "index": 整数0〜100,
+  "types": ["タイプ1", "タイプ2（任意）"],
+  "yomi": "300〜600字。なぜその指数になったかをホロスコープの象徴を根拠に説明する。幻想的で静かな文章。怖がらせない。",
+  "henshu": "AI編集部よりの注釈。上記の趣旨を自然に織り込む。200〜300字。"
+}`;
+  }
+
+  async function reikan(){
+    const yamlText = $("astroYaml").value.trim();
+    if (!yamlText) return;
+    const btn = $("reikanBtn");
+    btn.disabled = true;
+    let i = 0;
+    $("reikanStatus").textContent = reikanLoading[0];
+    reikanTimer = setInterval(() => { $("reikanStatus").textContent = reikanLoading[++i % reikanLoading.length]; }, 2500);
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1500,
+          messages: [{ role: "user", content: buildReikanPrompt(yamlText) }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content
+        .filter(b => b.type === "text")
+        .map(b => b.text).join("\n")
+        .replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(text);
+
+      $("reikanVal").textContent = Math.max(0, Math.min(100, parseInt(parsed.index, 10) || 0));
+      const tw = $("reikanTypes");
+      tw.innerHTML = "";
+      (parsed.types || []).slice(0,2).forEach(t => {
+        const s = document.createElement("span");
+        s.textContent = t;
+        tw.appendChild(s);
+      });
+      $("reikanYomi").textContent = parsed.yomi || "";
+      $("reikanHenshu").textContent = parsed.henshu || "";
+      $("reikanBlock").classList.add("show");
+      $("reikanStatus").textContent = "※占星術の象徴をAIがエンタメとして読み解いたものです";
+    } catch (err) {
+      $("reikanStatus").textContent = "読み解きに失敗した。YAMLを確認して、もう一度試すこと。";
+      console.error(err);
+    } finally {
+      clearInterval(reikanTimer);
+      btn.disabled = false;
+      btn.textContent = "再ビ読ミ解ク";
+    }
+  }
+  $("reikanBtn").addEventListener("click", reikan);
+
+  function refreshReikanBtn(){
+    const has = $("astroYaml").value.trim().length > 0;
+    const btn = $("reikanBtn");
+    btn.disabled = !has;
+    if (!has){
+      $("reikanStatus").textContent = "ネイタルYAMLを貼ると読み解ける";
+    } else if ($("reikanStatus").textContent === "ネイタルYAMLを貼ると読み解ける"){
+      $("reikanStatus").textContent = "";
+    }
+  }
+
   $("astroYaml").addEventListener("input", e => {
     astroParsed = parseAstroYaml(e.target.value);
     personalContext = buildPersonalKaiiContext(astroParsed);
     renderPersonalContext();
+    refreshReikanBtn();
     if (lastState) lastState.personalContext = personalContext;
   });
 

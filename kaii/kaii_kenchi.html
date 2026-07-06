@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KAII SCANNER — A Statistically Honest Ghost Detector</title>
+<title>怪異検知盤 — 統計的に正直なおばけ探知機</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -38,7 +38,7 @@ header{
   padding-bottom:14px;margin-bottom:26px;
 }
 .title-block h1{
-  font-size:24px;font-weight:800;letter-spacing:.3em;line-height:1.25;
+  font-size:26px;font-weight:800;letter-spacing:.35em;line-height:1;
 }
 .title-block .sub{
   margin-top:8px;font-size:11px;letter-spacing:.18em;color:var(--washi-dim);
@@ -154,11 +154,11 @@ footer{
 
 <header>
   <div class="title-block">
-    <h1>KAII<br>SCANNER</h1>
-    <div class="sub">怪異検知盤 — A STATISTICALLY HONEST GHOST DETECTOR</div>
+    <h1>怪異検知盤</h1>
+    <div class="sub">統計的に正直な、おばけ探知機</div>
   </div>
   <div class="clock">
-    CURRENT TIME<br><b id="now" class="mono">--:--:--</b>
+    現在時刻<br><b id="now" class="mono">--:--:--</b>
   </div>
 </header>
 
@@ -166,9 +166,9 @@ footer{
   <div class="ring"></div>
   <div class="ring r2"></div>
   <div class="ring r3"></div>
-  <button id="scanBtn" aria-label="Scan for anomalies">SCAN</button>
+  <button id="scanBtn" aria-label="怪異を検知する">検知</button>
 </div>
-<div class="stream mono" id="stream" aria-live="polite">Press to test 65,536 bits of randomness</div>
+<div class="stream mono" id="stream" aria-live="polite">釦を押すと、乱数六万五千五百三十六bitを検定します</div>
 
 <div class="card" id="card" role="status">
   <div class="seal" id="seal" aria-hidden="true">検</div>
@@ -181,13 +181,13 @@ footer{
 </div>
 
 <div class="log-wrap">
-  <h2>SCAN LOG</h2>
+  <h2>検知記録</h2>
   <ul id="log"></ul>
-  <div class="log-empty" id="logEmpty">No scans recorded yet.</div>
+  <div class="log-empty" id="logEmpty">記録はまだありません。</div>
 </div>
 
 <footer>
-  This device draws 65,536 bits from your device’s cryptographic random number generator (CSPRNG) and evaluates the proportion of 1s with a two-sided binomial test. The idea of treating RNG bias as an “anomaly” comes from commercial ghost-hunting gadgets and past research projects on randomness and consciousness (PEAR at Princeton, the Global Consciousness Project). There is no established scientific evidence that spirits influence random numbers. A small p-value WILL appear by pure chance if you keep pressing the button. Entertainment only — enjoy responsibly.
+  本器はこの端末の暗号論的乱数生成器（CSPRNG）から 65,536 bit を取得し、1 の出現率を二項検定（両側）で評価します。乱数発生器の偏りを「異常」として観測する発想は、市販の妖怪検知器や、乱数と意識の関係を扱った過去の研究プロジェクト（PEAR、Global Consciousness Project 等）に由来しますが、幽霊が乱数に干渉するという科学的根拠は確認されていません。p 値が小さい結果も、押した回数が増えれば必ず偶然に現れます。判定結果は娯楽としてお楽しみください。
 </footer>
 
 <script>
@@ -232,14 +232,14 @@ footer{
 
   function verdictOf(p){
     if(p<0.01) return {cls:"dev", tag:"v-dev", ofuda:"偏 り", seal:"偏",
-      line:"Significant bias detected — 偏り. But stay calm.",
-      honest:"A p<0.01 result appears by pure chance about once every hundred presses. Scan again in the same spot. If it doesn’t replicate, it was just probability."};
+      line:"有意な偏りを検知しました。ただし、落ち着いてください。",
+      honest:"p<0.01 の偏りは、百回押せばおよそ一回は偶然にも現れます。まずは同じ場所で再検知を。再現しなければ、それはただの確率です。"};
     if(p<0.05) return {cls:"mild", tag:"v-mild", ofuda:"微 弱", seal:"微",
-      line:"A faint bias — 微弱 — is present.",
-      honest:"Bias at this level shows up about once in twenty scans, even in a perfectly empty room. Statistically, nothing to worry about."};
+      line:"わずかな偏りがあります。",
+      honest:"この程度の偏りは、およそ二十回に一回、何もない場所でも現れます。統計的には気にする水準ではありません。"};
     return {cls:"ok", tag:"v-ok", ofuda:"異常なし", seal:"無",
-      line:"Within pure chance — 異常なし. The only one here is you.",
-      honest:"The random bits are scattered exactly as expected. For tonight, at least."};
+      line:"偶然の範囲です。ここに居るのは、あなただけです。",
+      honest:"乱数は期待どおりに散っています。今夜のところは。"};
   }
 
   function addLog(time,p,v){
@@ -263,20 +263,20 @@ footer{
     card.className="card";
     $("scanner").classList.add("busy");
     const t0=Date.now(), dur=reduced?400:2400;
-    const iv=setInterval(()=>{ stream.textContent="TESTING  "+noiseLine(); },80);
+    const iv=setInterval(()=>{ stream.textContent="検定中  "+noiseLine(); },80);
 
     setTimeout(()=>{
       clearInterval(iv);
       $("scanner").classList.remove("busy");
       const r=judge(), v=verdictOf(r.p);
-      stream.textContent="TEST COMPLETE";
+      stream.textContent="検定終了";
       card.className="card show "+v.cls;
       $("ofuda").textContent=v.ofuda;
       $("seal").textContent=v.seal;
       $("verdict").textContent=v.line;
       $("stats").innerHTML=
-        "Sample&nbsp;<b>"+N_BITS.toLocaleString()+"</b>&nbsp;bits &middot; ones&nbsp;<b>"+r.ones.toLocaleString()+"</b>"+
-        "<br>expected&nbsp;"+(N_BITS/2).toLocaleString()+" &middot; z = <b>"+r.z.toFixed(2)+"</b> &middot; p = <b>"+r.p.toFixed(4)+"</b>";
+        "標本&nbsp;<b>"+N_BITS.toLocaleString()+"</b>&nbsp;bit ／ 1の出現&nbsp;<b>"+r.ones.toLocaleString()+"</b>"+
+        "<br>期待値&nbsp;"+(N_BITS/2).toLocaleString()+" ／ z = <b>"+r.z.toFixed(2)+"</b> ／ p = <b>"+r.p.toFixed(4)+"</b>";
       $("honest").textContent=v.honest;
       const d=new Date();
       addLog([d.getHours(),d.getMinutes()].map(x=>String(x).padStart(2,"0")).join(":"), r.p, v);

@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>星の和音 — 出生図ソニフィケーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sora:#0E1220;       /* 宙 */
+  --fukai:#080B14;      /* 深い */
+  --hoshi:#EAE4D3;      /* 星明かり */
+  --kasumi:#8E8A7C;     /* 霞 */
+  --kin:#C9A15A;        /* 真鍮 */
+  --rin:#8FB8C9;        /* 燐光（協和） */
+  --shu:#C05248;        /* 朱（不協和） */
+  --line:rgba(234,228,211,.14);
+  --surface:rgba(14,18,32,.76);
+  --surface-strong:rgba(20,27,45,.88);
+  --radius:18px;
+  --shadow:0 18px 60px rgba(0,0,0,.34);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  position:relative;
+  overflow-x:hidden;
+  background:
+    radial-gradient(circle at 50% -8%, rgba(201,161,90,.16), transparent 32%),
+    radial-gradient(circle at 85% 12%, rgba(143,184,201,.12), transparent 30%),
+    radial-gradient(130% 80% at 50% -20%, #182036 0%, var(--sora) 55%, var(--fukai) 100%);
+  color:var(--hoshi);
+  font-family:"Shippori Mincho",serif;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:max(24px, env(safe-area-inset-top)) 16px 64px;
+  text-rendering:optimizeLegibility;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    radial-gradient(circle, rgba(234,228,211,.28) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(201,161,90,.18) 0 1px, transparent 1.7px);
+  background-size:72px 72px,118px 118px;
+  background-position:12px 18px,54px 36px;
+  opacity:.42;
+  mask-image:linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 45%, transparent 100%);
+}
+body::after{
+  content:"";
+  position:fixed;
+  inset:auto -20% -25% -20%;
+  height:42vh;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center, rgba(201,161,90,.12), transparent 62%);
+  filter:blur(10px);
+}
+body > *{
+  position:relative;
+  z-index:1;
+}
+.mono{font-family:"IBM Plex Mono",monospace}
+header{
+  width:100%;max-width:600px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 18px 16px;
+  margin-bottom:20px;
+  background:linear-gradient(180deg,rgba(234,228,211,.045),rgba(234,228,211,.015));
+  box-shadow:var(--shadow);
+  display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+}
+h1{font-size:clamp(24px,6.8vw,34px);font-weight:800;letter-spacing:.24em;line-height:1.15}
+.sub{font-size:12.5px;color:var(--kasumi);letter-spacing:.12em;margin-top:10px;line-height:1.6}
+.badge{font-size:11.5px;color:var(--kin);border:1px solid rgba(201,161,90,.58);border-radius:999px;padding:5px 10px;letter-spacing:.18em;white-space:nowrap;background:rgba(201,161,90,.08)}
+
+/* ── 円環 ── */
+.wheel-wrap{
+  width:100%;max-width:600px;
+  display:flex;justify-content:center;
+  margin-bottom:12px;
+  padding:14px 10px 8px;
+}
+svg{width:min(92vw,420px);height:auto;display:block}
+.zring{fill:none;stroke:var(--line);stroke-width:1}
+.tick{stroke:var(--line);stroke-width:1}
+.planet-dot{cursor:pointer}
+.planet-dot circle{fill:#1A2233;stroke:var(--kasumi);stroke-width:1;transition:fill .18s ease,stroke .18s ease,filter .18s ease,transform .18s ease}
+.planet-dot text{fill:var(--hoshi);font-size:15px;text-anchor:middle;dominant-baseline:central;pointer-events:none;font-family:"Shippori Mincho",serif}
+.planet-dot.on circle{fill:#2A3550;stroke:var(--kin);filter:drop-shadow(0 0 6px rgba(201,161,90,.5))}
+.planet-dot:hover circle,.planet-dot:focus-visible circle{stroke:var(--kin);filter:drop-shadow(0 0 8px rgba(201,161,90,.44))}
+.aline{stroke-width:1;opacity:.55}
+.aline.c{stroke:var(--rin)} .aline.d{stroke:var(--shu)}
+
+/* ── 操作 ── */
+.controls{width:100%;max-width:600px;display:flex;gap:12px;margin:6px 0 16px}
+button{
+  font-family:"Shippori Mincho",serif;letter-spacing:.14em;font-weight:600;
+  background:linear-gradient(180deg,#242E45,#151C2D);
+  color:var(--hoshi);border:1px solid rgba(234,228,211,.22);
+  border-radius:12px;
+  padding:13px 16px;flex:1;font-size:15px;line-height:1.25;cursor:pointer;
+  box-shadow:0 10px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.04);
+  -webkit-tap-highlight-color:transparent;transition:transform .12s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+button:hover{border-color:rgba(201,161,90,.48);background:linear-gradient(180deg,#293550,#171F33)}
+button:active{transform:scale(.98)}
+button:disabled{
+  cursor:not-allowed;
+  opacity:.45;
+  transform:none;
+  box-shadow:none;
+}
+button:disabled:hover{border-color:rgba(234,228,211,.22);background:linear-gradient(180deg,#242E45,#151C2D)}
+button:focus-visible{outline:2px solid var(--kin);outline-offset:2px}
+button.gold{border-color:rgba(201,161,90,.8);color:var(--kin);background:linear-gradient(180deg,rgba(201,161,90,.18),rgba(201,161,90,.06))}
+.timbre-panel{
+  width:100%;max-width:600px;
+  display:flex;align-items:center;gap:12px;
+  margin:-2px 0 16px;
+  padding:10px;
+  border:1px solid rgba(234,228,211,.12);
+  border-radius:14px;
+  background:rgba(8,11,20,.34);
+}
+.timbre-label{
+  flex:0 0 auto;
+  color:var(--kasumi);
+  font-size:12px;
+  letter-spacing:.2em;
+}
+.timbre-options{
+  flex:1;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+}
+.timbre-options button{
+  min-width:0;
+  padding:9px 8px;
+  font-size:12px;
+  letter-spacing:.08em;
+  border-radius:10px;
+  box-shadow:none;
+}
+.timbre-options button.active{
+  color:var(--kin);
+  border-color:rgba(201,161,90,.78);
+  background:linear-gradient(180deg,rgba(201,161,90,.2),rgba(201,161,90,.07));
+}
+.timbre-options button:disabled{
+  color:rgba(234,228,211,.42);
+  border-color:rgba(234,228,211,.1);
+  background:rgba(8,11,20,.42);
+}
+.timbre-options button.active:disabled{
+  color:rgba(201,161,90,.72);
+  border-color:rgba(201,161,90,.32);
+  background:rgba(201,161,90,.08);
+}
+.volume-panel{
+  width:100%;max-width:600px;
+  display:flex;align-items:center;gap:12px;
+  margin:-8px 0 18px;
+  padding:0 4px;
+}
+.volume-panel label{
+  color:var(--kasumi);
+  font-size:12px;
+  letter-spacing:.2em;
+  white-space:nowrap;
+}
+.volume-panel input{
+  flex:1;
+  min-width:0;
+  accent-color:var(--kin);
+}
+.volume-value{
+  width:42px;
+  color:var(--kin);
+  font-size:12px;
+  text-align:right;
+}
+.hint{width:100%;max-width:600px;font-size:13px;color:var(--kasumi);letter-spacing:.04em;line-height:1.85;margin-bottom:20px;text-align:center}
+
+/* ── 区画 ── */
+section{
+  width:100%;max-width:600px;
+  margin-bottom:18px;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--surface-strong),var(--surface));
+  box-shadow:0 14px 42px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter:blur(8px);
+}
+h2{font-size:13px;letter-spacing:.24em;color:var(--kin);font-weight:600;
+  border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px;line-height:1.7}
+
+/* 不協和度 */
+.dscore{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.dscore .num{font-size:42px;font-weight:600;color:var(--kin);line-height:1}
+.dscore .lbl{font-size:12.5px;color:var(--kasumi);letter-spacing:.1em}
+.dbar{height:7px;background:rgba(234,228,211,.08);border-radius:999px;margin-bottom:14px;position:relative;overflow:hidden}
+.dbar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--rin),var(--kin),var(--shu));width:0%;transition:width .6s ease}
+.pairs{list-style:none}
+.pairs li{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:15px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.pairs .nm{letter-spacing:.1em}
+.pairs .asp{font-size:12.5px;color:var(--kasumi)}
+.pairs .val{color:var(--shu)}
+.pairs button{flex:0 0 auto;padding:8px 14px;font-size:13px;letter-spacing:.12em;min-width:64px}
+
+/* アスペクト表 */
+.asp-list{list-style:none}
+.asp-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:15px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.asp-list .ratio{font-size:12.5px;color:var(--kasumi)}
+.asp-list button{flex:0 0 auto;padding:8px 14px;font-size:13px;letter-spacing:.12em;min-width:64px}
+.tag{font-size:12px;padding:3px 7px;border:1px solid var(--line);border-radius:999px;color:var(--kasumi);letter-spacing:.08em;white-space:nowrap}
+.tag.c{color:var(--rin);border-color:rgba(143,184,201,.5)}
+.tag.d{color:var(--shu);border-color:rgba(192,82,72,.5)}
+
+/* 入力 */
+details{border:0;padding:0}
+summary{cursor:pointer;font-size:14px;letter-spacing:.18em;color:var(--kin);padding:2px 0 14px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:var(--kin)}
+details[open] summary::before{content:"▾ "}
+.inrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line)}
+.inrow label{font-size:15px;letter-spacing:.15em}
+.inrow input{
+  width:118px;background:#0B0F19;border:1px solid var(--line);border-radius:10px;color:var(--hoshi);
+  font-family:"IBM Plex Mono",monospace;font-size:16px;padding:10px 11px;text-align:right;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.inrow input:hover,textarea:hover{border-color:rgba(234,228,211,.28)}
+.inrow input:focus-visible{outline:2px solid var(--kin);outline-offset:1px}
+.inrow .hz{font-size:12px;color:var(--kasumi);width:70px;text-align:right}
+
+/* YAML 読み込み */
+textarea{
+  width:100%;min-height:160px;background:#0B0F19;border:1px solid var(--line);border-radius:12px;
+  color:var(--hoshi);font-family:"IBM Plex Mono",monospace;font-size:13px;
+  padding:12px;line-height:1.65;resize:vertical;margin:2px 0 12px;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+textarea:focus-visible{outline:2px solid var(--kin);outline-offset:1px}
+.yaml-actions{display:flex;gap:10px;margin-bottom:10px}
+.status{font-size:13.5px;line-height:1.9;letter-spacing:.05em;color:var(--kasumi);padding-bottom:12px}
+.status.ok{color:var(--rin)}
+.status.err{color:var(--shu)}
+
+footer{width:100%;max-width:600px;font-size:12.5px;line-height:2;color:var(--kasumi);
+  border-top:1px solid var(--line);padding-top:16px;margin-top:6px;letter-spacing:.04em}
+footer b{color:var(--hoshi);font-weight:600}
+
+@media (max-width:520px){
+  body{padding:max(18px, env(safe-area-inset-top)) 12px 44px}
+  header{padding:16px 14px 14px;border-radius:15px}
+  h1{letter-spacing:.2em}
+  .sub{font-size:12px}
+  .badge{font-size:11px;padding:4px 8px}
+  .wheel-wrap{padding-top:6px}
+  .controls{gap:9px}
+  button{padding:12px 10px;font-size:14px;letter-spacing:.1em;border-radius:10px}
+  .timbre-panel{align-items:flex-start;gap:8px;flex-direction:column;padding:9px}
+  .timbre-options{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .timbre-options button{font-size:12px;padding:10px 8px}
+  .volume-panel{padding:0 2px}
+  section{padding:15px;border-radius:15px}
+  .dscore{flex-direction:column;gap:5px;align-items:flex-start}
+  .dscore .num{font-size:36px}
+  .pairs li,.asp-list li{gap:7px;flex-wrap:wrap}
+  .pairs .nm,.asp-list .nm{width:100%}
+  .pairs button,.asp-list button{margin-left:auto}
+  .inrow{align-items:flex-start;flex-wrap:wrap}
+  .inrow label{width:100%}
+  .inrow input{flex:1 1 140px;width:auto;text-align:left}
+  .inrow .hz{width:auto;padding-top:11px}
+  .yaml-actions{display:block}
+  .yaml-actions button{width:100%}
+}
+</style>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="shortcut icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/favicon.svg">
+<meta name="theme-color" content="#0A1128">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>星の和音</h1>
+    <div class="sub">出生図ソニフィケーション</div>
+  </div>
+</header>
+
+<div class="wheel-wrap">
+  <svg id="wheel" viewBox="0 0 340 340" role="img" aria-label="出生図の円環。天体をタップで発音の入切"></svg>
+</div>
+
+<div class="controls">
+  <button class="gold" id="playAll">和音を鳴らす</button>
+  <button id="stopAll">止める</button>
+</div>
+<div class="timbre-panel">
+  <span class="timbre-label">音色</span>
+  <div class="timbre-options" role="radiogroup" aria-label="音色">
+    <button class="active" type="button" data-timbre="pure" role="radio" aria-checked="true">Pure / 純音</button>
+    <button type="button" data-timbre="cosmic" role="radio" aria-checked="false">Cosmic / 宇宙</button>
+    <button type="button" data-timbre="bell" role="radio" aria-checked="false">Bell / 鐘</button>
+    <button type="button" data-timbre="deep" role="radio" aria-checked="false">Deep / 深音</button>
+  </div>
+</div>
+<div class="volume-panel">
+  <label for="volumeControl">音量</label>
+  <input id="volumeControl" type="range" min="0" max="100" value="70" aria-label="音量">
+  <span class="volume-value mono" id="volumeValue">70%</span>
+</div>
+<div class="hint">円環の天体をタップすると、その星を和音に入れたり外したりできます。<br>黄経 λ を音高 220Hz × 2<sup>λ/360</sup> に写像しています。</div>
+
+<section>
+  <h2>不協和度（Plomp–Levelt）</h2>
+  <div class="dscore"><span class="num mono" id="dnum">–</span><span class="lbl">相対スコア（0=純粋な協和）</span></div>
+  <div class="dbar"><i id="dfill"></i></div>
+  <ul class="pairs" id="pairList"></ul>
+</section>
+
+<section>
+  <h2>アスペクト → 音程</h2>
+  <ul class="asp-list" id="aspList"></ul>
+</section>
+
+<section>
+  <details open>
+    <summary>YAMLを貼って読み込む</summary>
+    <textarea id="yamlIn" placeholder="nanami-products のチャートYAMLをここに貼り付け。&#10;natal セクションの天体黄経を自動で拾います。&#10;（transit が混在していても natal を優先します）" aria-label="チャートYAMLの貼り付け欄"></textarea>
+    <div class="yaml-actions">
+      <button class="gold" id="yamlLoad">読み込んで鳴らせる状態にする</button>
+    </div>
+    <div class="status" id="yamlStatus">まだ読み込んでいません。下の手入力でも使えます。</div>
+  </details>
+</section>
+
+<section>
+  <details>
+    <summary>黄経の手入力（微調整用）</summary>
+    <div id="inputs"></div>
+  </details>
+</section>
+
+<footer>
+  写像規則: 黄経 λ° → 周波数 220×2^(λ/360) Hz（黄道一周＝1オクターブ）。二天体の離角 Δ° → 音程比 2^(Δ/180)（衝＝オクターブ、スクエア＝三全音、トライン≒短六度、セクスタイル≒長三度）。Pure音色は基音＋倍音5次のカスタム波形。不協和度は <b>Plomp–Levelt（1965）</b>の感覚的不協和度曲線を倍音対ごとに合算した相対値です。着想の系譜は <b>ケプラー『世界の調和』（1619）</b>、<b>H.クスト『The Cosmic Octave』</b>、<b>J.アディのハーモニクス占星術</b>。これはあなたのチャートの音響変換であり、聴取による効能は主張しません。
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+
+  /* ── 天体データ（サンプル配置。YAMLの黄経で差し替え可） ── */
+  const PLANETS=[
+    {k:"sun", g:"☉", n:"太陽", lon:132.5},
+    {k:"moon",g:"☽", n:"月",   lon:315.2},
+    {k:"mer", g:"☿", n:"水星", lon:155.8},
+    {k:"ven", g:"♀", n:"金星", lon:162.4},
+    {k:"mar", g:"♂", n:"火星", lon:170.1},
+    {k:"jup", g:"♃", n:"木星", lon:63.7},
+    {k:"sat", g:"♄", n:"土星", lon:260.9},
+    {k:"ura", g:"♅", n:"天王星",lon:38.3},
+    {k:"nep", g:"♆", n:"海王星",lon:353.6},
+    {k:"plu", g:"♇", n:"冥王星",lon:222.0},
+  ];
+  PLANETS.forEach(p=>p.on=true);
+
+  const ASPECTS=[
+    {a:0,  n:"合",        orb:6, cons:true },
+    {a:60, n:"セクスタイル", orb:4, cons:true },
+    {a:90, n:"スクエア",    orb:6, cons:false},
+    {a:120,n:"トライン",    orb:6, cons:true },
+    {a:180,n:"衝",        orb:6, cons:false},
+  ];
+
+  const freqOf=lon=>220*Math.pow(2,(((lon%360)+360)%360)/360);
+  const sep=(a,b)=>{let d=Math.abs(a-b)%360;return d>180?360-d:d};
+
+  /* ── 音 ── */
+  const NH=5, HARM=[1,.55,.35,.22,.14];
+  const TIMBRES={
+    pure:{wave:"periodic",level:1,output:1,attack:.4,release:.35,tail:.5},
+    cosmic:{type:"sine",level:1,output:1.28,attack:1,release:3,tail:3.4,delay:.5,feedback:.34,wet:.34,filterFreq:1500,vibrato:.9,vibratoDepth:1.8},
+    bell:{type:"sine",level:1.08,output:1.38,attack:.018,decay:1,sustain:.18,release:1.6,tail:2,bell:true,delay:.2,feedback:.14,wet:.16},
+    deep:{type:"triangle",level:1,output:1.18,attack:.75,release:3.4,tail:3.8,filter:"lowpass",filterFreq:560,octaveGain:.28}
+  };
+  const AudioEngine=(()=>{
+    let ctx=null, master=null, wave=null, timbreState="pure";
+    let masterVolume=.7;
+    let isPlaying=false, activeFreqs=[], activeGroup=null, transitionId=0;
+    let oneShotGroups=[];
+    let playingListener=()=>{};
+
+    function setPlaying(next){
+      if(isPlaying===next)return;
+      isPlaying=next;
+      playingListener(isPlaying);
+    }
+
+    async function ensureContext(){
+      if(!ctx){
+        ctx=new (window.AudioContext||window.webkitAudioContext)();
+        master=ctx.createGain();
+        master.gain.value=masterVolume;
+        master.connect(ctx.destination);
+      }
+      if(ctx.state==="suspended"){
+        await ctx.resume();
+      }
+      return ctx;
+    }
+    function periodic(){
+      if(wave)return wave;
+      const re=new Float32Array(NH+1), im=new Float32Array(NH+1);
+      for(let i=1;i<=NH;i++)im[i]=HARM[i-1];
+      wave=ctx.createPeriodicWave(re,im,{disableNormalization:false});
+      return wave;
+    }
+
+    function disposeGroup(group){
+      if(!group||group.disposed)return;
+      group.disposed=true;
+      if(group.timer)window.clearTimeout(group.timer);
+      group.oscillators.forEach(o=>{try{o.stop()}catch(e){}});
+      group.nodes.forEach(n=>{try{n.disconnect()}catch(e){}});
+      if(activeGroup===group)activeGroup=null;
+      oneShotGroups=oneShotGroups.filter(g=>g!==group);
+    }
+
+    function stopGroup(group,fade=.25){
+      if(!ctx||!group||group.disposed)return;
+      const t=ctx.currentTime;
+      try{
+        group.out.gain.cancelScheduledValues(t);
+        group.out.gain.setValueAtTime(group.out.gain.value,t);
+        group.out.gain.linearRampToValueAtTime(0,t+fade);
+      }catch(e){}
+      group.oscillators.forEach(o=>{try{o.stop(t+fade+.05)}catch(e){}});
+      group.timer=window.setTimeout(()=>disposeGroup(group),(fade+1)*1000);
+    }
+
+    function stopAllNodes(fade=.25,{markStopped=true}={}){
+      if(activeGroup)stopGroup(activeGroup,fade);
+      oneShotGroups.slice().forEach(group=>stopGroup(group,fade));
+      activeGroup=null;
+      if(markStopped){
+        activeFreqs=[];
+        setPlaying(false);
+      }
+    }
+
+    function startTone(frequency,timbre,level,groupOut,{sustain=false,dur=4}={},nodes,oscillators){
+      const mode=TIMBRES[timbre]||TIMBRES.pure;
+      const t=ctx.currentTime;
+      const o=ctx.createOscillator();
+      const toneGain=ctx.createGain();
+      if(mode.wave==="periodic")o.setPeriodicWave(periodic());
+      else o.type=mode.type||"sine";
+      o.frequency.value=frequency;
+      if(sustain){
+        toneGain.gain.setValueAtTime(timbre==="bell"?level*(mode.sustain||.2):level,t);
+      }else if(mode.bell){
+        toneGain.gain.setValueAtTime(.0001,t);
+        toneGain.gain.linearRampToValueAtTime(level,t+mode.attack);
+        toneGain.gain.exponentialRampToValueAtTime(Math.max(.0008,level*(mode.sustain||.2)),t+mode.decay);
+        toneGain.gain.setTargetAtTime(0,t+Math.min(dur,mode.decay),mode.release/3);
+      }else{
+        toneGain.gain.setValueAtTime(0,t);
+        toneGain.gain.linearRampToValueAtTime(level,t+mode.attack);
+        toneGain.gain.setTargetAtTime(0,t+Math.max(mode.attack,dur-mode.release),mode.release/3);
+      }
+      o.connect(toneGain);
+      toneGain.connect(groupOut);
+      nodes.push(o,toneGain);
+
+      /* Effects are additive. Dry sound above always reaches destination. */
+      try{
+        if(timbre==="cosmic"){
+          [-7,7].forEach((cents,idx)=>{
+            const pad=ctx.createOscillator(), padGain=ctx.createGain();
+            pad.type=idx===0?"triangle":"sine";
+            pad.frequency.value=frequency*Math.pow(2,cents/1200);
+            padGain.gain.value=level*.28;
+            pad.connect(padGain);
+            if(ctx.createStereoPanner){
+              const pan=ctx.createStereoPanner();
+              pan.pan.value=idx===0?-.34:.34;
+              padGain.connect(pan);
+              pan.connect(groupOut);
+              nodes.push(pan);
+            }else{
+              padGain.connect(groupOut);
+            }
+            pad.start(t);
+            oscillators.push(pad);
+            if(!sustain)try{pad.stop(t+dur+mode.tail)}catch(e){}
+            nodes.push(pad,padGain);
+          });
+
+          if(ctx.createStereoPanner){
+            const spread=ctx.createStereoPanner(), spreadGain=ctx.createGain();
+            spread.pan.value=(Math.sin(frequency)*.35);
+            spreadGain.gain.value=level*.22;
+            toneGain.connect(spread);
+            spread.connect(spreadGain);
+            spreadGain.connect(groupOut);
+            nodes.push(spread,spreadGain);
+          }
+
+          const lfo=ctx.createOscillator(), lfoGain=ctx.createGain();
+          lfo.type="sine";
+          lfo.frequency.value=mode.vibrato;
+          lfoGain.gain.value=mode.vibratoDepth;
+          lfo.connect(lfoGain);
+          lfoGain.connect(o.frequency);
+          lfo.start(t);
+          oscillators.push(lfo);
+          if(!sustain)try{lfo.stop(t+dur+mode.tail)}catch(e){}
+          nodes.push(lfo,lfoGain);
+
+          const filter=ctx.createBiquadFilter(), smooth=ctx.createGain();
+          filter.type="lowpass";
+          filter.frequency.value=mode.filterFreq;
+          filter.Q.value=.45;
+          smooth.gain.value=.18;
+          toneGain.connect(filter);
+          filter.connect(smooth);
+          smooth.connect(groupOut);
+          nodes.push(filter,smooth);
+        }
+        if(timbre==="bell"){
+          [2,3,4.2].forEach((mul,idx)=>{
+            const h=ctx.createOscillator(), hg=ctx.createGain();
+            h.type=idx===1?"triangle":"sine";
+            h.frequency.value=frequency*mul;
+            hg.gain.setValueAtTime(.0001,t);
+            hg.gain.linearRampToValueAtTime(level*([.52,.34,.2][idx]),t+.015);
+            hg.gain.exponentialRampToValueAtTime(.0008,t+([1.25,.85,.55][idx]));
+            h.connect(hg);
+            hg.connect(groupOut);
+            h.start(t);
+            oscillators.push(h);
+            if(!sustain)try{h.stop(t+mode.tail)}catch(e){}
+            nodes.push(h,hg);
+          });
+        }
+        if(timbre==="deep"){
+          [
+            {div:2,gain:mode.octaveGain||.28,type:"triangle"},
+            {div:4,gain:.12,type:"sine"}
+          ].forEach(layer=>{
+            const sub=ctx.createOscillator(), subGain=ctx.createGain(), subFilter=ctx.createBiquadFilter();
+            sub.type=layer.type;
+            sub.frequency.value=Math.max(22,frequency/layer.div);
+            subFilter.type="lowpass";
+            subFilter.frequency.value=mode.filterFreq;
+            subFilter.Q.value=.5;
+            subGain.gain.value=level*layer.gain;
+            sub.connect(subFilter);
+            subFilter.connect(subGain);
+            subGain.connect(groupOut);
+            sub.start(t);
+            oscillators.push(sub);
+            if(!sustain)try{sub.stop(t+dur+mode.tail)}catch(e){}
+            nodes.push(sub,subFilter,subGain);
+          });
+        }
+        if(mode.filter){
+          const filter=ctx.createBiquadFilter(), wet=ctx.createGain();
+          filter.type=mode.filter;
+          filter.frequency.value=mode.filterFreq;
+          filter.Q.value=.7;
+          wet.gain.value=mode.delay ? .18 : .22;
+          toneGain.connect(filter);
+          filter.connect(wet);
+          wet.connect(groupOut);
+          nodes.push(filter,wet);
+        }
+        if(mode.delay){
+          const delay=ctx.createDelay(.8), feedback=ctx.createGain(), wetDelay=ctx.createGain();
+          delay.delayTime.value=mode.delay;
+          feedback.gain.value=mode.feedback;
+          wetDelay.gain.value=mode.wet;
+          toneGain.connect(delay);
+          delay.connect(wetDelay);
+          wetDelay.connect(groupOut);
+          delay.connect(feedback);
+          feedback.connect(delay);
+          nodes.push(delay,feedback,wetDelay);
+        }
+      }catch(e){}
+      o.start(t);
+      if(!sustain){
+        try{o.stop(t+dur+mode.tail)}catch(e){}
+      }
+      return o;
+    }
+
+    function createGroup(freqs,timbre,{sustain=false,dur=4,fadeIn=.25}={}){
+      const mode=TIMBRES[timbre]||TIMBRES.pure;
+      const t=ctx.currentTime;
+      const groupOut=ctx.createGain();
+      groupOut.gain.setValueAtTime(0,t);
+      groupOut.gain.linearRampToValueAtTime(mode.output||1,t+fadeIn);
+      groupOut.connect(master);
+      const group={out:groupOut,nodes:[groupOut],oscillators:[],timer:null,disposed:false};
+      try{
+        freqs.forEach(f=>{
+          const level=Math.min(.14,Math.max(.1,(mode.level*.5)/Math.max(3,freqs.length)));
+          const o=startTone(f,timbre,level,groupOut,{sustain,dur},group.nodes,group.oscillators);
+          group.oscillators.push(o);
+        });
+        if(!sustain){
+          group.timer=window.setTimeout(()=>disposeGroup(group),(dur+mode.tail+1)*1000);
+        }
+      }catch(e){
+        disposeGroup(group);
+        throw e;
+      }
+      return group;
+    }
+
+    async function startChord(freqs){
+      const token=++transitionId;
+      stopAllNodes(.08,{markStopped:false});
+      setPlaying(true);
+      try{
+        await ensureContext();
+        if(token!==transitionId)return;
+        const nextFreqs=freqs.slice();
+        const group=createGroup(nextFreqs,timbreState,{sustain:true,fadeIn:.28});
+        if(token!==transitionId){disposeGroup(group);return}
+        activeGroup=group;
+        activeFreqs=nextFreqs;
+        setPlaying(true);
+      }catch(e){
+        stopAllNodes(0,{markStopped:true});
+      }
+    }
+
+    async function playOnce(freqs,dur=4){
+      try{
+        await ensureContext();
+        const group=createGroup(freqs.slice(),timbreState,{sustain:false,dur,fadeIn:.08});
+        oneShotGroups.push(group);
+      }catch(e){}
+    }
+
+    return {
+      playSustain(freqs){
+        if(!freqs.length){this.stop();return}
+        startChord(freqs);
+      },
+      playOnce,
+      stop(fade=.45){
+        transitionId++;
+        if(!ctx&&!activeGroup&&!oneShotGroups.length){setPlaying(false);activeFreqs=[];return}
+        stopAllNodes(fade,{markStopped:true});
+      },
+      setVolume(value){
+        const next=Math.max(0,Math.min(1,value));
+        masterVolume=next;
+        if(master)master.gain.value=next;
+      },
+      setTimbre(next){
+        if(!TIMBRES[next])return;
+        if(isPlaying)return;
+        timbreState=next;
+      },
+      testTimbres(){
+        Object.keys(TIMBRES).forEach((key,i)=>{
+          window.setTimeout(()=>{
+            this.setTimbre(key);
+            this.playOnce([330],.75);
+          },i*950);
+        });
+      },
+      updateSustain(freqs){
+        if(!isPlaying)return;
+        if(!freqs.length){this.stop();return}
+        startChord(freqs);
+      },
+      onPlayingChange(fn){
+        playingListener=typeof fn==="function"?fn:()=>{};
+        playingListener(isPlaying);
+      }
+    };
+  })();
+  function playFreqs(freqs,dur=4){AudioEngine.playOnce(freqs,dur)}
+  function playSustain(freqs){AudioEngine.playSustain(freqs)}
+  function updateSustainFromActive(){
+    const act=PLANETS.filter(p=>p.on);
+    AudioEngine.updateSustain(act.map(p=>freqOf(p.lon)));
+  }
+  function stopSustain(fade=.45){AudioEngine.stop(fade)}
+  window.hoshiNoWaonTestTimbres=()=>AudioEngine.testTimbres();
+
+  /* ── Plomp–Levelt 不協和度 ── */
+  function plDiss(f1,f2,a1,a2){
+    const fmin=Math.min(f1,f2), df=Math.abs(f1-f2);
+    const s=0.24/(0.021*fmin+19);
+    return a1*a2*(Math.exp(-3.5*s*df)-Math.exp(-5.75*s*df));
+  }
+  function pairDiss(fa,fb){
+    let d=0;
+    for(let i=0;i<NH;i++)for(let j=0;j<NH;j++)
+      d+=plDiss(fa*(i+1),fb*(j+1),HARM[i],HARM[j]);
+    return d;
+  }
+
+  /* ── 円環描画 ── */
+  const SVG_NS="http://www.w3.org/2000/svg";
+  const svg=$("wheel"), C=170, R=138, RP=118;
+  function pos(lon,r){
+    const th=(180-lon)*Math.PI/180;
+    return [C+r*Math.cos(th), C-r*Math.sin(th)];
+  }
+  function el(tag,attrs,parent){
+    const e=document.createElementNS(SVG_NS,tag);
+    for(const k in attrs)e.setAttribute(k,attrs[k]);
+    (parent||svg).appendChild(e);return e;
+  }
+  function drawWheel(){
+    svg.innerHTML="";
+    el("circle",{cx:C,cy:C,r:R,class:"zring"});
+    el("circle",{cx:C,cy:C,r:R-24,class:"zring"});
+    for(let i=0;i<12;i++){
+      const [x1,y1]=pos(i*30,R),[x2,y2]=pos(i*30,R-24);
+      el("line",{x1,y1,x2,y2,class:"tick"});
+    }
+    /* アスペクト線 */
+    const act=PLANETS.filter(p=>p.on);
+    for(let i=0;i<act.length;i++)for(let j=i+1;j<act.length;j++){
+      const d=sep(act[i].lon,act[j].lon);
+      const asp=ASPECTS.find(A=>Math.abs(d-A.a)<=A.orb);
+      if(!asp||asp.a===0)continue;
+      const [x1,y1]=pos(act[i].lon,RP-14),[x2,y2]=pos(act[j].lon,RP-14);
+      el("line",{x1,y1,x2,y2,class:"aline "+(asp.cons?"c":"d")});
+    }
+    /* 天体 */
+    PLANETS.forEach(p=>{
+      const [x,y]=pos(p.lon,RP);
+      const g=el("g",{class:"planet-dot"+(p.on?" on":""),role:"button",tabindex:0,
+        "aria-label":p.n+"を"+(p.on?"外す":"入れる")});
+      el("circle",{cx:x,cy:y,r:15},g);
+      const t=el("text",{x,y},g); t.textContent=p.g;
+      const toggle=()=>{p.on=!p.on;render();updateSustainFromActive()};
+      g.addEventListener("click",toggle);
+      g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}});
+    });
+  }
+
+  /* ── 表とスコア ── */
+  function nameBtn(label,fn){
+    const b=document.createElement("button");
+    b.textContent=label;b.addEventListener("click",fn);return b;
+  }
+  function render(){
+    drawWheel();
+    const act=PLANETS.filter(p=>p.on);
+
+    /* 不協和度 */
+    let total=0; const pd=[];
+    for(let i=0;i<act.length;i++)for(let j=i+1;j<act.length;j++){
+      const d=pairDiss(freqOf(act[i].lon),freqOf(act[j].lon));
+      total+=d; pd.push({a:act[i],b:act[j],d});
+    }
+    const norm=pd.length?total/pd.length:0;
+    $("dnum").textContent=pd.length?(norm*100).toFixed(1):"–";
+    $("dfill").style.width=Math.min(100,norm*100*1.4)+"%";
+    pd.sort((x,y)=>y.d-x.d);
+    const pl=$("pairList"); pl.innerHTML="";
+    pd.slice(0,3).forEach(p=>{
+      const li=document.createElement("li");
+      const nm=document.createElement("span");nm.className="nm";
+      nm.textContent=p.a.g+" "+p.a.n+" × "+p.b.g+" "+p.b.n;
+      const val=document.createElement("span");val.className="val mono";
+      val.textContent=(p.d*100).toFixed(1);
+      li.append(nm,val,nameBtn("聴く",()=>playFreqs([freqOf(p.a.lon),freqOf(p.b.lon)],3.2)));
+      pl.appendChild(li);
+    });
+
+    /* アスペクト表 */
+    const al=$("aspList"); al.innerHTML="";
+    let found=false;
+    for(let i=0;i<act.length;i++)for(let j=i+1;j<act.length;j++){
+      const d=sep(act[i].lon,act[j].lon);
+      const asp=ASPECTS.find(A=>Math.abs(d-A.a)<=A.orb);
+      if(!asp)continue; found=true;
+      const ratio=Math.pow(2,d/180);
+      const li=document.createElement("li");
+      const nm=document.createElement("span");nm.className="nm";
+      nm.textContent=act[i].g+"–"+act[j].g+" "+asp.n;
+      const tag=document.createElement("span");
+      tag.className="tag "+(asp.cons?"c":"d");
+      tag.textContent=asp.cons?"協和":"不協和";
+      const rt=document.createElement("span");rt.className="ratio mono";
+      rt.textContent=d.toFixed(1)+"° → ×"+ratio.toFixed(3);
+      const f=261.63;
+      li.append(nm,tag,rt,nameBtn("聴く",()=>playFreqs([f,f*ratio],3.2)));
+      al.appendChild(li);
+    }
+    if(!found){
+      const li=document.createElement("li");
+      li.innerHTML='<span class="ratio">オーブ内のアスペクトはありません</span>';
+      al.appendChild(li);
+    }
+
+    /* 入力欄の Hz 表示更新 */
+    PLANETS.forEach(p=>{
+      const hz=document.querySelector('[data-hz="'+p.k+'"]');
+      if(hz)hz.textContent=freqOf(p.lon).toFixed(1)+" Hz";
+    });
+  }
+
+  /* ── 入力欄 ── */
+  const inWrap=$("inputs");
+  PLANETS.forEach(p=>{
+    const row=document.createElement("div");row.className="inrow";
+    const lab=document.createElement("label");
+    lab.textContent=p.g+" "+p.n; lab.setAttribute("for","in_"+p.k);
+    const inp=document.createElement("input");
+    inp.type="number";inp.step="0.01";inp.min="0";inp.max="359.99";
+    inp.value=p.lon;inp.id="in_"+p.k;inp.inputMode="decimal";
+    inp.addEventListener("change",()=>{
+      let v=parseFloat(inp.value);
+      if(isNaN(v))v=0; v=((v%360)+360)%360;
+      inp.value=v.toFixed(2); p.lon=v; render();updateSustainFromActive();
+    });
+    const hz=document.createElement("span");hz.className="hz mono";
+    hz.dataset.hz=p.k;
+    row.append(lab,inp,hz);
+    inWrap.appendChild(row);
+  });
+
+  const timbreButtons=[...document.querySelectorAll("[data-timbre]")];
+  function setTimbreButtonsDisabled(disabled){
+    timbreButtons.forEach(btn=>{btn.disabled=disabled});
+  }
+  AudioEngine.onPlayingChange(setTimbreButtonsDisabled);
+  const volumeControl=$("volumeControl"), volumeValue=$("volumeValue");
+  volumeControl.addEventListener("input",()=>{
+    const pct=parseInt(volumeControl.value,10)||0;
+    volumeValue.textContent=pct+"%";
+    AudioEngine.setVolume(pct/100);
+  });
+  timbreButtons.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(btn.disabled)return;
+      AudioEngine.setTimbre(btn.dataset.timbre);
+      timbreButtons.forEach(b=>{
+        const active=b===btn;
+        b.classList.toggle("active",active);
+        b.setAttribute("aria-checked",active?"true":"false");
+      });
+    });
+  });
+
+  /* ── YAML 読み込み ── */
+  const ALIAS={
+    sun:["sun","太陽"], moon:["moon","月"], mer:["mercury","水星"],
+    ven:["venus","金星"], mar:["mars","火星"], jup:["jupiter","木星"],
+    sat:["saturn","土星"], ura:["uranus","天王星"], nep:["neptune","海王星"],
+    plu:["pluto","冥王星"]
+  };
+  const SIGNS=[
+    ["aries","牡羊","おひつじ"],["taurus","牡牛","おうし"],["gemini","双子","ふたご"],
+    ["cancer","蟹","かに"],["leo","獅子","しし"],["virgo","乙女","おとめ"],
+    ["libra","天秤","てんびん"],["scorpio","蠍","さそり"],["sagittarius","射手","いて"],
+    ["capricorn","山羊","やぎ"],["aquarius","水瓶","みずがめ"],["pisces","魚","うお"]
+  ];
+  const LON_KEYS=["longitude","ecliptic_longitude","abs_longitude","absolute_longitude","lon","黄経"];
+  const DEG_KEYS=["degree","degrees","deg","度数","sign_degree"];
+  const SIGN_KEYS=["sign","zodiac","星座","サイン"];
+
+  const norm=s=>String(s).toLowerCase().replace(/[\s_「」座]/g,"");
+  function planetKeyOf(str){
+    const n=norm(str);
+    for(const k in ALIAS)
+      if(ALIAS[k].some(a=>n===norm(a)||n.startsWith(norm(a))))return k;
+    return null;
+  }
+  function signIndexOf(str){
+    const n=norm(str);
+    for(let i=0;i<12;i++)
+      if(SIGNS[i].some(a=>n.includes(norm(a))))return i;
+    return -1;
+  }
+  function lonFromNode(v){
+    if(typeof v==="number")return (v>=0&&v<360)?v:null;
+    if(typeof v==="string"){const f=parseFloat(v);return(!isNaN(f)&&f>=0&&f<360)?f:null}
+    if(v&&typeof v==="object"&&!Array.isArray(v)){
+      for(const k of LON_KEYS){
+        for(const kk in v)if(norm(kk)===norm(k)){
+          const f=parseFloat(v[kk]);
+          if(!isNaN(f)&&f>=0&&f<360)return f;
+        }
+      }
+      /* サイン＋度数 */
+      let si=-1,dg=null;
+      for(const kk in v){
+        if(SIGN_KEYS.some(k=>norm(kk)===norm(k)))si=signIndexOf(v[kk]);
+        if(DEG_KEYS.some(k=>norm(kk)===norm(k))){
+          const f=parseFloat(v[kk]); if(!isNaN(f))dg=f;
+        }
+      }
+      if(si>=0&&dg!==null&&dg>=0&&dg<30)return si*30+dg;
+    }
+    return null;
+  }
+  function walk(node,found){
+    if(!node||typeof node!=="object")return;
+    if(Array.isArray(node)){
+      node.forEach(item=>{
+        if(item&&typeof item==="object"){
+          const nameField=item.name||item.planet||item.body||item.天体;
+          if(nameField){
+            const pk=planetKeyOf(nameField);
+            if(pk&&!(pk in found)){
+              const lon=lonFromNode(item);
+              if(lon!==null)found[pk]=lon;
+            }
+          }
+        }
+        walk(item,found);
+      });
+      return;
+    }
+    for(const key in node){
+      const pk=planetKeyOf(key);
+      if(pk&&!(pk in found)){
+        const lon=lonFromNode(node[key]);
+        if(lon!==null){found[pk]=lon;continue}
+      }
+      walk(node[key],found);
+    }
+  }
+  function regexFallback(text,found){
+    for(const k in ALIAS){
+      if(k in found)continue;
+      for(const a of ALIAS[k]){
+        const re=new RegExp(a+"[\\s\\S]{0,140}?(?:longitude|黄経|lon)\\s*[:=]\\s*([0-9.]+)","i");
+        const m=text.match(re);
+        if(m){const f=parseFloat(m[1]);if(!isNaN(f)&&f>=0&&f<360){found[k]=f;break}}
+      }
+    }
+  }
+  function loadYaml(){
+    const st=$("yamlStatus");
+    const text=$("yamlIn").value;
+    if(!text.trim()){st.className="status err";st.textContent="YAMLが空です。";return}
+    const found={};
+    try{
+      if(window.jsyaml){
+        const docs=[]; jsyaml.loadAll(text,d=>docs.push(d));
+        /* natal 優先 */
+        docs.forEach(doc=>{
+          if(!doc||typeof doc!=="object")return;
+          const natal=doc.natal||doc.natal_chart||(doc.chart&&doc.chart.natal);
+          if(natal)walk(natal,found);
+        });
+        if(Object.keys(found).length===0)docs.forEach(doc=>walk(doc,found));
+      }
+    }catch(e){/* パース失敗 → フォールバックへ */}
+    regexFallback(text,found);
+    const keys=Object.keys(found);
+    if(keys.length===0){
+      st.className="status err";
+      st.textContent="天体の黄経を見つけられませんでした。YAML内に 太陽/sun 等の天体名と longitude / 黄経（または サイン＋度数）が必要です。";
+      return;
+    }
+    keys.forEach(k=>{
+      const p=PLANETS.find(x=>x.k===k);
+      p.lon=found[k];
+      const inp=document.getElementById("in_"+k);
+      if(inp)inp.value=found[k].toFixed(2);
+    });
+    const got=PLANETS.filter(p=>keys.includes(p.k)).map(p=>p.g).join(" ");
+    const miss=PLANETS.filter(p=>!keys.includes(p.k)).map(p=>p.g).join(" ");
+    st.className="status ok";
+    st.textContent="読み込み完了: "+got+(miss?"（未検出: "+miss+" は手入力かサンプル値のまま）":"　全10天体");
+    render();
+    updateSustainFromActive();
+  }
+  $("yamlLoad").addEventListener("click",loadYaml);
+
+  $("playAll").addEventListener("click",()=>{
+    const act=PLANETS.filter(p=>p.on);
+    if(!act.length)return;
+    setTimbreButtonsDisabled(true);
+    playSustain(act.map(p=>freqOf(p.lon)));
+  });
+  $("stopAll").addEventListener("click",()=>stopSustain());
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden)stopSustain(.25);
+  });
+  window.addEventListener("pagehide",()=>stopSustain(.2));
+
+  render();
+})();
+</script>
+</body>
+</html>
