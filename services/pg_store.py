@@ -1275,6 +1275,19 @@ def redeem_and_save(
                 )
                 if cur.fetchone() is None:
                     return False
+                # reset_once による再発行: redemptions を最新の発行内容に付け替える。
+                # ここを更新しないと already_used 時のリダイレクトが旧チャートを指し続ける。
+                cur.execute(
+                    f"""
+                    UPDATE {SCHEMA}.redemptions
+                    SET email = %s,
+                        buyer_name = %s,
+                        token = %s,
+                        used_at = NOW()
+                    WHERE order_code = %s
+                    """,
+                    (email, buyer_name, token, order_code),
+                )
 
             _insert_chart(
                 cur,

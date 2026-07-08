@@ -1444,6 +1444,9 @@ def _truthy(value: str | None) -> bool:
 
 ORDER_CODE_RE = re.compile(r"[A-Za-z0-9=_-]+")
 ORDER_PROVIDERS = {"stores", "gumroad", "payhip"}
+# Gumroad relaxed（サーバー照合なし）を許す商品。Gumroadで販売しているのは西洋2種のみで、
+# provider欄の無いフォーム（四柱推命・トランジット等）が非数字コードで無検証発行になるのを防ぐ。
+GUMROAD_RELAXED_PRODUCT_TYPES = {"western_basic", "western_full"}
 ORDER_CHECK_POLICIES = {
     "stores": {"strict": True},
     # Temporary Gumroad relaxed mode. Set GUMROAD_ORDER_STRICT=1 to re-enable
@@ -1566,6 +1569,29 @@ def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, 
     if not order_code:
         return "", order_row, "Payhip購入履歴の注文IDを確認できません。管理者に連絡してください。", 400
     return order_code, order_row, None, 200
+
+
+def _check_payhip_order_row_for_redeem(
+    *,
+    order_id: str,
+    order_row: dict | None,
+    product_type: str,
+    enforce_product_type: bool = True,
+) -> tuple[str, dict | None, str | None, int]:
+    payment_status = str((order_row or {}).get("payment_status") or "").lower()
+    if payment_status == "cancelled":
+        return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
+
+    purchased_type = (order_row or {}).get("product_type")
+    if enforce_product_type and purchased_type and purchased_type != product_type:
+        return (
+            "product_mismatch",
+            order_row,
+            f"この注文番号は{_product_label(purchased_type)}用です。"
+            f"{_product_label(product_type)}の入力フォームでは使用できません。",
+            409,
+        )
+    return "ok", order_row, None, 200
 
 
 def _log_order_check(
@@ -1698,7 +1724,12 @@ def _check_order_for_redeem(
         )
         return "not_found", None, f"注文番号（{order_id}）を確認できません。購入確認メールに記載の番号を確認してください。", 400
 
-    if provider == "gumroad" and not strict_check and allow_gumroad_relaxed:
+    if (
+        provider == "gumroad"
+        and not strict_check
+        and allow_gumroad_relaxed
+        and product_type in GUMROAD_RELAXED_PRODUCT_TYPES
+    ):
         order_row = {
             "provider": "gumroad",
             "stores_order_no": order_id,
@@ -3422,6 +3453,7 @@ def redeem_post(
 
     requested_provider = (order_provider or "").strip().lower()
     payhip_metadata: dict[str, str] = {}
+    payhip_order_row: dict | None = None
     if requested_provider == "payhip":
         payhip_metadata, payhip_error = _payhip_metadata_from_form(
             payhip_email=payhip_email,
@@ -3431,7 +3463,7 @@ def redeem_post(
         )
         if payhip_error:
             return _form_err(payhip_error)
-        order_code_clean, _payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(payhip_metadata)
+        order_code_clean, payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(payhip_metadata)
         if payhip_order_error:
             return _form_err(payhip_order_error, status=payhip_order_error_status)
         order_provider_clean = "payhip"
@@ -3474,11 +3506,18 @@ def redeem_post(
         except Exception as e:
             return _form_err(str(e))
 
-        status, _order_row, order_error, order_error_status = _check_order_for_redeem(
-            order_id=order_code_clean,
-            provider=order_provider_clean,
-            product_type=product_type,
-        )
+        if order_provider_clean == "payhip":
+            status, _order_row, order_error, order_error_status = _check_payhip_order_row_for_redeem(
+                order_id=order_code_clean,
+                order_row=payhip_order_row,
+                product_type=product_type,
+            )
+        else:
+            status, _order_row, order_error, order_error_status = _check_order_for_redeem(
+                order_id=order_code_clean,
+                provider=order_provider_clean,
+                product_type=product_type,
+            )
         if order_error:
             return _form_err(order_error, status=order_error_status)
 
@@ -3583,11 +3622,18 @@ def redeem_post(
     except Exception as e:
         return _form_err(str(e))
 
-    status, _order_row, order_error, order_error_status = _check_order_for_redeem(
-        order_id=order_code_clean,
-        provider=order_provider_clean,
-        product_type=product_type,
-    )
+    if order_provider_clean == "payhip":
+        status, _order_row, order_error, order_error_status = _check_payhip_order_row_for_redeem(
+            order_id=order_code_clean,
+            order_row=payhip_order_row,
+            product_type=product_type,
+        )
+    else:
+        status, _order_row, order_error, order_error_status = _check_order_for_redeem(
+            order_id=order_code_clean,
+            provider=order_provider_clean,
+            product_type=product_type,
+        )
     if order_error:
         return _form_err(order_error, status=order_error_status)
 

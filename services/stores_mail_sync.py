@@ -57,11 +57,15 @@ _SUBJECT_ORDER_NO_RE = re.compile(
 )
 # 商品名コードからフォーム種別を判定する。STORESの商品名に
 # [NP-WB] / [NP-WF] / [NP-WA] / [NP-WT] / [NP-SF] / [NP-SC] / [NP-TY] を入れておく前提。
+# Payhip商品は [NP-AA]（小惑星addon）/ [NP-TA]（31日トランジットaddon）も使う
+# （routes.PAYHIP_PRODUCTS と対応させること）。
 _PRODUCT_CODE_PATTERNS = [
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WB\s*[\]］】]?", re.I), "western_basic"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WF\s*[\]］】]?", re.I), "western_full"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WA\s*[\]］】]?", re.I), "western_asteroids_addon"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?AA\s*[\]］】]?", re.I), "western_asteroids_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WT\s*[\]］】]?", re.I), "western_31days_transit_addon"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?TA\s*[\]］】]?", re.I), "western_31days_transit_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?SF\s*[\]］】]?", re.I), "shichu_fortune_cycles_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?SC\s*[\]］】]?", re.I), "shichu"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?TY\s*[\]］】]?", re.I), "transit_yaml"),
