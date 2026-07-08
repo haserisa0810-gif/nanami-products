@@ -203,6 +203,35 @@ class PayhipMetadataFormTest(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(code, 200)
 
+    def test_payhip_reusable_order_row_stays_reusable(self) -> None:
+        for payment_status in ("reusable", "test", "permanent"):
+            status, row, error, code = routes._check_payhip_order_row_for_redeem(
+                order_id="LWR6l4Y4Wa",
+                order_row={
+                    "stores_order_no": "LWR6l4Y4Wa",
+                    "payment_status": payment_status,
+                    "product_type": "western_basic",
+                },
+                product_type="western_basic",
+            )
+
+            self.assertEqual(status, "reusable", payment_status)
+            self.assertIsNotNone(row, payment_status)
+            self.assertIsNone(error, payment_status)
+            self.assertEqual(code, 200, payment_status)
+
+    def test_payhip_missing_order_row_is_not_found(self) -> None:
+        status, row, error, code = routes._check_payhip_order_row_for_redeem(
+            order_id="LWR6l4Y4Wa",
+            order_row=None,
+            product_type="western_basic",
+        )
+
+        self.assertEqual(status, "not_found")
+        self.assertIsNone(row)
+        self.assertIsNotNone(error)
+        self.assertEqual(code, 400)
+
 
 class _RecordingCursor:
     """redeem_and_save の SQL 発行順を記録するダミーカーソル。"""

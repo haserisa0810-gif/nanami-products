@@ -1578,11 +1578,16 @@ def _check_payhip_order_row_for_redeem(
     product_type: str,
     enforce_product_type: bool = True,
 ) -> tuple[str, dict | None, str | None, int]:
+    if not order_row:
+        return "not_found", None, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
+
     payment_status = str((order_row or {}).get("payment_status") or "").lower()
     if payment_status == "cancelled":
         return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
+    if payment_status in {"reusable", "test", "permanent"}:
+        return "reusable", order_row, None, 200
 
-    purchased_type = (order_row or {}).get("product_type")
+    purchased_type = order_row.get("product_type")
     if enforce_product_type and purchased_type and purchased_type != product_type:
         return (
             "product_mismatch",
