@@ -56,24 +56,15 @@
             </label>
           </div>
           <div id="payhip-order-fields" hidden>
-            <label>{{ t.payhip_email }}<span class="required">{{ t.required }}</span>
-              <input type="email" name="payhip_email" id="payhip-email"
-                     value="{{ form.payhip_email if form else '' }}"
-                     placeholder="example@email.com"
-                     autocomplete="email">
-            </label>
-            <label>{{ t.payhip_product }}<span class="required">{{ t.required }}</span>
-              <select name="payhip_product_code" id="payhip-product-code">
-                <option value="">{{ t.select_placeholder }}</option>
-                {% for item in payhip_products %}
-                  <option value="{{ item.code }}" {% if form and form.payhip_product_code == item.code %}selected{% endif %}>{{ item.label }}</option>
-                {% endfor %}
-              </select>
-            </label>
-            <label>{{ t.payhip_order_id_optional }}<span class="optional">{{ t.optional }}</span>
-              <input type="text" name="payhip_order_id"
+            <input type="hidden" name="payhip_email" id="payhip-email" value="">
+            <input type="hidden" name="payhip_product_code" id="payhip-product-code" value="">
+            <label>{{ t.payhip_order_id }}<span class="required">{{ t.required }}</span>
+              <input type="text" name="payhip_order_id" id="payhip-order-id"
                      value="{{ form.payhip_order_id if form else '' }}"
-                     placeholder="Order ID / Invoice Number">
+                     placeholder="LWR6l4Y4Wa"
+                     pattern="[A-Za-z0-9=_-]+"
+                     title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"
+                     autocomplete="off">
               <small>{{ t.payhip_order_hint }}</small>
             </label>
           </div>
@@ -508,6 +499,7 @@
       const orderCode = document.getElementById('order-code');
       const payhipEmail = document.getElementById('payhip-email');
       const payhipProduct = document.getElementById('payhip-product-code');
+      const payhipOrderId = document.getElementById('payhip-order-id');
       const isPayhip = provider === 'payhip';
       if (standard) standard.hidden = isPayhip;
       if (payhip) payhip.hidden = !isPayhip;
@@ -516,12 +508,16 @@
         orderCode.disabled = isPayhip;
       }
       if (payhipEmail) {
-        payhipEmail.required = isPayhip;
-        payhipEmail.disabled = !isPayhip;
+        payhipEmail.required = false;
+        payhipEmail.disabled = false;
       }
       if (payhipProduct) {
-        payhipProduct.required = isPayhip;
-        payhipProduct.disabled = !isPayhip;
+        payhipProduct.required = false;
+        payhipProduct.disabled = false;
+      }
+      if (payhipOrderId) {
+        payhipOrderId.required = isPayhip;
+        payhipOrderId.disabled = !isPayhip;
       }
     }
 

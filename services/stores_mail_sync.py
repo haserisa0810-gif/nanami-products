@@ -36,6 +36,7 @@ from psycopg2.extras import RealDictCursor
 
 SCHEMA = "nanami_products"
 STORES_FROM_DEFAULT = "hello@stores.jp"
+PAYHIP_FROM_DEFAULT = "contact@payhip.com"
 
 # STORESの通知メールを識別するパターン
 _OWNER_NOTICE_PATTERN = re.compile(
@@ -178,6 +179,7 @@ def _extract_text(msg: Message) -> str:
 def _parse_datetime(raw: str | None) -> datetime | None:
     if not raw:
         return None
+    raw = re.sub(r"\b(\d{1,2})(st|nd|rd|th)\b", r"\1", raw, flags=re.I)
     try:
         dt = email.utils.parsedate_to_datetime(raw)
         if dt.tzinfo is not None:
@@ -197,6 +199,7 @@ def _extract_first(patterns: list[str], text_value: str) -> str | None:
 
 def _extract_amount(text_value: str) -> int | None:
     patterns = [
+        r"(?:Total|Amount)\s*[：:]?\s*(?:USD\s*)?[$＄]\s*([0-9][0-9,]*)(?:\.[0-9]+)?",
         r"(?:お支払い金額|合計金額|ご請求金額|金額|合計（税込）)\s*[：:]?\s*[¥￥]?\s*([0-9][0-9,]*)",
         r"[¥￥]\s*([0-9][0-9,]*)",
     ]
@@ -208,6 +211,15 @@ def _extract_amount(text_value: str) -> int | None:
             except Exception:
                 pass
     return None
+
+
+def _normalize_payhip_order_id(value: str | None) -> str | None:
+    value = (value or "").strip()
+    if not value:
+        return None
+    value = re.sub(r"(Order\s*ID|Invoice\s*Number|注文ID)\s*[：:]?\s*", "", value, flags=re.I)
+    value = re.sub(r"[^A-Za-z0-9=_-]", "", value)
+    return value or None
 
 
 def _guess_product_type(subject: str, body: str) -> str | None:
@@ -285,6 +297,50 @@ def _parse_stores_mail(
     }
 
 
+def _parse_payhip_mail(
+    subject: str,
+    body: str,
+    message_id: str | None,
+    received_at: datetime | None,
+    from_value: str,
+) -> dict[str, object] | None:
+    combined = f"{from_value}\n{subject}\n{body}"
+    combined_lower = combined.lower()
+    if (
+        "payhip" not in combined_lower
+        and "you've sold an item" not in combined_lower
+        and "you have sold an item" not in combined_lower
+        and "order id:" not in combined_lower
+    ):
+        return None
+
+    order_id = _normalize_payhip_order_id(
+        _extract_first(
+            [
+                r"Order\s*ID\s*[：:]\s*([A-Za-z0-9=_-]+)",
+                r"Invoice\s*Number\s*[：:]\s*([A-Za-z0-9=_-]+)",
+            ],
+            combined,
+        )
+    )
+    if not order_id:
+        return None
+
+    payment_status = "paid"
+    if "cancelled" in combined_lower or "refunded" in combined_lower:
+        payment_status = "cancelled"
+
+    return {
+        "stores_order_no": order_id,
+        "product_type": _guess_product_type(subject, body),
+        "amount": _extract_amount(body),
+        "mail_subject": subject,
+        "raw_message_id": message_id,
+        "mail_received_at": received_at,
+        "payment_status": payment_status,
+    }
+
+
 # ── DB upsert ──────────────────────────────────────────────────────
 
 def _upsert_order(con, parsed: dict[str, Any]) -> bool:
@@ -341,6 +397,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
     username = (os.getenv("STORES_MAIL_USERNAME") or "").strip()
     password = (os.getenv("STORES_MAIL_PASSWORD") or "").strip()
     from_filter = (os.getenv("STORES_MAIL_FROM_FILTER", STORES_FROM_DEFAULT) or "").strip()
+    payhip_from_filter = (os.getenv("PAYHIP_MAIL_FROM_FILTER", PAYHIP_FROM_DEFAULT) or "").strip()
 
     counters = dict(fetched=0, parsed=0, inserted=0, skipped=0, errors=0)
 
@@ -354,14 +411,23 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
         conn_imap.login(username, password)
         conn_imap.select("INBOX")
 
-        # FROM絞り込みで検索（失敗したら全件）
-        status, data = conn_imap.search(None, "FROM", f'"{from_filter}"')
-        if status != "OK" or not data or not data[0]:
+        status = "OK"
+        search_ids: list[bytes] = []
+        for candidate in dict.fromkeys([from_filter, payhip_from_filter]):
+            if not candidate:
+                continue
+            candidate_status, candidate_data = conn_imap.search(None, "FROM", f'"{candidate}"')
+            if candidate_status == "OK" and candidate_data and candidate_data[0]:
+                search_ids.extend(candidate_data[0].split())
+
+        if not search_ids:
             status, data = conn_imap.search(None, "ALL")
+            if status == "OK" and data and data[0]:
+                search_ids = data[0].split()
         if status != "OK":
             return {**counters, "ok": False, "message": "IMAP検索失敗"}
 
-        ids = data[0].split()
+        ids = sorted(set(search_ids), key=lambda item: int(item))
         recent_ids = list(reversed(ids[-limit:]))
 
         con_db = _get_conn()
@@ -387,6 +453,11 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
             combined_lower = f"{from_value}\n{subject}\n{body}".lower()
             if (
                 from_filter.lower() not in combined_lower
+                and payhip_from_filter.lower() not in combined_lower
+                and "payhip" not in combined_lower
+                and "you've sold an item" not in combined_lower
+                and "you have sold an item" not in combined_lower
+                and "order id:" not in combined_lower
                 and "stores" not in combined_lower
                 and "ストアーズ" not in f"{from_value}{subject}{body}"
                 and "アイテムが購入されました" not in body
@@ -396,7 +467,10 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
                 counters["skipped"] += 1
                 continue
 
-            parsed = _parse_stores_mail(subject, body, message_id, received_at, from_value)
+            parsed = (
+                _parse_payhip_mail(subject, body, message_id, received_at, from_value)
+                or _parse_stores_mail(subject, body, message_id, received_at, from_value)
+            )
             if not parsed:
                 counters["skipped"] += 1
                 continue

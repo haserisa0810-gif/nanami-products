@@ -579,7 +579,7 @@ I18N = {
         "payhip_product": "購入した商品",
         "payhip_order_id": "Order ID / Invoice Number",
         "payhip_order_id_optional": "Order ID / Invoice Number（任意）",
-        "payhip_order_hint": "Payhipの購入メールにOrder IDやInvoice Numberが表示されている場合のみ入力してください。",
+        "payhip_order_hint": "Payhipの購入メールに表示されているOrder IDを入力してください。",
         "required": "必須",
         "optional": "任意",
         "not_entered": "未入力",
@@ -943,7 +943,7 @@ I18N = {
         "payhip_product": "Purchased product",
         "payhip_order_id": "Order ID / Invoice Number",
         "payhip_order_id_optional": "Order ID / Invoice Number (optional)",
-        "payhip_order_hint": "Enter this only if the Payhip purchase email shows an Order ID or Invoice Number.",
+        "payhip_order_hint": "Enter the Order ID shown in your Payhip purchase email.",
         "required": "Required",
         "optional": "Optional",
         "not_entered": "Not entered",
@@ -1517,19 +1517,14 @@ def _payhip_metadata_from_form(
     email_clean = _normalize_payhip_email(payhip_email)
     product_code_clean = (payhip_product_code or "").strip().upper()
     optional_order_id = (payhip_order_id or "").strip()
-    if not email_clean:
-        return {}, "Payhipを選択した場合は、購入時のメールアドレスを入力してください。"
-    if "@" not in email_clean:
+    if email_clean and "@" not in email_clean:
         return {}, "Payhipの購入時メールアドレスを正しい形式で入力してください。"
+    if not optional_order_id:
+        return {}, "Payhipを選択した場合は、Order IDを入力してください。"
+    if not _is_valid_order_code(optional_order_id):
+        return {}, "Order IDには英数字、ハイフン、アンダースコア、イコールのみ使用できます。"
     product = PAYHIP_PRODUCTS.get(product_code_clean)
-    if not product:
-        return {}, "Payhipを選択した場合は、購入した商品を選択してください。"
-    selected_product_type = str(product["product_type"])
-    if selected_product_type != expected_product_type:
-        return {}, (
-            f"選択したPayhip商品は{_product_label(selected_product_type)}用です。"
-            f"{_product_label(expected_product_type)}の入力フォームでは使用できません。"
-        )
+    selected_product_type = str(product["product_type"]) if product else expected_product_type
     metadata = {
         "provider": "payhip",
         "purchaser_email": email_clean,
@@ -1543,30 +1538,26 @@ def _payhip_metadata_from_form(
 def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, dict | None, str | None, int]:
     email_clean = metadata.get("purchaser_email") or ""
     product_code = metadata.get("selected_product_code") or ""
+    order_id = _normalize_stores_order_no(metadata.get("optional_order_id") or "")
     if not os.environ.get("DATABASE_URL"):
         return "", None, "Payhip購入履歴の照合に必要なDATABASE_URLが未設定です。", 503
     try:
-        status, order_row = stores_mail_sync.verify_payhip_order(
-            purchaser_email=email_clean,
-            product_code=product_code,
-        )
+        status, order_row = stores_mail_sync.verify_order_no(order_id)
         if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
             _sync_stores_orders_for_lookup()
-            status, order_row = stores_mail_sync.verify_payhip_order(
-                purchaser_email=email_clean,
-                product_code=product_code,
-            )
+            status, order_row = stores_mail_sync.verify_order_no(order_id)
     except Exception as exc:
         logger.exception(
-            "payhip_order_check_failed email=%s product_code=%s error_type=%s error=%r",
-            email_clean,
+            "payhip_order_check_failed order_id=%s email_present=%s product_code=%s error_type=%s error=%r",
+            order_id,
+            bool(email_clean),
             product_code,
             type(exc).__name__,
             exc,
         )
         return "", None, _public_error_message(exc, fallback="Payhip購入履歴の照合に失敗しました。時間をおいて再試行してください。"), 503
     if status == "not_found":
-        return "", order_row, "Payhip購入履歴を確認できません。購入時メールアドレスと購入商品を確認してください。", 400
+        return "", order_row, "Payhip購入履歴を確認できません。Order IDを確認してください。", 400
     if status == "already_used":
         return "", order_row, "このPayhip購入履歴はすでに使用済みです。", 409
     if status == "cancelled":
