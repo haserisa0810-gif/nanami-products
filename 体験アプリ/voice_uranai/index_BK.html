@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ボイス占い（東北イタコ）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    textarea { width: 100%; height: 200px; font-size: 1rem; padding: .5rem; box-sizing: border-box; }
+    button { font-size: 1.1rem; padding: .6rem 1.4rem; margin-top: .8rem; cursor: pointer; }
+    #status { margin-top: .8rem; color: #666; min-height: 1.4em; }
+    #credit { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ccc; color: #888; font-size: .85rem; }
+    audio { width: 100%; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>ボイス占い（東北イタコ）</h1>
+  <p>鑑定テキストを貼り付けて「聴く」を押してください。</p>
+  <textarea id="text" placeholder="ここに鑑定テキストを貼り付け"></textarea>
+  <button id="speakBtn">聴く</button>
+  <div id="status"></div>
+  <audio id="player" controls hidden></audio>
+  <div id="credit">VOICEVOX:東北イタコ</div>
+
+  <script>
+    const btn = document.getElementById('speakBtn');
+    const status = document.getElementById('status');
+    const player = document.getElementById('player');
+
+    btn.addEventListener('click', async () => {
+      const text = document.getElementById('text').value.trim();
+      if (!text) { status.textContent = 'テキストを入力してください'; return; }
+      btn.disabled = true;
+      status.textContent = '合成中…（数十秒かかることがあります）';
+      player.hidden = true;
+      try {
+        const res = await fetch('/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || ('HTTP ' + res.status));
+        }
+        const blob = await res.blob();
+        player.src = URL.createObjectURL(blob);
+        player.hidden = false;
+        player.play();
+        status.textContent = '完了';
+      } catch (e) {
+        status.textContent = 'エラー: ' + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

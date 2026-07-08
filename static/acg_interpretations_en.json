@@ -1,0 +1,202 @@
+{
+  "Sun_MC": {
+    "label": "Sun MC line",
+    "meaning": "A place where goals and roles tend to become clear, and your abilities are easily recognized. Attention tends to turn toward career and self-realization.",
+    "meaning_hint": "social role, self-realization, visibility of ability"
+  },
+  "Sun_IC": {
+    "label": "Sun IC line",
+    "meaning": "A place where you tend to want to build a life foundation in your own way. Attention turns to family and home, and you can recharge from within.",
+    "meaning_hint": "life foundation, family, inner recharge"
+  },
+  "Sun_ASC": {
+    "label": "Sun ASC line",
+    "meaning": "A place where your presence comes across naturally and you feel like taking the initiative. You may feel encouraged to start something new.",
+    "meaning_hint": "presence, initiative, new beginnings"
+  },
+  "Sun_DSC": {
+    "label": "Sun DSC line",
+    "meaning": "A place where encounters with others tend to shape the course of your life. Your own direction often becomes clearer through other people.",
+    "meaning_hint": "encounters, growth through relationships"
+  },
+  "Moon_MC": {
+    "label": "Moon MC line",
+    "meaning": "A place where sensitivity and empathy work well in your professional life. You may become more attuned to others' feelings, so rest matters too.",
+    "meaning_hint": "empathy at work, emotionally resonant work"
+  },
+  "Moon_IC": {
+    "label": "Moon IC line",
+    "meaning": "A place where you tend to feel safe and at ease. Suited to emotional recharging and resetting your daily rhythm.",
+    "meaning_hint": "sense of safety, comfort, emotional recharge"
+  },
+  "Moon_ASC": {
+    "label": "Moon ASC line",
+    "meaning": "A place where feelings show easily on your face and people find you approachable. Emotional waves are also felt more strongly, so keep your own pace.",
+    "meaning_hint": "approachability, visible emotions"
+  },
+  "Moon_DSC": {
+    "label": "Moon DSC line",
+    "meaning": "A place where you tend to seek emotional connection. Relationships with people you feel safe with tend to deepen.",
+    "meaning_hint": "emotional connection, secure relationships"
+  },
+  "Mercury_MC": {
+    "label": "Mercury MC line",
+    "meaning": "A place where work with words and information tends to be recognized. Attention turns to learning, communication, and negotiation.",
+    "meaning_hint": "words, information, recognition for learning"
+  },
+  "Mercury_IC": {
+    "label": "Mercury IC line",
+    "meaning": "A place where local learning, reading, and journaling help settle the mind. Suited to calming down and organizing your thoughts.",
+    "meaning_hint": "organizing thoughts, everyday learning"
+  },
+  "Mercury_ASC": {
+    "label": "Mercury ASC line",
+    "meaning": "A place where conversation and curiosity get moving. You become more light-footed and information gathering goes smoothly.",
+    "meaning_hint": "conversation, curiosity, mobility"
+  },
+  "Mercury_DSC": {
+    "label": "Mercury DSC line",
+    "meaning": "A place where relationships grow through dialogue. Suited to moving things forward by talking them through.",
+    "meaning_hint": "dialogue, relationships built through discussion"
+  },
+  "Venus_MC": {
+    "label": "Venus MC line",
+    "meaning": "A place connected to public charm, reputation, and how your creative work is seen. Aesthetic sense and harmony tend to work in your favor professionally.",
+    "meaning_hint": "public charm, reputation, visibility of creative work"
+  },
+  "Venus_IC": {
+    "label": "Venus IC line",
+    "meaning": "A place where you want to make your home and daily life comfortable. Easy to find satisfaction living surrounded by things you love.",
+    "meaning_hint": "comfortable living, life with what you love"
+  },
+  "Venus_ASC": {
+    "label": "Venus ASC line",
+    "meaning": "A place where your charm comes across and you tend to be received warmly. Enjoyment and connections tend to expand.",
+    "meaning_hint": "charm that comes across, expanding enjoyment"
+  },
+  "Venus_DSC": {
+    "label": "Venus DSC line",
+    "meaning": "A place where intimate and cooperative relationships tend to grow. Partnership themes come into the spotlight.",
+    "meaning_hint": "intimate relationships, partnership"
+  },
+  "Mars_MC": {
+    "label": "Mars MC line",
+    "meaning": "A place where drive and decisiveness show in your work. The urge to take on challenges rises, so pace yourself.",
+    "meaning_hint": "drive, decisiveness, challenge"
+  },
+  "Mars_IC": {
+    "label": "Mars IC line",
+    "meaning": "A place where you pour energy into building your life foundation. Physical activity tends to support emotional stability.",
+    "meaning_hint": "energy for foundations, exercise habits"
+  },
+  "Mars_ASC": {
+    "label": "Mars ASC line",
+    "meaning": "A place where assertiveness comes forward and you move with speed. With extra momentum, mind the details too.",
+    "meaning_hint": "assertiveness, speed"
+  },
+  "Mars_DSC": {
+    "label": "Mars DSC line",
+    "meaning": "A place where interactions with others carry heat. Frank exchanges increase, so keep a healthy distance.",
+    "meaning_hint": "frank exchanges, heated engagement"
+  },
+  "Jupiter_MC": {
+    "label": "Jupiter MC line",
+    "meaning": "A place where broadened horizons and opportunities show up in your work. Easy to envision your future here.",
+    "meaning_hint": "opportunity, broadened horizons, outlook"
+  },
+  "Jupiter_IC": {
+    "label": "Jupiter IC line",
+    "meaning": "A place where life feels spacious and abundant. Home and foundations tend to expand.",
+    "meaning_hint": "spacious living, expanding foundations"
+  },
+  "Jupiter_ASC": {
+    "label": "Jupiter ASC line",
+    "meaning": "A place where your generosity comes across and possibilities open up. Also pairs well with themes of learning and travel.",
+    "meaning_hint": "generosity, possibility, learning and travel"
+  },
+  "Jupiter_DSC": {
+    "label": "Jupiter DSC line",
+    "meaning": "A place blessed with good connections and supporters. Your world tends to expand through people.",
+    "meaning_hint": "good connections, supporters, growth through people"
+  },
+  "Saturn_MC": {
+    "label": "Saturn MC line",
+    "meaning": "A place suited to settling in and building a career steadily. Trust takes shape in proportion to the responsibility you accept.",
+    "meaning_hint": "steady building, responsibility and trust"
+  },
+  "Saturn_IC": {
+    "label": "Saturn IC line",
+    "meaning": "A place suited to carefully solidifying your life foundation. Good for putting life in order and cultivating long-term stability.",
+    "meaning_hint": "solid foundations, long-term stability"
+  },
+  "Saturn_ASC": {
+    "label": "Saturn ASC line",
+    "meaning": "A place where composure and a sense of responsibility come forward. You tend to advance steadily with self-discipline.",
+    "meaning_hint": "composure, responsibility, steadiness"
+  },
+  "Saturn_DSC": {
+    "label": "Saturn DSC line",
+    "meaning": "A place suited to growing relationships over time. Trust deepens as promises and roles are carefully maintained.",
+    "meaning_hint": "relationships built over time, commitments"
+  },
+  "Uranus_MC": {
+    "label": "Uranus MC line",
+    "meaning": "A place where attention turns to unconventional ways of working and original angles. Easy to experiment with a shift into new fields.",
+    "meaning_hint": "original path, reinventing how you work"
+  },
+  "Uranus_IC": {
+    "label": "Uranus IC line",
+    "meaning": "A place where you feel like refreshing your way of living. Easy to bring new air into your home and habits.",
+    "meaning_hint": "refreshed living, new habits"
+  },
+  "Uranus_ASC": {
+    "label": "Uranus ASC line",
+    "meaning": "A place where individuality and originality stand out. You feel like moving with free ideas.",
+    "meaning_hint": "individuality, free thinking"
+  },
+  "Uranus_DSC": {
+    "label": "Uranus DSC line",
+    "meaning": "A place where unconventional encounters and exchanges arise. Relationships that respect each other's freedom tend to grow.",
+    "meaning_hint": "unconventional encounters, free relationships"
+  },
+  "Neptune_MC": {
+    "label": "Neptune MC line",
+    "meaning": "A place where attention turns to work that uses imagination and sensibility. As receptivity opens up, keep practical plans at hand too.",
+    "meaning_hint": "imagination, work using sensibility"
+  },
+  "Neptune_IC": {
+    "label": "Neptune IC line",
+    "meaning": "A place where quiet and healing are easy to feel. Boundaries soften; suited to unwinding and nurturing your sensitivity.",
+    "meaning_hint": "quiet, healing, nurturing sensitivity"
+  },
+  "Neptune_ASC": {
+    "label": "Neptune ASC line",
+    "meaning": "A place where a gentle aura comes across. Intuition works well here, so keep plans and promises in writing.",
+    "meaning_hint": "gentle aura, working intuition"
+  },
+  "Neptune_DSC": {
+    "label": "Neptune DSC line",
+    "meaning": "A place where empathetic connections arise. Compassion for others deepens, while boundaries deserve attention.",
+    "meaning_hint": "empathetic connection, compassion"
+  },
+  "Pluto_MC": {
+    "label": "Pluto MC line",
+    "meaning": "A place suited to deep career involvement and rebuilding from the structure up. Easy to focus your concentration on one point.",
+    "meaning_hint": "deep involvement, career transformation"
+  },
+  "Pluto_IC": {
+    "label": "Pluto IC line",
+    "meaning": "A place suited to facing your life foundation and inner themes in depth. Easy to let go of what you no longer need and rebuild the base.",
+    "meaning_hint": "reviewing foundations, letting go and rebuilding"
+  },
+  "Pluto_ASC": {
+    "label": "Pluto ASC line",
+    "meaning": "A place where your hidden powers of concentration are drawn out. Suited to looking deeply at how you want to be.",
+    "meaning_hint": "concentration, re-examining who you are"
+  },
+  "Pluto_DSC": {
+    "label": "Pluto DSC line",
+    "meaning": "A place where themes of deep, long-lasting relationships appear. Easy to reshape roles within relationships and regrow bonds.",
+    "meaning_hint": "deep long-term relationships, regrowing bonds"
+  }
+}

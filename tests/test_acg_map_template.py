@@ -101,7 +101,7 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
 def test_acg_map_uses_shared_planet_labels_line_styles_and_globe_link() -> None:
     template = _template()
 
-    assert "var NAME_JA = {" in template
+    assert "var NAME_JA = EN ? {" in template
     assert 'Sun: "太陽"' in template
     assert '"North Node": "ドラゴンヘッド"' in template
     assert 'MC:  { weight: 2.8, dashArray: null }' in template

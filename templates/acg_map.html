@@ -1,10 +1,19 @@
-<!doctype html>
-<html lang="ja">
+{% set en = lang == "en" %}<!doctype html>
+<html lang="{{ 'en' if en else 'ja' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ACG 天空線マップ | nanami astrology</title>
-  <meta name="description" content="アストロカートグラフィ（ACG）の天空線を世界地図に表示します。今日の空のマンデン線と、YAML貼り付けによるパーソナル線に対応。">
+  <title>{{ "ACG Sky-Line Map | nanami astrology" if en else "ACG 天空線マップ | nanami astrology" }}</title>
+  <meta name="description" content="{{ "Displays astrocartography (ACG) sky lines on a world map. Supports mundane lines for any date and personal lines from a pasted YAML." if en else "アストロカートグラフィ（ACG）の天空線を世界地図に表示します。今日の空のマンデン線と、YAML貼り付けによるパーソナル線に対応。" }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="nanami astrology">
+  <meta property="og:title" content="{{ "ACG Sky-Line Map — Where your stars shine in the world" if en else "アストロカートグラフィ ── あなたの星が、世界のどこで輝くか" }}">
+  <meta property="og:description" content="{{ "Overlay your chart data on a world map, see the sky lines of any day, and ask AI about the places that catch your eye." if en else "鑑定データを地図に重ねる。その日の空の線を誰でも見られる。気になる場所をタップしてAIに質問できる。" }}">
+  <meta property="og:url" content="{{ public_base_url }}/acg">
+  <meta property="og:image" content="{{ public_base_url }}{{ asset_url('ogp_acg.jpg') }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
   <!-- asset_version: {{ asset_version }} -->
   <style>
@@ -27,9 +36,34 @@
       flex-direction: column;
     }
     header.acg-header {
+      position: relative;
       padding: 12px 16px 8px;
       border-bottom: 1px solid var(--panel-border);
     }
+    .lang-switch {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      display: flex;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      overflow: hidden;
+      font-size: 0.78rem;
+      line-height: 1;
+    }
+    .lang-switch a {
+      padding: 7px 13px;
+      color: var(--text-main);
+      text-decoration: none;
+      opacity: 0.7;
+    }
+    .lang-switch a.active {
+      background: var(--brand-line);
+      color: var(--brand-base);
+      font-weight: 600;
+      opacity: 1;
+    }
+    .lang-switch a:hover:not(.active) { opacity: 1; }
     header.acg-header h1 {
       margin: 0;
       font-size: 1.05rem;
@@ -74,7 +108,7 @@
       border-color: var(--brand-line);
       font-weight: 600;
     }
-    input[type="date"], textarea {
+    input[type="date"], input[type="search"], textarea {
       width: 100%;
       background: var(--brand-base);
       color: var(--text-main);
@@ -97,6 +131,19 @@
       cursor: pointer;
     }
     .action-btn:disabled { opacity: 0.5; cursor: wait; }
+    .geo-results { display: grid; gap: 6px; margin-top: 8px; }
+    .geo-results button {
+      width: 100%;
+      text-align: left;
+      padding: 7px 9px;
+      background: var(--brand-base);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .geo-results button:hover { border-color: var(--brand-line); }
     .view-btns, .preset-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .view-btns button, .preset-btns button {
       flex: 1 1 45%;
@@ -299,88 +346,100 @@
 </head>
 <body>
   <header class="acg-header">
-    <h1>ACG 天空線マップ</h1>
-    <p>天体の力が強く働く場所を世界地図で確認できます。線をタップすると意味が、地図の地点をタップすると近くの線が表示されます。</p>
+    <nav class="lang-switch" aria-label="Language">
+      <a href="?lang=ja"{% if not en %} class="active"{% endif %}>日本語</a>
+      <a href="?lang=en"{% if en %} class="active"{% endif %}>EN</a>
+    </nav>
+    <h1>{{ "ACG Sky-Line Map" if en else "ACG 天空線マップ" }}</h1>
+    <p>{{ "See where each planet's influence is strongest on a world map. Tap a line for its meaning, or tap a point on the map to list nearby lines." if en else "天体の力が強く働く場所を世界地図で確認できます。線をタップすると意味が、地図の地点をタップすると近くの線が表示されます。" }}</p>
   </header>
   <div class="acg-layout">
     <aside class="acg-side">
       <div class="mode-tabs">
-        <button id="tab-mundane" class="active" type="button">今日の空（マンデン）</button>
-        <button id="tab-personal" type="button">わたしの線（YAML）</button>
+        <button id="tab-mundane" class="active" type="button">{{ "Today's sky (mundane)" if en else "今日の空（マンデン）" }}</button>
+        <button id="tab-personal" type="button">{{ "My lines (YAML)" if en else "わたしの線（YAML）" }}</button>
       </div>
 
       <div class="panel" id="panel-mundane">
-        <h2>日付</h2>
+        <h2>{{ "Date" if en else "日付" }}</h2>
         <input type="date" id="mundane-date">
-        <button class="action-btn" id="btn-mundane" type="button">この日の天空線を表示</button>
-        <p class="note">日本時間の正午時点の空を表示します。</p>
+        <button class="action-btn" id="btn-mundane" type="button">{{ "Show sky lines for this date" if en else "この日の天空線を表示" }}</button>
+        <p class="note">{{ "Shows the sky as of noon Japan time." if en else "日本時間の正午時点の空を表示します。" }}</p>
       </div>
 
       <div class="panel" id="panel-personal" hidden>
-        <h2>YAML 貼り付け</h2>
-        <textarea id="yaml-input" placeholder="購入した YAML の全文をここに貼り付けてください"></textarea>
-        <button class="action-btn" id="btn-personal" type="button">わたしの天空線を表示</button>
-        <p class="note">貼り付けた内容はサーバーに保存されません。</p>
+        <h2>{{ "Paste YAML" if en else "YAML 貼り付け" }}</h2>
+        <textarea id="yaml-input" placeholder="{{ "Paste the full text of your purchased YAML here" if en else "購入した YAML の全文をここに貼り付けてください" }}"></textarea>
+        <button class="action-btn" id="btn-personal" type="button">{{ "Show my sky lines" if en else "わたしの天空線を表示" }}</button>
+        <p class="note">{{ "Pasted content is never stored on the server." if en else "貼り付けた内容はサーバーに保存されません。" }}</p>
       </div>
 
       <p class="status" id="status"></p>
 
+      <div class="panel">
+        <h2>{{ "Place search" if en else "地点検索" }}</h2>
+        <input type="search" id="geo-input" placeholder="{{ "e.g. Tokyo / Paris / New York" if en else "例：札幌 / Paris / ニューヨーク" }}">
+        <button class="action-btn" id="btn-geo-search" type="button">{{ "Search by place name" if en else "地名で探す" }}</button>
+        <p class="note" id="geo-status" aria-live="polite"></p>
+        <div class="geo-results" id="geo-results"></div>
+      </div>
+
       <div class="panel" id="nearby-panel" hidden>
-        <h2>この地点の近くの線</h2>
+        <h2>{{ "Lines near this point" if en else "この地点の近くの線" }}</h2>
         <p id="nearby-title"></p>
         <ul id="nearby-list"></ul>
-        <button class="action-btn" id="btn-copy-yaml" type="button">AIへ場所コンテキストをコピー</button>
+        <button class="action-btn" id="btn-copy-yaml" type="button">{{ "Copy location context for AI" if en else "AIへ場所コンテキストをコピー" }}</button>
       </div>
 
       <div class="panel">
-        <h2>プリセット</h2>
+        <h2>{{ "Presets" if en else "プリセット" }}</h2>
         <div class="preset-btns">
-          <button type="button" data-preset="basic">基本</button>
-          <button type="button" data-preset="work">仕事の線</button>
-          <button type="button" data-preset="relation">人の縁の線</button>
-          <button type="button" data-preset="all">すべて表示</button>
+          <button type="button" data-preset="basic">{{ "Basic" if en else "基本" }}</button>
+          <button type="button" data-preset="work">{{ "Career lines" if en else "仕事の線" }}</button>
+          <button type="button" data-preset="relation">{{ "Relationship lines" if en else "人の縁の線" }}</button>
+          <button type="button" data-preset="all">{{ "Show all" if en else "すべて表示" }}</button>
         </div>
       </div>
 
       <div class="panel">
-        <h2>天体</h2>
+        <h2>{{ "Planets" if en else "天体" }}</h2>
         <div class="toggle-grid" id="planet-toggles"></div>
       </div>
 
       <div class="panel">
-        <h2>アングル</h2>
+        <h2>{{ "Angles" if en else "アングル" }}</h2>
         <div class="angle-row" id="angle-toggles"></div>
       </div>
 
       <div class="panel">
-        <h2>表示範囲</h2>
+        <h2>{{ "View" if en else "表示範囲" }}</h2>
         <div class="view-btns">
-          <button type="button" id="btn-zoom-japan">日本にズーム</button>
-          <button type="button" id="btn-zoom-world">世界全体</button>
+          <button type="button" id="btn-zoom-japan">{{ "Zoom to Japan" if en else "日本にズーム" }}</button>
+          <button type="button" id="btn-zoom-world">{{ "Whole world" if en else "世界全体" }}</button>
         </div>
       </div>
 
       <div class="panel">
-        <h2>線の見かた</h2>
+        <h2>{{ "How to read lines" if en else "線の見かた" }}</h2>
         <div class="legend-samples">
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4"/></svg>MC 実線</span>
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4" stroke-dasharray="8 5"/></svg>IC 破線</span>
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.2" stroke-dasharray="1 5"/></svg>ASC 点線</span>
-          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.2" stroke-dasharray="2 6"/></svg>DSC 点線</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4"/></svg>{{ "MC solid" if en else "MC 実線" }}</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.4" stroke-dasharray="8 5"/></svg>{{ "IC dashed" if en else "IC 破線" }}</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.2" stroke-dasharray="1 5"/></svg>{{ "ASC dotted" if en else "ASC 点線" }}</span>
+          <span><svg width="26" height="6"><line x1="0" y1="3" x2="26" y2="3" stroke="#C9A227" stroke-width="2.2" stroke-dasharray="2 6"/></svg>{{ "DSC dotted" if en else "DSC 点線" }}</span>
         </div>
       </div>
     </aside>
     <div class="acg-map-wrap">
       <div id="map"></div>
       <div class="map-legend" aria-hidden="true">
-        <h3>凡例</h3>
-        <div class="legend-row"><span class="line-swatch mc"></span><span>MC: 実線</span></div>
-        <div class="legend-row"><span class="line-swatch ic"></span><span>IC: 破線</span></div>
-        <div class="legend-row"><span class="line-swatch asc"></span><span>ASC: 点線</span></div>
-        <div class="legend-row"><span class="line-swatch dsc"></span><span>DSC: 点線</span></div>
-        <div class="legend-row planet-extra"><span class="swatch" style="background:#F2C04B"></span><span>太陽 MC</span></div>
-        <div class="legend-row planet-extra"><span class="swatch" style="background:#7FD0C8"></span><span>水星 IC</span></div>
-        <div class="legend-row planet-extra"><span class="swatch" style="background:#F0A3C0"></span><span>金星 ASC</span></div>
+        <h3>{{ "Legend" if en else "凡例" }}</h3>
+        <div class="legend-row"><span class="line-swatch mc"></span><span>{{ "MC: solid" if en else "MC: 実線" }}</span></div>
+        <div class="legend-row"><span class="line-swatch ic"></span><span>{{ "IC: dashed" if en else "IC: 破線" }}</span></div>
+        <div class="legend-row"><span class="line-swatch asc"></span><span>{{ "ASC: dotted" if en else "ASC: 点線" }}</span></div>
+        <div class="legend-row"><span class="line-swatch dsc"></span><span>{{ "DSC: dotted" if en else "DSC: 点線" }}</span></div>
+        <div class="legend-row planet-extra"><span class="swatch" style="background:#F2C04B"></span><span>{{ "Sun MC" if en else "太陽 MC" }}</span></div>
+        <div class="legend-row planet-extra"><span class="swatch" style="background:#7FD0C8"></span><span>{{ "Mercury IC" if en else "水星 IC" }}</span></div>
+        <div class="legend-row planet-extra"><span class="swatch" style="background:#F0A3C0"></span><span>{{ "Venus ASC" if en else "金星 ASC" }}</span></div>
       </div>
     </div>
   </div>
@@ -391,18 +450,20 @@
   (function () {
     "use strict";
 
-    var NAME_JA = {
+    var EN = {{ "true" if en else "false" }};  // 英語表示（?lang=en）
+
+    var NAME_JA = EN ? {
+      // 英語では planet キーがそのまま表示名になる。別名だけ吸収する
+      TrueNode: "North Node", MeanNode: "North Node"
+    } : {
       Sun: "太陽", Moon: "月", Mercury: "水星", Venus: "金星", Mars: "火星",
       Jupiter: "木星", Saturn: "土星", Uranus: "天王星", Neptune: "海王星", Pluto: "冥王星",
       "North Node": "ドラゴンヘッド", "South Node": "ドラゴンテイル", TrueNode: "ドラゴンヘッド",
       MeanNode: "ドラゴンヘッド", Node: "ノード", Lilith: "リリス", Chiron: "キロン",
       Ceres: "セレス", Pallas: "パラス", Juno: "ジュノー", Vesta: "ベスタ"
     };
-    var PLANETS = [
-      ["Sun", NAME_JA.Sun], ["Moon", NAME_JA.Moon], ["Mercury", NAME_JA.Mercury], ["Venus", NAME_JA.Venus],
-      ["Mars", NAME_JA.Mars], ["Jupiter", NAME_JA.Jupiter], ["Saturn", NAME_JA.Saturn],
-      ["Uranus", NAME_JA.Uranus], ["Neptune", NAME_JA.Neptune], ["Pluto", NAME_JA.Pluto]
-    ];
+    var PLANETS = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+      .map(function (key) { return [key, NAME_JA[key] || key]; });
     var ANGLES = ["MC", "IC", "ASC", "DSC"];
     var PLANET_COLORS = {
       Sun: "#F2C04B",
@@ -621,6 +682,190 @@
         })
       }
     };
+    if (EN) {
+      PRESET_CONTEXT = {
+        basic: {
+          key: "basic",
+          label: "Basic",
+          purpose: "Core lines for a quick overall reading",
+          interpretation_scope: {
+            focus: ["overall tendencies", "life foundation", "self-expression"],
+            secondary: ["work", "relationships", "learning"]
+          },
+          included_line_rules: [
+            {
+              planet: "Sun",
+              angles: ["MC"],
+              reason: "social role, self-expression, professional visibility",
+              short_hint: "themes where you shine in society",
+              keywords: ["career", "self-expression", "visibility", "recognition", "title"],
+              typical_topics: ["job change", "starting a business", "social media", "personal branding", "public activity"]
+            },
+            {
+              planet: "Moon",
+              angles: ["IC"],
+              reason: "sense of security, daily rhythm, inner foundation",
+              short_hint: "themes of a place where you can settle",
+              keywords: ["security", "daily life", "belonging", "family", "habits"],
+              typical_topics: ["housing", "family", "daily rhythm", "rest", "building a home base"]
+            },
+            {
+              planet: "Venus",
+              angles: ["ASC"],
+              reason: "charm, first impressions, gateway to relationships",
+              short_hint: "themes of visible personal charm",
+              keywords: ["charm", "first impression", "relationships", "aesthetics", "harmony"],
+              typical_topics: ["customer-facing work", "beauty", "design", "socializing", "introductions"]
+            },
+            {
+              planet: "Jupiter",
+              angles: ["MC"],
+              reason: "growth, expansion, widening opportunities",
+              short_hint: "themes of expanding work or roles",
+              keywords: ["growth", "expansion", "opportunity", "learning", "abundance"],
+              typical_topics: ["new ventures", "study", "overseas", "planning", "introductions"]
+            },
+            {
+              planet: "Saturn",
+              angles: ["MC"],
+              reason: "responsibility, persistence, long-term results",
+              short_hint: "themes of commitment and responsibility",
+              keywords: ["responsibility", "persistence", "track record", "title", "maturity"],
+              typical_topics: ["management", "long-term planning", "systems", "organizations", "steady building"]
+            }
+          ]
+        },
+        work: {
+          key: "work",
+          label: "Career lines",
+          purpose: "Lines for reading work, social recognition, and places of activity",
+          interpretation_scope: {
+            focus: ["career", "social activity", "communication", "places of activity"],
+            secondary: ["relationships", "learning"]
+          },
+          included_line_rules: [
+            {
+              planet: "Sun",
+              angles: ["MC"],
+              reason: "social role, self-expression, professional title",
+              short_hint: "themes where you shine in society",
+              keywords: ["career", "self-expression", "visibility", "recognition", "title"],
+              typical_topics: ["job change", "starting a business", "social media", "personal branding", "public activity"]
+            },
+            {
+              planet: "Jupiter",
+              angles: ["MC", "ASC"],
+              reason: "growth, expansion, opportunity",
+              short_hint: "themes of drawing in growth and chances",
+              keywords: ["growth", "expansion", "opportunity", "learning", "abundance"],
+              typical_topics: ["new ventures", "study", "overseas", "planning", "introductions"]
+            },
+            {
+              planet: "Saturn",
+              angles: ["MC"],
+              reason: "responsibility, persistence, title, long-term results",
+              short_hint: "responsibility and persistence become themes",
+              keywords: ["responsibility", "persistence", "track record", "title", "maturity"],
+              typical_topics: ["management", "long-term planning", "systems", "organizations", "steady building"]
+            },
+            {
+              planet: "Mercury",
+              angles: ["MC", "ASC"],
+              reason: "writing, communication, negotiation, intellectual work",
+              short_hint: "words and information connect to work",
+              keywords: ["writing", "communication", "negotiation", "intellectual work", "information"],
+              typical_topics: ["writing", "editing", "sales", "meetings", "study"]
+            },
+            {
+              planet: "Mars",
+              angles: ["MC", "ASC"],
+              reason: "drive, competition, independence",
+              short_hint: "themes of launching and decisive moments",
+              keywords: ["drive", "competition", "independence", "momentum", "decision"],
+              typical_topics: ["launching", "negotiation", "relocation", "competition", "execution"]
+            },
+            {
+              planet: "Venus",
+              angles: ["MC"],
+              reason: "customer appeal, popularity, aesthetic work, branding",
+              short_hint: "appearance and likability tie into work",
+              keywords: ["customer appeal", "popularity", "aesthetic work", "brand", "harmony"],
+              typical_topics: ["customer-facing work", "beauty", "design", "public relations", "branding"]
+            }
+          ]
+        },
+        relation: {
+          key: "relation",
+          label: "Relationship lines",
+          purpose: "Lines for reading relationships, encounters, and cooperation",
+          interpretation_scope: {
+            focus: ["relationships", "encounters", "cooperation", "belonging"],
+            secondary: ["work", "learning"]
+          },
+          included_line_rules: [
+            {
+              planet: "Venus",
+              angles: ["ASC", "DSC"],
+              reason: "charm, first impressions, gateway to relationships",
+              short_hint: "visible charm and how relationships begin",
+              keywords: ["charm", "first impression", "relationships", "aesthetics", "harmony"],
+              typical_topics: ["introductions", "socializing", "dating", "customer-facing work", "cooperation"]
+            },
+            {
+              planet: "Moon",
+              angles: ["ASC", "DSC", "IC"],
+              reason: "sense of security, closeness, belonging",
+              short_hint: "relationships and places where you feel safe",
+              keywords: ["security", "closeness", "belonging", "family", "empathy"],
+              typical_topics: ["living together", "friendships", "family", "community", "support"]
+            },
+            {
+              planet: "Jupiter",
+              angles: ["DSC"],
+              reason: "support, expansion, fortunate encounters",
+              short_hint: "themes of encounters that bring growth",
+              keywords: ["support", "expansion", "encounters", "learning", "introductions"],
+              typical_topics: ["networking", "mentorship", "joint projects", "introductions", "learning"]
+            },
+            {
+              planet: "Mercury",
+              angles: ["DSC"],
+              reason: "conversation, introductions, contact, coordination",
+              short_hint: "relationships move through conversation and contact",
+              keywords: ["conversation", "introductions", "contact", "coordination", "information"],
+              typical_topics: ["contact", "meetings", "negotiation", "consultation", "introductions"]
+            },
+            {
+              planet: "Sun",
+              angles: ["DSC"],
+              reason: "self-understanding through others, axis of relationships",
+              short_hint: "you see yourself through relationships with others",
+              keywords: ["self-understanding", "partner", "relationships", "axis", "presence"],
+              typical_topics: ["partners", "collaboration", "in-person consulting", "contracts", "center of relationships"]
+            }
+          ]
+        },
+        all: {
+          key: "all",
+          label: "Show all",
+          purpose: "Overview for organizing all displayed lines",
+          interpretation_scope: {
+            focus: ["overall check", "compatibility", "comparison", "synthesis"],
+            secondary: ["work", "relationships", "relocation"]
+          },
+          included_line_rules: PLANETS.map(function (p) {
+            return {
+              planet: p[0],
+              angles: ANGLES.slice(),
+              reason: "for overall review",
+              short_hint: "line included for overall review",
+              keywords: ["overall", "comparison", "review"],
+              typical_topics: ["overall review", "comparison", "organizing"]
+            };
+          })
+        }
+      };
+    }
     var PRESETS = {
       basic:    { planets: ["Sun", "Moon", "Venus", "Jupiter", "Saturn"], angles: ["MC", "IC", "ASC"] },
       work:     { planets: ["Sun", "Saturn", "Mercury", "Mars", "Jupiter", "Venus"], angles: ["MC", "ASC", "IC"] },
@@ -697,7 +942,7 @@
       interactive: false,
       icon: L.divIcon({
         className: "",
-        html: '<span class="japan-label">日本</span>',
+        html: '<span class="japan-label">' + (EN ? "Japan" : "日本") + '</span>',
         iconSize: [48, 22],
         iconAnchor: [24, 11]
       })
@@ -726,7 +971,7 @@
       interactive: false,
       icon: L.divIcon({
         className: "",
-        html: '<span class="japan-guide">日本は左側。左の「日本にズーム」でも移動できます。</span>',
+        html: '<span class="japan-guide">' + (EN ? "Japan is to the left. You can also use \"Zoom to Japan\" in the sidebar." : "日本は左側。左の「日本にズーム」でも移動できます。") + '</span>',
         iconSize: [260, 30],
         iconAnchor: [0, 15]
       })
@@ -747,9 +992,11 @@
     var planetState = {};
     var angleState = {};
     var lastQuery = null;      // 直近の逆引き結果（YAMLコピー用）
+    var lastLatLng = null;     // 直近のクリック地点（緯度経度）。線表示が変わっても保持する
+    var lastLocationName = ""; // 地点検索で選んだ地名。手動クリックでは空に戻す
     var clickMarker = null;
 
-    fetch("{{ asset_url('acg_interpretations.json') }}")
+    fetch(EN ? "{{ asset_url('acg_interpretations_en.json') }}" : "{{ asset_url('acg_interpretations.json') }}")
       .then(function (r) { return r.json(); })
       .then(function (data) { dict = data; });
 
@@ -768,7 +1015,7 @@
     }
 
     function lineLabel(planet, angle) {
-      return planetLabel(planet) + angle + "ライン";
+      return EN ? planetLabel(planet) + " " + angle + " line" : planetLabel(planet) + angle + "ライン";
     }
 
     function planetColor(planet) {
@@ -787,16 +1034,37 @@
     }
 
     function roleLabel(mode) {
+      if (EN) {
+        return mode === "natal" || mode === "personal" ? "Your natal chart (ACG)" : "Sky of the day (mundane)";
+      }
       return mode === "natal" || mode === "personal" ? "あなたの出生図（ACG）" : "今日の空（マンデン）";
     }
 
     function momentLabel(mode) {
+      if (EN) {
+        return mode === "natal" || mode === "personal" ? "the moment of birth" : "the reference time of the selected date";
+      }
       return mode === "natal" || mode === "personal" ? "出生瞬間" : "指定日の基準時刻";
     }
 
     function angleAstronomyText(planet, angle, mode) {
       var name = planetLabel(planet);
       var when = momentLabel(mode);
+      if (EN) {
+        if (angle === "MC") {
+          return "Near this line, " + name + " culminates (crosses the upper meridian) at " + when + ".";
+        }
+        if (angle === "IC") {
+          return "Near this line, " + name + " crosses the lower meridian at " + when + ".";
+        }
+        if (angle === "ASC") {
+          return "Near this line, " + name + " rises over the eastern horizon at " + when + ".";
+        }
+        if (angle === "DSC") {
+          return "Near this line, " + name + " sets below the western horizon at " + when + ".";
+        }
+        return "This line shows the relationship between " + name + " and " + angle + ".";
+      }
       if (angle === "MC") {
         return "この線の近くでは、" + name + "が" + when + "に南中する地域です。";
       }
@@ -834,7 +1102,7 @@
         + '<div class="popup-role">' + role + '</div>'
         + '<div class="popup-astro">' + angleAstronomyText(props.planet, props.angle, props.mode) + '</div>'
         + '<div>' + meaning + '</div>'
-        + '<a class="globe-link" href="' + globeUrl(props) + '" target="_blank" rel="noopener">3D地球儀で見る</a>'
+        + '<a class="globe-link" href="' + globeUrl(props) + '" target="_blank" rel="noopener">' + (EN ? "View on 3D globe" : "3D地球儀で見る") + '</a>'
         + '</div>';
     }
 
@@ -891,22 +1159,22 @@
       featureSets[mode] = features;
       currentFeatures = features;
       currentMode = mode;
-      clearNearby();
       renderLines();
+      refreshNearbyForLastPoint();  // 地点は保持し、新しい線データで引き直す
     }
 
     function loadMundane(dateStr) {
-      setStatus("計算中…");
+      setStatus(EN ? "Calculating…" : "計算中…");
       var btn = document.getElementById("btn-mundane");
       btn.disabled = true;
       // v= はレスポンススキーマ版。変更時にブラウザHTTPキャッシュ（max-age=86400）を無効化する
       fetch("/api/acg/mundane?date=" + encodeURIComponent(dateStr) + "&v=2")
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
         .then(function (res) {
-          if (!res.ok) { throw new Error(res.body.error || "取得に失敗しました。"); }
+          if (!res.ok) { throw new Error(res.body.error || (EN ? "Failed to fetch data." : "取得に失敗しました。")); }
           currentDate = dateStr;
           applyGeojson(res.body, "mundane");
-          setStatus(dateStr + " のマンデン線を表示しています。");
+          setStatus(EN ? "Showing mundane lines for " + dateStr + "." : dateStr + " のマンデン線を表示しています。");
         })
         .catch(function (e) { setStatus(e.message, true); })
         .finally(function () { btn.disabled = false; });
@@ -914,8 +1182,8 @@
 
     function loadPersonal() {
       var text = document.getElementById("yaml-input").value;
-      if (!text.trim()) { setStatus("YAML を貼り付けてください。", true); return; }
-      setStatus("計算中…");
+      if (!text.trim()) { setStatus(EN ? "Please paste your YAML." : "YAML を貼り付けてください。", true); return; }
+      setStatus(EN ? "Calculating…" : "計算中…");
       var btn = document.getElementById("btn-personal");
       btn.disabled = true;
       fetch("/api/acg/personal", {
@@ -925,21 +1193,31 @@
       })
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
         .then(function (res) {
-          if (!res.ok) { throw new Error(res.body.error || "取得に失敗しました。"); }
+          if (!res.ok) { throw new Error(res.body.error || (EN ? "Failed to fetch data." : "取得に失敗しました。")); }
           personalContext = (res.body.meta && res.body.meta.personal_context) || null;
           hasPersonalYaml = true;
           applyGeojson(res.body, "personal");
-          setStatus("あなたのネイタル天空線を表示しています。");
+          setStatus(EN ? "Showing your natal sky lines." : "あなたのネイタル天空線を表示しています。");
         })
         .catch(function (e) { setStatus(e.message, true); })
         .finally(function () { btn.disabled = false; });
     }
 
     // --- 地点逆引き + YAMLエクスポート ---
+    // 地点を明示的にリセットする（線データの差し替えでは呼ばない）
     function clearNearby() {
       lastQuery = null;
+      lastLatLng = null;
+      lastLocationName = "";
       document.getElementById("nearby-panel").hidden = true;
       if (clickMarker) { map.removeLayer(clickMarker); clickMarker = null; }
+    }
+
+    // 保持しているクリック地点で「近くの線」を引き直し、パネルとlastQueryを更新する。
+    // 地点が無ければ何もしない。
+    function refreshNearbyForLastPoint() {
+      if (!lastLatLng) { return; }
+      showNearby(lastLatLng, lookupNearby(lastLatLng));
     }
 
     function lookupNearby(latlng) {
@@ -991,12 +1269,13 @@
       var panel = document.getElementById("nearby-panel");
       var title = document.getElementById("nearby-title");
       var list = document.getElementById("nearby-list");
-      title.textContent = "緯度 " + lastQuery.latitude + " / 経度 " + lastQuery.longitude +
-        "（" + NEARBY_MAX_KM + "km以内・近い順）";
+      title.textContent = EN
+        ? "Lat " + lastQuery.latitude + " / Lon " + lastQuery.longitude + " (within " + NEARBY_MAX_KM + "km, nearest first)"
+        : "緯度 " + lastQuery.latitude + " / 経度 " + lastQuery.longitude + "（" + NEARBY_MAX_KM + "km以内・近い順）";
       list.innerHTML = "";
       if (!results.length) {
         var empty = document.createElement("li");
-        empty.textContent = "近くに表示中の線はありません。";
+        empty.textContent = EN ? "No displayed lines nearby." : "近くに表示中の線はありません。";
         list.appendChild(empty);
       }
       results.forEach(function (r) {
@@ -1008,7 +1287,7 @@
         name.textContent = r.label;
         var distText = document.createElement("span");
         distText.className = "line-dist strength-" + r.strength;
-        distText.textContent = r.distance_km + "km（" + r.strength + "）";
+        distText.textContent = EN ? r.distance_km + "km (" + r.strength + ")" : r.distance_km + "km（" + r.strength + "）";
         head.appendChild(name);
         head.appendChild(distText);
         li.appendChild(head);
@@ -1030,8 +1309,68 @@
 
     map.on("click", function (e) {
       if (!currentFeatures.length) { return; }
+      lastLatLng = e.latlng;
+      lastLocationName = "";
       showNearby(e.latlng, lookupNearby(e.latlng));
     });
+
+    // --- 地点検索（/api/geocode・Nominatim） ---
+    (function () {
+      var input = document.getElementById("geo-input");
+      var btn = document.getElementById("btn-geo-search");
+      var statusEl = document.getElementById("geo-status");
+      var resultsEl = document.getElementById("geo-results");
+      function setGeoStatus(text) { statusEl.textContent = text || ""; }
+      function clearResults() { resultsEl.innerHTML = ""; }
+      function selectPlace(item) {
+        var lat = Number(item.latitude);
+        var lon = Number(item.longitude);
+        if (!isFinite(lat) || !isFinite(lon)) { return; }
+        clearResults();
+        setGeoStatus("");
+        input.value = item.display_name || item.name || "";
+        lastLatLng = L.latLng(lat, lon);
+        lastLocationName = item.display_name || item.name || "";
+        map.setView([lat, lon], Math.max(map.getZoom(), 5));
+        if (currentFeatures.length) {
+          showNearby(lastLatLng, lookupNearby(lastLatLng));
+        } else {
+          if (clickMarker) { map.removeLayer(clickMarker); }
+          clickMarker = L.circleMarker(lastLatLng, {
+            radius: 6, color: "#E8C75A", weight: 2, fillColor: "#E8C75A", fillOpacity: 0.4
+          }).addTo(map);
+          setGeoStatus(EN ? "Show sky lines to see the lines near this point." : "天空線を表示すると、この地点の近くの線が出ます。");
+        }
+      }
+      function searchPlace() {
+        var q = input.value.trim();
+        if (!q) { setGeoStatus(EN ? "Enter a place name to search" : "検索する地名を入力してください"); clearResults(); return; }
+        setGeoStatus(EN ? "Searching…" : "検索中…");
+        clearResults();
+        btn.disabled = true;
+        fetch("/api/geocode?q=" + encodeURIComponent(q), { headers: { "Accept": "application/json" } })
+          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+          .then(function (res) {
+            if (!res.ok) { throw new Error((res.body && res.body.error) || (EN ? "Search failed." : "検索に失敗しました。")); }
+            var items = Array.isArray(res.body.results) ? res.body.results : [];
+            if (!items.length) { setGeoStatus(EN ? "No places found" : "地点が見つかりませんでした"); return; }
+            setGeoStatus(EN ? "Results (click to select a point)" : "検索結果（クリックで地点を選択）");
+            items.forEach(function (item) {
+              var b = document.createElement("button");
+              b.type = "button";
+              b.textContent = item.display_name || item.name || (EN ? "Unnamed" : "名称なし");
+              b.addEventListener("click", function () { selectPlace(item); });
+              resultsEl.appendChild(b);
+            });
+          })
+          .catch(function (e) { setGeoStatus(e.message || (EN ? "Place search failed. Please try again later." : "地名検索に失敗しました。時間をおいて再度お試しください。")); })
+          .finally(function () { btn.disabled = false; });
+      }
+      btn.addEventListener("click", searchPlace);
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); searchPlace(); }
+      });
+    })();
 
     function buildExportYaml() {
       if (!lastQuery) { return ""; }
@@ -1039,15 +1378,20 @@
       var reportDate = currentDate || today;
       var combined = hasPersonalYaml;
       var preset = selectedPresetContext();
+      // 高緯度では経線の収束で全MC/IC線が地理的に近接する。その事実だけをAIに渡す（解釈はしない）
+      var absLat = Math.abs(Number(lastQuery.latitude));
+      var latZone = absLat >= 80 ? "polar" : (absLat >= 66.5 ? "high" : "normal");
       var lines = [
         "acg_location_report:",
         "  generated_by: nanami-astro ACG",
         "  mode: " + (combined ? "combined" : (currentMode === "mundane" ? "mundane" : "personal")),
         "  query:",
-        '    location_name: ""',
+        "    location_name: " + yamlString(lastLocationName),
         "    latitude: " + lastQuery.latitude,
         "    longitude: " + lastQuery.longitude,
-        '    date: "' + reportDate + '"'
+        '    date: "' + reportDate + '"',
+        "    latitude_zone: " + latZone,
+        "    lines_converge_at_high_latitude: " + (latZone === "normal" ? "false" : "true")
       ];
       appendSelectedPreset(lines, preset);
       if (combined) {
@@ -1068,10 +1412,11 @@
     }
 
     function appendPersonalContext(lines) {
+      var defaultNote = EN ? "See the full YAML for detailed natal chart interpretation" : "出生図の詳しい解釈は、別途YAML本文を参照";
       var context = personalContext || {
         source: "uploaded_birth_yaml",
         natal_summary: { sun: null, moon: null, asc: null, mc: null },
-        note: "出生図の詳しい解釈は、別途YAML本文を参照"
+        note: defaultNote
       };
       var summary = context.natal_summary || {};
       lines.push("  personal_context:");
@@ -1081,7 +1426,7 @@
       lines.push("      moon: " + yamlNullable(summary.moon));
       lines.push("      asc: " + yamlNullable(summary.asc));
       lines.push("      mc: " + yamlNullable(summary.mc));
-      lines.push("    note: " + yamlString(context.note || "出生図の詳しい解釈は、別途YAML本文を参照"));
+      lines.push("    note: " + yamlString(context.note || defaultNote));
     }
 
     function selectedPresetContext() {
@@ -1131,38 +1476,80 @@
       lines.push("      - natal_yaml");
       lines.push("      - transit_yaml");
       lines.push("    interpretation_policy:");
-      if (combined) {
-        lines.push("      - personal_lines_nearby は本人にとってその土地が持ちやすいテーマとして読む");
-        lines.push("      - mundane_lines_nearby はその日の社会的・集合的な空気として読む");
-        lines.push("      - 本人の出生図YAML、現在の目的、過去の滞在経験と照合して読む");
-        lines.push("      - 近い線同士がある場合は、本人テーマと今日の空気の重なりとして読む");
+      if (EN) {
+        if (combined) {
+          lines.push("      - read personal_lines_nearby as themes this place tends to hold for the person");
+          lines.push("      - read mundane_lines_nearby as the social/collective mood of the day");
+          lines.push("      - in each list, treat lines with a smaller distance_rank as primary and larger as supporting");
+          lines.push("      - cross-reference with the person's natal YAML, current purpose, and past stays");
+          lines.push("      - when lines sit close together, read them as an overlap of personal themes and the day's mood");
+        } else {
+          lines.push("      - read lines_nearby along the theme of the selected preset");
+          lines.push("      - in lines_nearby, treat lines with a smaller distance_rank as primary and larger as supporting");
+          lines.push("      - if the person's natal YAML is available, read it together with the natal chart");
+        }
+        lines.push("      - when lines_converge_at_high_latitude is true, lines are close due to high-latitude convergence; proximity itself does not mean strength");
       } else {
-        lines.push("      - lines_nearby は選択中プリセットのテーマに沿って読む");
-        lines.push("      - 本人の出生図YAMLがある場合は、出生図と重ねて読む");
+        if (combined) {
+          lines.push("      - personal_lines_nearby は本人にとってその土地が持ちやすいテーマとして読む");
+          lines.push("      - mundane_lines_nearby はその日の社会的・集合的な空気として読む");
+          lines.push("      - 各リストは distance_rank の小さい線を主、大きい線を補助として読む");
+          lines.push("      - 本人の出生図YAML、現在の目的、過去の滞在経験と照合して読む");
+          lines.push("      - 近い線同士がある場合は、本人テーマと今日の空気の重なりとして読む");
+        } else {
+          lines.push("      - lines_nearby は選択中プリセットのテーマに沿って読む");
+          lines.push("      - lines_nearby は distance_rank の小さい線を主、大きい線を補助として読む");
+          lines.push("      - 本人の出生図YAMLがある場合は、出生図と重ねて読む");
+        }
+        lines.push("      - lines_converge_at_high_latitude が true の場合、線が近いのは高緯度の収束によるもので、近接自体は強さを意味しない");
       }
       lines.push("  suggested_questions:");
-      if (preset.key === "work") {
-        lines.push('    - この場所は仕事や発信の場所としてどう読めますか？');
-        lines.push('    - 私の出生図と重ねると、この土地ではどんな働き方が向きそうですか？');
-        lines.push('    - 今日この場所で仕事・発信・営業をするなら、どんな使い方がよさそうですか？');
-        lines.push('    - 過去にこの地域と縁がある場合、仕事面ではどう振り返れますか？');
-      } else if (preset.key === "relation") {
-        lines.push('    - この場所は人間関係や出会いの場としてどう読めますか？');
-        lines.push('    - 私の出生図と重ねると、どんな関わり方が起こりやすいですか？');
-        lines.push('    - 今日この場所で人に会うなら、どんな使い方が向いていますか？');
-        lines.push('    - 過去にこの地域と縁がある場合、対人面ではどう振り返れますか？');
+      if (EN) {
+        if (preset.key === "work") {
+          lines.push('    - How does this place read as a location for work and communication?');
+          lines.push('    - Combined with my natal chart, what way of working suits this place?');
+          lines.push('    - If I work, publish, or do sales here today, how should I use this place?');
+          lines.push('    - If I have past ties to this area, how can I reflect on them work-wise?');
+        } else if (preset.key === "relation") {
+          lines.push('    - How does this place read as a setting for relationships and encounters?');
+          lines.push('    - Combined with my natal chart, what kinds of connections tend to happen here?');
+          lines.push('    - If I meet someone here today, how should I use this place?');
+          lines.push('    - If I have past ties to this area, how can I reflect on them relationship-wise?');
+        } else {
+          lines.push('    - Reading this place through the selected preset, what themes come up?');
+          lines.push('    - If I visit this place today, how should I use it?');
+          lines.push('    - Combined with my natal chart, how does this place look?');
+          lines.push('    - If I have stayed here before, what reflections are possible?');
+        }
       } else {
-        lines.push('    - この場所を選択中プリセットの観点で読むと、どんなテーマがありますか？');
-        lines.push('    - この場所に今日行くなら、どんな使い方が向いていますか？');
-        lines.push('    - 本人の出生図と重ねると、どんな見え方になりますか？');
-        lines.push('    - 過去の滞在経験がある場合、どんな振り返りができますか？');
+        if (preset.key === "work") {
+          lines.push('    - この場所は仕事や発信の場所としてどう読めますか？');
+          lines.push('    - 私の出生図と重ねると、この土地ではどんな働き方が向きそうですか？');
+          lines.push('    - 今日この場所で仕事・発信・営業をするなら、どんな使い方がよさそうですか？');
+          lines.push('    - 過去にこの地域と縁がある場合、仕事面ではどう振り返れますか？');
+        } else if (preset.key === "relation") {
+          lines.push('    - この場所は人間関係や出会いの場としてどう読めますか？');
+          lines.push('    - 私の出生図と重ねると、どんな関わり方が起こりやすいですか？');
+          lines.push('    - 今日この場所で人に会うなら、どんな使い方が向いていますか？');
+          lines.push('    - 過去にこの地域と縁がある場合、対人面ではどう振り返れますか？');
+        } else {
+          lines.push('    - この場所を選択中プリセットの観点で読むと、どんなテーマがありますか？');
+          lines.push('    - この場所に今日行くなら、どんな使い方が向いていますか？');
+          lines.push('    - 本人の出生図と重ねると、どんな見え方になりますか？');
+          lines.push('    - 過去の滞在経験がある場合、どんな振り返りができますか？');
+        }
       }
     }
 
     function appendUsageNote(lines) {
       lines.push("  usage_note: >-");
-      lines.push("    このYAMLは、ACG地図上の地点と選択中プリセットをもとにした場所コンテキストです。");
-      lines.push("    解釈はAI側で行ってください。");
+      if (EN) {
+        lines.push("    This YAML is a location context based on a point on the ACG map and the selected preset.");
+        lines.push("    Interpretation should be done by the AI.");
+      } else {
+        lines.push("    このYAMLは、ACG地図上の地点と選択中プリセットをもとにした場所コンテキストです。");
+        lines.push("    解釈はAI側で行ってください。");
+      }
     }
 
     function yamlNullable(value) {
@@ -1182,12 +1569,13 @@
         return;
       }
       lines.push("  " + key + ":");
-      results.forEach(function (r) {
+      results.forEach(function (r, i) {
         var match = categoryMatchForLine(r, preset);
         lines.push("    - planet: " + r.planet);
         lines.push("      angle: " + r.angle);
         lines.push("      line_type: " + r.line_type);
         lines.push("      distance_km: " + r.distance_km);
+        lines.push("      distance_rank: " + (i + 1));
         lines.push("      strength: " + r.strength);
         if (match) {
           lines.push("      category_match:");
@@ -1223,6 +1611,26 @@
     }
 
     function lineMeaningShortHint(mode, preset, line, match) {
+      if (EN) {
+        if (preset && preset.key === "work") {
+          return mode === "personal"
+            ? "Treat this line as a work theme the person can express in this place."
+            : "Treat this line as a social/collective theme of the day.";
+        }
+        if (preset && preset.key === "relation") {
+          return mode === "personal"
+            ? "Treat this line as a theme of how the person connects with others in this place."
+            : "Treat this line as an interpersonal/collective theme of the day.";
+        }
+        if (match) {
+          return mode === "personal"
+            ? "Treat this line as a theme the person can express in this place."
+            : "Treat this line as a social/collective theme of the day.";
+        }
+        return mode === "personal"
+          ? "Treat this line as a personal theme in this place."
+          : "Treat this line as a theme of the day.";
+      }
       if (preset && preset.key === "work") {
         return mode === "personal"
           ? "このラインは、この土地で本人が発揮しやすい仕事テーマとして扱う。"
@@ -1269,6 +1677,26 @@
     }
 
     function categoryAiHint(mode, preset) {
+      if (EN) {
+        if (preset && preset.key === "work") {
+          return mode === "mundane"
+            ? "Treat this line as a social/collective work theme of the day.\nIf it overlaps with personal lines, read them together as how to use this place."
+            : "Treat this line as a work theme the person can express in this place.\nRead it together with related natal placements.";
+        }
+        if (preset && preset.key === "relation") {
+          return mode === "mundane"
+            ? "Treat this line as an interpersonal/collective relationship theme of the day.\nIf it overlaps with personal lines, read it as how relationships tend to unfold."
+            : "Treat this line as a theme of how the person connects with others in this place.\nRead it together with related natal placements.";
+        }
+        if (preset && preset.key === "basic") {
+          return mode === "mundane"
+            ? "Treat this line as an overall theme of the day.\nIf it overlaps with personal lines, use it as material for a combined reading."
+            : "Treat this line as an overall theme the person can express in this place.\nRead it together with related natal placements.";
+        }
+        return mode === "mundane"
+          ? "Treat this line as a social/collective theme of the day.\nIf it overlaps with personal lines, read them together as themes of this place."
+          : "Treat this line as a theme the person can express in this place.\nRead it together with related natal placements.";
+      }
       if (preset && preset.key === "work") {
         return mode === "mundane"
           ? "このラインは、その日の社会的・集合的な仕事テーマとして扱う。\n本人ラインとの重なりがあれば、場所の使い方として合わせて読む。"
@@ -1299,7 +1727,7 @@
     document.getElementById("btn-copy-yaml").addEventListener("click", function () {
       var text = buildExportYaml();
       if (!text) { return; }
-      function done() { setStatus("AIへ場所コンテキストをコピーしました。"); }
+      function done() { setStatus(EN ? "Location context copied for AI." : "AIへ場所コンテキストをコピーしました。"); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
       } else {
@@ -1314,7 +1742,7 @@
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand("copy"); done(); } catch (e) { setStatus("コピーに失敗しました。", true); }
+      try { document.execCommand("copy"); done(); } catch (e) { setStatus(EN ? "Copy failed." : "コピーに失敗しました。", true); }
       document.body.removeChild(ta);
     }
 
@@ -1331,6 +1759,7 @@
       cb.addEventListener("change", function () {
         planetState[key] = cb.checked;
         renderLines();
+        refreshNearbyForLastPoint();
       });
       planetChecks[key] = cb;
       var dot = document.createElement("span");
@@ -1352,6 +1781,7 @@
       cb.addEventListener("change", function () {
         angleState[key] = cb.checked;
         renderLines();
+        refreshNearbyForLastPoint();
       });
       angleChecks[key] = cb;
       label.appendChild(cb);
@@ -1374,6 +1804,7 @@
         angleChecks[key].checked = on;
       });
       renderLines();
+      refreshNearbyForLastPoint();
     }
 
     Array.prototype.forEach.call(document.querySelectorAll(".preset-btns button"), function (btn) {

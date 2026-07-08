@@ -2386,8 +2386,15 @@ def healthz():
 
 @app.get("/acg", response_class=HTMLResponse)
 def acg_map_page(request: Request):
-    """ACG 天空線マップ（マンデン＋YAML貼り付けパーソナル）。"""
-    return templates.TemplateResponse("acg_map.html", {"request": request})
+    """ACG 天空線マップ（マンデン＋YAML貼り付けパーソナル）。?lang=en で英語表示。"""
+    return templates.TemplateResponse(
+        "acg_map.html",
+        {
+            "request": request,
+            "lang": _resolve_lang(request),
+            "public_base_url": _public_base_url(request),
+        },
+    )
 
 
 @app.get("/acg/globe-demo", response_class=HTMLResponse)
