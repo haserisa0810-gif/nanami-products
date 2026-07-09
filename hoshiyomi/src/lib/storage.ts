@@ -82,6 +82,36 @@ export function setLastProfileId(profileId: string): void {
   localStorage.setItem(LAST_KEY, profileId);
 }
 
+/* ユーザーイベント（§9.3）— キー nanami:{profile_id}:userEvents */
+
+import type { TimelineEvent } from "./timeline";
+
+const userEventsKey = (profileId: string) => `${PREFIX}${profileId}:userEvents`;
+
+export function listUserEvents(profileId: string): TimelineEvent[] {
+  try {
+    const raw = localStorage.getItem(userEventsKey(profileId));
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveUserEvent(profileId: string, ev: TimelineEvent): TimelineEvent[] {
+  const list = listUserEvents(profileId).filter((e) => e.id !== ev.id);
+  list.push(ev);
+  list.sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem(userEventsKey(profileId), JSON.stringify(list));
+  return list;
+}
+
+export function deleteUserEvent(profileId: string, id: string): TimelineEvent[] {
+  const list = listUserEvents(profileId).filter((e) => e.id !== id);
+  localStorage.setItem(userEventsKey(profileId), JSON.stringify(list));
+  return list;
+}
+
 export function readingsToMarkdown(p: StoredProfile): string {
   const lines = [
     `# 星読みの暦 — AI鑑定`,

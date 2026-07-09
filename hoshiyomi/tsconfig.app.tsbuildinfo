@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/theme.ts","./src/vite-env.d.ts","./src/components/aiview.tsx","./src/components/calendarview.tsx","./src/components/daydetail.tsx","./src/components/natalview.tsx","./src/components/yamlloader.tsx","./src/components/common.tsx","./src/lib/parseyaml.ts","./src/lib/reading.ts","./src/lib/storage.ts"],"version":"5.9.3"}

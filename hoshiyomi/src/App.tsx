@@ -6,16 +6,15 @@ import {
 } from "./lib/storage";
 import { Eyebrow } from "./components/common";
 import NatalView from "./components/NatalView";
-import CalendarView from "./components/CalendarView";
-import DayDetail from "./components/DayDetail";
+import TimelineView from "./components/TimelineView";
 import AIView from "./components/AIView";
 import YamlLoader from "./components/YamlLoader";
 
-type Tab = "natal" | "calendar" | "day" | "ai" | "load";
+type Tab = "natal" | "timeline" | "ai" | "load";
 
 export default function App() {
   const [data, setData] = useState<ChartData | null>(null);
-  const [tab, setTab] = useState<Tab>("calendar");
+  const [tab, setTab] = useState<Tab>("timeline");
   const [selected, setSelected] = useState<string>("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [profilesVersion, setProfilesVersion] = useState(0);
@@ -52,7 +51,7 @@ export default function App() {
       setSelected(parsed.transit.todayDate);
       setLoadError(null);
       setProfilesVersion((v) => v + 1);
-      setTab("calendar");
+      setTab("timeline");
     } catch (e) {
       setLoadError(
         e instanceof YamlParseError ? e.message : `読み込みに失敗しました: ${e instanceof Error ? e.message : String(e)}`,
@@ -68,7 +67,7 @@ export default function App() {
       setData(parsed);
       setSelected(parsed.transit.todayDate);
       setLastProfileId(profileId);
-      if (tab === "load") setTab("calendar");
+      if (tab === "load") setTab("timeline");
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : String(e));
       setTab("load");
@@ -77,8 +76,7 @@ export default function App() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "natal", label: "出生図" },
-    { id: "calendar", label: "38日カレンダー" },
-    { id: "day", label: "日別詳細" },
+    { id: "timeline", label: "タイムライン" },
     { id: "ai", label: "AI鑑定" },
     { id: "load", label: "YAML読み込み" },
   ];
@@ -161,11 +159,14 @@ export default function App() {
       <main style={{ maxWidth: 1080, margin: "0 auto", padding: "24px" }}>
         {tab === "load" && <YamlLoader onLoad={loadYaml} error={loadError} />}
         {data && tab === "natal" && <NatalView data={data} />}
-        {data && tab === "calendar" && (
-          <CalendarView data={data} selected={selected} onSelect={(d) => { setSelected(d); setTab("day"); }} />
-        )}
-        {data && tab === "day" && (
-          <DayDetail data={data} date={selected} onNavigate={setSelected} onAskAI={(d) => { setSelected(d); setTab("ai"); }} />
+        {data && tab === "timeline" && (
+          <TimelineView
+            key={data.profileId}
+            data={data}
+            selected={selected}
+            onSelectDate={setSelected}
+            onAskAI={(d) => { setSelected(d); setTab("ai"); }}
+          />
         )}
         {data && tab === "ai" && (
           <AIView
