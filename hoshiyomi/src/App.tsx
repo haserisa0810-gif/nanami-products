@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { C, SANS, SERIF } from "./theme";
 import { parseYamlText, YamlParseError, type ChartData } from "./lib/parseYaml";
+import { detectPayload } from "./lib/detect";
+import { chartFromStored } from "./lib/merge";
 import {
   listProfiles, getProfile, saveProfile, getLastProfileId, setLastProfileId,
+  updateProfileExtras, appendAddonYaml, saveLifeEvents,
+  type StoredProfile,
 } from "./lib/storage";
 import { Eyebrow } from "./components/common";
 import NatalView from "./components/NatalView";
@@ -17,7 +21,17 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("timeline");
   const [selected, setSelected] = useState<string>("");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadNotice, setLoadNotice] = useState<string | null>(null);
   const [profilesVersion, setProfilesVersion] = useState(0);
+
+  const applyStored = (stored: StoredProfile): ChartData => {
+    const merged = chartFromStored(stored.yamlText, stored.addonYamls);
+    setData(merged);
+    setSelected(merged.transit.todayDate);
+    setLastProfileId(stored.profileId);
+    setProfilesVersion((v) => v + 1);
+    return merged;
+  };
 
   // 起動時: 前回のプロファイルを復元
   useEffect(() => {
@@ -25,33 +39,71 @@ export default function App() {
     const stored = last ? getProfile(last) : listProfiles()[0];
     if (stored) {
       try {
-        const parsed = parseYamlText(stored.yamlText);
-        setData(parsed);
-        setSelected(parsed.transit.todayDate);
+        applyStored(stored);
         return;
       } catch {
         /* 保存データが壊れていたら読み込み画面へ */
       }
     }
     setTab("load");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const profiles = useMemo(() => listProfiles(), [data, profilesVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 読み込みUI: チャート / 月次アドオン / life_events / readings / horoscope.svg を自動判別（§10.3）
   const loadYaml = (text: string) => {
+    setLoadError(null);
+    setLoadNotice(null);
     try {
-      const parsed = parseYamlText(text);
-      saveProfile({
-        profileId: parsed.profileId,
-        title: parsed.title,
-        birthDate: parsed.birthDate,
-        yamlText: text,
-      });
-      setData(parsed);
-      setSelected(parsed.transit.todayDate);
-      setLoadError(null);
-      setProfilesVersion((v) => v + 1);
-      setTab("timeline");
+      const det = detectPayload(text);
+
+      if (det.kind === "chart") {
+        const parsed = parseYamlText(text);
+        if (parsed.dataRole !== "base_chart") {
+          // 月次トランジット追加YAML（§11.3）— 同一 profile_id のベースにマージ
+          const target = getProfile(parsed.profileId);
+          if (!target) {
+            throw new YamlParseError(
+              `アドオンYAML（data_role: ${parsed.dataRole}）です。先に同じプロファイルのベースチャートを読み込んでください。`,
+            );
+          }
+          const updated = appendAddonYaml(parsed.profileId, text)!;
+          applyStored(updated);
+          setLoadNotice(`月次データをマージしました（期間 ${parsed.transit.period.start_date} 〜）。`);
+          setTab("timeline");
+          return;
+        }
+        const stored = saveProfile({
+          profileId: parsed.profileId,
+          title: parsed.title,
+          birthDate: parsed.birthDate,
+          yamlText: text,
+        });
+        applyStored(stored);
+        setTab("timeline");
+        return;
+      }
+
+      // 以降はチャート以外の同梱物 — 読み込み先プロファイルが必要
+      if (!data) {
+        throw new YamlParseError("先にチャートYAMLを読み込んでから、同梱ファイルを追加してください。");
+      }
+      if (det.kind === "life_events") {
+        saveLifeEvents(data.profileId, det.events);
+        setLoadNotice(`life_events を ${det.events.length} 件読み込みました。年・人生ビューに表示されます。`);
+        setTab("timeline");
+      } else if (det.kind === "readings") {
+        updateProfileExtras(data.profileId, {
+          baked: { text: det.text, loadedAt: new Date().toISOString() },
+        });
+        setLoadNotice("同梱の基本版鑑定を読み込みました。AI鑑定タブに表示されます。");
+        setTab("ai");
+      } else if (det.kind === "svg") {
+        updateProfileExtras(data.profileId, { horoscopeSvg: det.svg });
+        setLoadNotice("ホロスコープ図を読み込みました。出生図タブに表示されます。");
+        setTab("natal");
+      }
     } catch (e) {
       setLoadError(
         e instanceof YamlParseError ? e.message : `読み込みに失敗しました: ${e instanceof Error ? e.message : String(e)}`,
@@ -63,10 +115,7 @@ export default function App() {
     const stored = getProfile(profileId);
     if (!stored) return;
     try {
-      const parsed = parseYamlText(stored.yamlText);
-      setData(parsed);
-      setSelected(parsed.transit.todayDate);
-      setLastProfileId(profileId);
+      applyStored(stored);
       if (tab === "load") setTab("timeline");
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : String(e));
@@ -91,6 +140,13 @@ export default function App() {
         @media (max-width: 720px){ .grid-collapse{ grid-template-columns: 1fr !important; } }
         button:focus-visible{ outline: 2px solid ${C.dawn}; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce){ *{ transition: none !important; } }
+        @media print {
+          nav, footer, select, .no-print { display: none !important; }
+          body, #root > div { background: #fff !important; }
+          * { color: #1a1a1a !important; border-color: #bbb !important;
+              background: transparent !important; text-shadow: none !important; }
+          main { max-width: 100% !important; padding: 0 !important; }
+        }
       `}</style>
       {/* ヘッダー */}
       <header style={{ borderBottom: `1px solid ${C.line}`, padding: "22px 24px 0", maxWidth: 1080, margin: "0 auto" }}>
@@ -157,8 +213,20 @@ export default function App() {
         </nav>
       </header>
       <main style={{ maxWidth: 1080, margin: "0 auto", padding: "24px" }}>
-        {tab === "load" && <YamlLoader onLoad={loadYaml} error={loadError} />}
-        {data && tab === "natal" && <NatalView data={data} />}
+        {tab === "load" && (
+          <>
+            {loadNotice && (
+              <div style={{ marginBottom: 12, fontSize: 13, color: C.good, lineHeight: 1.7 }}>{loadNotice}</div>
+            )}
+            <YamlLoader onLoad={loadYaml} error={loadError} />
+          </>
+        )}
+        {loadNotice && tab !== "load" && (
+          <div style={{ marginBottom: 14, fontSize: 12.5, color: C.good }}>{loadNotice}</div>
+        )}
+        {data && tab === "natal" && (
+          <NatalView data={data} horoscopeSvg={getProfile(data.profileId)?.horoscopeSvg} />
+        )}
         {data && tab === "timeline" && (
           <TimelineView
             key={data.profileId}

@@ -1,6 +1,6 @@
 /* AI鑑定 — buildPayload とプロンプト（引き継ぎ§6準拠、ルール変更禁止）。
-   Phase 1: VITE_ANTHROPIC_API_KEY でクライアントから直接呼び出す（自分専用）。
-   Phase 2 ではAPIプロキシに差し替え、キーをクライアントに置かないこと。 */
+   レーンA（既定・§6.1）: プロンプト全文を組み立ててコピー／各AIへ受け渡す。実行時APIなし。
+   ライブ生成（§6.5）: VITE_ANTHROPIC_API_KEY がある場合のみの開発検証用。配布ビルドには含めない。 */
 
 import type { ChartData } from "./parseYaml";
 
@@ -77,6 +77,32 @@ export function buildSystemPrompt(data: ChartData): string {
 6. 月の朝・昼・夜データは日内の使い方の根拠として使う。
 見出しや箇条書きを適度に使い、日本語で読みやすく書いてください。`;
 }
+
+/* レーンA用: 自分のAIに貼り付けるプロンプト全文（ルール＋依頼＋データ） */
+export function buildFullPrompt(
+  data: ChartData,
+  sectionId: SectionId,
+  selectedDate: string,
+): string {
+  const payload = buildPayload(data, sectionId, selectedDate);
+  return `${buildSystemPrompt(data)}
+
+依頼: ${buildInstruction(data, sectionId, selectedDate)}
+
+データ:
+${JSON.stringify(payload)}`;
+}
+
+/* コピー後に開く受け渡し先（レーンA） */
+export const AI_DESTINATIONS = [
+  { id: "chatgpt", label: "ChatGPT", url: "https://chatgpt.com/" },
+  { id: "claude", label: "Claude", url: "https://claude.ai/new" },
+  { id: "gemini", label: "Gemini", url: "https://gemini.google.com/app" },
+] as const;
+
+/* ライブ生成は開発検証専用（§6.5）。キーが無ければ UI 自体を出さない */
+export const devApiKeyAvailable = (): boolean =>
+  Boolean(import.meta.env.VITE_ANTHROPIC_API_KEY);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

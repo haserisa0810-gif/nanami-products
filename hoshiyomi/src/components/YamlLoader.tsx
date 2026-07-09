@@ -28,8 +28,12 @@ export default function YamlLoader({
 
   return (
     <Panel>
-      <Eyebrow>Load YAML</Eyebrow>
-      <H2>YAMLを読み込む</H2>
+      <Eyebrow>Load Files</Eyebrow>
+      <H2>YAML・同梱ファイルを読み込む</H2>
+      <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12, lineHeight: 1.8 }}>
+        チャートYAMLのほか、同梱の月次追加YAML・life_events.yaml・基本版鑑定（readings）・horoscope.svg
+        も同じ場所から読み込めます（自動判別）。同梱ファイルは先にチャートを読み込んでから追加してください。
+      </div>
       <div
         onDrop={onDrop}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -56,7 +60,7 @@ export default function YamlLoader({
         <input
           ref={fileInput}
           type="file"
-          accept=".yaml,.yml,.txt"
+          accept=".yaml,.yml,.txt,.md,.svg"
           style={{ display: "none" }}
           onChange={(e) => {
             const f = e.target.files?.[0];

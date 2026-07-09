@@ -2,7 +2,13 @@ import { C, SIGN_GLYPH, PLANET, ASPECT, fmtDeg } from "../theme";
 import type { ChartData } from "../lib/parseYaml";
 import { Eyebrow, H2, Panel } from "./common";
 
-export default function NatalView({ data }: { data: ChartData }) {
+export default function NatalView({
+  data,
+  horoscopeSvg,
+}: {
+  data: ChartData;
+  horoscopeSvg?: string;
+}) {
   const natal = data.natal;
   const bodies = Object.entries(natal.bodies);
   const el = natal.summary.elements;
@@ -19,6 +25,17 @@ export default function NatalView({ data }: { data: ChartData }) {
   const tightAspects = natal.aspects.filter((a) => a.orb <= 2.2);
   return (
     <div>
+      {/* 同梱 horoscope.svg（§11.2）— 無ければ天体テーブルのみ */}
+      {horoscopeSvg && (
+        <Panel style={{ marginBottom: 16, textAlign: "center" }}>
+          <Eyebrow>Horoscope Chart</Eyebrow>
+          <img
+            src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(horoscopeSvg)}`}
+            alt="ホロスコープ図"
+            style={{ maxWidth: "min(520px, 100%)", height: "auto" }}
+          />
+        </Panel>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(300px,1.4fr) minmax(240px,1fr)", gap: 16 }} className="grid-collapse">
         <Panel>
           <Eyebrow>Natal Bodies</Eyebrow>

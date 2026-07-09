@@ -9,8 +9,9 @@ export type TimelineScale = "day" | "month" | "year" | "life";
 
 export type TimelineSource =
   | "transit" // 既存 daily / natal_aspects 由来
-  | "transit_major" // 外惑星の主要イベント（将来のデータ供給）
-  | "user"; // ユーザー入力
+  | "transit_major" // 外惑星の主要イベント（life_events.yaml、§10.2）
+  | "user" // ユーザー入力
+  | "diary"; // 日別の一言メモ（§11.3、userEvents と同キーに保存）
 // 将来: "shichusuimei" | "acg" | "solar_return" | "progression" | "note" | "ai_archive"
 
 export type TimelineEvent = {

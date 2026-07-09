@@ -8,7 +8,8 @@ import {
   fromTransitDaily, fromKeyDates, fromUserEvent, mergeEvents, yearOf,
   type TimelineEvent, type TimelineScale, type UserEventInput,
 } from "../lib/timeline";
-import { listUserEvents, saveUserEvent, deleteUserEvent } from "../lib/storage";
+import { listUserEvents, saveUserEvent, deleteUserEvent, listLifeEvents } from "../lib/storage";
+import DiaryPanel from "./DiaryPanel";
 import CalendarView from "./CalendarView";
 import DayDetail from "./DayDetail";
 import YearView from "./YearView";
@@ -43,13 +44,17 @@ export default function TimelineView({
   );
   const [editing, setEditing] = useState<TimelineEvent | "new" | null>(null);
 
+  // life_events.yaml（§10.2）は読み込み時に localStorage へ保存される。ここでは読むだけ
+  const lifeEvents = useMemo(() => listLifeEvents(data.profileId), [data.profileId]);
+
   const astroEvents = useMemo(
     () =>
       mergeEvents(
         fromTransitDaily(data.transit.daily, YEAR_VIEW_ORB_MAX),
         fromKeyDates(data.transit.summary),
+        lifeEvents,
       ),
-    [data],
+    [data, lifeEvents],
   );
   const allEvents = useMemo(
     () => mergeEvents(astroEvents, userEvents),
@@ -121,7 +126,25 @@ export default function TimelineView({
       )}
 
       {scale === "day" && (
-        <DayDetail data={data} date={selected} onNavigate={onSelectDate} onAskAI={onAskAI} />
+        <>
+          <DayDetail data={data} date={selected} onNavigate={onSelectDate} onAskAI={onAskAI} />
+          <DiaryPanel
+            date={selected}
+            entry={userEvents.find((e) => e.source === "diary" && e.id === `diary:${selected}`) ?? null}
+            onSave={(text) =>
+              setUserEvents(
+                saveUserEvent(data.profileId, {
+                  id: `diary:${selected}`,
+                  type: "diary",
+                  date: selected,
+                  title: text,
+                  source: "diary",
+                }),
+              )
+            }
+            onDelete={() => setUserEvents(deleteUserEvent(data.profileId, `diary:${selected}`))}
+          />
+        </>
       )}
       {scale === "month" && (
         <CalendarView data={data} selected={selected} onSelect={openDay} />

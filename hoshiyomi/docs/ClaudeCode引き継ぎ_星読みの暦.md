@@ -150,44 +150,68 @@ Phase 2 で追加する機能:
 
 ---
 
-## 6. AI鑑定仕様
+## 6. AI鑑定仕様（コスト設計込み）
 
-- モデル: `claude-sonnet-4-6`（Phase 2でコスト調整するなら haiku 系に差し替え可能な設計に）
-- 生成単位: セクション別（1リクエスト1セクション、max_tokens 1000〜2000）
-- ペイロード圧縮: 全YAMLは送らない。プロトタイプの `buildPayload()` を正とする
-  - 共通: 出生図天体（sign_ja/度数1桁/ハウス/逆行）、小惑星、natal aspects orb≤2.2、elements/modes
-  - 「今後38日間」: 期間サマリー + 日別アスペクト orb≤0.8 のみ
-  - 「選択日」: 対象日の natal_aspects 全件 + moon_timepoints
-- プロンプトの必須ルール（元の鑑定プロンプトから継承。システムプロンプトに固定すること）:
-  1. 計算結果を変更・再計算しない。JSON内の値のみを根拠にする
-  2. 断定しすぎず「傾向・使い方・活かし方」として表現する
-  3. 「良い・悪い」ではなく「どう使うとズレにくいか」を優先する
-  4. 「ラッキー」等の軽い表現は避け、具体的な行動ヒントに置き換える
-  5. `today.selected_date` 基準で過去日は振り返り、以降を今後として扱う
-  6. 月の朝・昼・夜データは日内の使い方の根拠として使う
-- エラー処理: API失敗時は理由を表示し再試行可能に。overloaded(529)は指数バックオフ
+買い手ぶんの実行時課金を発生させないため、鑑定は次の2レーンで提供する。**アプリが買い手の端末でAPIを叩く常時ライブ生成は採用しない**（採用すると買い手×回数ぶん課金が積み上がるため）。
+
+### 6.1 レーンA: 買い手が自分のAIへ受け渡し（無料・既定）
+
+既存 nanami-astro の「AIに送る／コピー」導線と同じ。アプリは圧縮ペイロード＋鑑定プロンプトを組み立てて**コピー / 各AIへ送るボタン**を出すだけ。買い手は自分の ChatGPT / Claude / Gemini（無料枠可）に貼って読む。**あなたの課金ゼロ、買い手の鍵も不要。** プロトタイプのAI鑑定タブは、この方式へ差し替える（`fetch` を「プロンプト生成＋コピー」に置き換え、`buildPayload()` はそのまま流用）。
+
+### 6.2 レーンB: 基本版鑑定を生成時に焼き込み（Gemini 2.5 Flash-Lite）
+
+清書済みの「基本版鑑定」を、**nanami-astro のチャート生成時に一度だけ**生成してZIPに同梱する（§10.1）。買い手のアプリは表示するだけ＝**実行時APIゼロ**。
+
+- モデル: **Gemini 2.5 Flash-Lite**（最安ティア。入力 $0.10 / 出力 $0.40 per 1M。1鑑定 約0.2円）。将来の差し替えを考え、モデル名は生成設定の1箇所に定数化する
+- 読ませる範囲（基本版）: **主要天体（Sun〜Pluto＋ASC/MC/North Node）＋（小惑星）＋鑑定プロンプト部分**。トランジットは基本版では送らない（38日/年/人生は別レーン・別データで扱う）
+- 出力の**注釈にモデルを明記**（必須）。例: 「本鑑定は Gemini 2.5 Flash-Lite により、計算済みデータのみを根拠に生成しています。」
+- 出力形式: セクション見出し付き Markdown。`readings.yaml`（or `readings.md`）としてZIP同梱
+
+### 6.3 プロンプトの必須ルール（両レーン共通・システム側に固定）
+
+1. 計算結果を変更・再計算しない。渡された値のみを根拠にする
+2. 断定しすぎず「傾向・使い方・活かし方」として表現する
+3. 「良い・悪い」ではなく「どう使うとズレにくいか」を優先する
+4. 「ラッキー」等の軽い表現は避け、具体的な行動ヒントに置き換える
+5. `today.selected_date` 基準で過去日は振り返り、以降を今後として扱う
+6. 月の朝・昼・夜データは日内の使い方の根拠として使う
+
+### 6.4 ペイロード圧縮（プロトタイプ `buildPayload()` を正とする）
+
+- 基本版（レーンB）: 主要天体（sign_ja/度数1桁/ハウス/逆行）＋小惑星＋natal aspects orb≤2.2＋elements/modes
+- 「今後38日間」（レーンAで任意生成）: 期間サマリー ＋ 日別アスペクト orb≤0.8 のみ
+- 「選択日」（レーンAで任意生成）: 対象日の natal_aspects 全件 ＋ moon_timepoints
+
+### 6.5 アプリ内ライブAPI（開発検証のみ）
+
+プロトタイプのライブ `fetch` は**あなたの検証用途に限り**残してよい（`.env` のキー、Flash-Lite の無料枠可）。配布ビルドには含めない。将来どうしても買い手のアプリ内ライブ生成が必要になったら §11.1 のプロキシ＋レート制限を検討。
 
 ---
 
 ## 7. 実装タスクリスト（Claude Codeへの指示に使う）
 
 Phase 1:
-- [x] Vite + React + TS 雛形作成、デザイントークンを theme 化
-- [x] `src/lib/parseYaml.ts`: js-yaml でパース → 内部モデルへ正規化 + バージョン検証 + 単体テスト（sample_data_compact.yaml をフィクスチャに）
-- [x] プロトタイプJSXを components/ に分割移植（NatalView / CalendarView / DayDetail / AIView / AspectChip）
-- [x] YAML読み込みUI（ドロップ＋貼り付け）と localStorage プロファイル管理
-- [x] AI鑑定: `src/lib/reading.ts` に buildPayload とプロンプトを移植、.env のキーで呼び出し
-- [x] 鑑定結果の保存・コピー・Markdownエクスポート
+- [ ] Vite + React + TS 雛形作成、デザイントークンを theme 化
+- [ ] `src/lib/parseYaml.ts`: js-yaml でパース → 内部モデルへ正規化 + バージョン検証 + 単体テスト（sample_data_compact.yaml をフィクスチャに）
+- [ ] プロトタイプJSXを components/ に分割移植（NatalView / CalendarView / DayDetail / AIView / AspectChip）
+- [ ] YAML読み込みUI（ドロップ＋貼り付け）と localStorage プロファイル管理
+- [ ] AI鑑定: `src/lib/reading.ts` に buildPayload とプロンプトを移植、.env のキーで呼び出し
+- [ ] 鑑定結果の保存・コピー・Markdownエクスポート
 
-Phase 2:
-- [ ] Next.js 化 or API プロキシ追加（キー秘匿＋レート制限）
-- [ ] horoscope_svg 表示、月次アドオンYAMLマージ、印刷レイアウト
-
-Phase 2.5（タイムライン拡張。§9 参照）:
-- [ ] 共通イベント型 `TimelineEvent` と各ソースのアダプタ
+Phase 2 — アプリ側（§9・§11 参照）:
+- [ ] AI鑑定タブをレーンA（コピー／自分のAIへ送る）へ差し替え（§6.1）
+- [ ] 焼き込み `readings.yaml` を表示するビュー（§6.2 / §10.1）
+- [ ] 共通イベント型 `TimelineEvent` と各ソースのアダプタ（§9.1）
 - [ ] ズーム切替（日→月→年→人生）、既存の月カレンダーを「月」スケールに接続
-- [ ] ユーザーイベントの localStorage CRUD、占術イベントとのマージ表示
-- [ ] 人生ビュー（Time River）とGoogleカレンダー追加リンク
+- [ ] `life_events.yaml` を年/人生ビューへ流し込み（§10.2）
+- [ ] ユーザーイベント／日記の localStorage CRUD、占術イベントとのマージ表示
+- [ ] 人生ビュー（Time River）とGoogleカレンダー追加リンク（§9.5/9.6）
+- [ ] horoscope_svg 表示（§11.2）、月次マージ（§11.3）、印刷レイアウト（§11.4）
+
+Phase 2 — 生成側（nanami-astro / Python。§10 参照）:
+- [ ] 基本版鑑定を Gemini 2.5 Flash-Lite で焼き込み → `readings.yaml`（§10.1）
+- [ ] `life_events.yaml` 広域スキャン生成（Swiss Ephemeris・主要イベントのみ）（§10.2）
+- [ ] profile 単位ZIPに readings / life_events / horoscope.svg を同梱（§10.3）
 
 受け入れ基準:
 - sample_data_compact.yaml と本番フルYAMLの両方が読み込め、38日全日がカレンダーに出る
@@ -303,3 +327,63 @@ https://calendar.google.com/calendar/render?action=TEMPLATE
 - 作業開始前に現在状態を確認し、必要ならチェックポイントコミット
 - この拡張は大規模UI改修に当たるため、**着手前のチェックポイントコミットを推奨**（例: `git commit -m "checkpoint: before timeline zoom"`）
 - 既存機能を壊さないこと。まず器（型・ズーム切替・ユーザーイベント）を薄く通し、占術イベントの充実は後段で足す
+
+---
+
+## 10. 生成側（nanami-astro バックエンド）の追加出力
+
+ここは Vite アプリ（Claude Code）ではなく、**既存の nanami-astro 生成パイプライン（Swiss Ephemeris / Python）側のタスク**。アプリは常に「計算済みデータを表示するだけ」を保ち、計算は必ず生成側で行う（§1の絶対ルール）。
+
+### 10.1 基本版鑑定の焼き込み（§6.2 の生成ステップ）
+
+チャート/ZIP生成の最後に1ステップ足す:
+
+1. 主要天体＋（小惑星）＋natal aspects(orb≤2.2)＋elements/modes を圧縮ペイロード化
+2. §6.3 のルールをシステムプロンプトに固定し、**Gemini 2.5 Flash-Lite** を1回呼ぶ
+3. 返ってきた Markdown に**モデル注釈**（§6.2）を付け、`readings.yaml`（or `readings.md`）としてZIPに同梱
+4. コストは1商品あたり約0.2円。低ボリュームなら Flash-Lite 無料枠でも可
+
+### 10.2 年/人生ビューのデータ供給（`life_events.yaml`）
+
+年/人生スケールが必要とする「遠い年の占術イベント」は38日YAMLに無い。**nanami-astro の Swiss Ephemeris で広域スキャンした専用ファイルを生成**して供給する（アプリ側では絶対に計算しない）。
+
+- 出力: `life_events.yaml`。中身は §9.1 `TimelineEvent` 互換の配列（`source: "transit_major"`）
+- 生成エンジン: 既存と同一（Swiss Ephemeris / tropical / Placidus / Asia/Tokyo）
+- スキャン範囲: `birth_date` 〜 `today + N年`（N は設定。例: +10年）。過去（出生〜現在）も含めて人生タイムラインを埋める
+- **人生スケール向けに「主要イベントだけ」に絞る**（ノイズ回避）:
+  - 外惑星（Jupiter/Saturn/Uranus/Neptune/Pluto/Chiron）→ natal の Sun/Moon/ASC/MC/Saturn/Node への major aspect（conj/opp/square/trine）、タイトorb（例 ≤1°）、**ピーク日**を出力
+  - リターン: Saturn return（約29.5年・59年）、Jupiter return（約12年ごと）、Nodal return（約18.6年）、Chiron return（約50年）
+  - 外惑星のサイン・イングレス（世代の節目）、木星–土星コンジャンクション等の主要ムンダン（任意）
+- 各イベント → `{ id, type:"aspect"|"return"|"ingress", date:ピーク日, title:"木星 合 土星" 等, description:meaning_hint, source:"transit_major", meta:{bodies, aspect, orb} }`
+- 粒度: 「年」ビューは月解像度、「人生」ビューは年ごとに最重要イベントへ集約（アプリ側でフィルタしてもよいが、集約済みの `granularity` フィールドを持たせると軽い）
+
+これでアプリは `life_events.yaml` を読み込むだけで年/人生ビューが埋まる。ファイルが無い期間は「ユーザーイベント＋38日窓」だけを表示（捏造しない）。
+
+### 10.3 生成物の受け渡し
+
+profile 単位で `{natal.yaml, transit(38d).yaml, readings.yaml, life_events.yaml, horoscope.svg}` をZIP同梱。アプリの読み込みUI（§4 Phase1）はこれらを一括で取り込む。将来の月次追加（§11.3）も同じ profile_id に束ねる。
+
+---
+
+## 11. Phase 2 実装詳細（アプリ側 / Claude Code）
+
+### 11.1 APIプロキシ（焼き込み採用なら“任意”）
+
+§6のレーンA＋Bを採用する限り**買い手のアプリはAPIを叩かないので、プロキシは不要**。将来「買い手がアプリ内でライブ生成」を出したくなった場合にのみ、Next.js API Route か Cloudflare Workers でキーを秘匿し、IP/セッション単位のレート制限（例: 1日20回）を掛ける。代替は BYOK（買い手が自分の鍵を入力、localStorage保存・サーバ非送信）。
+
+### 11.2 horoscope_svg 表示
+
+`assets.horoscope_svg`（nanami-astro が既に出力している `horoscope.svg`）を出生図タブに表示。ZIP内のSVGをそのまま `<img>` か inline SVG で描画するだけ。無ければ天体テーブルのみ表示にフォールバック。
+
+### 11.3 月次トランジットのマージ（＋日記レイヤーの土台）
+
+毎月の「次のトランジット」YAML（`data_role` addon）を取り込み、既存 `daily[]` に**日付キーでマージ**して連続タイムライン化する:
+
+- マージキー: `date`（'YYYY-MM-DD'）。重複日は新しい addon を優先
+- `period` は全体の最小 start 〜 最大 end に拡張。今日ハイライトは `today.selected_date`
+- 保存: `nanami:{profile_id}` に統合済みトランジットをキャッシュ（localStorage）
+- **日記レイヤー**: 各日付に一言メモを紐付け、`TimelineEvent`（`source:"diary"`）として `nanami:{profile_id}:userEvents` に保存（§9.3と同型）。別アプリにする場合も同じキー/型を共有すれば相互に開ける
+
+### 11.4 印刷 / PDF レイアウト
+
+出生図・鑑定・選択期間を1枚に流す印刷用CSS（`@media print`）。まずはブラウザ印刷→PDFで十分。

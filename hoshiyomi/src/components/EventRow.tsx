@@ -5,7 +5,10 @@ const SOURCE_LABEL: Record<string, { label: string; color: string }> = {
   transit: { label: "transit", color: C.day },
   transit_major: { label: "major", color: C.night },
   user: { label: "user", color: C.dawn },
+  diary: { label: "diary", color: C.good },
 };
+
+const EDITABLE_SOURCES = new Set(["user", "diary"]);
 
 export default function EventRow({
   ev,
@@ -63,10 +66,10 @@ export default function EventRow({
       >
         📅
       </a>
-      {ev.source === "user" && onEdit && (
+      {EDITABLE_SOURCES.has(ev.source) && onEdit && (
         <button style={iconBtn} title="編集" onClick={() => onEdit(ev)}>✎</button>
       )}
-      {ev.source === "user" && onDelete && (
+      {EDITABLE_SOURCES.has(ev.source) && onDelete && (
         <button style={iconBtn} title="削除" onClick={() => onDelete(ev.id)}>×</button>
       )}
     </div>

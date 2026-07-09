@@ -18,16 +18,25 @@ npm run dev        # http://localhost:5180
 - 読み込んだ YAML と AI 鑑定結果は localStorage（キー `nanami:{profile_id}`）に保存され、複数プロファイルを切替可能
 - 圧縮版（`transit.summary` / フラット moon_timepoints）とフル版（`next_31_days_summary` / `body:` ネスト）の両スキーマに対応
 
-## AI鑑定
+## AI鑑定（2レーン・引き継ぎ§6）
 
-`.env` を作成（`.env.example` 参照）:
+- **レーンA（既定・無料）**: セクションを選ぶと鑑定プロンプト全文を組み立てる。「プロンプトをコピー」または「ChatGPT / Claude / Gemini へ →」（コピーしてからサイトを開く）で自分のAIに貼り付けて読む。実行時APIなし
+- **レーンB（同梱）**: 生成側（nanami-astro）が焼き込んだ `readings.yaml` / `readings.md` を読み込みタブから取り込むと、AI鑑定タブの先頭に表示される
+- **開発検証用ライブ生成（§6.5）**: `.env` に `VITE_ANTHROPIC_API_KEY` を設定したときだけ「（開発用）このアプリで生成」ボタンが出る。配布ビルドにはキーを含めないこと
 
-```
-VITE_ANTHROPIC_API_KEY=sk-ant-...
-```
+## 同梱ファイルの読み込み（§10.3）
 
-Phase 1 はクライアントから直接 Anthropic API を叩く（自分専用の前提）。
-**顧客に配布する場合はこのままデプロイしないこと** — Phase 2 で API プロキシ（キー秘匿＋レート制限）を挟む。
+「YAML読み込み」タブは種類を自動判別する:
+
+| 入力 | 判別 | 行き先 |
+|---|---|---|
+| チャートYAML（`data_role: base_chart`） | chart | プロファイル新規/更新 |
+| 月次追加YAML（`data_role` がアドオン） | chart(addon) | 既存プロファイルの `daily[]` に日付キーでマージ、期間拡張（§11.3） |
+| `life_events.yaml`（TimelineEvent互換配列） | life_events | 年・人生ビューに `transit_major` として表示（§10.2） |
+| 焼き込み鑑定（Markdown / `{readings: ...}`） | readings | AI鑑定タブ先頭に表示 |
+| `horoscope.svg` | svg | 出生図タブに表示（§11.2） |
+
+日別詳細の下に「日記」欄があり、一言メモが `source:"diary"` として userEvents と同じキーに保存され、年・人生ビューにも載る。
 
 ## タイムライン（Phase 2.5 / 引き継ぎ§9）
 

@@ -71,6 +71,7 @@ export type NatalSummary = {
 
 export type ChartData = {
   profileId: string;
+  dataRole: string; // "base_chart" | アドオン種別（§11.3 の月次マージ判定に使う）
   title: string;
   birthDate: string;
   birthTime: string;
@@ -221,6 +222,7 @@ export function parseYamlText(text: string): ChartData {
 
   return {
     profileId: String(doc.meta.profile_id ?? "unknown"),
+    dataRole: String(doc.meta.data_role ?? "base_chart"),
     title: String(input.title ?? ""),
     birthDate: String(input.birth_date ?? ""),
     birthTime: String(input.birth_time ?? ""),
