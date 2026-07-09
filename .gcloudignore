@@ -4,3 +4,4 @@ __pycache__/
 .env
 app.db
 data/location/source/municipality/*.zip
+hoshiyomi/

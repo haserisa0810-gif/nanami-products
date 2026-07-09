@@ -1,0 +1,949 @@
+version: nanami-products-yaml-v1
+meta:
+  schema_version: '1.1'
+  product_type: western_31days_transit_addon
+  profile_id: profile_bfd713c3dc78dda7
+  chart_id: chart_c36542f98d2d7e71
+  generated_at: '2026-06-01T00:06:04.218328+00:00'
+  data_role: base_chart
+  addon_type: western_31days_transit
+  campaign_id: note-2026-07
+  target_month: 2026-07
+birth_time:
+  input_value: '20:41'
+  calculation_time: '20:41'
+  accuracy: exact
+  note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+interpretation_flags:
+  allow_house_interpretation: true
+  allow_asc_mc_interpretation: true
+  house_reliability: high
+  moon_reliability: high
+input:
+  title: リサフル6/1
+  birth_date: '1976-08-10'
+  birth_time: '20:41'
+  prefecture: 東京都
+  birth_place: 東京都
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+systems:
+  western:
+    natal:
+      engine: Swiss Ephemeris
+      house_system: P
+      bodies:
+        Sun: {sign: Leo, sign_ja: 獅子座, degree: 17.9572, absolute_longitude: 137.9572, house: 5, retrograde: false}
+        Moon: {sign: Aqu, sign_ja: 水瓶座, degree: 23.9421, absolute_longitude: 323.9421, house: 11, retrograde: false}
+        Mercury: {sign: Vir, sign_ja: 乙女座, degree: 10.7232, absolute_longitude: 160.7232, house: 6, retrograde: false}
+        Venus: {sign: Vir, sign_ja: 乙女座, degree: 2.62, absolute_longitude: 152.62, house: 6, retrograde: false}
+        Mars: {sign: Vir, sign_ja: 乙女座, degree: 21.272, absolute_longitude: 171.272, house: 6, retrograde: false}
+        Jupiter: {sign: Tau, sign_ja: 牡牛座, degree: 28.6592, absolute_longitude: 58.6592, house: 2, retrograde: false}
+        Saturn: {sign: Leo, sign_ja: 獅子座, degree: 8.0832, absolute_longitude: 128.0832, house: 5, retrograde: false}
+        Uranus: {sign: Sco, sign_ja: 蠍座, degree: 3.4291, absolute_longitude: 213.4291, house: 7, retrograde: false}
+        Neptune: {sign: Sag, sign_ja: 射手座, degree: 11.2395, absolute_longitude: 251.2395, house: 9, retrograde: true}
+        Pluto: {sign: Lib, sign_ja: 天秤座, degree: 9.6682, absolute_longitude: 189.6682, house: 7, retrograde: false}
+        North Node: {sign: Sco, sign_ja: 蠍座, degree: 6.9178, absolute_longitude: 216.9178, house: 7, retrograde: true}
+        South Node: {sign: Tau, sign_ja: 牡牛座, degree: 6.9178, absolute_longitude: 36.9178, house: 1, retrograde: true}
+        ASC: {sign: Ari, sign_ja: 牡羊座, degree: 6.3569, absolute_longitude: 6.3569, house: 1, retrograde: false}
+        MC: {sign: Cap, sign_ja: 山羊座, degree: 3.6904, absolute_longitude: 273.6904, house: 10, retrograde: false}
+      houses:
+        '1': {sign: Ari, sign_ja: 牡羊座, degree: 6.3569}
+        '2': {sign: Tau, sign_ja: 牡牛座, degree: 14.5097}
+        '3': {sign: Gem, sign_ja: 双子座, degree: 11.2365}
+        '4': {sign: Can, sign_ja: 蟹座, degree: 3.6904}
+        '5': {sign: Can, sign_ja: 蟹座, degree: 26.7076}
+        '6': {sign: Leo, sign_ja: 獅子座, degree: 25.35}
+        '7': {sign: Lib, sign_ja: 天秤座, degree: 6.3569}
+        '8': {sign: Sco, sign_ja: 蠍座, degree: 14.5097}
+        '9': {sign: Sag, sign_ja: 射手座, degree: 11.2365}
+        '10': {sign: Cap, sign_ja: 山羊座, degree: 3.6904}
+        '11': {sign: Cap, sign_ja: 山羊座, degree: 26.7076}
+        '12': {sign: Aqu, sign_ja: 水瓶座, degree: 25.35}
+      aspects:
+      - {body1: North Node, body2: South Node, aspect: opposition, orb: 0.0}
+      - {body1: Jupiter, body2: Juno, aspect: trine, orb: 0.04}
+      - {body1: Pallas, body2: MC, aspect: opposition, orb: 0.2}
+      - {body1: Uranus, body2: MC, aspect: sextile, orb: 0.26}
+      - {body1: Pluto, body2: Ceres, aspect: sextile, orb: 0.43}
+      - {body1: Uranus, body2: Pallas, aspect: trine, orb: 0.47}
+      - {body1: Mercury, body2: Neptune, aspect: square, orb: 0.52}
+      - {body1: Venus, body2: Chiron, aspect: trine, orb: 0.72}
+      - {body1: Mercury, body2: Lilith, aspect: trine, orb: 0.8}
+      - {body1: Venus, body2: Uranus, aspect: sextile, orb: 0.81}
+      - {body1: MC, body2: Vertex, aspect: square, orb: 0.96}
+      - {body1: Venus, body2: MC, aspect: trine, orb: 1.07}
+      - {body1: Chiron, body2: Vesta, aspect: sextile, orb: 1.1}
+      - {body1: Neptune, body2: Ceres, aspect: trine, orb: 1.14}
+      - {body1: Pallas, body2: Vertex, aspect: square, orb: 1.16}
+      - {body1: Saturn, body2: North Node, aspect: square, orb: 1.17}
+      - {body1: Saturn, body2: South Node, aspect: square, orb: 1.17}
+      - {body1: Venus, body2: Pallas, aspect: sextile, orb: 1.28}
+      - {body1: Lilith, body2: Ceres, aspect: square, orb: 1.43}
+      - {body1: Uranus, body2: Chiron, aspect: opposition, orb: 1.53}
+      - {body1: Neptune, body2: Pluto, aspect: sextile, orb: 1.57}
+      - {body1: Saturn, body2: Pluto, aspect: sextile, orb: 1.59}
+      - {body1: Saturn, body2: ASC, aspect: trine, orb: 1.73}
+      - {body1: Chiron, body2: MC, aspect: trine, orb: 1.79}
+      - {body1: Venus, body2: Vesta, aspect: sextile, orb: 1.82}
+      - {body1: Saturn, body2: Ceres, aspect: conjunction, orb: 2.01}
+      - {body1: Saturn, body2: Neptune, aspect: trine, orb: 3.16}
+      - {body1: Pluto, body2: ASC, aspect: opposition, orb: 3.31}
+      - {body1: Uranus, body2: North Node, aspect: conjunction, orb: 3.49}
+      - {body1: Mercury, body2: North Node, aspect: sextile, orb: 3.81}
+      - {body1: Venus, body2: Jupiter, aspect: square, orb: 3.96}
+      - {body1: Saturn, body2: Uranus, aspect: square, orb: 4.65}
+      - {body1: Moon, body2: Jupiter, aspect: square, orb: 4.72}
+      - {body1: Neptune, body2: ASC, aspect: trine, orb: 4.88}
+      - {body1: Sun, body2: Moon, aspect: opposition, orb: 5.98}
+      - {body1: Mars, body2: Juno, aspect: conjunction, orb: 7.43}
+      - {body1: Sun, body2: Ceres, aspect: conjunction, orb: 7.86}
+      summary:
+        elements: {fire: 3, earth: 4, air: 2, water: 1}
+        modes: {cardinal: 1, fixed: 5, mutable: 4}
+        dominant_signs:
+        - {sign: Vir, sign_ja: 乙女座, count: 3}
+        - {sign: Leo, sign_ja: 獅子座, count: 2}
+        - {sign: Aqu, sign_ja: 水瓶座, count: 1}
+    asteroids:
+      Lilith: {sign: Tau, sign_ja: 牡牛座, degree: 11.5232, house: 1, retrograde: true}
+      Chiron: {sign: Tau, sign_ja: 牡牛座, degree: 1.9028, house: 1, retrograde: true}
+      Ceres: {sign: Leo, sign_ja: 獅子座, degree: 10.0952, house: 5, retrograde: false}
+      Pallas: {sign: Can, sign_ja: 蟹座, degree: 3.8953, house: 4, retrograde: false}
+      Juno: {sign: Vir, sign_ja: 乙女座, degree: 28.7017, house: 6, retrograde: false}
+      Vesta: {sign: Can, sign_ja: 蟹座, degree: 0.8015, house: 3, retrograde: false}
+      Vertex: {sign: Lib, sign_ja: 天秤座, degree: 2.7331, house: 6, retrograde: false}
+    transit:
+      period: {start_date: '2026-07-01', days: 38, timezone: Asia/Tokyo, end_date: '2026-08-07'}
+      daily:
+      - date: '2026-07-01'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 9.322, house: 9, retrograde: false}
+          Moon: {sign_ja: 山羊座, degree: 21.7151, house: 4, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 26.1831, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 20.3348, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 1.6474, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 0.1884, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.1921, house: 7, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 3.7138, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4071, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.8734, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Sun, natal_body: Pluto, aspect: square, orb: 0.35}
+        - {transit_body: Moon, natal_body: Mars, aspect: trine, orb: 0.44}
+        - {transit_body: Mars, natal_body: Venus, aspect: square, orb: 0.97}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.09}
+        - {transit_body: Sun, natal_body: Mercury, aspect: sextile, orb: 1.4}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.44}
+        moon_timepoints:
+        - {label: morning, sign_ja: 山羊座, degree: 18.721, house: 6, aspects: []}
+        - {label: noon, sign_ja: 山羊座, degree: 21.7151, house: 4, aspects: [{natal_body: Mars, aspect: trine, orb: 0.44}]}
+        - {label: night, sign_ja: 山羊座, degree: 26.2158, house: 12, aspects: []}
+      - date: '2026-07-02'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 10.2752, house: 9, retrograde: false}
+          Moon: {sign_ja: 水瓶座, degree: 3.7464, house: 4, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 26.039, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 21.4673, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 2.3579, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 0.4029, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.2341, house: 7, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 3.7635, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4103, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.8528, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Venus, aspect: square, orb: 0.26}
+        - {transit_body: Moon, natal_body: Uranus, aspect: square, orb: 0.32}
+        - {transit_body: Sun, natal_body: Mercury, aspect: sextile, orb: 0.45}
+        - {transit_body: Sun, natal_body: Pluto, aspect: square, orb: 0.61}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.14}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.42}
+        moon_timepoints:
+        - {label: morning, sign_ja: 水瓶座, degree: 0.7293, house: 7, aspects: []}
+        - {label: noon, sign_ja: 水瓶座, degree: 3.7464, house: 4, aspects: [{natal_body: Uranus, aspect: square, orb: 0.32}]}
+        - {label: night, sign_ja: 水瓶座, degree: 8.2854, house: 12, aspects: [{natal_body: Saturn, aspect: opposition, orb: 0.2}]}
+      - date: '2026-07-03'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 11.2285, house: 9, retrograde: false}
+          Moon: {sign_ja: 水瓶座, degree: 15.8911, house: 4, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 25.821, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 22.5977, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 3.0673, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 0.6179, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.2746, house: 7, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 3.8128, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.413, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.8319, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Venus, aspect: square, orb: 0.45}
+        - {transit_body: Sun, natal_body: Mercury, aspect: sextile, orb: 0.51}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.19}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.4}
+        moon_timepoints:
+        - {label: morning, sign_ja: 水瓶座, degree: 12.8422, house: 7, aspects: []}
+        - {label: noon, sign_ja: 水瓶座, degree: 15.8911, house: 4, aspects: []}
+        - {label: night, sign_ja: 水瓶座, degree: 20.4825, house: 1, aspects: []}
+      - date: '2026-07-04'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 12.1817, house: 9, retrograde: false}
+          Moon: {sign_ja: 水瓶座, degree: 28.1891, house: 5, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 25.5317, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 23.7259, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 3.7757, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 0.8334, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.3135, house: 7, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 3.8617, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4151, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.8108, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Venus, natal_body: Moon, aspect: opposition, orb: 0.22}
+        - {transit_body: Moon, natal_body: Jupiter, aspect: square, orb: 0.47}
+        - {transit_body: Mars, natal_body: Venus, aspect: square, orb: 1.16}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.24}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.38}
+        - {transit_body: Sun, natal_body: Mercury, aspect: sextile, orb: 1.46}
+        moon_timepoints:
+        - {label: morning, sign_ja: 水瓶座, degree: 25.0977, house: 8, aspects: [{natal_body: Moon, aspect: conjunction, orb: 1.16}]}
+        - {label: noon, sign_ja: 水瓶座, degree: 28.1891, house: 5, aspects: [{natal_body: Jupiter, aspect: square, orb: 0.47}]}
+        - {label: night, sign_ja: 魚座, degree: 2.85, house: 1, aspects: [{natal_body: Venus, aspect: opposition, orb: 0.23}, {natal_body: Uranus, aspect: trine, orb: 0.58}]}
+      - date: '2026-07-05'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 13.135, house: 9, retrograde: false}
+          Moon: {sign_ja: 魚座, degree: 10.6886, house: 5, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 25.1748, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 24.8519, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 4.483, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 1.0494, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.3507, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 3.9101, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4166, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.7896, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Moon, natal_body: Mercury, aspect: opposition, orb: 0.03}
+        - {transit_body: Moon, natal_body: Neptune, aspect: square, orb: 0.55}
+        - {transit_body: Venus, natal_body: Moon, aspect: opposition, orb: 0.91}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.29}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.36}
+        moon_timepoints:
+        - {label: morning, sign_ja: 魚座, degree: 7.542, house: 8, aspects: []}
+        - {label: noon, sign_ja: 魚座, degree: 10.6886, house: 5, aspects: [{natal_body: Mercury, aspect: opposition, orb: 0.03}, {natal_body: Neptune, aspect: square, orb: 0.55}]}
+        - {label: night, sign_ja: 魚座, degree: 15.4389, house: 1, aspects: []}
+      - date: '2026-07-06'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 14.0883, house: 9, retrograde: false}
+          Moon: {sign_ja: 魚座, degree: 23.4441, house: 6, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 24.7549, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 25.9755, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 5.1893, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 1.2658, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.3863, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 3.9581, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4176, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.7681, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.34}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.34}
+        moon_timepoints:
+        - {label: morning, sign_ja: 魚座, degree: 20.2281, house: 9, aspects: [{natal_body: Mars, aspect: opposition, orb: 1.04}]}
+        - {label: noon, sign_ja: 魚座, degree: 23.4441, house: 6, aspects: []}
+        - {label: night, sign_ja: 魚座, degree: 28.3051, house: 1, aspects: [{natal_body: Jupiter, aspect: sextile, orb: 0.35}]}
+      - date: '2026-07-07'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 15.0417, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡羊座, degree: 6.5125, house: 6, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 24.2777, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 27.0969, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 5.8945, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 1.4826, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.4204, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.0056, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.418, house: 6, retrograde: false}
+          Pluto: {sign_ja: 水瓶座, degree: 4.7465, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.32}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.39}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡羊座, degree: 3.213, house: 9, aspects: []}
+        - {label: noon, sign_ja: 牡羊座, degree: 6.5125, house: 6, aspects: []}
+        - {label: night, sign_ja: 牡羊座, degree: 11.5047, house: 2, aspects: [{natal_body: Neptune, aspect: trine, orb: 0.27}]}
+      - date: '2026-07-08'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 15.9952, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡羊座, degree: 19.9458, house: 7, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 23.75, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 28.2159, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 6.5986, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 1.6999, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.4528, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.0526, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4179, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.7246, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Venus, natal_body: Jupiter, aspect: square, orb: 0.44}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.3}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.43}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡羊座, degree: 16.5508, house: 9, aspects: []}
+        - {label: noon, sign_ja: 牡羊座, degree: 19.9458, house: 7, aspects: []}
+        - {label: night, sign_ja: 牡羊座, degree: 25.0856, house: 2, aspects: [{natal_body: Moon, aspect: sextile, orb: 1.14}]}
+      - date: '2026-07-09'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 16.9489, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡牛座, degree: 3.7807, house: 7, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 23.1797, house: 10, retrograde: true}
+          Venus: {sign_ja: 獅子座, degree: 29.3326, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 7.3017, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 1.9176, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.4835, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.0991, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4173, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.7027, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Moon, natal_body: Uranus, aspect: opposition, orb: 0.35}
+        - {transit_body: Venus, natal_body: Jupiter, aspect: square, orb: 0.67}
+        - {transit_body: Mars, natal_body: Saturn, aspect: sextile, orb: 0.78}
+        - {transit_body: Moon, natal_body: Venus, aspect: trine, orb: 1.16}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.27}
+        - {transit_body: Uranus, natal_body: Venus, aspect: square, orb: 1.48}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡牛座, degree: 0.2832, house: 10, aspects: []}
+        - {label: noon, sign_ja: 牡牛座, degree: 3.7807, house: 7, aspects: [{natal_body: Uranus, aspect: opposition, orb: 0.35}, {natal_body: Venus, aspect: trine, orb: 1.16}]}
+        - {label: night, sign_ja: 牡牛座, degree: 9.0752, house: 2, aspects: [{natal_body: Saturn, aspect: square, orb: 0.99}]}
+      - date: '2026-07-10'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 17.9026, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡牛座, degree: 18.0257, house: 8, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 22.5756, house: 10, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 0.4469, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 8.0037, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 2.1357, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.5127, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.1452, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4162, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.6806, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Moon, natal_body: Sun, aspect: square, orb: 0.07}
+        - {transit_body: Mars, natal_body: Saturn, aspect: sextile, orb: 0.08}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.25}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 1.29}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡牛座, degree: 14.4269, house: 10, aspects: []}
+        - {label: noon, sign_ja: 牡牛座, degree: 18.0257, house: 8, aspects: [{natal_body: Sun, aspect: square, orb: 0.07}]}
+        - {label: night, sign_ja: 牡牛座, degree: 23.4682, house: 3, aspects: [{natal_body: Moon, aspect: square, orb: 0.47}]}
+      - date: '2026-07-11'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 18.8565, house: 9, retrograde: false}
+          Moon: {sign_ja: 双子座, degree: 2.6487, house: 8, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 21.9473, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 1.5587, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 8.7046, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 2.3542, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.5402, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.1907, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4145, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.6583, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Moon, natal_body: Venus, aspect: square, orb: 0.03}
+        - {transit_body: Mars, natal_body: Saturn, aspect: sextile, orb: 0.62}
+        - {transit_body: Mercury, natal_body: Mars, aspect: sextile, orb: 0.68}
+        - {transit_body: Mars, natal_body: Pluto, aspect: trine, orb: 0.96}
+        - {transit_body: Venus, natal_body: Venus, aspect: conjunction, orb: 1.06}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 1.07}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.23}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡牛座, degree: 28.961, house: 10, aspects: [{natal_body: Jupiter, aspect: conjunction, orb: 0.3}]}
+        - {label: noon, sign_ja: 双子座, degree: 2.6487, house: 8, aspects: [{natal_body: Venus, aspect: square, orb: 0.03}]}
+        - {label: night, sign_ja: 双子座, degree: 8.215, house: 3, aspects: [{natal_body: Saturn, aspect: sextile, orb: 0.13}]}
+      - date: '2026-07-12'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 19.8106, house: 9, retrograde: false}
+          Moon: {sign_ja: 双子座, degree: 17.5697, house: 8, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 21.3052, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 2.6679, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 9.4044, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 2.5731, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.566, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.2358, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4123, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.636, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mercury, natal_body: Mars, aspect: sextile, orb: 0.03}
+        - {transit_body: Venus, natal_body: Venus, aspect: conjunction, orb: 0.05}
+        - {transit_body: Mars, natal_body: Pluto, aspect: trine, orb: 0.26}
+        - {transit_body: Moon, natal_body: Sun, aspect: sextile, orb: 0.39}
+        - {transit_body: Venus, natal_body: Uranus, aspect: sextile, orb: 0.76}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.86}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.21}
+        - {transit_body: Sun, natal_body: Mars, aspect: sextile, orb: 1.46}
+        moon_timepoints:
+        - {label: morning, sign_ja: 双子座, degree: 13.8177, house: 11, aspects: []}
+        - {label: noon, sign_ja: 双子座, degree: 17.5697, house: 8, aspects: [{natal_body: Sun, aspect: sextile, orb: 0.39}]}
+        - {label: night, sign_ja: 双子座, degree: 23.2174, house: 4, aspects: [{natal_body: Moon, aspect: trine, orb: 0.72}]}
+      - date: '2026-07-13'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 20.7647, house: 9, retrograde: false}
+          Moon: {sign_ja: 蟹座, degree: 2.6627, house: 9, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 20.6602, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 3.7747, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 10.1031, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 2.7923, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.5902, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.2804, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4096, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.6135, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Moon, natal_body: Venus, aspect: sextile, orb: 0.04}
+        - {transit_body: Venus, natal_body: Uranus, aspect: sextile, orb: 0.35}
+        - {transit_body: Mars, natal_body: Pluto, aspect: trine, orb: 0.43}
+        - {transit_body: Sun, natal_body: Mars, aspect: sextile, orb: 0.51}
+        - {transit_body: Mercury, natal_body: Mars, aspect: sextile, orb: 0.61}
+        - {transit_body: Mars, natal_body: Mercury, aspect: square, orb: 0.62}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.64}
+        - {transit_body: Moon, natal_body: Uranus, aspect: trine, orb: 0.77}
+        - {transit_body: Mars, natal_body: Neptune, aspect: opposition, orb: 1.14}
+        - {transit_body: Venus, natal_body: Venus, aspect: conjunction, orb: 1.15}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.18}
+        moon_timepoints:
+        - {label: morning, sign_ja: 双子座, degree: 28.8816, house: 11, aspects: []}
+        - {label: noon, sign_ja: 蟹座, degree: 2.6627, house: 9, aspects: [{natal_body: Venus, aspect: sextile, orb: 0.04}, {natal_body: Uranus, aspect: trine, orb: 0.77}]}
+        - {label: night, sign_ja: 蟹座, degree: 8.3355, house: 5, aspects: []}
+      - date: '2026-07-14'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 21.719, house: 9, retrograde: false}
+          Moon: {sign_ja: 蟹座, degree: 17.7713, house: 9, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 20.0233, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 4.8787, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 10.8007, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 3.0118, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6127, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.3244, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4063, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.5909, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Mercury, aspect: square, orb: 0.08}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.42}
+        - {transit_body: Mars, natal_body: Neptune, aspect: opposition, orb: 0.44}
+        - {transit_body: Sun, natal_body: Mars, aspect: sextile, orb: 0.45}
+        - {transit_body: Mars, natal_body: Pluto, aspect: trine, orb: 1.13}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.16}
+        moon_timepoints:
+        - {label: morning, sign_ja: 蟹座, degree: 14.0017, house: 12, aspects: []}
+        - {label: noon, sign_ja: 蟹座, degree: 17.7713, house: 9, aspects: []}
+        - {label: night, sign_ja: 蟹座, degree: 23.4075, house: 5, aspects: []}
+      - date: '2026-07-15'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 22.6733, house: 9, retrograde: false}
+          Moon: {sign_ja: 獅子座, degree: 2.7332, house: 10, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 19.4058, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 5.98, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 11.4971, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 3.2315, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6335, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.3678, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.4025, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.5682, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.2}
+        - {transit_body: Mars, natal_body: Neptune, aspect: opposition, orb: 0.26}
+        - {transit_body: Moon, natal_body: Uranus, aspect: square, orb: 0.7}
+        - {transit_body: Mars, natal_body: Mercury, aspect: square, orb: 0.77}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.14}
+        - {transit_body: Sun, natal_body: Mars, aspect: sextile, orb: 1.4}
+        moon_timepoints:
+        - {label: morning, sign_ja: 蟹座, degree: 29.0148, house: 12, aspects: [{natal_body: Jupiter, aspect: sextile, orb: 0.36}]}
+        - {label: noon, sign_ja: 獅子座, degree: 2.7332, house: 10, aspects: [{natal_body: Uranus, aspect: square, orb: 0.7}]}
+        - {label: night, sign_ja: 獅子座, degree: 8.2761, house: 6, aspects: [{natal_body: Saturn, aspect: conjunction, orb: 0.19}]}
+      - date: '2026-07-16'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 23.6277, house: 9, retrograde: false}
+          Moon: {sign_ja: 獅子座, degree: 17.407, house: 10, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 18.8185, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 7.0784, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 12.1922, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 3.4515, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6526, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.4107, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3981, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.5453, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.02}
+        - {transit_body: Moon, natal_body: Sun, aspect: conjunction, orb: 0.55}
+        - {transit_body: Mars, natal_body: Neptune, aspect: opposition, orb: 0.95}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.12}
+        moon_timepoints:
+        - {label: morning, sign_ja: 獅子座, degree: 13.7719, house: 1, aspects: []}
+        - {label: noon, sign_ja: 獅子座, degree: 17.407, house: 10, aspects: [{natal_body: Sun, aspect: conjunction, orb: 0.55}]}
+        - {label: night, sign_ja: 獅子座, degree: 22.8134, house: 6, aspects: [{natal_body: Moon, aspect: opposition, orb: 1.13}]}
+      - date: '2026-07-17'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 24.5821, house: 9, retrograde: false}
+          Moon: {sign_ja: 乙女座, degree: 1.6921, house: 11, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 18.272, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 8.1739, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 12.8862, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 3.6717, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6699, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.453, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3932, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.5224, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.24}
+        - {transit_body: Moon, natal_body: Venus, aspect: conjunction, orb: 0.93}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.09}
+        moon_timepoints:
+        - {label: morning, sign_ja: 獅子座, degree: 28.161, house: 1, aspects: [{natal_body: Jupiter, aspect: square, orb: 0.5}]}
+        - {label: noon, sign_ja: 乙女座, degree: 1.6921, house: 11, aspects: [{natal_body: Venus, aspect: conjunction, orb: 0.93}]}
+        - {label: night, sign_ja: 乙女座, degree: 6.9367, house: 7, aspects: []}
+      - date: '2026-07-18'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 25.5365, house: 9, retrograde: false}
+          Moon: {sign_ja: 乙女座, degree: 15.5366, house: 11, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 17.7763, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 9.2664, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 13.579, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 3.8921, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6856, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.4947, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3877, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.4993, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.46}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.07}
+        moon_timepoints:
+        - {label: morning, sign_ja: 乙女座, degree: 12.1178, house: 2, aspects: [{natal_body: Neptune, aspect: square, orb: 0.88}]}
+        - {label: noon, sign_ja: 乙女座, degree: 15.5366, house: 11, aspects: []}
+        - {label: night, sign_ja: 乙女座, degree: 20.6122, house: 7, aspects: [{natal_body: Mars, aspect: conjunction, orb: 0.66}]}
+      - date: '2026-07-19'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 26.491, house: 9, retrograde: false}
+          Moon: {sign_ja: 乙女座, degree: 28.9344, house: 11, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 17.3406, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 10.3558, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 14.2706, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 4.1127, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6995, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.5358, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3817, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.4762, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Moon, natal_body: Jupiter, aspect: trine, orb: 0.28}
+        - {transit_body: Venus, natal_body: Mercury, aspect: conjunction, orb: 0.37}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.68}
+        - {transit_body: Venus, natal_body: Neptune, aspect: square, orb: 0.88}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.05}
+        moon_timepoints:
+        - {label: morning, sign_ja: 乙女座, degree: 25.6257, house: 2, aspects: []}
+        - {label: noon, sign_ja: 乙女座, degree: 28.9344, house: 11, aspects: [{natal_body: Jupiter, aspect: trine, orb: 0.28}]}
+        - {label: night, sign_ja: 天秤座, degree: 3.8487, house: 7, aspects: []}
+      - date: '2026-07-20'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 27.4456, house: 9, retrograde: false}
+          Moon: {sign_ja: 天秤座, degree: 11.9158, house: 12, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.9732, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 11.4419, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 14.961, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 4.3335, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7118, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.5763, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3751, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.4529, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Venus, natal_body: Neptune, aspect: square, orb: 0.2}
+        - {transit_body: Moon, natal_body: Neptune, aspect: sextile, orb: 0.68}
+        - {transit_body: Venus, natal_body: Mercury, aspect: conjunction, orb: 0.72}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 0.9}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.02}
+        - {transit_body: Sun, natal_body: Jupiter, aspect: sextile, orb: 1.21}
+        moon_timepoints:
+        - {label: morning, sign_ja: 天秤座, degree: 8.7068, house: 3, aspects: [{natal_body: Saturn, aspect: sextile, orb: 0.62}, {natal_body: Pluto, aspect: conjunction, orb: 0.96}]}
+        - {label: noon, sign_ja: 天秤座, degree: 11.9158, house: 12, aspects: [{natal_body: Neptune, aspect: sextile, orb: 0.68}]}
+        - {label: night, sign_ja: 天秤座, degree: 16.6872, house: 7, aspects: []}
+      - date: '2026-07-21'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 28.4002, house: 9, retrograde: false}
+          Moon: {sign_ja: 天秤座, degree: 24.5359, house: 12, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.6814, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 12.5247, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 15.6502, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 4.5544, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7223, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.6162, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3681, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.4297, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Sun, natal_body: Jupiter, aspect: sextile, orb: 0.26}
+        - {transit_body: Moon, natal_body: Moon, aspect: trine, orb: 0.59}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 1.0}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 1.13}
+        moon_timepoints:
+        - {label: morning, sign_ja: 天秤座, degree: 21.4111, house: 3, aspects: []}
+        - {label: noon, sign_ja: 天秤座, degree: 24.5359, house: 12, aspects: [{natal_body: Moon, aspect: trine, orb: 0.59}]}
+        - {label: night, sign_ja: 天秤座, degree: 29.189, house: 8, aspects: []}
+      - date: '2026-07-22'
+        transiting_bodies:
+          Sun: {sign_ja: 蟹座, degree: 29.3548, house: 9, retrograde: false}
+          Moon: {sign_ja: 蠍座, degree: 6.8634, house: 1, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.4716, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 13.6042, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 16.3382, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 4.7754, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7311, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.6555, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3605, house: 6, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.4064, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Sun, natal_body: Jupiter, aspect: sextile, orb: 0.7}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.98}
+        - {transit_body: Jupiter, natal_body: Uranus, aspect: square, orb: 1.35}
+        moon_timepoints:
+        - {label: morning, sign_ja: 蠍座, degree: 3.8049, house: 3, aspects: [{natal_body: Uranus, aspect: conjunction, orb: 0.38}, {natal_body: Venus, aspect: sextile, orb: 1.18}]}
+        - {label: noon, sign_ja: 蠍座, degree: 6.8634, house: 1, aspects: []}
+        - {label: night, sign_ja: 蠍座, degree: 11.4258, house: 8, aspects: [{natal_body: Mercury, aspect: sextile, orb: 0.7}]}
+      - date: '2026-07-23'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 0.3096, house: 9, retrograde: false}
+          Moon: {sign_ja: 蠍座, degree: 18.9722, house: 1, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.3489, house: 9, retrograde: true}
+          Venus: {sign_ja: 乙女座, degree: 14.6801, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 17.025, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 4.9966, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7383, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.6942, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3525, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.383, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Sun, aspect: sextile, orb: 0.93}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.95}
+        - {transit_body: Moon, natal_body: Sun, aspect: square, orb: 1.01}
+        moon_timepoints:
+        - {label: morning, sign_ja: 蠍座, degree: 15.9615, house: 4, aspects: []}
+        - {label: noon, sign_ja: 蠍座, degree: 18.9722, house: 1, aspects: [{natal_body: Sun, aspect: square, orb: 1.01}]}
+        - {label: night, sign_ja: 蠍座, degree: 23.4717, house: 8, aspects: [{natal_body: Moon, aspect: square, orb: 0.47}]}
+      - date: '2026-07-24'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 1.2644, house: 9, retrograde: false}
+          Moon: {sign_ja: 射手座, degree: 0.9351, house: 2, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.3179, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 15.7525, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 17.7106, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 5.2179, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7437, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.7323, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3439, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.3597, house: 4, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Sun, aspect: sextile, orb: 0.25}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.93}
+        moon_timepoints:
+        - {label: morning, sign_ja: 蠍座, degree: 27.9543, house: 4, aspects: [{natal_body: Jupiter, aspect: opposition, orb: 0.7}]}
+        - {label: noon, sign_ja: 射手座, degree: 0.9351, house: 2, aspects: []}
+        - {label: night, sign_ja: 射手座, degree: 5.3975, house: 9, aspects: []}
+      - date: '2026-07-25'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 2.2194, house: 9, retrograde: false}
+          Moon: {sign_ja: 射手座, degree: 12.8193, house: 2, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.3818, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 16.8211, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 18.3951, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 5.4393, house: 10, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7475, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.7698, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3348, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.3363, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Sun, aspect: sextile, orb: 0.44}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.91}
+        - {transit_body: Sun, natal_body: Uranus, aspect: square, orb: 1.21}
+        moon_timepoints:
+        - {label: morning, sign_ja: 射手座, degree: 9.8523, house: 4, aspects: [{natal_body: Pluto, aspect: sextile, orb: 0.18}, {natal_body: Mercury, aspect: square, orb: 0.87}]}
+        - {label: noon, sign_ja: 射手座, degree: 12.8193, house: 2, aspects: []}
+        - {label: night, sign_ja: 射手座, degree: 17.268, house: 9, aspects: [{natal_body: Sun, aspect: trine, orb: 0.69}]}
+      - date: '2026-07-26'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 3.1745, house: 9, retrograde: false}
+          Moon: {sign_ja: 射手座, degree: 24.6841, house: 2, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.5433, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 17.886, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 19.0784, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 5.6607, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7495, house: 6, retrograde: false}
+          Uranus: {sign_ja: 双子座, degree: 4.8066, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3253, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.3129, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Sun, natal_body: Uranus, aspect: square, orb: 0.25}
+        - {transit_body: Moon, natal_body: Moon, aspect: sextile, orb: 0.74}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.88}
+        - {transit_body: Mars, natal_body: Sun, aspect: sextile, orb: 1.12}
+        moon_timepoints:
+        - {label: morning, sign_ja: 射手座, degree: 21.7168, house: 5, aspects: [{natal_body: Mars, aspect: square, orb: 0.44}]}
+        - {label: noon, sign_ja: 射手座, degree: 24.6841, house: 2, aspects: [{natal_body: Moon, aspect: sextile, orb: 0.74}]}
+        - {label: night, sign_ja: 射手座, degree: 29.139, house: 10, aspects: []}
+      - date: '2026-07-27'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 4.1297, house: 9, retrograde: false}
+          Moon: {sign_ja: 山羊座, degree: 6.5799, house: 3, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 16.8042, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 18.9469, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 19.7604, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 5.8822, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7499, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 4.8428, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3152, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.2895, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Sun, natal_body: Uranus, aspect: square, orb: 0.7}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.86}
+        moon_timepoints:
+        - {label: morning, sign_ja: 山羊座, degree: 3.6006, house: 5, aspects: [{natal_body: Uranus, aspect: sextile, orb: 0.17}, {natal_body: Venus, aspect: trine, orb: 0.98}]}
+        - {label: noon, sign_ja: 山羊座, degree: 6.5799, house: 3, aspects: []}
+        - {label: night, sign_ja: 山羊座, degree: 11.0575, house: 10, aspects: [{natal_body: Mercury, aspect: trine, orb: 0.33}]}
+      - date: '2026-07-28'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 5.0851, house: 9, retrograde: false}
+          Moon: {sign_ja: 山羊座, degree: 18.5481, house: 3, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 17.1657, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 20.0038, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 20.4413, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 6.1037, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7485, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 4.8783, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.3047, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.2661, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Mars, aspect: square, orb: 0.83}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.84}
+        moon_timepoints:
+        - {label: morning, sign_ja: 山羊座, degree: 15.5473, house: 5, aspects: []}
+        - {label: noon, sign_ja: 山羊座, degree: 18.5481, house: 3, aspects: []}
+        - {label: night, sign_ja: 山羊座, degree: 23.0619, house: 11, aspects: []}
+      - date: '2026-07-29'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 6.0407, house: 9, retrograde: false}
+          Moon: {sign_ja: 水瓶座, degree: 0.6224, house: 3, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 17.6283, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 21.0566, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 21.121, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 6.3252, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7455, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 4.9132, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2936, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.2427, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Mars, aspect: square, orb: 0.15}
+        - {transit_body: Venus, natal_body: Mars, aspect: conjunction, orb: 0.22}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.81}
+        moon_timepoints:
+        - {label: morning, sign_ja: 山羊座, degree: 27.5923, house: 6, aspects: [{natal_body: Jupiter, aspect: trine, orb: 1.07}]}
+        - {label: noon, sign_ja: 水瓶座, degree: 0.6224, house: 3, aspects: []}
+        - {label: night, sign_ja: 水瓶座, degree: 5.1834, house: 11, aspects: []}
+      - date: '2026-07-30'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 6.9964, house: 9, retrograde: false}
+          Moon: {sign_ja: 水瓶座, degree: 12.8305, house: 4, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 18.1921, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 22.1051, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 21.7995, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 6.5465, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7407, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 4.9474, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2821, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.2193, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Mars, aspect: square, orb: 0.53}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.79}
+        - {transit_body: Venus, natal_body: Mars, aspect: conjunction, orb: 0.83}
+        - {transit_body: Sun, natal_body: Saturn, aspect: conjunction, orb: 1.09}
+        moon_timepoints:
+        - {label: morning, sign_ja: 水瓶座, degree: 9.7645, house: 6, aspects: [{natal_body: Pluto, aspect: trine, orb: 0.1}]}
+        - {label: noon, sign_ja: 水瓶座, degree: 12.8305, house: 4, aspects: []}
+        - {label: night, sign_ja: 水瓶座, degree: 17.448, house: 11, aspects: [{natal_body: Sun, aspect: opposition, orb: 0.51}]}
+      - date: '2026-07-31'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 7.9524, house: 9, retrograde: false}
+          Moon: {sign_ja: 水瓶座, degree: 25.1966, house: 4, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 18.8567, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 23.1493, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 22.4768, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 6.7679, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7342, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 4.9809, house: 8, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2701, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.1959, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Sun, natal_body: Saturn, aspect: conjunction, orb: 0.13}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.77}
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 1.32}
+        moon_timepoints:
+        - {label: morning, sign_ja: 水瓶座, degree: 22.089, house: 7, aspects: []}
+        - {label: noon, sign_ja: 水瓶座, degree: 25.1966, house: 4, aspects: []}
+        - {label: night, sign_ja: 水瓶座, degree: 29.8794, house: 12, aspects: []}
+      - date: '2026-08-01'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 8.9086, house: 9, retrograde: false}
+          Moon: {sign_ja: 魚座, degree: 7.7439, house: 4, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 19.6214, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 24.189, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 23.1529, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 6.9893, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.726, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.0137, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2575, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.1725, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.74}
+        - {transit_body: Sun, natal_body: Pluto, aspect: sextile, orb: 0.76}
+        - {transit_body: Mars, natal_body: Moon, aspect: trine, orb: 0.79}
+        - {transit_body: Sun, natal_body: Saturn, aspect: conjunction, orb: 0.83}
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 1.09}
+        moon_timepoints:
+        - {label: morning, sign_ja: 魚座, degree: 4.5888, house: 7, aspects: [{natal_body: Uranus, aspect: trine, orb: 1.16}]}
+        - {label: noon, sign_ja: 魚座, degree: 7.7439, house: 4, aspects: []}
+        - {label: night, sign_ja: 魚座, degree: 12.5007, house: 12, aspects: []}
+      - date: '2026-08-02'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 9.865, house: 9, retrograde: false}
+          Moon: {sign_ja: 魚座, degree: 20.4962, house: 5, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 20.4849, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 25.2242, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 23.8279, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 7.2107, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7161, house: 6, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.0458, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2445, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.1492, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mars, natal_body: Moon, aspect: trine, orb: 0.11}
+        - {transit_body: Sun, natal_body: Pluto, aspect: sextile, orb: 0.2}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.72}
+        - {transit_body: Moon, natal_body: Mars, aspect: opposition, orb: 0.78}
+        - {transit_body: Mercury, natal_body: Mars, aspect: sextile, orb: 0.79}
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 0.87}
+        - {transit_body: Sun, natal_body: Neptune, aspect: trine, orb: 1.37}
+        moon_timepoints:
+        - {label: morning, sign_ja: 魚座, degree: 17.2875, house: 8, aspects: []}
+        - {label: noon, sign_ja: 魚座, degree: 20.4962, house: 5, aspects: [{natal_body: Mars, aspect: opposition, orb: 0.78}]}
+        - {label: night, sign_ja: 魚座, degree: 25.3362, house: 12, aspects: []}
+      - date: '2026-08-03'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 10.8218, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡羊座, degree: 3.4786, house: 5, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 21.446, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 26.2546, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 24.5016, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 7.4319, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.7045, house: 5, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.0772, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.231, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.1259, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Mercury, natal_body: Mars, aspect: sextile, orb: 0.17}
+        - {transit_body: Sun, natal_body: Neptune, aspect: trine, orb: 0.42}
+        - {transit_body: Mars, natal_body: Moon, aspect: trine, orb: 0.56}
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 0.65}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.7}
+        - {transit_body: Sun, natal_body: Pluto, aspect: sextile, orb: 1.15}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡羊座, degree: 0.21, house: 8, aspects: []}
+        - {label: noon, sign_ja: 牡羊座, degree: 3.4786, house: 5, aspects: []}
+        - {label: night, sign_ja: 牡羊座, degree: 8.4116, house: 1, aspects: [{natal_body: Saturn, aspect: trine, orb: 0.33}]}
+      - date: '2026-08-04'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 11.7788, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡羊座, degree: 16.7167, house: 6, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 22.5026, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 27.2803, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 25.1741, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 7.6531, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6912, house: 5, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.1079, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2171, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.1026, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 0.43}
+        - {transit_body: Sun, natal_body: Neptune, aspect: trine, orb: 0.54}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.67}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡羊座, degree: 13.3819, house: 8, aspects: []}
+        - {label: noon, sign_ja: 牡羊座, degree: 16.7167, house: 6, aspects: []}
+        - {label: night, sign_ja: 牡羊座, degree: 21.7517, house: 1, aspects: []}
+      - date: '2026-08-05'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 12.7362, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡牛座, degree: 0.2329, house: 6, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 23.6526, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 28.301, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 25.8454, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 7.8741, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6763, house: 5, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.138, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.2027, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.0795, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 0.21}
+        - {transit_body: Venus, natal_body: Jupiter, aspect: trine, orb: 0.36}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.65}
+        - {transit_body: Sun, natal_body: Neptune, aspect: trine, orb: 1.5}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡羊座, degree: 26.8268, house: 9, aspects: []}
+        - {label: noon, sign_ja: 牡牛座, degree: 0.2329, house: 6, aspects: []}
+        - {label: night, sign_ja: 牡牛座, degree: 5.3765, house: 1, aspects: []}
+      - date: '2026-08-06'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 13.694, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡牛座, degree: 14.0414, house: 7, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 24.8935, house: 9, retrograde: false}
+          Venus: {sign_ja: 乙女座, degree: 29.3168, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 26.5156, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 8.095, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6596, house: 5, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.1673, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.1879, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.0564, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 0.01}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.63}
+        - {transit_body: Venus, natal_body: Jupiter, aspect: trine, orb: 0.66}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡牛座, degree: 10.5616, house: 9, aspects: [{natal_body: Mercury, aspect: trine, orb: 0.16}]}
+        - {label: noon, sign_ja: 牡牛座, degree: 14.0414, house: 7, aspects: []}
+        - {label: night, sign_ja: 牡牛座, degree: 19.2953, house: 2, aspects: []}
+      - date: '2026-08-07'
+        transiting_bodies:
+          Sun: {sign_ja: 獅子座, degree: 14.6521, house: 9, retrograde: false}
+          Moon: {sign_ja: 牡牛座, degree: 28.1409, house: 7, retrograde: false}
+          Mercury: {sign_ja: 蟹座, degree: 26.2221, house: 9, retrograde: false}
+          Venus: {sign_ja: 天秤座, degree: 0.3273, house: 11, retrograde: false}
+          Mars: {sign_ja: 双子座, degree: 27.1845, house: 8, retrograde: false}
+          Jupiter: {sign_ja: 獅子座, degree: 8.3159, house: 9, retrograde: false}
+          Saturn: {sign_ja: 牡羊座, degree: 14.6414, house: 5, retrograde: true}
+          Uranus: {sign_ja: 双子座, degree: 5.1959, house: 7, retrograde: false}
+          Neptune: {sign_ja: 牡羊座, degree: 4.1726, house: 5, retrograde: true}
+          Pluto: {sign_ja: 水瓶座, degree: 4.0334, house: 3, retrograde: true}
+        natal_aspects:
+        - {transit_body: Jupiter, natal_body: Saturn, aspect: conjunction, orb: 0.23}
+        - {transit_body: Moon, natal_body: Jupiter, aspect: conjunction, orb: 0.52}
+        - {transit_body: Pluto, natal_body: Uranus, aspect: square, orb: 0.6}
+        - {transit_body: Jupiter, natal_body: Pluto, aspect: sextile, orb: 1.35}
+        moon_timepoints:
+        - {label: morning, sign_ja: 牡牛座, degree: 24.5896, house: 10, aspects: [{natal_body: Moon, aspect: square, orb: 0.65}]}
+        - {label: noon, sign_ja: 牡牛座, degree: 28.1409, house: 7, aspects: [{natal_body: Jupiter, aspect: conjunction, orb: 0.52}]}
+        - {label: night, sign_ja: 双子座, degree: 3.4992, house: 2, aspects: [{natal_body: Venus, aspect: square, orb: 0.88}]}
+      today: {selected_date: '2026-07-01'}
+      summary:
+        overall_theme: この31日間は、調整・見直し・境界線の整理が継続しやすい時期です。短期的な勢いより、違和感を確かめながら進めると扱いやすくなります。
+        key_dates:
+        - {date: '2026-07-01', theme: 自己表現、調整}
+        - {date: '2026-07-02', theme: 感情調整、調整}
+        - {date: '2026-07-03', theme: 自己表現、活用}
+        - {date: '2026-07-04', theme: 対人調整、調整}
+        - {date: '2026-07-05', theme: 感情調整、調整}
+        - {date: '2026-07-08', theme: 対人調整、調整}
+        caution_dates: ['2026-07-01', '2026-07-02', '2026-07-03']
+        easy_to_move_days: ['2026-07-01', '2026-07-03', '2026-07-10']
+        action_hints:
+        - 動きが出やすい日は、連絡・相談・意思表示などを前に進める候補日として使えます。
+        - 注意日には、即断よりも確認・調整・境界線の見直しを優先してください。
+        - 当日分の詳細を主根拠にし、31日サマリーは流れの強弱を読む補助として使ってください。
+campaign: {id: note-2026-07, label: 2026年7月 note特典, target_month: 2026-07, start_date: '2026-07-01', end_date: '2026-08-07'}

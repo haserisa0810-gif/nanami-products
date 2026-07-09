@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hoshiyomi",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": [
+        "hoshiyomi/node_modules/vite/bin/vite.js",
+        "hoshiyomi",
+        "--port",
+        "5180"
+      ],
+      "port": 5180
+    }
+  ]
+}
