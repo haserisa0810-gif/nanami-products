@@ -32,11 +32,16 @@ npm run dev        # http://localhost:5180
 |---|---|---|
 | チャートYAML（`data_role: base_chart`） | chart | プロファイル新規/更新 |
 | 月次追加YAML（`data_role` がアドオン） | chart(addon) | 既存プロファイルの `daily[]` に日付キーでマージ、期間拡張（§11.3） |
-| `life_events.yaml`（TimelineEvent互換配列） | life_events | 年・人生ビューに `transit_major` として表示（§10.2） |
-| 焼き込み鑑定（Markdown / `{readings: ...}`） | readings | AI鑑定タブ先頭に表示 |
+| `life_events.yaml`（`nanami-life-events-v1` / TimelineEvent互換配列） | life_events | 年・人生ビューに `transit_major` として表示（§10.2） |
+| 焼き込み鑑定（`nanami-readings-v1` / Markdown / `{readings: ...}`） | readings | AI鑑定タブ先頭に表示（モデル注釈付き） |
 | `horoscope.svg` | svg | 出生図タブに表示（§11.2） |
 
 日別詳細の下に「日記」欄があり、一言メモが `source:"diary"` として userEvents と同じキーに保存され、年・人生ビューにも載る。
+
+生成側（nanami-astro）が出力すべき `readings.yaml` / `life_events.yaml` の契約は
+[docs/receiver_scaffold/README_受け皿.md](docs/receiver_scaffold/README_受け皿.md) を参照
+（claude.ai 製の受け皿スキャフォールド一式を参考として保管。アプリ本体はこの契約を取り込み済みで、
+クォート無し日付（js-yaml が Date 化する）にも対応している）。
 
 ## タイムライン（Phase 2.5 / 引き継ぎ§9）
 

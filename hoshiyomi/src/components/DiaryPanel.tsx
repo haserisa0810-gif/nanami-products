@@ -17,14 +17,16 @@ export default function DiaryPanel({
   onSave: (text: string) => void;
   onDelete: () => void;
 }) {
-  const [text, setText] = useState(entry?.title ?? "");
+  const stored = entry?.description ?? entry?.title ?? "";
+  const [text, setText] = useState(stored);
   const [saved, setSaved] = useState(false);
   useEffect(() => {
-    setText(entry?.title ?? "");
+    setText(stored);
     setSaved(false);
-  }, [date, entry?.title]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, stored]);
 
-  const dirty = text.trim() !== (entry?.title ?? "");
+  const dirty = text.trim() !== stored;
   const btn = (on: boolean) => ({
     background: "transparent", border: `1px solid ${on ? C.dawn : C.line}`,
     color: on ? C.dawn : C.faint, borderRadius: 8, padding: "7px 14px",

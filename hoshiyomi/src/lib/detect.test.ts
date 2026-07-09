@@ -72,4 +72,47 @@ describe("detectPayload（同梱ファイルの自動判別）", () => {
     expect(() => detectPayload("")).toThrow(YamlParseError);
     expect(() => detectPayload("x: 1\ny: 2\n")).toThrow(/対応していない形式/);
   });
+
+  /* 生成側とのデータ契約（docs/receiver_scaffold/README_受け皿.md） */
+
+  it("nanami-readings-v1（sections構造）を readings と判別しモデル注釈を付ける", () => {
+    const text = `
+version: nanami-readings-v1
+model: gemini-2.5-flash-lite
+profile_id: profile_xxx
+sections:
+  - { id: overview, title: 全体像, body: "傾向のまとめです。" }
+  - { id: talent, title: 才能・強み, body: "強みの説明です。" }
+`;
+    const det = detectPayload(text);
+    if (det.kind !== "readings") throw new Error("readings expected");
+    expect(det.text).toContain("## 全体像");
+    expect(det.text).toContain("## 才能・強み");
+    expect(det.text).toContain("本鑑定は gemini-2.5-flash-lite により、計算済みデータのみを根拠に生成しています。");
+  });
+
+  it("nanami-readings-v1 の note があれば注釈はそれを優先する", () => {
+    const det = detectPayload(
+      "version: nanami-readings-v1\nmodel: x\nnote: カスタム注釈\nsections:\n- {id: a, title: T, body: B}\n",
+    );
+    if (det.kind !== "readings") throw new Error("readings expected");
+    expect(det.text).toContain("カスタム注釈");
+    expect(det.text).not.toContain("本鑑定は x により");
+  });
+
+  it("nanami-life-events-v1（クォート無し日付 = js-yaml が Date 化）も正しく読む", () => {
+    const text = `
+version: nanami-life-events-v1
+profile_id: profile_xxx
+events:
+  - { type: return, date: 2005-08-01, title: サターンリターン, description: 節目, meta: { orb: 0.3 } }
+  - { type: ingress, date: 2027-04-01, title: 天王星 双子座入り, granularity: year }
+`;
+    const det = detectPayload(text);
+    if (det.kind !== "life_events") throw new Error("life_events expected");
+    expect(det.events[0].date).toBe("2005-08-01"); // Date → ISO 文字列へ正規化
+    expect(det.events[0].source).toBe("transit_major");
+    expect(det.events[1].date).toBe("2027-04-01");
+    expect(det.events[1].meta).toMatchObject({ granularity: "year" });
+  });
 });

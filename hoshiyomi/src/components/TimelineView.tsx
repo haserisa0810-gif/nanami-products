@@ -137,7 +137,8 @@ export default function TimelineView({
                   id: `diary:${selected}`,
                   type: "diary",
                   date: selected,
-                  title: text,
+                  title: text.slice(0, 40), // 一覧では先頭40字、全文は description
+                  description: text.length > 40 ? text : undefined,
                   source: "diary",
                 }),
               )

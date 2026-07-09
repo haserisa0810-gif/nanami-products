@@ -32,11 +32,24 @@ export default function LifeView({
     const y = yearOf(e.date);
     byYear.set(y, [...(byYear.get(y) ?? []), e]);
   }
+  // 人生スケールは年ごとに最重要へ集約（§10.2）: major/user/diary は全件、
+  // 38日窓の transit は orb 昇順で3件まで（残りは年ビューで見る）
+  const TRANSIT_PER_YEAR = 3;
+  const condense = (list: TimelineEvent[]): { rows: TimelineEvent[]; hidden: number } => {
+    const keep = list.filter((e) => e.source !== "transit");
+    const transit = list
+      .filter((e) => e.source === "transit")
+      .sort((a, b) => ((a.meta?.orb as number) ?? 9) - ((b.meta?.orb as number) ?? 9));
+    const rows = [...keep, ...transit.slice(0, TRANSIT_PER_YEAR)].sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
+    return { rows, hidden: Math.max(0, transit.length - TRANSIT_PER_YEAR) };
+  };
 
   return (
     <div style={{ maxWidth: 720 }}>
       {years.map((y) => {
-        const list = byYear.get(y) ?? [];
+        const { rows: list, hidden } = condense(byYear.get(y) ?? []);
         const isNow = y === currentYear;
         return (
           <div
@@ -76,6 +89,17 @@ export default function LifeView({
                   onDelete={onDelete}
                 />
               ))}
+              {hidden > 0 && (
+                <button
+                  onClick={() => onOpenYear(y)}
+                  style={{
+                    background: "transparent", border: "none", color: C.faint,
+                    fontSize: 11.5, cursor: "pointer", padding: "4px 2px", fontFamily: SANS,
+                  }}
+                >
+                  ほか {hidden} 件のトランジット → 年ビューで見る
+                </button>
+              )}
             </div>
           </div>
         );
