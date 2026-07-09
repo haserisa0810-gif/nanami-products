@@ -1584,8 +1584,6 @@ def _check_payhip_order_row_for_redeem(
     payment_status = str((order_row or {}).get("payment_status") or "").lower()
     if payment_status == "cancelled":
         return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
-    if payment_status in {"reusable", "test", "permanent"}:
-        return "reusable", order_row, None, 200
 
     purchased_type = order_row.get("product_type")
     if enforce_product_type and purchased_type and purchased_type != product_type:
@@ -1596,6 +1594,8 @@ def _check_payhip_order_row_for_redeem(
             f"{_product_label(product_type)}の入力フォームでは使用できません。",
             409,
         )
+    if payment_status in {"reusable", "test", "permanent"}:
+        return "reusable", order_row, None, 200
     return "ok", order_row, None, 200
 
 

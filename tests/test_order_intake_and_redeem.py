@@ -220,6 +220,22 @@ class PayhipMetadataFormTest(unittest.TestCase):
             self.assertIsNone(error, payment_status)
             self.assertEqual(code, 200, payment_status)
 
+    def test_payhip_reusable_order_row_still_checks_product_type(self) -> None:
+        status, row, error, code = routes._check_payhip_order_row_for_redeem(
+            order_id="LWR6l4Y4Wa",
+            order_row={
+                "stores_order_no": "LWR6l4Y4Wa",
+                "payment_status": "reusable",
+                "product_type": "western_full",
+            },
+            product_type="western_basic",
+        )
+
+        self.assertEqual(status, "product_mismatch")
+        self.assertIsNotNone(row)
+        self.assertIsNotNone(error)
+        self.assertEqual(code, 409)
+
     def test_payhip_missing_order_row_is_not_found(self) -> None:
         status, row, error, code = routes._check_payhip_order_row_for_redeem(
             order_id="LWR6l4Y4Wa",
