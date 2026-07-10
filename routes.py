@@ -5451,7 +5451,7 @@ def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str, addon_
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("前回鑑定URLが不正です。https:// から始まる鑑定結果ページのURLを貼り付けてください。")
 
-    token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\\.yaml)?/?", parsed.path or "")
+    token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\.yaml)?/?", parsed.path or "")
     if not token_match:
         raise ValueError("前回鑑定URLが不正です。鑑定結果ページのURLをそのまま貼り付けてください。")
 

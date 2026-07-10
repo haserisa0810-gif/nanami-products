@@ -11,6 +11,27 @@
         "5180"
       ],
       "port": 5180
+    },
+    {
+      "name": "keiba-simulator",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-X", "utf8", "C:\\Users\\haser\\dev\\keiba_ai\\serve.py"],
+      "port": 5057
+    },
+    {
+      "name": "keiba-cloud",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-X", "utf8", "C:\\Users\\haser\\dev\\keiba_ai\\serve_cloud.py"],
+      "port": 8080
+    },
+    {
+      "name": "keiba-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m", "http.server", "5058",
+        "--directory", "C:\\Users\\haser\\dev\\keiba_ai\\simulator"
+      ],
+      "port": 5058
     }
   ]
 }

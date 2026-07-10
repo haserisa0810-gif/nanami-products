@@ -7,10 +7,30 @@ from unittest.mock import patch
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 
-from routes import addon_generate
+from routes import _load_addon_base_doc_from_previous_chart_url, addon_generate
 
 
 class LongTermTransitAddonFormTest(unittest.TestCase):
+    @patch("routes._validate_addon_base_doc")
+    @patch("routes._load_addon_base_yaml", return_value={"systems": {"western": {"natal": {}}}})
+    @patch("routes.pg_store.get_chart", return_value={"yaml_text": "version: test", "options": {}})
+    def test_previous_chart_url_accepts_page_and_yaml_urls(
+        self,
+        get_chart,
+        _load_yaml,
+        _validate,
+    ) -> None:
+        token = "abcdefghijklmnopqrstuvwxyz"
+        for suffix in ("", ".yaml"):
+            with self.subTest(suffix=suffix):
+                result = _load_addon_base_doc_from_previous_chart_url(
+                    f"https://chart.nanami-astro.com/chart/{token}{suffix}",
+                    "western_long_term_transits_addon",
+                )
+                self.assertIn("systems", result)
+
+        self.assertEqual(get_chart.call_count, 2)
+
     def test_ui_treats_long_term_transits_as_a_transit_addon(self) -> None:
         template = Path("templates/addon_form.html").read_text(encoding="utf-8")
 
