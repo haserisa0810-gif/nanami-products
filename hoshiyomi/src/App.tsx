@@ -221,15 +221,24 @@ export default function App() {
       {/* ヘッダー */}
       <header style={{ borderBottom: `1px solid ${C.line}`, padding: "22px 24px 0", maxWidth: 1080, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 10 }}>
-          <div>
-            <Eyebrow>Nanami Products — Western 38days Transit</Eyebrow>
-            <h1 style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, margin: 0, letterSpacing: "0.1em" }}>星読みの暦</h1>
-            {data && (
-              <div style={{ fontSize: 12.5, color: C.sub, margin: "8px 0 0" }}>
-                {data.title} ／ {data.birthDate} {data.birthTime} 生・{data.birthPlace}
-                （出生時刻: {accuracyJa[data.birthTimeAccuracy] ?? data.birthTimeAccuracy}）
-              </div>
-            )}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <img
+              src={`${import.meta.env.BASE_URL}nanami-products-logo.svg`}
+              alt="nanami-products"
+              width={56}
+              height={56}
+              style={{ borderRadius: 12, flexShrink: 0 }}
+            />
+            <div>
+              <Eyebrow>Nanami Products — Western 38days Transit</Eyebrow>
+              <h1 style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, margin: 0, letterSpacing: "0.1em" }}>星読みの暦</h1>
+              {data && (
+                <div style={{ fontSize: 12.5, color: C.sub, margin: "8px 0 0" }}>
+                  {data.title} ／ {data.birthDate} {data.birthTime} 生・{data.birthPlace}
+                  （出生時刻: {accuracyJa[data.birthTimeAccuracy] ?? data.birthTimeAccuracy}）
+                </div>
+              )}
+            </div>
           </div>
           <div style={{ fontSize: 11.5, color: C.faint, textAlign: "right" }}>
             {data && (

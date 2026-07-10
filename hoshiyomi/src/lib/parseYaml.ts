@@ -245,7 +245,7 @@ export function parseYamlText(text: string): ChartData {
 
   const period = req(transit, "period");
   const todayDate = String(
-    transit.today?.selected_date ?? period.start_date,
+    transit.today?.selected_date ?? transit.today?.date ?? period.start_date,
   );
 
   const flags = doc.interpretation_flags ?? {};

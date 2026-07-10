@@ -57,6 +57,17 @@ describe("parseYamlText（detail 版）", () => {
     expect(data.transit.todayDate).toBe("2026-07-09");
   });
 
+  it("selected_date が無い場合は today.date を選択日に使う", () => {
+    const withoutSelectedDate = fixture.replace(
+      /\n\s+selected_date: '2026-07-09'/,
+      "",
+    );
+    const parsed = parseYamlText(withoutSelectedDate);
+
+    expect(parsed.transit.daily[0].date).toBe("2026-07-09");
+    expect(parsed.transit.todayDate).toBe("2026-07-09");
+  });
+
   it("オブジェクト形の today.moon_timepoints を朝昼夜の配列へ変換する（§3.1-4）", () => {
     const tps = data.transit.daily[0].moon_timepoints;
     expect(tps.map((t) => t.label)).toEqual(["morning", "noon", "night"]);
