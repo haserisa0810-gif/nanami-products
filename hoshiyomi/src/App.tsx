@@ -43,7 +43,10 @@ export default function App() {
 
       if (det.kind === "chart") {
         const parsed = parseYamlText(text);
-        if (parsed.dataRole !== "base_chart") {
+        // detail / lite 等の縮約版はフル版の抜粋（daily は当日1日分のみ合成）。
+        // アドオンマージの対象にはしない。
+        const reduced = parsed.yamlVariant !== "full";
+        if (!reduced && parsed.dataRole !== "base_chart") {
           // 月次トランジット追加YAML（§11.3）— 同一 profile_id のベースにマージ
           const target = getProfile(parsed.profileId);
           if (!target) {
@@ -57,6 +60,25 @@ export default function App() {
           setTab("timeline");
           return merged;
         }
+        if (reduced) {
+          // すでに情報量の多いデータを読み込み済みなら、縮約版で上書きしない
+          const existing = getProfile(parsed.profileId);
+          if (existing) {
+            try {
+              const existingChart = chartFromStored(existing.yamlText, existing.addonYamls);
+              if (existingChart.transit.daily.length >= parsed.transit.daily.length) {
+                const applied = applyStored(existing);
+                setLoadNotice(
+                  `${parsed.yamlVariant}版はフル版の抜粋のため、読み込み済みのデータをそのまま表示します。`,
+                );
+                setTab("timeline");
+                return applied;
+              }
+            } catch {
+              /* 既存が壊れていれば縮約版で置き換える */
+            }
+          }
+        }
         const stored = saveProfile({
           profileId: parsed.profileId,
           title: parsed.title,
@@ -64,6 +86,11 @@ export default function App() {
           yamlText: text,
         });
         const applied = applyStored(stored);
+        if (reduced) {
+          setLoadNotice(
+            `AI貼り付け用（${parsed.yamlVariant}版）を読み込みました。カレンダーは当日分のみです。フル版YAMLを読み込むと全期間が表示されます。`,
+          );
+        }
         setTab("timeline");
         return applied;
       }

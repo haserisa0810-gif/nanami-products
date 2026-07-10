@@ -31,6 +31,7 @@ npm run dev        # http://localhost:5180
 | 入力 | 判別 | 行き先 |
 |---|---|---|
 | チャートYAML（`data_role: base_chart`） | chart | プロファイル新規/更新 |
+| AI貼り付け用YAML（`nanami-products-yaml-detail-v1` 等の縮約版） | chart(縮約) | 当日1日分として表示。フル版読み込み済みなら上書きせず保護 |
 | 月次追加YAML（`data_role` がアドオン） | chart(addon) | 既存プロファイルの `daily[]` に日付キーでマージ、期間拡張（§11.3） |
 | `life_events.yaml`（`nanami-life-events-v1` / TimelineEvent互換配列） | life_events | 年・人生ビューに `transit_major` として表示（§10.2） |
 | 焼き込み鑑定（`nanami-readings-v1` / Markdown / `{readings: ...}`） | readings | AI鑑定タブ先頭に表示（モデル注釈付き） |

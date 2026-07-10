@@ -6,6 +6,8 @@ import yaml from "js-yaml";
 import type { AspectName, TimepointLabel } from "../theme";
 
 export const SUPPORTED_VERSION = "nanami-products-yaml-v1";
+// detail / lite / base などのバリアント（例: nanami-products-yaml-detail-v1）も受ける
+export const SUPPORTED_VERSION_RE = /^nanami-products-yaml(-[a-z0-9_]+)?-v1$/;
 export const SUPPORTED_SCHEMA_VERSIONS = ["1.0", "1.1"];
 
 export type Body = {
@@ -72,6 +74,7 @@ export type NatalSummary = {
 export type ChartData = {
   profileId: string;
   dataRole: string; // "base_chart" | アドオン種別（§11.3 の月次マージ判定に使う）
+  yamlVariant: string; // "full" | "detail" | "lite" | "base"（meta.yaml_variant）
   title: string;
   birthDate: string;
   birthTime: string;
@@ -135,9 +138,9 @@ export function parseYamlText(text: string): ChartData {
   }
 
   const version = doc.version;
-  if (version !== SUPPORTED_VERSION) {
+  if (typeof version !== "string" || !SUPPORTED_VERSION_RE.test(version)) {
     throw new YamlParseError(
-      `このYAMLは対応バージョンではありません（version: ${version ?? "なし"}、対応: ${SUPPORTED_VERSION}）`,
+      `このYAMLは対応バージョンではありません（version: ${version ?? "なし"}、対応: ${SUPPORTED_VERSION} およびそのバリアント）`,
     );
   }
   const schemaVersion = String(req(doc, "meta.schema_version"));
@@ -150,9 +153,36 @@ export function parseYamlText(text: string): ChartData {
   const input = req(doc, "input");
   const natal = req(doc, "systems.western.natal");
   const transit = req(doc, "systems.western.transit");
-  const asteroidsRaw = doc.systems.western.asteroids ?? {};
+  // detail 版は asteroids.bodies にネストする（フル版は直下がボディのマップ）
+  const asteroidsSrc = doc.systems.western.asteroids ?? {};
+  const asteroidsRaw = asteroidsSrc.bodies ?? asteroidsSrc;
 
-  const daily: TransitDay[] = req(transit, "daily").map((d: any) => ({
+  // detail / lite 版には daily が無く today のみ。today から1日分を合成する。
+  // today.moon_timepoints はオブジェクト形 {morning: {time, moon, natal_aspects}, ...}（§3.1-4）
+  let dailyRaw: any[] = Array.isArray(transit.daily) ? transit.daily : [];
+  if (dailyRaw.length === 0 && transit.today?.transiting_bodies) {
+    const t = transit.today;
+    const mtp = t.moon_timepoints;
+    const mtpArr = Array.isArray(mtp)
+      ? mtp
+      : ["morning", "noon", "night"]
+          .filter((l) => mtp?.[l]?.moon ?? mtp?.[l]?.body)
+          .map((l) => ({
+            label: l,
+            body: mtp[l].moon ?? mtp[l].body,
+            natal_aspects: mtp[l].natal_aspects ?? mtp[l].aspects ?? [],
+          }));
+    dailyRaw = [
+      {
+        date: t.date ?? t.selected_date,
+        transiting_bodies: t.transiting_bodies,
+        natal_aspects: t.natal_aspects ?? [],
+        moon_timepoints: mtpArr,
+      },
+    ];
+  }
+
+  const daily: TransitDay[] = dailyRaw.map((d: any) => ({
     date: String(d.date),
     transiting_bodies: Object.fromEntries(
       Object.entries(d.transiting_bodies ?? {}).map(([k, b]) => [k, normBody(b)]),
@@ -223,6 +253,7 @@ export function parseYamlText(text: string): ChartData {
   return {
     profileId: String(doc.meta.profile_id ?? "unknown"),
     dataRole: String(doc.meta.data_role ?? "base_chart"),
+    yamlVariant: String(doc.meta.yaml_variant ?? "full"),
     title: String(input.title ?? ""),
     birthDate: String(input.birth_date ?? ""),
     birthTime: String(input.birth_time ?? ""),
@@ -242,7 +273,11 @@ export function parseYamlText(text: string): ChartData {
           { sign_ja: String(h.sign_ja), degree: Number(h.degree) },
         ]),
       ),
-      aspects: (natal.aspects ?? []).map((a: any) => ({
+      // detail 版は aspects が {major_only, items: [...]} 形式（フル版は配列直下）
+      aspects: (Array.isArray(natal.aspects)
+        ? natal.aspects
+        : (natal.aspects?.items ?? [])
+      ).map((a: any) => ({
         body1: String(a.body1),
         body2: String(a.body2),
         aspect: a.aspect as AspectName,

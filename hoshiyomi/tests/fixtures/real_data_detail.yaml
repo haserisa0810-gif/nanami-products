@@ -1,0 +1,849 @@
+version: nanami-products-yaml-detail-v1
+meta:
+  schema_version: '1.1'
+  product_type: personal_ai_astrology_yaml_detail
+  profile_id: profile_bfd713c3dc78dda7
+  chart_id: chart_c36542f98d2d7e71
+  generated_at: '2026-06-01T00:06:04.218328+00:00'
+  data_role: addon
+  addon_type: western_31days_transit
+  campaign_id: note-2026-07
+  target_month: 2026-07
+  yaml_variant: detail
+base: null
+generated_at: '2026-06-30T04:16:05.335887+00:00'
+calculation:
+  engine: Swiss Ephemeris
+  zodiac: tropical
+  house_system: P
+  timezone: Asia/Tokyo
+  location_source: input
+  ephemeris_version: null
+birth_time:
+  input_value: '20:41'
+  calculation_time: '20:41'
+  accuracy: exact
+  note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+interpretation_flags:
+  allow_house_interpretation: true
+  allow_asc_mc_interpretation: true
+  house_reliability: high
+  moon_reliability: high
+  use_houses_as_reference_only: false
+assets:
+  horoscope_svg:
+    available: true
+    file_name: horoscope.svg
+    generated_from_chart_id: chart_c36542f98d2d7e71
+  shichusuimei_svg:
+    available: false
+    file_name: shichusuimei-chart.svg
+    generated_from_chart_id: chart_c36542f98d2d7e71
+  yaml_lite:
+    available: true
+  yaml_detail:
+    available: true
+  yaml_full:
+    available: true
+  yaml_base:
+    available: true
+input:
+  title: リサフル6/1
+  birth_date: '1976-08-10'
+  birth_time: '20:41'
+  calculation_time: '20:41'
+  birth_time_accuracy: exact
+  birth_time_note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+  prefecture: 東京都
+  birth_place_kind: domestic
+  birth_place: 東京都
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
+  gender: unknown
+product:
+  type: personal_ai_astrology_yaml_detail
+  options:
+    western_natal: true
+    asteroids: true
+    transit_today: true
+    transit_31days_summary: true
+    western_long_term_transits: false
+usage_note:
+  for_ai: このYAMLはFULL版の計算済みデータから抽出したAI貼り付け用データです。生年月日から再計算せず、この値を根拠にしてください。
+  full_yaml: 完全版YAMLは検証・保存用です。AI貼り付けにはAI貼り付け版を優先してください。
+systems:
+  western:
+    natal:
+      bodies:
+        Sun:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 17.9572
+          absolute_longitude: 137.9572
+          house: 5
+          retrograde: false
+        Moon:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 23.9421
+          absolute_longitude: 323.9421
+          house: 11
+          retrograde: false
+        Mercury:
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 10.7232
+          absolute_longitude: 160.7232
+          house: 6
+          retrograde: false
+        Venus:
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 2.62
+          absolute_longitude: 152.62
+          house: 6
+          retrograde: false
+        Mars:
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 21.272
+          absolute_longitude: 171.272
+          house: 6
+          retrograde: false
+        Jupiter:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 28.6592
+          absolute_longitude: 58.6592
+          house: 2
+          retrograde: false
+        Saturn:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 8.0832
+          absolute_longitude: 128.0832
+          house: 5
+          retrograde: false
+        Uranus:
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 3.4291
+          absolute_longitude: 213.4291
+          house: 7
+          retrograde: false
+        Neptune:
+          sign: Sag
+          sign_ja: 射手座
+          degree: 11.2395
+          absolute_longitude: 251.2395
+          house: 9
+          retrograde: true
+        Pluto:
+          sign: Lib
+          sign_ja: 天秤座
+          degree: 9.6682
+          absolute_longitude: 189.6682
+          house: 7
+          retrograde: false
+        North Node:
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 6.9178
+          absolute_longitude: 216.9178
+          house: 7
+          retrograde: true
+        South Node:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 6.9178
+          absolute_longitude: 36.9178
+          house: 1
+          retrograde: true
+        ASC:
+          sign: Ari
+          sign_ja: 牡羊座
+          degree: 6.3569
+          absolute_longitude: 6.3569
+          house: 1
+          retrograde: false
+        MC:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 3.6904
+          absolute_longitude: 273.6904
+          house: 10
+          retrograde: false
+      houses:
+        '1':
+          sign: Ari
+          sign_ja: 牡羊座
+          degree: 6.3569
+          absolute_longitude: 6.3569
+        '2':
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 14.5097
+          absolute_longitude: 44.5097
+        '3':
+          sign: Gem
+          sign_ja: 双子座
+          degree: 11.2365
+          absolute_longitude: 71.2365
+        '4':
+          sign: Can
+          sign_ja: 蟹座
+          degree: 3.6904
+          absolute_longitude: 93.6904
+        '5':
+          sign: Can
+          sign_ja: 蟹座
+          degree: 26.7076
+          absolute_longitude: 116.7076
+        '6':
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 25.35
+          absolute_longitude: 145.35
+        '7':
+          sign: Lib
+          sign_ja: 天秤座
+          degree: 6.3569
+          absolute_longitude: 186.3569
+        '8':
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 14.5097
+          absolute_longitude: 224.5097
+        '9':
+          sign: Sag
+          sign_ja: 射手座
+          degree: 11.2365
+          absolute_longitude: 251.2365
+        '10':
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 3.6904
+          absolute_longitude: 273.6904
+        '11':
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 26.7076
+          absolute_longitude: 296.7076
+        '12':
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 25.35
+          absolute_longitude: 325.35
+      aspects:
+        major_only: true
+        items:
+        - body1: North Node
+          body2: South Node
+          aspect: opposition
+          orb: 0.0
+        - body1: Uranus
+          body2: MC
+          aspect: sextile
+          orb: 0.26
+        - body1: Mercury
+          body2: Neptune
+          aspect: square
+          orb: 0.52
+        - body1: Venus
+          body2: Uranus
+          aspect: sextile
+          orb: 0.81
+        - body1: Venus
+          body2: MC
+          aspect: trine
+          orb: 1.07
+        - body1: Saturn
+          body2: North Node
+          aspect: square
+          orb: 1.17
+        - body1: Saturn
+          body2: South Node
+          aspect: square
+          orb: 1.17
+        - body1: Neptune
+          body2: Pluto
+          aspect: sextile
+          orb: 1.57
+        - body1: Saturn
+          body2: Pluto
+          aspect: sextile
+          orb: 1.59
+        - body1: Saturn
+          body2: ASC
+          aspect: trine
+          orb: 1.73
+        - body1: ASC
+          body2: MC
+          aspect: square
+          orb: 2.67
+        - body1: Saturn
+          body2: Neptune
+          aspect: trine
+          orb: 3.16
+        - body1: North Node
+          body2: MC
+          aspect: sextile
+          orb: 3.23
+        - body1: South Node
+          body2: MC
+          aspect: trine
+          orb: 3.23
+        - body1: Pluto
+          body2: ASC
+          aspect: opposition
+          orb: 3.31
+        - body1: Uranus
+          body2: North Node
+          aspect: conjunction
+          orb: 3.49
+        - body1: Uranus
+          body2: South Node
+          aspect: opposition
+          orb: 3.49
+        - body1: Mercury
+          body2: North Node
+          aspect: sextile
+          orb: 3.81
+        - body1: Mercury
+          body2: South Node
+          aspect: trine
+          orb: 3.81
+        - body1: Venus
+          body2: Jupiter
+          aspect: square
+          orb: 3.96
+        - body1: Venus
+          body2: South Node
+          aspect: trine
+          orb: 4.3
+        - body1: Saturn
+          body2: Uranus
+          aspect: square
+          orb: 4.65
+        - body1: Moon
+          body2: Jupiter
+          aspect: square
+          orb: 4.72
+        - body1: Neptune
+          body2: ASC
+          aspect: trine
+          orb: 4.88
+        - body1: Pluto
+          body2: MC
+          aspect: square
+          orb: 5.98
+        - body1: Sun
+          body2: Moon
+          aspect: opposition
+          orb: 5.98
+      summary:
+        elements:
+          fire: 3
+          earth: 4
+          air: 2
+          water: 1
+        modes:
+          cardinal: 1
+          fixed: 5
+          mutable: 4
+        dominant_signs:
+        - sign: Vir
+          sign_ja: 乙女座
+          count: 3
+        - sign: Leo
+          sign_ja: 獅子座
+          count: 2
+        - sign: Aqu
+          sign_ja: 水瓶座
+          count: 1
+    asteroids:
+      bodies:
+        Lilith:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 11.5232
+          absolute_longitude: 41.5232
+          house: 1
+          retrograde: true
+        Chiron:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 1.9028
+          absolute_longitude: 31.9028
+          house: 1
+          retrograde: true
+        Ceres:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 10.0952
+          absolute_longitude: 130.0952
+          house: 5
+          retrograde: false
+        Pallas:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 3.8953
+          absolute_longitude: 93.8953
+          house: 4
+          retrograde: false
+        Juno:
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 28.7017
+          absolute_longitude: 178.7017
+          house: 6
+          retrograde: false
+        Vesta:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 0.8015
+          absolute_longitude: 90.8015
+          house: 3
+          retrograde: false
+        Vertex:
+          sign: Lib
+          sign_ja: 天秤座
+          degree: 2.7331
+          absolute_longitude: 182.7331
+          house: 6
+          retrograde: false
+    transit:
+      period:
+        start_date: '2026-07-01'
+        days: 38
+        timezone: Asia/Tokyo
+        sample_time: '12:00'
+        moon_timepoints: &id001
+        - 06:00
+        - '12:00'
+        - '21:00'
+      today:
+        selected_date: '2026-07-09'
+        selection_status: current_date
+        date: '2026-07-09'
+        transiting_bodies:
+          Sun:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 16.9489
+            absolute_longitude: 106.9489
+            house: 9
+            retrograde: false
+          Moon:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 3.7807
+            absolute_longitude: 33.7807
+            house: 7
+            retrograde: false
+          Mercury:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 23.1797
+            absolute_longitude: 113.1797
+            house: 10
+            retrograde: true
+          Venus:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 29.3326
+            absolute_longitude: 149.3326
+            house: 11
+            retrograde: false
+          Mars:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 7.3017
+            absolute_longitude: 67.3017
+            house: 8
+            retrograde: false
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 1.9176
+            absolute_longitude: 121.9176
+            house: 10
+            retrograde: false
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 14.4835
+            absolute_longitude: 14.4835
+            house: 6
+            retrograde: false
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.0991
+            absolute_longitude: 64.0991
+            house: 8
+            retrograde: false
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 4.4173
+            absolute_longitude: 4.4173
+            house: 6
+            retrograde: true
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 4.7027
+            absolute_longitude: 304.7027
+            house: 4
+            retrograde: true
+        natal_aspects:
+        - transit_body: Moon
+          natal_body: Uranus
+          aspect: opposition
+          orb: 0.35
+          transit_longitude: 33.7807
+          natal_longitude: 213.4291
+        - transit_body: Venus
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.67
+          transit_longitude: 149.3326
+          natal_longitude: 58.6592
+        - transit_body: Mars
+          natal_body: Saturn
+          aspect: sextile
+          orb: 0.78
+          transit_longitude: 67.3017
+          natal_longitude: 128.0832
+        - transit_body: Moon
+          natal_body: Venus
+          aspect: trine
+          orb: 1.16
+          transit_longitude: 33.7807
+          natal_longitude: 152.62
+        - transit_body: Pluto
+          natal_body: Uranus
+          aspect: square
+          orb: 1.27
+          transit_longitude: 304.7027
+          natal_longitude: 213.4291
+        - transit_body: Uranus
+          natal_body: Venus
+          aspect: square
+          orb: 1.48
+          transit_longitude: 64.0991
+          natal_longitude: 152.62
+        moon_timepoints:
+          morning:
+            time: 06:00
+            moon:
+              sign: Tau
+              sign_ja: 牡牛座
+              degree: 0.2832
+              absolute_longitude: 30.2832
+              house: 10
+              retrograde: false
+            natal_aspects: []
+          noon:
+            time: '12:00'
+            moon:
+              sign: Tau
+              sign_ja: 牡牛座
+              degree: 3.7807
+              absolute_longitude: 33.7807
+              house: 7
+              retrograde: false
+            natal_aspects:
+            - transit_body: Moon
+              natal_body: Uranus
+              aspect: opposition
+              orb: 0.35
+              transit_longitude: 33.7807
+              natal_longitude: 213.4291
+            - transit_body: Moon
+              natal_body: Venus
+              aspect: trine
+              orb: 1.16
+              transit_longitude: 33.7807
+              natal_longitude: 152.62
+          night:
+            time: '21:00'
+            moon:
+              sign: Tau
+              sign_ja: 牡牛座
+              degree: 9.0752
+              absolute_longitude: 39.0752
+              house: 2
+              retrograde: false
+            natal_aspects:
+            - transit_body: Moon
+              natal_body: Saturn
+              aspect: square
+              orb: 0.99
+              transit_longitude: 39.0752
+              natal_longitude: 128.0832
+      next_31_days_summary:
+        period:
+          start_date: '2026-07-01'
+          days: 38
+          timezone: Asia/Tokyo
+          sample_time: '12:00'
+          moon_timepoints: *id001
+          end_date: '2026-08-07'
+        overall_theme: この31日間は、調整・見直し・境界線の整理が継続しやすい時期です。短期的な勢いより、違和感を確かめながら進めると扱いやすくなります。
+        key_periods:
+        - start_date: '2026-07-01'
+          end_date: '2026-07-03'
+          theme: 行動力、調整
+          source_aspects:
+          - date: '2026-07-01'
+            transit_body: Mars
+            natal_body: Venus
+            aspect: square
+            orb: 0.97
+            meaning_hint: 行動力、調整
+        - start_date: '2026-07-02'
+          end_date: '2026-07-15'
+          theme: 感情調整、調整
+          source_aspects:
+          - date: '2026-07-02'
+            transit_body: Moon
+            natal_body: Uranus
+            aspect: square
+            orb: 0.32
+            meaning_hint: 感情調整、調整
+        - start_date: '2026-07-02'
+          end_date: '2026-07-03'
+          theme: 自己表現、活用
+          source_aspects:
+          - date: '2026-07-02'
+            transit_body: Sun
+            natal_body: Mercury
+            aspect: sextile
+            orb: 0.45
+            meaning_hint: 自己表現、活用
+        - start_date: '2026-07-03'
+          end_date: '2026-07-08'
+          theme: 変化対応、調整
+          source_aspects:
+          - date: '2026-07-03'
+            transit_body: Uranus
+            natal_body: Venus
+            aspect: square
+            orb: 1.19
+            meaning_hint: 変化対応、調整
+        - start_date: '2026-07-04'
+          end_date: '2026-07-05'
+          theme: 対人調整、調整
+          source_aspects:
+          - &id003
+            date: '2026-07-04'
+            transit_body: Venus
+            natal_body: Moon
+            aspect: opposition
+            orb: 0.22
+            meaning_hint: 対人調整、調整
+        key_dates:
+        - date: '2026-07-01'
+          theme: 自己表現、調整
+          reason: タイトな主要アスペクト
+          source_aspects:
+          - &id002
+            date: '2026-07-01'
+            transit_body: Sun
+            natal_body: Pluto
+            aspect: square
+            orb: 0.35
+            meaning_hint: 自己表現、調整
+        - date: '2026-07-04'
+          theme: 感情調整、調整
+          reason: タイトな主要アスペクト
+          source_aspects:
+          - &id005
+            date: '2026-07-04'
+            transit_body: Moon
+            natal_body: Jupiter
+            aspect: square
+            orb: 0.47
+            meaning_hint: 感情調整、調整
+        - date: '2026-07-05'
+          theme: 感情調整、調整
+          reason: タイトな主要アスペクト
+          source_aspects:
+          - &id004
+            date: '2026-07-05'
+            transit_body: Moon
+            natal_body: Mercury
+            aspect: opposition
+            orb: 0.03
+            meaning_hint: 感情調整、調整
+        - date: '2026-07-06'
+          theme: 深い切り替え、調整
+          reason: 主要アスペクトが重なる日
+          source_aspects:
+          - date: '2026-07-06'
+            transit_body: Pluto
+            natal_body: Uranus
+            aspect: square
+            orb: 1.34
+            meaning_hint: 深い切り替え、調整
+        - date: '2026-07-07'
+          theme: 深い切り替え、調整
+          reason: 主要アスペクトが重なる日
+          source_aspects:
+          - date: '2026-07-07'
+            transit_body: Pluto
+            natal_body: Uranus
+            aspect: square
+            orb: 1.32
+            meaning_hint: 深い切り替え、調整
+        - date: '2026-07-08'
+          theme: 対人調整、調整
+          reason: タイトな主要アスペクト
+          source_aspects:
+          - date: '2026-07-08'
+            transit_body: Venus
+            natal_body: Jupiter
+            aspect: square
+            orb: 0.44
+            meaning_hint: 対人調整、調整
+        - date: '2026-07-09'
+          theme: 感情調整、調整
+          reason: タイトな主要アスペクト
+          source_aspects:
+          - date: '2026-07-09'
+            transit_body: Moon
+            natal_body: Uranus
+            aspect: opposition
+            orb: 0.35
+            meaning_hint: 感情調整、調整
+        caution_dates:
+        - date: '2026-07-01'
+          reason: 調整が必要な配置がある日
+          source_aspects:
+          - *id002
+        - date: '2026-07-02'
+          reason: 調整が必要な配置がある日
+          source_aspects:
+          - date: '2026-07-02'
+            transit_body: Mars
+            natal_body: Venus
+            aspect: square
+            orb: 0.26
+            meaning_hint: 行動力、調整
+        - date: '2026-07-03'
+          reason: 調整が必要な配置がある日
+          source_aspects:
+          - date: '2026-07-03'
+            transit_body: Mars
+            natal_body: Venus
+            aspect: square
+            orb: 0.45
+            meaning_hint: 行動力、調整
+        - date: '2026-07-04'
+          reason: 調整が必要な配置がある日
+          source_aspects:
+          - *id003
+        - date: '2026-07-05'
+          reason: 調整が必要な配置がある日
+          source_aspects:
+          - *id004
+        easy_to_move_days:
+        - date: '2026-07-11'
+          reason: 動きが出やすい一方で、調整も必要な日
+          source_aspects:
+          - date: '2026-07-11'
+            transit_body: Moon
+            natal_body: Venus
+            aspect: square
+            orb: 0.03
+            meaning_hint: 感情調整、調整
+        - date: '2026-07-12'
+          reason: 動きが出やすい配置がある日
+          source_aspects:
+          - date: '2026-07-12'
+            transit_body: Mercury
+            natal_body: Mars
+            aspect: sextile
+            orb: 0.03
+            meaning_hint: 思考整理、活用
+        - date: '2026-07-13'
+          reason: 動きが出やすい配置がある日
+          source_aspects:
+          - date: '2026-07-13'
+            transit_body: Moon
+            natal_body: Venus
+            aspect: sextile
+            orb: 0.04
+            meaning_hint: 感情調整、活用
+        - date: '2026-07-19'
+          reason: 動きが出やすい一方で、調整も必要な日
+          source_aspects:
+          - date: '2026-07-19'
+            transit_body: Moon
+            natal_body: Jupiter
+            aspect: trine
+            orb: 0.28
+            meaning_hint: 感情調整、活用
+        - date: '2026-07-20'
+          reason: 動きが出やすい一方で、調整も必要な日
+          source_aspects:
+          - date: '2026-07-20'
+            transit_body: Venus
+            natal_body: Neptune
+            aspect: square
+            orb: 0.2
+            meaning_hint: 対人調整、調整
+        next_few_days:
+        - date: '2026-07-09'
+          theme: 感情調整、調整
+          source_aspects:
+          - date: '2026-07-09'
+            transit_body: Moon
+            natal_body: Uranus
+            aspect: opposition
+            orb: 0.35
+            meaning_hint: 感情調整、調整
+        - date: '2026-07-10'
+          theme: 感情調整、調整
+          source_aspects:
+          - date: '2026-07-10'
+            transit_body: Moon
+            natal_body: Sun
+            aspect: square
+            orb: 0.07
+            meaning_hint: 感情調整、調整
+        - date: '2026-07-11'
+          theme: 感情調整、調整
+          source_aspects:
+          - date: '2026-07-11'
+            transit_body: Moon
+            natal_body: Venus
+            aspect: square
+            orb: 0.03
+            meaning_hint: 感情調整、調整
+        action_hints:
+        - 動きが出やすい日は、連絡・相談・意思表示などを前に進める候補日として使えます。
+        - 注意日には、即断よりも確認・調整・境界線の見直しを優先してください。
+        - 当日分の詳細を主根拠にし、31日サマリーは流れの強弱を読む補助として使ってください。
+        key_aspects:
+        - *id002
+        - date: '2026-07-01'
+          transit_body: Moon
+          natal_body: Mars
+          aspect: trine
+          orb: 0.44
+          meaning_hint: 感情調整、活用
+        - *id005
+        - *id004
+        - date: '2026-07-05'
+          transit_body: Moon
+          natal_body: Neptune
+          aspect: square
+          orb: 0.55
+          meaning_hint: 感情調整、調整
+    transit_long_term: null
+  shichusuimei: null
