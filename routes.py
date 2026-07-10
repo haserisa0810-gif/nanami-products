@@ -4017,6 +4017,14 @@ def chart_page(request: Request, token: str):
             f"?addon_type=western_31days_transit_addon"
             f"&previous_chart_url={quote(canonical_chart_url, safe='')}"
         )
+        # 星読みの暦アプリ（HOSHIYOMI_APP_URL 設定時のみ）: チャートYAML＋ホロスコープSVGを
+        # ?load= で自動読み込みさせるリンク。西洋占星術チャートのときだけ出す。
+        hoshiyomi_app_url = None
+        app_base = os.getenv("HOSHIYOMI_APP_URL", "").strip().rstrip("/")
+        if app_base and has_western_natal and not is_transit_yaml:
+            hoshiyomi_app_url = f"{app_base}/?load={quote(f'{base_url}/chart/{token}.yaml', safe='')}"
+            if has_horoscope_svg:
+                hoshiyomi_app_url += f"&load={quote(f'{base_url}/chart/{token}/horoscope.svg', safe='')}"
         timings["zip個別ファイル準備_ms"] = _elapsed_ms(step_start)
 
         step_start = time.perf_counter()
@@ -4052,6 +4060,7 @@ def chart_page(request: Request, token: str):
                 "download_zip_url": f"{base_url}/chart/{token}/download.zip",
                 "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
                 "usage_guide_url": "https://guide.nanami-astro.com/",
+                "hoshiyomi_app_url": hoshiyomi_app_url,
                 "next_transit_url": next_transit_url,
                 "expires_at": expires_at,
                 "expires_label": expires_label,
@@ -6590,6 +6599,9 @@ def _chart_zip_readme(chart: dict) -> str:
 
 def _apply_public_chart_headers(response: Response, chart: dict, *, max_age: int) -> None:
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    # 星読みの暦アプリ（別オリジン）が ?load= で YAML/SVG を fetch できるようにする。
+    # token を知っている人には元々公開のデータなので、CORS 許可で公開範囲は変わらない。
+    response.headers["Access-Control-Allow-Origin"] = "*"
     expires_at = _chart_expiry(chart)
     if expires_at:
         seconds_left = int((expires_at - datetime.now(timezone.utc)).total_seconds())

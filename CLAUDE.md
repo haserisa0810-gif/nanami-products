@@ -93,6 +93,7 @@ Neon/PostgreSQL。`DATABASE_URL` 環境変数から接続。スキーマ `nanami
 | `FREEASTRO_API_KEY` | `""` | Enables asteroid fallback |
 | `SWEPH_EPHE_PATH` | `""` | Override ephemeris directory |
 | `FREEASTRO_API_TIMEOUT` | `12` | Seconds for asteroid API calls |
+| `HOSHIYOMI_APP_URL` | `""` | 星読みの暦アプリ（hoshiyomi/）のベースURL。設定すると `/chart/{token}` に「アプリで開く（自動読み込み）」ボタンが出る（`?load=` にYAML/SVGのURLを渡す。公開チャートのYAML/SVGはCORS許可済み） |
 
 ### 四柱推命 Calculation Notes (`shichusuimei_calc.py`)
 

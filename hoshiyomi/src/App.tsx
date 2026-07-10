@@ -33,26 +33,9 @@ export default function App() {
     return merged;
   };
 
-  // 起動時: 前回のプロファイルを復元
-  useEffect(() => {
-    const last = getLastProfileId();
-    const stored = last ? getProfile(last) : listProfiles()[0];
-    if (stored) {
-      try {
-        applyStored(stored);
-        return;
-      } catch {
-        /* 保存データが壊れていたら読み込み画面へ */
-      }
-    }
-    setTab("load");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const profiles = useMemo(() => listProfiles(), [data, profilesVersion]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 読み込みUI: チャート / 月次アドオン / life_events / readings / horoscope.svg を自動判別（§10.3）
-  const loadYaml = (text: string) => {
+  // 読み込み本体: チャート / 月次アドオン / life_events / readings / horoscope.svg を自動判別（§10.3）。
+  // active = 同梱物の紐付け先。成功時は読み込み後のアクティブな ChartData を返し、失敗時は null。
+  const loadPayloadText = (text: string, active: ChartData | null): ChartData | null => {
     setLoadError(null);
     setLoadNotice(null);
     try {
@@ -69,10 +52,10 @@ export default function App() {
             );
           }
           const updated = appendAddonYaml(parsed.profileId, text)!;
-          applyStored(updated);
+          const merged = applyStored(updated);
           setLoadNotice(`月次データをマージしました（期間 ${parsed.transit.period.start_date} 〜）。`);
           setTab("timeline");
-          return;
+          return merged;
         }
         const stored = saveProfile({
           profileId: parsed.profileId,
@@ -80,35 +63,95 @@ export default function App() {
           birthDate: parsed.birthDate,
           yamlText: text,
         });
-        applyStored(stored);
+        const applied = applyStored(stored);
         setTab("timeline");
-        return;
+        return applied;
       }
 
       // 以降はチャート以外の同梱物 — 読み込み先プロファイルが必要
-      if (!data) {
+      if (!active) {
         throw new YamlParseError("先にチャートYAMLを読み込んでから、同梱ファイルを追加してください。");
       }
       if (det.kind === "life_events") {
-        saveLifeEvents(data.profileId, det.events);
+        saveLifeEvents(active.profileId, det.events);
         setLoadNotice(`life_events を ${det.events.length} 件読み込みました。年・人生ビューに表示されます。`);
         setTab("timeline");
       } else if (det.kind === "readings") {
-        updateProfileExtras(data.profileId, {
+        updateProfileExtras(active.profileId, {
           baked: { text: det.text, loadedAt: new Date().toISOString() },
         });
         setLoadNotice("同梱の基本版鑑定を読み込みました。AI鑑定タブに表示されます。");
         setTab("ai");
       } else if (det.kind === "svg") {
-        updateProfileExtras(data.profileId, { horoscopeSvg: det.svg });
+        updateProfileExtras(active.profileId, { horoscopeSvg: det.svg });
         setLoadNotice("ホロスコープ図を読み込みました。出生図タブに表示されます。");
         setTab("natal");
       }
+      setProfilesVersion((v) => v + 1);
+      return active;
     } catch (e) {
       setLoadError(
         e instanceof YamlParseError ? e.message : `読み込みに失敗しました: ${e instanceof Error ? e.message : String(e)}`,
       );
+      return null;
     }
+  };
+
+  // 起動時: ?load=<URL>（複数可・記載順）があれば取得して自動読み込み。
+  // 無ければ前回のプロファイルを復元。
+  useEffect(() => {
+    const loads = new URLSearchParams(window.location.search).getAll("load");
+    if (loads.length > 0) {
+      setTab("load");
+      setLoadNotice("鑑定データを読み込んでいます…");
+      (async () => {
+        let current: ChartData | null = null;
+        for (const url of loads) {
+          let text: string;
+          try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            text = await res.text();
+          } catch (e) {
+            setLoadNotice(null);
+            setLoadError(
+              `URLから読み込めませんでした（${url}）: ${e instanceof Error ? e.message : String(e)}`,
+            );
+            setTab("load");
+            return;
+          }
+          const next = loadPayloadText(text, current);
+          if (!next) {
+            setTab("load");
+            return;
+          }
+          current = next;
+        }
+        // 共有URLを残さない（tokenの入ったURLを履歴から消す）
+        window.history.replaceState(null, "", window.location.pathname);
+        if (current) setTab("timeline");
+      })();
+      return;
+    }
+    const last = getLastProfileId();
+    const stored = last ? getProfile(last) : listProfiles()[0];
+    if (stored) {
+      try {
+        applyStored(stored);
+        return;
+      } catch {
+        /* 保存データが壊れていたら読み込み画面へ */
+      }
+    }
+    setTab("load");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const profiles = useMemo(() => listProfiles(), [data, profilesVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 読み込みUI（手動）からの入口
+  const loadYaml = (text: string) => {
+    loadPayloadText(text, data);
   };
 
   const switchProfile = (profileId: string) => {

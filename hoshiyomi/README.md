@@ -37,6 +37,17 @@ npm run dev        # http://localhost:5180
 | `horoscope.svg` | svg | 出生図タブに表示（§11.2） |
 
 日別詳細の下に「日記」欄があり、一言メモが `source:"diary"` として userEvents と同じキーに保存され、年・人生ビューにも載る。
+**日記・ユーザーイベント・鑑定結果はすべてブラウザの localStorage 保存**（その端末・そのブラウザ内のみ。サーバ送信なし）。
+
+## 鑑定URLからの自動読み込み（`?load=`）
+
+`{アプリURL}/?load=<YAMLのURL>&load=<SVGのURL>` の形で開くと、記載順に fetch して自動で読み込む
+（1つ目はチャートYAML、以降は同梱物）。読み込み後はアドレスバーから token 入りURLを消す。
+
+nanami-products サーバ側は環境変数 `HOSHIYOMI_APP_URL` を設定すると、購入者の
+`/chart/{token}` ページに「星読みの暦アプリで開く（自動読み込み）」ボタンが出る
+（チャートYAML＋horoscope.svg を `?load=` で渡す。YAML/SVG エンドポイントは CORS 許可済み）。
+アプリを別オリジンにホスティングする場合もこの仕組みだけで動く。
 
 生成側（nanami-astro）が出力すべき `readings.yaml` / `life_events.yaml` の契約は
 [docs/receiver_scaffold/README_受け皿.md](docs/receiver_scaffold/README_受け皿.md) を参照
