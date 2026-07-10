@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>怪異スポット相性盤 | 場所・怪異スポット相性</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10131a;
+      --panel: #191d27;
+      --panel-2: #202638;
+      --ink: #f4efe5;
+      --muted: #b6ad9d;
+      --line: rgba(244, 239, 229, .14);
+      --accent: #d9b25f;
+      --accent-2: #7fc7b0;
+      --warn: #dc776e;
+      --shadow: 0 24px 60px rgba(0, 0, 0, .28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(127, 199, 176, .18), transparent 34rem),
+        radial-gradient(circle at 86% 18%, rgba(217, 178, 95, .14), transparent 30rem),
+        linear-gradient(180deg, #10131a 0%, #161926 54%, #0d1016 100%);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .app {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    header {
+      display: grid;
+      gap: 12px;
+      padding: 18px 0 24px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 4.4rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(.98rem, 2.4vw, 1.12rem);
+    }
+
+    .notice {
+      border: 1px solid rgba(217, 178, 95, .26);
+      background: rgba(217, 178, 95, .08);
+      color: #ead7aa;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: .92rem;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 410px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(32, 38, 56, .96), rgba(25, 29, 39, .96));
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    label {
+      color: #e7ddca;
+      font-weight: 650;
+      font-size: .92rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(244, 239, 229, .18);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(12, 15, 21, .76);
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    textarea { min-height: 88px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(127, 199, 176, .8);
+      box-shadow: 0 0 0 3px rgba(127, 199, 176, .14);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .button {
+      border: 1px solid rgba(244, 239, 229, .16);
+      background: rgba(244, 239, 229, .08);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, #d9b25f, #c9845e);
+      color: #17120a;
+      border-color: transparent;
+      font-weight: 750;
+    }
+
+    .button:disabled {
+      opacity: .58;
+      cursor: wait;
+    }
+
+    .status {
+      min-height: 1.5em;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-top: 10px;
+    }
+
+    .reading {
+      display: grid;
+      gap: 14px;
+    }
+
+    .meter {
+      display: grid;
+      gap: 8px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .score {
+      font-size: clamp(2.5rem, 8vw, 4.8rem);
+      line-height: 1;
+      font-weight: 850;
+      color: var(--accent);
+    }
+
+    .score-label {
+      color: var(--accent-2);
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .bar {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(244, 239, 229, .12);
+    }
+
+    .bar span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #7fc7b0, #d9b25f, #dc776e);
+      transition: width .5s ease;
+    }
+
+    .spot {
+      border: 1px solid rgba(244, 239, 229, .12);
+      background: rgba(12, 15, 21, .42);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .spot h3 { margin: 0 0 5px; font-size: 1.25rem; }
+    .spot p { margin: 0; color: var(--muted); }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      border: 1px solid rgba(217, 178, 95, .28);
+      color: #ead7aa;
+      background: rgba(217, 178, 95, .08);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .8rem;
+    }
+
+    .factors {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .factor {
+      border: 1px solid rgba(244, 239, 229, .1);
+      border-radius: 8px;
+      background: rgba(244, 239, 229, .045);
+      padding: 11px;
+      min-height: 90px;
+    }
+
+    .factor b { display: block; color: #efe3c8; margin-bottom: 4px; }
+    .factor span { color: var(--muted); font-size: .9rem; }
+
+    .lineup {
+      display: grid;
+      gap: 10px;
+    }
+
+    .line-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid rgba(244, 239, 229, .09);
+      padding-bottom: 10px;
+    }
+
+    .line-item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .line-item small { color: var(--muted); }
+    .line-score { color: var(--accent); font-weight: 800; }
+
+    .empty {
+      color: var(--muted);
+      padding: 20px 0;
+    }
+
+    @media (max-width: 860px) {
+      main { grid-template-columns: 1fr; }
+      .factors { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .app { padding-inline: 14px; }
+      .panel { padding: 15px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .score-row { align-items: start; flex-direction: column; }
+      .score-label { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="eyebrow">Kaii Spot Affinity</div>
+      <h1>怪異スポット相性盤</h1>
+      <p class="lead">現在地周辺の公園・橋・トンネル・観光地など、公開データ上の場所タイプと、空・月・時間・入力語の「怪異ムード相性」を読む遊びアプリです。</p>
+      <div class="notice">これは霊の存在判定・危険判定ではありません。候補は公開空間や観光・史跡系の場所タイプを対象にし、個人宅、私有地、学校、病院、立入禁止区域は表示対象にしません。</div>
+    </header>
+
+    <main>
+      <section class="panel" aria-labelledby="input-title">
+        <h2 id="input-title">場所と今の空</h2>
+        <div class="actions">
+          <button class="button primary" id="geoButton" type="button">現在地を取得</button>
+          <button class="button" id="sampleButton" type="button">サンプル地点</button>
+        </div>
+        <div class="status" id="geoStatus">現在地が使えない場合は、緯度・経度を手入力してください。</div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="latInput">緯度</label>
+            <input id="latInput" inputmode="decimal" autocomplete="off" placeholder="35.681236">
+          </div>
+          <div class="field">
+            <label for="lngInput">経度</label>
+            <input id="lngInput" inputmode="decimal" autocomplete="off" placeholder="139.767125">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="skyInput">現在の空</label>
+          <select id="skyInput">
+            <option value="clear">晴れ / 星が見える</option>
+            <option value="cloudy">曇り / 月が隠れる</option>
+            <option value="rain">雨 / 水音が強い</option>
+            <option value="wind">風が強い</option>
+            <option value="fog">霧・靄っぽい</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="moodInput">気になる言葉・今の気分</label>
+          <textarea id="moodInput" placeholder="例: トンネル、海、古い道、少し怖いけど見てみたい"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="button primary" id="readButton" type="button">相性を読む</button>
+        </div>
+        <div class="status" id="dataStatus">現在地を入れると、周辺の公開データから候補を探します。</div>
+      </section>
+
+      <section class="panel reading" aria-live="polite">
+        <div class="meter">
+          <div class="score-row">
+            <div>
+              <div class="score" id="scoreText">--</div>
+              <div id="distanceText" class="status">場所を入力すると読みが出ます。</div>
+            </div>
+            <div class="score-label" id="scoreLabel">待機中</div>
+          </div>
+          <div class="bar"><span id="scoreBar"></span></div>
+        </div>
+
+        <article class="spot" id="bestSpot">
+          <h3>まだ候補は選ばれていません</h3>
+          <p>現在地または緯度・経度を入力して、周辺の場所タイプとの相性を読んでください。</p>
+          <div class="chips"></div>
+        </article>
+
+        <div class="factors" id="factors"></div>
+
+        <div>
+          <h2>近い候補</h2>
+          <div class="lineup" id="lineup">
+            <div class="empty">現在地を入れると、周辺候補を表示します。</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const fallbackPlaceTypes = [
+      { category: "park", name: "近くの公園タイプ", meters: 650, bearing: 40, tags: ["公園", "木陰", "夕暮れ"] },
+      { category: "bridge", name: "近くの橋・水辺タイプ", meters: 900, bearing: 115, tags: ["橋", "水辺", "境界"] },
+      { category: "tunnel", name: "近くのトンネル・地下道タイプ", meters: 1300, bearing: 205, tags: ["トンネル", "反響", "夜"] },
+      { category: "viewpoint", name: "近くの展望地タイプ", meters: 1800, bearing: 285, tags: ["高台", "見晴らし", "月"] },
+      { category: "historic", name: "近くの史跡・碑タイプ", meters: 2200, bearing: 330, tags: ["史跡", "碑", "記憶"] }
+    ];
+
+    const categoryText = {
+      tunnel: "音の反響と暗がりで、都市伝説めいた想像が広がります。",
+      bridge: "境界を渡る場所なので、怪談の導入として雰囲気を作りやすいです。",
+      park: "開けた空と暗がりの境目があり、伝承遊びと相性がよい場所です。",
+      plaza: "人の流れや記憶を想像しやすく、街の怪異譚に寄ります。",
+      forest: "風や足音が演出になり、静かな怖さを楽しみやすいです。",
+      garden: "整えられた静けさと木陰があり、ひそやかな怪異譚に寄ります。",
+      historic: "古い記憶を想像しやすく、伝承や土地の話と相性がよい場所です。",
+      monument: "碑文や追憶のイメージが、しっとりした怪談に寄ります。",
+      shrine: "境内や参道の静けさが、土地の言い伝えを読む遊びに向いています。",
+      viewpoint: "視界が開けるぶん、方角や月の印象を読みやすい場所です。",
+      station: "人の流れが残る場所なので、街の記憶を読む怪異譚に寄ります。",
+      attraction: "観光地として開かれた場所の印象を、物語の舞台として読みます。"
+    };
+
+    const skyBonus = {
+      clear: { score: 5, text: "星や月を見上げやすく、観察の雰囲気が出ます。" },
+      cloudy: { score: 12, text: "月が隠れる曇り空は、余白のある怪談ムードを作ります。" },
+      rain: { score: 14, text: "雨音がノイズになり、物語への没入感が上がります。" },
+      wind: { score: 10, text: "風の音が足音や囁きのように聞こえる瞬間があります。" },
+      fog: { score: 16, text: "霧や靄は輪郭をぼかし、怪談的な相性がかなり高めです。" }
+    };
+
+    const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+    const NEARBY_RADIUS_M = 3000;
+    const state = { spots: [], source: "waiting" };
+    const $ = (id) => document.getElementById(id);
+
+    async function loadSpots() {
+      state.spots = [];
+      $("dataStatus").textContent = "現在地を入れると、半径3km前後の公開データから候補を探します。";
+      renderLineup();
+    }
+
+    function buildOverpassQuery(lat, lng) {
+      const around = `(around:${NEARBY_RADIUS_M},${lat},${lng})`;
+      const selectors = [
+        `node${around}["leisure"~"^(park|garden|nature_reserve)$"]`,
+        `way${around}["leisure"~"^(park|garden|nature_reserve)$"]`,
+        `relation${around}["leisure"~"^(park|garden|nature_reserve)$"]`,
+        `node${around}["tourism"~"^(attraction|viewpoint|museum|picnic_site|information)$"]`,
+        `way${around}["tourism"~"^(attraction|viewpoint|museum|picnic_site|information)$"]`,
+        `relation${around}["tourism"~"^(attraction|viewpoint|museum|picnic_site|information)$"]`,
+        `node${around}["historic"~"^(monument|memorial|castle|archaeological_site|wayside_shrine)$"]`,
+        `way${around}["historic"~"^(monument|memorial|castle|archaeological_site|wayside_shrine)$"]`,
+        `relation${around}["historic"~"^(monument|memorial|castle|archaeological_site|wayside_shrine)$"]`,
+        `node${around}["amenity"~"^(place_of_worship|fountain)$"]`,
+        `way${around}["amenity"~"^(place_of_worship|fountain)$"]`,
+        `relation${around}["amenity"~"^(place_of_worship|fountain)$"]`,
+        `node${around}["place"="square"]`,
+        `way${around}["place"="square"]`,
+        `node${around}["railway"="station"]`,
+        `way${around}["railway"="station"]`,
+        `node${around}["highway"]["bridge"="yes"]`,
+        `way${around}["highway"]["bridge"="yes"]`,
+        `node${around}["highway"]["tunnel"="yes"]`,
+        `way${around}["highway"]["tunnel"="yes"]`
+      ];
+      return `[out:json][timeout:12];(${selectors.join(";")};);out center tags 60;`;
+    }
+
+    async function fetchNearbyPlaces(lat, lng) {
+      const query = buildOverpassQuery(lat, lng);
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 14000);
+      try {
+        const response = await fetch(`${OVERPASS_URL}?data=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+          cache: "no-store"
+        });
+        if (!response.ok) throw new Error("nearby search failed");
+        const data = await response.json();
+        return normalizeNearbyElements(data.elements || [], lat, lng);
+      } finally {
+        window.clearTimeout(timer);
+      }
+    }
+
+    function normalizeNearbyElements(elements, originLat, originLng) {
+      const seen = new Set();
+      return elements
+        .map((element) => placeFromElement(element, originLat, originLng))
+        .filter(Boolean)
+        .filter((spot) => {
+          const key = `${spot.name}|${spot.category}|${spot.lat.toFixed(4)}|${spot.lng.toFixed(4)}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort((a, b) => haversineKm(originLat, originLng, a.lat, a.lng) - haversineKm(originLat, originLng, b.lat, b.lng))
+        .slice(0, 18);
+    }
+
+    function placeFromElement(element, originLat, originLng) {
+      const tags = element.tags || {};
+      if (!isSafeCandidate(tags)) return null;
+      const lat = element.lat ?? element.center?.lat;
+      const lng = element.lon ?? element.center?.lon;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      const category = categoryFromTags(tags);
+      if (!category) return null;
+      const typeName = typeLabel(category);
+      const name = tags.name || `${bearingLabel(originLat, originLng, lat, lng)}の${typeName}`;
+      return {
+        id: `${element.type}_${element.id}`,
+        name,
+        lat,
+        lng,
+        category,
+        description: descriptionForCategory(category, tags),
+        scope: "public_osm",
+        safety: "公開データ上の候補です。現地の掲示、開放時間、立入可否を必ず優先してください。",
+        tags: tagsForCategory(category, tags)
+      };
+    }
+
+    function isSafeCandidate(tags) {
+      const deniedAccess = new Set(["private", "no", "customers", "permit"]);
+      const deniedAmenities = new Set(["school", "kindergarten", "hospital", "clinic", "doctors", "dentist", "nursing_home", "social_facility", "prison", "police", "fire_station"]);
+      const deniedTourism = new Set(["hotel", "guest_house", "hostel", "apartment", "chalet", "camp_site", "caravan_site"]);
+      const deniedBuildings = new Set(["house", "detached", "residential", "apartments", "dormitory", "hotel", "hospital", "school"]);
+      if (deniedAccess.has(tags.access)) return false;
+      if (deniedAmenities.has(tags.amenity)) return false;
+      if (deniedTourism.has(tags.tourism)) return false;
+      if (deniedBuildings.has(tags.building)) return false;
+      if (tags.landuse === "residential") return false;
+      if (tags.boundary === "administrative") return false;
+      return true;
+    }
+
+    function categoryFromTags(tags) {
+      if (tags.highway && tags.tunnel === "yes") return "tunnel";
+      if (tags.highway && tags.bridge === "yes") return "bridge";
+      if (tags.leisure === "park") return "park";
+      if (tags.leisure === "garden") return "garden";
+      if (tags.leisure === "nature_reserve") return "forest";
+      if (tags.tourism === "viewpoint") return "viewpoint";
+      if (tags.tourism) return "attraction";
+      if (tags.historic === "monument" || tags.historic === "memorial") return "monument";
+      if (tags.historic) return "historic";
+      if (tags.amenity === "place_of_worship") return "shrine";
+      if (tags.place === "square") return "plaza";
+      if (tags.railway === "station") return "station";
+      return null;
+    }
+
+    function typeLabel(category) {
+      return {
+        tunnel: "トンネル・地下道",
+        bridge: "橋",
+        park: "公園",
+        garden: "庭園",
+        forest: "緑地",
+        viewpoint: "展望地",
+        attraction: "観光スポット",
+        historic: "史跡",
+        monument: "碑・記念物",
+        shrine: "寺社・祈りの場",
+        plaza: "広場",
+        station: "駅前エリア"
+      }[category] || "公開スポット";
+    }
+
+    function descriptionForCategory(category, tags) {
+      const label = typeLabel(category);
+      const named = tags.name ? `${tags.name}は` : `${label}は`;
+      return `${named}公開データから見つかった${label}です。怪異の実在ではなく、場所の形や時間帯から物語の雰囲気を読んでいます。`;
+    }
+
+    function tagsForCategory(category, tags) {
+      const base = {
+        tunnel: ["トンネル", "反響", "暗がり"],
+        bridge: ["橋", "境界", "水辺"],
+        park: ["公園", "木陰", "夕暮れ"],
+        garden: ["庭園", "静けさ", "月"],
+        forest: ["緑地", "風", "散策路"],
+        viewpoint: ["展望地", "方角", "月"],
+        attraction: ["観光", "人の記憶", "物語"],
+        historic: ["史跡", "伝承", "記憶"],
+        monument: ["碑", "追憶", "静けさ"],
+        shrine: ["寺社", "参道", "伝承"],
+        plaza: ["広場", "街", "足音"],
+        station: ["駅前", "人の流れ", "記憶"]
+      }[category] || ["公開空間", "雰囲気"];
+      return tags.name ? [tags.name, ...base].slice(0, 4) : base;
+    }
+
+    function bearingLabel(fromLat, fromLng, toLat, toLng) {
+      const rad = Math.PI / 180;
+      const y = Math.sin((toLng - fromLng) * rad) * Math.cos(toLat * rad);
+      const x = Math.cos(fromLat * rad) * Math.sin(toLat * rad) -
+        Math.sin(fromLat * rad) * Math.cos(toLat * rad) * Math.cos((toLng - fromLng) * rad);
+      const degrees = (Math.atan2(y, x) / rad + 360) % 360;
+      return ["北", "北東", "東", "南東", "南", "南西", "西", "北西"][Math.round(degrees / 45) % 8];
+    }
+
+    function destinationPoint(lat, lng, meters, bearing) {
+      const radius = 6371000;
+      const angular = meters / radius;
+      const brng = bearing * Math.PI / 180;
+      const lat1 = lat * Math.PI / 180;
+      const lng1 = lng * Math.PI / 180;
+      const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angular) + Math.cos(lat1) * Math.sin(angular) * Math.cos(brng));
+      const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(angular) * Math.cos(lat1), Math.cos(angular) - Math.sin(lat1) * Math.sin(lat2));
+      return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
+    }
+
+    function buildFallbackSpots(lat, lng) {
+      return fallbackPlaceTypes.map((item, index) => {
+        const point = destinationPoint(lat, lng, item.meters, item.bearing);
+        return {
+          id: `fallback_${item.category}_${index}`,
+          name: item.name,
+          lat: point.lat,
+          lng: point.lng,
+          category: item.category,
+          description: "周辺データを取得できない時の場所タイプ診断です。実在の地点名ではなく、現在地から見た雰囲気の方向性として読んでください。",
+          scope: "fallback_type",
+          safety: "実在地点ではありません。実際に移動する場合は公開された安全な場所だけを選んでください。",
+          tags: item.tags
+        };
+      });
+    }
+
+    function toNumber(value) {
+      if (typeof value !== "string") return NaN;
+      return Number(value.trim());
+    }
+
+    function haversineKm(aLat, aLng, bLat, bLng) {
+      const rad = Math.PI / 180;
+      const earth = 6371;
+      const dLat = (bLat - aLat) * rad;
+      const dLng = (bLng - aLng) * rad;
+      const s1 = Math.sin(dLat / 2) ** 2;
+      const s2 = Math.cos(aLat * rad) * Math.cos(bLat * rad) * Math.sin(dLng / 2) ** 2;
+      return 2 * earth * Math.asin(Math.sqrt(s1 + s2));
+    }
+
+    function moonPhase(date) {
+      const synodic = 29.53058867;
+      const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+      const days = (date.getTime() - knownNewMoon) / 86400000;
+      const age = ((days % synodic) + synodic) % synodic;
+      const fullness = 1 - Math.abs(age - synodic / 2) / (synodic / 2);
+      const names = [
+        [1.8, "新月"],
+        [6.5, "三日月"],
+        [9.8, "上弦前後"],
+        [13.8, "十三夜"],
+        [16.8, "満月前後"],
+        [21.2, "欠けゆく月"],
+        [24.8, "下弦前後"],
+        [30, "暁の細い月"]
+      ];
+      const name = names.find(([limit]) => age < limit)?.[1] || "月";
+      return { age, fullness, name };
+    }
+
+    function nightScore(hour) {
+      if (hour >= 22 || hour < 4) return 18;
+      if (hour >= 18 || hour < 6) return 13;
+      if (hour >= 16 || hour < 8) return 8;
+      return 2;
+    }
+
+    function distanceScore(km) {
+      if (km < 1) return 22;
+      if (km < 5) return 18;
+      if (km < 20) return 12;
+      if (km < 60) return 7;
+      return 3;
+    }
+
+    function textMatchScore(spot, mood) {
+      const normalized = mood.trim().toLowerCase();
+      if (!normalized) return { score: 4, matches: [] };
+      const words = [spot.name, spot.category, ...spot.tags].map((item) => String(item).toLowerCase());
+      const matches = words.filter((word) => normalized.includes(word) || spot.tags.some((tag) => normalized.includes(String(tag).toLowerCase())));
+      return { score: Math.min(14, 5 + matches.length * 5), matches: [...new Set(matches)] };
+    }
+
+    function readAffinity(lat, lng) {
+      const now = new Date();
+      const moon = moonPhase(now);
+      const sky = skyBonus[$("skyInput").value] || skyBonus.clear;
+      const mood = $("moodInput").value || "";
+
+      return state.spots.map((spot) => {
+        const km = haversineKm(lat, lng, spot.lat, spot.lng);
+        const textMatch = textMatchScore(spot, mood);
+        const time = nightScore(now.getHours());
+        const moonPoints = Math.round(4 + moon.fullness * 13);
+        const base = 18;
+        const score = Math.max(1, Math.min(99, Math.round(base + distanceScore(km) + sky.score + time + moonPoints + textMatch.score)));
+        return { spot, km, score, sky, moon, time, textMatch };
+      }).sort((a, b) => b.score - a.score || a.km - b.km);
+    }
+
+    function scoreLabel(score) {
+      if (score >= 86) return "かなり語りやすい夜";
+      if (score >= 72) return "雰囲気は濃いめ";
+      if (score >= 55) return "ほどよく怪談日和";
+      if (score >= 38) return "軽い散策向き";
+      return "今日は日常寄り";
+    }
+
+    function renderReading(results) {
+      const top = results[0];
+      $("scoreText").textContent = top.score;
+      $("scoreLabel").textContent = scoreLabel(top.score);
+      $("scoreBar").style.width = `${top.score}%`;
+      $("distanceText").textContent = `${top.spot.name} まで約 ${top.km.toFixed(top.km < 10 ? 1 : 0)} km`;
+
+      $("bestSpot").innerHTML = `
+        <h3>${escapeHtml(top.spot.name)}</h3>
+        <p>${escapeHtml(top.spot.description)}</p>
+        ${top.spot.safety ? `<p class="status">${escapeHtml(top.spot.safety)}</p>` : ""}
+        <div class="chips">${top.spot.tags.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}</div>
+      `;
+
+      const moonText = `${top.moon.name}、月齢 ${top.moon.age.toFixed(1)}。満ち欠けが読みの陰影になります。`;
+      const textMatch = top.textMatch.matches.length
+        ? `入力語と ${top.textMatch.matches.join(" / ")} が響きました。`
+        : "入力語はゆるく反映しました。気になる地名や要素を入れると読みが変わります。";
+
+      $("factors").innerHTML = [
+        ["場所", categoryText[top.spot.category] || "その場所のタグから雰囲気を読みました。"],
+        ["空", top.sky.text],
+        ["時間", top.time >= 13 ? "夜の時間帯なので、光と音の少なさが雰囲気を強めています。" : "明るい時間帯なので、怖さより観察遊びに寄っています。"],
+        ["月・入力", `${moonText} ${textMatch}`]
+      ].map(([title, body]) => `<div class="factor"><b>${escapeHtml(title)}</b><span>${escapeHtml(body)}</span></div>`).join("");
+
+      renderLineup(results);
+    }
+
+    function renderLineup(results = []) {
+      if (!results.length && !state.spots.length) {
+        $("lineup").innerHTML = `<div class="empty">現在地を入れると、周辺候補を表示します。</div>`;
+        return;
+      }
+      const items = results.length ? results.slice(0, 5) : state.spots.slice(0, 5).map((spot) => ({ spot, km: null, score: null }));
+      $("lineup").innerHTML = items.map((item) => {
+        const detail = item.km == null ? item.spot.tags.join(" / ") : `約 ${item.km.toFixed(item.km < 10 ? 1 : 0)} km / ${item.spot.tags.join(" / ")}`;
+        const score = item.score == null ? "" : `<div class="line-score">${item.score}</div>`;
+        return `<div class="line-item"><div><b>${escapeHtml(item.spot.name)}</b><br><small>${escapeHtml(detail)}</small></div>${score}</div>`;
+      }).join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    async function runReading() {
+      const lat = toNumber($("latInput").value);
+      const lng = toNumber($("lngInput").value);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+        $("geoStatus").textContent = "緯度は -90〜90、経度は -180〜180 の数値で入力してください。";
+        return;
+      }
+      $("readButton").disabled = true;
+      $("dataStatus").textContent = "周辺の公開データから、公園・橋・観光地などの候補を探しています。";
+      try {
+        const nearby = await fetchNearbyPlaces(lat, lng);
+        if (nearby.length) {
+          state.spots = nearby;
+          state.source = "osm";
+          $("dataStatus").textContent = `${nearby.length}件の公開データ候補を見つけました。`;
+        } else {
+          state.spots = buildFallbackSpots(lat, lng);
+          state.source = "fallback";
+          $("dataStatus").textContent = "近くの公開データ候補が少ないため、場所タイプ診断で読みます。";
+        }
+      } catch (error) {
+        state.spots = buildFallbackSpots(lat, lng);
+        state.source = "fallback";
+        $("dataStatus").textContent = "周辺データを取得できなかったため、場所タイプ診断で読みます。";
+      } finally {
+        $("readButton").disabled = false;
+      }
+      $("geoStatus").textContent = "場所を読み込みました。これは雰囲気相性のエンタメ判定です。";
+      renderReading(readAffinity(lat, lng));
+    }
+
+    $("geoButton").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        $("geoStatus").textContent = "このブラウザでは現在地取得が使えません。手入力で試してください。";
+        return;
+      }
+      $("geoButton").disabled = true;
+      $("geoStatus").textContent = "現在地を取得しています。";
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          $("latInput").value = latitude.toFixed(6);
+          $("lngInput").value = longitude.toFixed(6);
+          $("geoStatus").textContent = "現在地を取得しました。";
+          $("geoButton").disabled = false;
+          runReading();
+        },
+        () => {
+          $("geoStatus").textContent = "現在地を取得できませんでした。ブラウザ許可を確認するか、緯度・経度を手入力してください。";
+          $("geoButton").disabled = false;
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    });
+
+    $("sampleButton").addEventListener("click", () => {
+      $("latInput").value = "35.681236";
+      $("lngInput").value = "139.767125";
+      $("geoStatus").textContent = "東京駅付近のサンプル地点を入れました。";
+      runReading();
+    });
+
+    $("readButton").addEventListener("click", runReading);
+
+    loadSpots();
+  </script>
+</body>
+</html>
