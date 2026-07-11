@@ -19,6 +19,13 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY routes.py config.py acg.py ./
+COPY services/ ./services/
+COPY templates/ ./templates/
+COPY static/ ./static/
+COPY data/ ./data/
+COPY ephe/ ./ephe/
+COPY cards/ ./cards/
+COPY kaii/ ./kaii/
 
 CMD ["sh", "-c", "python -m uvicorn routes:app --host 0.0.0.0 --port ${PORT:-8080}"]
