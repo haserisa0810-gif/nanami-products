@@ -2439,6 +2439,130 @@ def astro_earth_page(request: Request):
     return templates.TemplateResponse("astro_earth.html", {"request": request})
 
 
+# ─── Transit Flight（トランジットを3D飛行で体験するプロトタイプ） ─────────
+# Three.js は transit_flight.html にだけ CDN 読み込み。固定サンプルJSONを
+# /static/transit-flight/sample-data.json から取得。YAML は下記 API で変換。
+
+@app.get("/transit-flight", response_class=HTMLResponse)
+def transit_flight_page(request: Request):
+    return templates.TemplateResponse("transit_flight.html", {"request": request})
+
+
+# ─── House Tour（出生図12ハウスを3D空間で歩くデモ） ─────────────────
+# 固定サンプルJSONのみ。鑑定・注文・YAML生成とは独立。Three.js はこのページだけ。
+
+@app.get("/house-tour", response_class=HTMLResponse)
+def house_tour_page(request: Request):
+    """ホロスコープ・ハウスツアー 3D デモ（固定サンプル）。"""
+    return templates.TemplateResponse("house_tour.html", {"request": request})
+
+
+def _transit_flight_max_events(payload: dict) -> int:
+    max_events = payload.get("max_events", 10)
+    try:
+        max_events_i = int(max_events)
+    except (TypeError, ValueError):
+        max_events_i = 10
+    return max(3, min(max_events_i, 16))
+
+
+@app.post("/api/transit-flight/from-yaml")
+async def transit_flight_from_yaml(request: Request):
+    """western 31日トランジット YAML → Transit Flight 用 JSON。
+
+    ステートレス（保存しない）。本文はログに出さない。
+    yaml_text または chart_url / url / chart_id のいずれかを受け付ける。
+    """
+    from services.transit_flight_data import (
+        TransitFlightDataError,
+        build_flight_data_from_chart_ref,
+        build_flight_data_from_yaml,
+    )
+
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    max_events_i = _transit_flight_max_events(payload)
+    yaml_text = payload.get("yaml_text")
+    chart_ref = (
+        payload.get("chart_url")
+        or payload.get("url")
+        or payload.get("yaml_url")
+        or payload.get("chart_id")
+        or payload.get("load")
+    )
+
+    try:
+        if isinstance(yaml_text, str) and yaml_text.strip():
+            data = build_flight_data_from_yaml(yaml_text, max_events=max_events_i)
+        elif isinstance(chart_ref, str) and chart_ref.strip():
+            data = build_flight_data_from_chart_ref(chart_ref.strip(), max_events=max_events_i)
+        else:
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "error": "YAMLテキスト、または Chart URL / chart_id を指定してください。",
+                },
+                status_code=400,
+            )
+    except TransitFlightDataError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=422)
+    except Exception:
+        logging.getLogger("nanami.chart").exception("transit_flight_from_yaml_failed")
+        return JSONResponse(
+            {"ok": False, "error": "YAMLの変換中にエラーが発生しました。"},
+            status_code=500,
+        )
+
+    return _mark_no_store(JSONResponse({"ok": True, "data": data}))
+
+
+@app.get("/api/transit-flight/from-url")
+def transit_flight_from_url(
+    url: str = "",
+    chart_url: str = "",
+    chart_id: str = "",
+    load: str = "",
+    max_events: int = 10,
+):
+    """Chart URL / token から飛行用 JSON を返す（GET・ディープリンク用）。
+
+    例:
+      /api/transit-flight/from-url?chart_url=https://chart.nanami-astro.com/chart/{id}
+      /api/transit-flight/from-url?load=/chart/{id}.yaml
+      /api/transit-flight/from-url?chart_id={id}
+    """
+    from services.transit_flight_data import TransitFlightDataError, build_flight_data_from_chart_ref
+
+    ref = (chart_url or url or load or chart_id or "").strip()
+    if not ref:
+        return JSONResponse(
+            {"ok": False, "error": "chart_url / url / load / chart_id のいずれかを指定してください。"},
+            status_code=400,
+        )
+    try:
+        max_events_i = int(max_events)
+    except (TypeError, ValueError):
+        max_events_i = 10
+    max_events_i = max(3, min(max_events_i, 16))
+
+    try:
+        data = build_flight_data_from_chart_ref(ref, max_events=max_events_i)
+    except TransitFlightDataError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=422)
+    except Exception:
+        logging.getLogger("nanami.chart").exception("transit_flight_from_url_failed")
+        return JSONResponse(
+            {"ok": False, "error": "Chart URL の読み込みに失敗しました。"},
+            status_code=500,
+        )
+    return _mark_no_store(JSONResponse({"ok": True, "data": data}))
+
+
 @app.get("/api/geocode")
 def api_geocode(q: str = ""):
     """地名検索（source=manual_search）。結果は内部共通形式の配列で返す。
@@ -4025,6 +4149,12 @@ def chart_page(request: Request, token: str):
             hoshiyomi_app_url = f"{app_base}/?load={quote(f'{base_url}/chart/{token}.yaml', safe='')}"
             if has_horoscope_svg:
                 hoshiyomi_app_url += f"&load={quote(f'{base_url}/chart/{token}/horoscope.svg', safe='')}"
+        # Transit Flight: 31日トランジット付きチャートを ?load=ChartURL で自動読み込み
+        transit_flight_url = None
+        if has_31day_transit and not is_transit_yaml:
+            transit_flight_url = (
+                f"/transit-flight?load={quote(canonical_chart_url, safe='')}"
+            )
         timings["zip個別ファイル準備_ms"] = _elapsed_ms(step_start)
 
         step_start = time.perf_counter()
@@ -4061,6 +4191,7 @@ def chart_page(request: Request, token: str):
                 "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
                 "usage_guide_url": "https://guide.nanami-astro.com/",
                 "hoshiyomi_app_url": hoshiyomi_app_url,
+                "transit_flight_url": transit_flight_url,
                 "next_transit_url": next_transit_url,
                 "expires_at": expires_at,
                 "expires_label": expires_label,

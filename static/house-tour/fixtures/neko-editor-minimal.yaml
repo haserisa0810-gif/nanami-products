@@ -1,0 +1,92 @@
+# House Tour 読込テスト用（ねこ編集長サンプルの natal 部分のみ）
+version: nanami-products-yaml-detail-v1
+input:
+  title: ねこ編集長
+  birth_date: '2022-02-22'
+  birth_time: '12:00'
+  birth_place: 神奈川県 横浜市
+  prefecture: 神奈川県
+calculation:
+  house_system: P
+systems:
+  western:
+    natal:
+      bodies:
+        Sun:
+          sign_ja: 魚座
+          degree: 3.4552
+          house: 9
+          retrograde: false
+        Moon:
+          sign_ja: 蠍座
+          degree: 10.0888
+          house: 5
+          retrograde: false
+        Mercury:
+          sign_ja: 水瓶座
+          degree: 7.7166
+          house: 8
+          retrograde: false
+        Venus:
+          sign_ja: 山羊座
+          degree: 20.4168
+          house: 8
+          retrograde: false
+        Mars:
+          sign_ja: 山羊座
+          degree: 20.9675
+          house: 8
+          retrograde: false
+        Jupiter:
+          sign_ja: 魚座
+          degree: 12.2049
+          house: 10
+          retrograde: false
+        Saturn:
+          sign_ja: 水瓶座
+          degree: 18.002
+          house: 9
+          retrograde: false
+        Uranus:
+          sign_ja: 牡牛座
+          degree: 11.3297
+          house: 11
+          retrograde: false
+        Neptune:
+          sign_ja: 魚座
+          degree: 22.1483
+          house: 10
+          retrograde: false
+        Pluto:
+          sign_ja: 山羊座
+          degree: 27.5891
+          house: 8
+          retrograde: false
+        North Node:
+          sign_ja: 牡牛座
+          degree: 26.187
+          house: 12
+          retrograde: true
+        South Node:
+          sign_ja: 蠍座
+          degree: 26.187
+          house: 6
+          retrograde: true
+        ASC:
+          sign_ja: 双子座
+          degree: 24.9868
+          house: 1
+        MC:
+          sign_ja: 魚座
+          degree: 4.7976
+          house: 10
+      houses:
+        '1':
+          sign_ja: 双子座
+          degree: 24.9868
+        '5':
+          sign_ja: 天秤座
+          degree: 8.0636
+        '9':
+          sign_ja: 水瓶座
+          degree: 8.6997

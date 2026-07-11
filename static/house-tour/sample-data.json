@@ -1,0 +1,25 @@
+{
+  "profile": {
+    "name": "サンプル・ナナミ",
+    "name_en": "Sample Natal Chart",
+    "birth_date": "1990-08-15",
+    "birth_time": "14:22",
+    "birth_place": "東京都",
+    "house_system": "Placidus",
+    "note": "固定デモ用。実装は js/data/sample-chart.js が正本。"
+  },
+  "houses": {
+    "1": [],
+    "2": ["Jupiter"],
+    "3": [],
+    "4": [],
+    "5": ["Sun", "Saturn"],
+    "6": ["Mercury", "Venus", "Mars"],
+    "7": ["Uranus", "Pluto"],
+    "8": [],
+    "9": ["Neptune"],
+    "10": [],
+    "11": ["Moon"],
+    "12": []
+  }
+}
