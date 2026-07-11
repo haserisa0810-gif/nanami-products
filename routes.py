@@ -2453,8 +2453,16 @@ def transit_flight_page(request: Request):
 
 @app.get("/house-tour", response_class=HTMLResponse)
 def house_tour_page(request: Request):
-    """ホロスコープ・ハウスツアー 3D デモ（固定サンプル）。"""
+    """ホロスコープ・ハウスツアー 3D デモ（抽象ミュージアム版・本線）。"""
     return templates.TemplateResponse("house_tour.html", {"request": request})
+
+
+@app.get("/house-tour-architecture", response_class=HTMLResponse)
+def house_tour_architecture_page(request: Request):
+    """建築寄りミュージアム試作。抽象版 /house-tour は上書きしない。"""
+    return templates.TemplateResponse(
+        "house_tour_architecture.html", {"request": request}
+    )
 
 
 def _transit_flight_max_events(payload: dict) -> int:

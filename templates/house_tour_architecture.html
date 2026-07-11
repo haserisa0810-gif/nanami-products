@@ -4,42 +4,43 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Birth Chart Museum｜出生図ミュージアム</title>
-  <meta name="description" content="自分の出生図を巡るインタラクティブ展示。ガイドが部屋と展示を案内します。">
+  <title>Birth Chart Museum — Architecture Edition</title>
+  <meta name="description" content="Architectural museum walkthrough of natal chart houses. Experiment edition.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Serif+JP:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ asset_url('house-tour/house-tour.css') }}">
+  <link rel="stylesheet" href="{{ asset_url('house-tour-architecture/arch.css') }}">
   <!-- asset_version: {{ asset_version }} -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 {% include "_head_icons.html" %}
 </head>
-<body>
+<body class="ht-arch">
   <div id="ht-loading" aria-live="polite">
     <div class="ht-spinner" aria-hidden="true"></div>
     <span data-i18n="loading">ENTERING THE CHART</span>
   </div>
 
-  <!-- 言語トグル（常時） -->
   <div class="ht-lang-bar" role="navigation" aria-label="Language">
     <button type="button" class="ht-lang-btn" data-lang-set="ja" id="ht-lang-ja">日本語</button>
     <button type="button" class="ht-lang-btn" data-lang-set="en" id="ht-lang-en">English</button>
   </div>
 
   <div id="ht-root">
-    <canvas id="ht-canvas" aria-label="Birth Chart Museum 3D view"></canvas>
+    <canvas id="ht-canvas" aria-label="Architecture Museum 3D"></canvas>
   </div>
 
-  <div id="ht-title" role="dialog" aria-label="Birth Chart Museum title">
+  <div id="ht-title" role="dialog" aria-label="Architecture edition title">
     <div class="ht-title-card">
-      <p class="ht-eyebrow">NANAMI PRODUCTS · INTERACTIVE MUSEUM</p>
+      <p class="ht-eyebrow">NANAMI PRODUCTS · ARCHITECTURE EDITION</p>
       <h1 class="ht-title-main">BIRTH CHART<br>MUSEUM</h1>
-      <p class="ht-title-sub" data-i18n="title_sub">出生図ミュージアム</p>
+      <p class="ht-title-sub">Architecture Prototype</p>
+      <p class="ht-edition-badge">実験版 · 第4 / 5 / 9 棟を建築寄りに</p>
       <p class="ht-concept">
-        <span data-i18n="concept_1">占いゲームではなく、</span><strong data-i18n="concept_1b">自分の出生図を巡る展示</strong><span data-i18n="concept_1c">です。</span><br>
-        <span data-i18n="concept_2">カメラがゆっくり案内します。見る場所は画面のキャプションに出ます。</span><br>
-        <span class="ht-concept-sub" data-i18n="concept_3">遠景 → 入口 → 展示物。読み物の前に、まず空間を感じる。</span>
+        フォトリアルではなく、<strong>博物館として歩ける建築</strong>を目指した試作です。<br>
+        邸宅・劇場・天文台を中心に、素材とスケールを寄せています。<br>
+        <span class="ht-concept-sub">抽象版のUX（ガイド / YAML / 日英）はそのまま再利用。</span>
       </p>
       <dl class="ht-profile">
         <dt data-i18n="profile_chart">出生図</dt>
@@ -53,35 +54,25 @@
       <div class="ht-yaml-panel">
         <label class="ht-yaml-label" for="ht-yaml-input">
           <span data-i18n="yaml_label">自分の出生図 YAML を貼る</span>
-          <span class="ht-yaml-note" data-i18n="yaml_note">detail / full / base（systems.western.natal 入り）</span>
+          <span class="ht-yaml-note" data-i18n="yaml_note">detail / full / base</span>
         </label>
-        <textarea
-          id="ht-yaml-input"
-          class="ht-yaml-input"
-          rows="5"
-          spellcheck="false"
-          placeholder="version: nanami-products-yaml-detail-v1&#10;systems:&#10;  western:&#10;    natal: …"
-        ></textarea>
+        <textarea id="ht-yaml-input" class="ht-yaml-input" rows="4" spellcheck="false"></textarea>
         <div class="ht-yaml-actions">
           <button type="button" class="ht-btn" id="ht-load-yaml" data-i18n="yaml_load">YAMLで読み込む</button>
           <button type="button" class="ht-btn ht-btn-secondary" id="ht-load-neko" data-i18n="yaml_neko">ねこ編集長</button>
           <button type="button" class="ht-btn ht-btn-secondary" id="ht-use-sample" data-i18n="yaml_sample">デモ用サンプル</button>
         </div>
-        <p id="ht-yaml-status" class="ht-yaml-status" role="status" aria-live="polite"></p>
+        <p id="ht-yaml-status" class="ht-yaml-status" role="status"></p>
       </div>
 
       <div class="ht-title-actions">
         <button type="button" class="ht-btn" id="ht-start-guide" data-i18n="start_guide">ガイドツアーで巡る（おすすめ）</button>
-        <button type="button" class="ht-btn ht-btn-secondary" id="ht-start-free" data-i18n="start_free">自由に歩く（クリックで移動）</button>
+        <button type="button" class="ht-btn ht-btn-secondary" id="ht-start-free" data-i18n="start_free">自由に歩く</button>
         <button type="button" class="ht-btn ht-btn-secondary" id="ht-start-orbit" data-i18n="start_orbit">全体を俯瞰</button>
       </div>
       <p class="ht-hint">
-        <span data-i18n="hint_1">まずはガイドツアー。カメラが「何を見ればいいか」を案内します。</span><br>
-        <span data-i18n="hint_2">案内中は「次へ」でショット送り／次の部屋へ。歩きはゆっくりです。</span><br>
-        <span data-i18n="hint_3">YAMLはブラウザ内のみ（サーバーへ送りません）。</span>
-      </p>
-      <p class="ht-hint">
-        <a class="ht-edition-link" href="/house-tour-architecture">Architecture Edition（建築試作）→</a>
+        ヒーロー棟: <strong>4 邸宅 · 5 劇場 · 9 天文台/図書館</strong>。他は建築シェル。<br>
+        <a class="ht-edition-link" href="/house-tour">← 抽象版ミュージアム（本線）へ戻る</a>
       </p>
       <p class="ht-back"><a href="/" data-i18n="back_home">← nanami-products へ戻る</a></p>
     </div>
@@ -90,45 +81,45 @@
   <div id="ht-hud" class="is-hidden" aria-hidden="true">
     <div class="ht-topbar">
       <div>
-        <div class="ht-brand">BIRTH CHART MUSEUM</div>
+        <div class="ht-brand">ARCHITECTURE EDITION</div>
         <div class="ht-mode-label" id="ht-mode-label">—</div>
         <div class="ht-guide-label" id="ht-guide-label"></div>
       </div>
       <div class="ht-top-actions">
-        <button type="button" class="ht-chip-btn" id="ht-btn-prev" data-i18n="btn_prev" data-i18n-title="btn_prev">← 前</button>
-        <button type="button" class="ht-chip-btn ht-chip-primary" id="ht-btn-next" data-i18n="btn_next" data-i18n-title="btn_next">次へ →</button>
+        <button type="button" class="ht-chip-btn" id="ht-btn-prev" data-i18n="btn_prev">← 前</button>
+        <button type="button" class="ht-chip-btn ht-chip-primary" id="ht-btn-next" data-i18n="btn_next">次へ →</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-map" data-i18n="btn_map">マップ</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-mode" data-i18n="btn_mode_orbit">俯瞰</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-sound" data-i18n="btn_sound_off">音: OFF</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-quality" data-i18n="btn_quality_high">品質: 高</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-help" data-i18n="btn_help">操作</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-menu" data-i18n="btn_menu">メニュー</button>
+        <a class="ht-chip-btn" href="/house-tour" title="Abstract edition">Abstract</a>
       </div>
     </div>
 
     <aside class="ht-info is-center" id="ht-info" aria-live="polite">
-      <div class="ht-info-num" id="ht-info-num">中心 · CHART CORE</div>
-      <h2 class="ht-info-title" id="ht-info-title">出生図の中庭</h2>
-      <div class="ht-info-en" id="ht-info-en">Natal Courtyard</div>
-
-      <div class="ht-sense-grid" id="ht-sense-grid" aria-label="senses">
+      <div class="ht-info-num" id="ht-info-num">CORE</div>
+      <h2 class="ht-info-title" id="ht-info-title">—</h2>
+      <div class="ht-info-en" id="ht-info-en"></div>
+      <div class="ht-sense-grid" id="ht-sense-grid">
         <div class="ht-sense">
-          <span class="ht-sense-icon" aria-hidden="true">⌂</span>
+          <span class="ht-sense-icon">⌂</span>
           <span class="ht-sense-label" data-i18n="sense_space">空間</span>
           <span class="ht-sense-value" id="ht-sense-space">—</span>
         </div>
         <div class="ht-sense">
-          <span class="ht-sense-icon" aria-hidden="true">✦</span>
+          <span class="ht-sense-icon">✦</span>
           <span class="ht-sense-label" data-i18n="sense_light">光</span>
           <span class="ht-sense-value" id="ht-sense-light">—</span>
         </div>
         <div class="ht-sense">
-          <span class="ht-sense-icon" aria-hidden="true">♪</span>
+          <span class="ht-sense-icon">♪</span>
           <span class="ht-sense-label" data-i18n="sense_sound">音</span>
           <span class="ht-sense-value" id="ht-sense-sound">—</span>
         </div>
         <div class="ht-sense">
-          <span class="ht-sense-icon" aria-hidden="true">◇</span>
+          <span class="ht-sense-icon">◇</span>
           <span class="ht-sense-label" data-i18n="sense_color">色</span>
           <span class="ht-sense-value" id="ht-sense-color">
             <span class="ht-swatch" id="ht-swatch-a"></span>
@@ -137,82 +128,70 @@
           </span>
         </div>
       </div>
-
       <div class="ht-section-label" data-i18n="section_objects">空間にあるもの</div>
       <div class="ht-object-chips" id="ht-object-chips"></div>
       <div class="ht-keywords" id="ht-info-keywords"></div>
-
       <details class="ht-readmore">
-        <summary data-i18n="section_readmore">詳しく見る（補助テキスト）</summary>
+        <summary data-i18n="section_readmore">詳しく見る</summary>
         <p class="ht-info-short" id="ht-info-short"></p>
         <p class="ht-info-atmosphere" id="ht-info-detail"></p>
         <p class="ht-arch" id="ht-info-arch"></p>
       </details>
-
-      <div class="ht-section-label" id="ht-planets-label" data-i18n="section_planets">この空間の天体</div>
+      <div class="ht-section-label" id="ht-planets-label" data-i18n="section_planets">天体</div>
       <ul class="ht-planets" id="ht-info-planets"></ul>
     </aside>
 
     <div id="ht-planet-panel" class="ht-planet-panel" hidden>
-      <button type="button" class="ht-planet-close" id="ht-planet-close" aria-label="Close">×</button>
+      <button type="button" class="ht-planet-close" id="ht-planet-close">×</button>
       <h3 id="ht-planet-title" class="ht-planet-title"></h3>
       <div id="ht-planet-body" class="ht-planet-body"></div>
     </div>
 
-    <nav class="ht-nav" id="ht-nav" aria-label="12 houses">
+    <nav class="ht-nav" id="ht-nav">
       <div class="ht-nav-ring" id="ht-nav-ring">
-        <button type="button" class="ht-nav-center is-active" id="ht-nav-center" title="Core">CORE</button>
+        <button type="button" class="ht-nav-center is-active" id="ht-nav-center">CORE</button>
       </div>
     </nav>
-
-    <div class="ht-strip" id="ht-strip" aria-label="Houses"></div>
-
-    <div id="ht-stick-base" class="ht-stick-base" hidden aria-hidden="true">
+    <div class="ht-strip" id="ht-strip"></div>
+    <div id="ht-stick-base" class="ht-stick-base" hidden>
       <div id="ht-stick-knob" class="ht-stick-knob"></div>
     </div>
-
-    <div class="ht-crosshair" id="ht-crosshair" aria-hidden="true"></div>
-    <div id="ht-vignette" aria-hidden="true"></div>
-
+    <div class="ht-crosshair" id="ht-crosshair"></div>
+    <div id="ht-vignette"></div>
     <div id="ht-caption" class="ht-caption" hidden>
-      <div class="ht-caption-kicker" id="ht-caption-kicker">—</div>
+      <div class="ht-caption-kicker" id="ht-caption-kicker"></div>
       <div class="ht-caption-title" id="ht-caption-title"></div>
       <p class="ht-caption-body" id="ht-caption-body"></p>
     </div>
-
     <div class="ht-bottom">
-      <div class="ht-controls-hint" data-i18n="bottom_hint">
-        次へ で案内 · 歩くときは クリックで近づく · ドラッグで見回す
-      </div>
+      <div class="ht-controls-hint" data-i18n="bottom_hint">次へ · クリックで近づく</div>
       <div class="ht-location">
         <strong id="ht-loc-title">—</strong>
-        <span id="ht-loc-sub">Museum Lobby</span>
+        <span id="ht-loc-sub">Architecture</span>
       </div>
     </div>
   </div>
 
   <div id="ht-map-overlay" class="ht-overlay-panel" hidden>
     <div class="ht-overlay-card">
-      <h3 data-i18n="map_title">12ハウス・マップ</h3>
-      <p class="ht-overlay-note" data-i18n="map_note">番号を選ぶと移動します。</p>
+      <h3 data-i18n="map_title">マップ</h3>
+      <p class="ht-overlay-note" data-i18n="map_note">番号で移動</p>
       <button type="button" class="ht-btn ht-btn-secondary" id="ht-map-close" data-i18n="map_close">閉じる</button>
     </div>
   </div>
-
   <div id="ht-menu-overlay" class="ht-overlay-panel" hidden>
     <div class="ht-overlay-card">
       <h3 data-i18n="menu_title">メニュー</h3>
       <div class="ht-menu-actions">
-        <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-title" data-i18n="menu_title_back">タイトルへ戻る</button>
-        <a class="ht-btn ht-btn-secondary" href="/" data-i18n="menu_home">サイトTOPへ</a>
+        <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-title" data-i18n="menu_title_back">タイトルへ</button>
+        <a class="ht-btn ht-btn-secondary" href="/house-tour">Abstract Museum</a>
+        <a class="ht-btn ht-btn-secondary" href="/" data-i18n="menu_home">TOP</a>
         <button type="button" class="ht-btn" id="ht-menu-close" data-i18n="menu_close">閉じる</button>
       </div>
-      <p class="ht-overlay-note" data-i18n="menu_note">音声は既定OFF。YAMLはブラウザ内のみです。</p>
     </div>
   </div>
+  <div id="ht-toast" role="status"></div>
 
-  <div id="ht-toast" role="status" aria-live="polite"></div>
-
-  <script type="module" src="{{ asset_url('house-tour/js/main.js') }}"></script>
+  <script type="module" src="{{ asset_url('house-tour-architecture/js/main.js') }}"></script>
 </body>
 </html>

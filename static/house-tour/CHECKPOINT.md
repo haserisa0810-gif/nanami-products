@@ -36,9 +36,11 @@ feature/house-tour-architecture-edition
 They must **not** replace `/house-tour` without an explicit product decision.
 Keep abstract as the default public demo until architecture edition is clearly better.
 
-## Compare editions (target)
+## Compare editions
 
-| Edition | Route (planned) | Role |
-|---------|-----------------|------|
+| Edition | Route | Role |
+|---------|-------|------|
 | Abstract Museum (this) | `/house-tour` | Concept, UX, YAML, i18n, tour |
-| Architecture Museum | `/house-tour-architecture` (optional) | Materials, lighting, believable rooms |
+| Architecture Museum | `/house-tour-architecture` | Materials, lighting, hero buildings 4/5/9 |
+
+Both coexist. Do not delete abstract when expanding architecture.

@@ -1,0 +1,42 @@
+/* Architecture Edition — thin overlay on shared museum CSS */
+
+body.ht-arch {
+  --ht-gold: #d4b87a;
+}
+
+.ht-edition-badge {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 169, 110, 0.35);
+  background: rgba(201, 169, 110, 0.1);
+  color: var(--ht-gold-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.ht-edition-link {
+  color: var(--ht-gold);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201, 169, 110, 0.35);
+}
+
+.ht-edition-link:hover {
+  color: var(--ht-gold-soft);
+}
+
+body.ht-arch .ht-brand {
+  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+}
+
+/* ヒーロー棟ナビ強調は JS 無しでも色で分かるようゴールド枠 */
+body.ht-arch .ht-nav-house[data-house="4"],
+body.ht-arch .ht-nav-house[data-house="5"],
+body.ht-arch .ht-nav-house[data-house="9"],
+body.ht-arch .ht-strip-btn[data-house="4"],
+body.ht-arch .ht-strip-btn[data-house="5"],
+body.ht-arch .ht-strip-btn[data-house="9"] {
+  box-shadow: 0 0 0 1px rgba(212, 184, 122, 0.55);
+}

@@ -504,6 +504,17 @@ body {
   color: var(--ht-gold-soft);
 }
 
+.ht-edition-link {
+  color: var(--ht-gold);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201, 169, 110, 0.35);
+  font-size: 0.78rem;
+}
+
+.ht-edition-link:hover {
+  color: var(--ht-gold-soft);
+}
+
 /* planet list buttons */
 .ht-p-btn {
   appearance: none;
