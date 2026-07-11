@@ -1,56 +1,71 @@
-# House Tour — ホロスコープ・ハウスツアー 3D デモ
+# Birth Chart Museum — House Tour (Abstract Edition)
 
-出生図の12ハウスを、空間・建築・光・色・音・オブジェクト・天体として歩いて体験する独立デモです。
+出生図の12ハウスを、**ミュージアムとして巡る**インタラクティブ展示デモです。
 
 > ホロスコープを読むのではなく、自分の出生図の中を歩く。
 
-## アクセス
+## Edition
 
-アプリ経由:
+| 名前 | 説明 | ルート |
+|------|------|--------|
+| **Abstract Museum (v1)** | 現行。象徴・低ポリ・ガイドツアー・YAML・JA/EN | `/house-tour` |
+| Architecture Museum | 実験予定。建築・素材寄りの博物館品質 | 別ルートで追加予定（本版を上書きしない） |
+
+**チェックポイント（退避済み）**
+
+- Git tag: `checkpoint/house-tour-abstract-museum-v1`
+- 詳細: [CHECKPOINT.md](./CHECKPOINT.md)
+- リアル寄り検討: [REALISM.md](./REALISM.md)
+
+## アクセス
 
 ```text
 GET /house-tour
+GET /house-tour?lang=en
+GET /house-tour?chart=neko
 ```
+
+## 機能
+
+- ガイドツアー（シネマティックカメラ）
+- 自由歩行（クリックで近づく / ドラッグで見回す）
+- YAML 出生図のクライアント読込
+- 日本語 / English 切替
+- サンプル「ねこ編集長」ワンクリック
 
 ## 構成
 
 ```text
 static/house-tour/
 ├─ house-tour.css
-├─ sample-data.json          # テスト用ミラー（正本は js/data）
+├─ sample-data.json
 ├─ README.md
+├─ CHECKPOINT.md
+├─ REALISM.md
 └─ js/
    ├─ main.js
-   ├─ scene.js
-   ├─ controls.js
-   ├─ house-builder.js
-   ├─ planet-builder.js
-   ├─ tour-controller.js
-   ├─ ui.js
+   ├─ scene.js / controls.js / cinematic.js / museum-shots.js
+   ├─ house-builder.js / planet-builder.js
+   ├─ tour-controller.js / ui.js / i18n.js / parse-yaml.js
    └─ data/
-      ├─ sample-chart.js
-      ├─ houses-ja.js
-      ├─ houses-en.js
-      └─ planets-ja.js
+      ├─ sample-chart.js / neko-chart.js
+      ├─ houses-ja.js / houses-en.js
+      ├─ planets-ja.js / planets-en.js
+      └─ ui-strings.js
 ```
 
 テンプレート: `templates/house_tour.html`  
-ルート: `routes.py` の `GET /house-tour` のみ（鑑定・注文・YAML 非接続）
-
-## 技術
-
-- Three.js r128（CDN、このページのみ）
-- ES modules（ビルド不要）
-- 外部APIなし・固定サンプルのみ
-- 音声は既定 OFF
+ルート: `GET /house-tour`（鑑定・注文・YAML生成には非接続）
 
 ## 操作
 
 | 環境 | 操作 |
 |------|------|
-| PC | WASD 移動 / クリックで視点ロック / N・P 次前 / M マップ |
-| スマホ | 左スティック移動 / 右ドラッグ視点 / 「次へ」「前」ボタン |
+| PC | クリックで近づく / ドラッグで見回す / ホイール前後 / 次へ |
+| スマホ | 中央タップで近づく / 右ドラッグ視点 / 左スティック |
 
-## 非対象（今回）
+## 非対象（このデモ）
 
-- 占星術計算、YAML貼り付け、ユーザー出生図、注文・課金、既存鑑定フロー改変
+- サーバー側での再計算
+- フォトリアル AAA レンダリング
+- 既存鑑定・注文フローの改変
