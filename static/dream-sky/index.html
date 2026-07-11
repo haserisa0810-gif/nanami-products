@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="data:," />
+  <title>Dream Sky · House Dream v0</title>
+  <style>
+    :root {
+      --bg: #04050b;
+      --fg: rgba(233, 237, 255, 0.92);
+      --fg-dim: rgba(233, 237, 255, 0.5);
+      --line: rgba(233, 237, 255, 0.12);
+      --panel: rgba(7, 10, 22, 0.55);
+      --accent: rgba(170, 196, 255, 0.9);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+        "Hiragino Sans", "Noto Sans JP", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #scene {
+      position: fixed; inset: 0; display: block; touch-action: none;
+    }
+    #vignette {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(125% 125% at 50% 44%,
+        rgba(0,0,0,0) 42%, rgba(0,0,0,0.55) 100%);
+    }
+    .caption {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top));
+      left: max(16px, env(safe-area-inset-left));
+      z-index: 10; max-width: min(70vw, 360px);
+      pointer-events: none; user-select: none;
+    }
+    .caption h1 {
+      margin: 0; font-size: 13px; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg);
+    }
+    .caption p {
+      margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: var(--fg-dim);
+    }
+    .caption .status {
+      margin-top: 8px; font-size: 11px; letter-spacing: 0.04em; color: var(--fg-dim);
+    }
+    .caption .status::before {
+      content: ""; display: inline-block; width: 5px; height: 5px;
+      border-radius: 50%; margin-right: 7px; vertical-align: middle;
+      background: rgba(150, 180, 255, 0.85);
+      box-shadow: 0 0 6px rgba(150, 180, 255, 0.9);
+    }
+    .readout {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top));
+      right: max(16px, env(safe-area-inset-right));
+      z-index: 10; width: min(240px, calc(100vw - 32px));
+      padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--panel);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      pointer-events: none; user-select: none;
+    }
+    .readout .house-num {
+      font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--fg-dim); margin-bottom: 4px;
+    }
+    .readout .house-title {
+      font-size: 15px; font-weight: 400; letter-spacing: 0.04em;
+      color: var(--fg); margin-bottom: 6px;
+    }
+    .readout .house-body {
+      font-size: 11px; line-height: 1.55; color: var(--fg-dim);
+    }
+    .readout .bodies {
+      margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+      display: flex; flex-wrap: wrap; gap: 4px;
+    }
+    .readout .bodies span {
+      font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px;
+      border-radius: 999px; background: rgba(150, 180, 255, 0.12); color: var(--fg);
+    }
+    .readout .bodies em {
+      font-style: normal; font-size: 10px; color: var(--fg-dim); width: 100%;
+    }
+    .controls {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 10; display: flex; flex-wrap: wrap; justify-content: center;
+      max-width: calc(100vw - 24px); gap: 6px; padding: 6px;
+      border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .controls button {
+      appearance: none; border: none; background: transparent;
+      color: var(--fg-dim); font: inherit; font-size: 11px; letter-spacing: 0.06em;
+      padding: 9px 14px; border-radius: 999px; cursor: pointer;
+      transition: color 0.2s, background 0.2s; white-space: nowrap;
+    }
+    .controls button:hover { color: var(--fg); }
+    .controls button[aria-pressed="true"] {
+      color: var(--fg); background: rgba(150, 180, 255, 0.14);
+    }
+    /* YAML chart panel */
+    .chart-panel {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      bottom: auto;
+      transform: translate(-50%, -50%);
+      z-index: 60;
+      width: min(480px, calc(100vw - 28px));
+      max-height: min(85vh, 640px);
+      overflow: auto;
+      padding: 16px 16px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(6, 8, 16, 0.96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      display: none;
+      pointer-events: auto;
+    }
+    .chart-panel.is-open { display: block; }
+    .intro-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .intro-actions button {
+      appearance: none;
+      border: 1px solid rgba(233, 237, 255, 0.22);
+      background: rgba(150, 180, 255, 0.12);
+      color: var(--fg);
+      font: inherit;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      padding: 12px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .intro-actions button.primary {
+      background: rgba(170, 196, 255, 0.28);
+      border-color: rgba(170, 196, 255, 0.5);
+    }
+    .intro-actions button:hover {
+      background: rgba(150, 180, 255, 0.22);
+    }
+    .chart-panel h2 {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .chart-panel .help {
+      margin: 0 0 10px;
+      font-size: 11px;
+      line-height: 1.55;
+      color: var(--fg-dim);
+    }
+    .chart-panel textarea {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #0a0c14;
+      color: #c8d0e0;
+      color-scheme: dark;
+      font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      outline: none;
+    }
+    .chart-panel textarea:focus {
+      border-color: rgba(170, 196, 255, 0.45);
+    }
+    .chart-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .chart-actions button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(150, 180, 255, 0.1);
+      color: var(--fg);
+      font: inherit;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .chart-actions button.primary {
+      background: rgba(170, 196, 255, 0.22);
+      border-color: rgba(170, 196, 255, 0.4);
+    }
+    .chart-actions button:hover { background: rgba(150, 180, 255, 0.18); }
+    .chart-status {
+      min-height: 1.2em;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--fg-dim);
+    }
+    .chart-status.is-ok { color: #9fe0b0; }
+    .chart-status.is-err { color: #e8a0a0; }
+    .intro {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; background: #03040a;
+      opacity: 0; transition: opacity 1.1s ease;
+    }
+    .intro.show { opacity: 1; }
+    .intro.hide { opacity: 0; pointer-events: none; }
+    .intro__inner {
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 1.6s ease, transform 1.7s ease;
+    }
+    .intro.show .intro__inner { opacity: 1; transform: none; }
+    .intro__title {
+      margin: 0 0 14px; font-weight: 300;
+      font-size: clamp(22px, 6vw, 38px); letter-spacing: 0.32em;
+      text-transform: uppercase; color: rgba(236, 240, 255, 0.96);
+    }
+    .intro__sub {
+      margin: 0; font-size: 12px; line-height: 1.65; letter-spacing: 0.05em;
+      color: var(--fg-dim); max-width: 28em;
+    }
+    .intro__hint {
+      margin: 32px 0 0; font-size: 10px; letter-spacing: 0.28em;
+      text-transform: uppercase; color: var(--fg-dim); opacity: 0.55;
+    }
+    .caption, .readout, .controls {
+      transition: opacity 1.2s ease;
+    }
+    body:not(.revealed) .caption,
+    body:not(.revealed) .readout,
+    body:not(.revealed) .controls {
+      opacity: 0; pointer-events: none;
+    }
+    noscript {
+      position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; color: var(--fg-dim); padding: 24px; text-align: center;
+    }
+    @media (max-width: 520px) {
+      .readout {
+        top: auto; right: auto;
+        left: max(16px, env(safe-area-inset-left));
+        bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px));
+        width: min(250px, calc(100vw - 32px));
+      }
+      .caption h1 { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div id="vignette"></div>
+
+  <div class="caption">
+    <h1>Dream Sky</h1>
+    <p id="captionLine">ハウスという夢の重力</p>
+    <div class="status" id="status">ねこ編集長 · 第4 / 5 / 12</div>
+  </div>
+
+  <aside class="readout" aria-live="polite">
+    <div class="house-num" id="houseNum">HOUSE 4</div>
+    <div class="house-title" id="houseTitle">夜の湖</div>
+    <div class="house-body" id="houseBody">言葉より先に、安心が残る場所。</div>
+    <div class="bodies" id="bodyChips"><em>配置天体なし — 空間そのもの</em></div>
+  </aside>
+
+  <div class="controls" role="toolbar" aria-label="House and options">
+    <button type="button" id="btnH4" aria-pressed="true">IV · 湖</button>
+    <button type="button" id="btnH5" aria-pressed="false">V · 舞台</button>
+    <button type="button" id="btnH12" aria-pressed="false">XII · 霧</button>
+    <button type="button" id="btnChart" aria-pressed="false">Chart / YAML</button>
+    <button type="button" id="btnSpin" aria-pressed="true">Auto-rotate</button>
+    <button type="button" id="btnLang" aria-pressed="false">EN</button>
+  </div>
+
+  <div class="chart-panel" id="chartPanel" aria-label="Natal YAML">
+    <h2 id="chartPanelTitle">Birth chart YAML</h2>
+    <p class="help" id="chartPanelHelp">
+      nanami-products の western natal YAML を貼ると、第4 / 5 / 12 の天体配置で光と粒子が変わります。ブラウザ内のみ。
+    </p>
+    <textarea id="yamlInput" spellcheck="false" placeholder="version: …&#10;systems:&#10;  western:&#10;    natal:&#10;      bodies: …"></textarea>
+    <div class="chart-actions">
+      <button type="button" class="primary" id="btnLoadYaml">YAMLを読む</button>
+      <button type="button" id="btnNeko">ねこ編集長</button>
+      <button type="button" id="btnCloseChart">閉じる</button>
+    </div>
+    <p class="chart-status" id="chartStatus" role="status"></p>
+  </div>
+
+  <div class="intro" id="intro">
+    <div class="intro__inner">
+      <h2 class="intro__title">Dream Sky</h2>
+      <p class="intro__sub" id="introSub">
+        建物はない。部屋もない。<br>
+        ハウスは、光と粒子と重力だけになる。<br>
+        <span style="opacity:0.85">自分の出生図 YAML を貼ってから入れます。</span>
+      </p>
+      <div class="intro-actions" id="introActions">
+        <button type="button" class="primary" id="introYaml">自分の YAML で入る</button>
+        <button type="button" id="introSample">ねこ編集長で入る</button>
+      </div>
+      <p class="intro__hint" id="introHint">YAML はブラウザ内のみ · 再計算しません</p>
+    </div>
+  </div>
+
+  <noscript>JavaScript が必要です。</noscript>
+
+  <!-- Same Three generation as Birth Sky; CDN only (no embed, no overwrite of Birth Sky) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // -----------------------------------------------------------------------
+    // Chart: default ねこ編集長 + optional YAML (client-only, no recalc)
+    // -----------------------------------------------------------------------
+    const TOUR_BODY_IDS = [
+      "Sun", "Moon", "Mercury", "Venus", "Mars",
+      "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto",
+      "North Node", "South Node", "Chiron"
+    ];
+    const ANGLE_IDS = { ASC: 1, MC: 1, DSC: 1, IC: 1, Vertex: 1 };
+
+    const NEKO = {
+      name: "ねこ編集長",
+      nameEn: "Neko Editor-in-Chief",
+      houses: {
+        1: [], 2: [], 3: [],
+        4: [],
+        5: ["Moon"],
+        6: ["South Node"],
+        7: [],
+        8: ["Mercury", "Venus", "Mars", "Pluto"],
+        9: ["Sun", "Saturn"],
+        10: ["Jupiter", "Neptune"],
+        11: ["Uranus"],
+        12: ["North Node"]
+      }
+    };
+
+    function emptyHouses() {
+      const h = {};
+      for (let i = 1; i <= 12; i++) h[i] = [];
+      return h;
+    }
+
+    function cloneChart(src) {
+      const houses = emptyHouses();
+      for (let i = 1; i <= 12; i++) {
+        houses[i] = (src.houses[i] || []).slice();
+      }
+      return {
+        name: src.name,
+        nameEn: src.nameEn || src.name,
+        houses: houses,
+        source: src.source || "sample"
+      };
+    }
+
+    /** Current natal chart driving Dream body effects */
+    let chart = cloneChart(NEKO);
+
+    function normalizeBodyId(id) {
+      if (!id) return null;
+      const s = String(id).trim();
+      const map = {
+        sun: "Sun", moon: "Moon", mercury: "Mercury", venus: "Venus", mars: "Mars",
+        jupiter: "Jupiter", saturn: "Saturn", uranus: "Uranus", neptune: "Neptune", pluto: "Pluto",
+        "north node": "North Node", "south node": "South Node",
+        northnode: "North Node", southnode: "South Node",
+        "true node": "North Node", "mean node": "North Node",
+        chiron: "Chiron",
+        太陽: "Sun", 月: "Moon", 水星: "Mercury", 金星: "Venus", 火星: "Mars",
+        木星: "Jupiter", 土星: "Saturn", 天王星: "Uranus", 海王星: "Neptune", 冥王星: "Pluto",
+        北交点: "North Node", 南交点: "South Node", カイロン: "Chiron"
+      };
+      if (map[s]) return map[s];
+      if (map[s.toLowerCase()]) return map[s.toLowerCase()];
+      if (TOUR_BODY_IDS.indexOf(s) >= 0) return s;
+      return s;
+    }
+
+    /**
+     * nanami-products YAML → house map (client only)
+     * systems.western.natal.bodies.{id}.house
+     */
+    function bodiesToEntries(bodies) {
+      const out = [];
+      if (!bodies) return out;
+      if (Array.isArray(bodies)) {
+        bodies.forEach(function (b, i) {
+          if (!b || typeof b !== "object") return;
+          const rawId = b.name || b.body || b.planet || b.id || ("body" + i);
+          out.push({ rawId: rawId, b: b });
+        });
+        return out;
+      }
+      if (typeof bodies === "object") {
+        Object.keys(bodies).forEach(function (rawId) {
+          out.push({ rawId: rawId, b: bodies[rawId] });
+        });
+      }
+      return out;
+    }
+
+    function houseOfBody(b) {
+      if (!b || typeof b !== "object") return null;
+      const v =
+        b.house != null ? b.house :
+        b.house_number != null ? b.house_number :
+        b.house_num != null ? b.house_num :
+        b.House != null ? b.House :
+        null;
+      const n = parseInt(v, 10);
+      return n >= 1 && n <= 12 ? n : null;
+    }
+
+    function parseNatalYaml(text) {
+      if (typeof jsyaml === "undefined" || !jsyaml.load) {
+        throw new Error(lang === "ja" ? "js-yaml が読み込まれていません" : "js-yaml missing");
+      }
+      const raw = String(text || "").trim();
+      if (!raw) {
+        throw new Error(lang === "ja" ? "YAMLが空です" : "YAML is empty");
+      }
+      let doc;
+      try {
+        doc = jsyaml.load(raw);
+      } catch (e) {
+        throw new Error((lang === "ja" ? "YAML解析エラー: " : "YAML parse error: ") + (e.message || e));
+      }
+      if (!doc || typeof doc !== "object") {
+        throw new Error(lang === "ja" ? "YAMLオブジェクトを取得できません" : "YAML root must be an object");
+      }
+
+      const natal =
+        (doc.systems && doc.systems.western && doc.systems.western.natal) ||
+        (doc.western && doc.western.natal) ||
+        (doc.natal) ||
+        (doc.chart && doc.chart.natal) ||
+        null;
+      const bodies =
+        (natal && natal.bodies) ||
+        doc.bodies ||
+        (doc.chart && doc.chart.bodies) ||
+        null;
+      if (!bodies || (typeof bodies !== "object" && !Array.isArray(bodies))) {
+        throw new Error(
+          lang === "ja"
+            ? "systems.western.natal.bodies が見つかりません（detail / full YAML を貼ってください）"
+            : "systems.western.natal.bodies not found (use detail/full YAML)"
+        );
+      }
+
+      const houses = emptyHouses();
+      let count = 0;
+      bodiesToEntries(bodies).forEach(function (entry) {
+        const b = entry.b;
+        if (!b || typeof b !== "object") return;
+        const id = normalizeBodyId(entry.rawId);
+        if (!id || ANGLE_IDS[id] || ANGLE_IDS[entry.rawId]) return;
+        if (TOUR_BODY_IDS.indexOf(id) < 0 && id !== "Chiron") return;
+        const house = houseOfBody(b);
+        if (!house) return;
+        if (houses[house].indexOf(id) < 0) {
+          houses[house].push(id);
+          count += 1;
+        }
+      });
+      if (!count) {
+        throw new Error(
+          lang === "ja"
+            ? "ハウス番号付きの天体が見つかりませんでした"
+            : "No bodies with house numbers found"
+        );
+      }
+
+      const input = doc.input || {};
+      const name =
+        input.title ||
+        input.name ||
+        (doc.meta && (doc.meta.profile_id || doc.meta.name || doc.meta.title)) ||
+        (lang === "ja" ? "読み込みチャート" : "Loaded chart");
+
+      return {
+        name: String(name),
+        nameEn: String(name),
+        houses: houses,
+        source: "yaml",
+        bodyCount: count,
+        summary:
+          "H4: " + (houses[4].join(", ") || "—") +
+          " · H5: " + (houses[5].join(", ") || "—") +
+          " · H12: " + (houses[12].join(", ") || "—")
+      };
+    }
+
+    function applyChart(next, opts) {
+      opts = opts || {};
+      chart = next;
+      // YAML を変えたら「天体のあるハウス」へ飛ばして差が見えるようにする
+      if (opts.jumpToBodies !== false) {
+        currentHouse = pickInterestingHouse(chart.houses);
+      }
+      buildHouse(currentHouse);
+      if (opts.status) setChartStatus(opts.status, opts.ok !== false);
+      // 画面左のステータスでも確認できるように
+      try {
+        const s4 = (chart.houses[4] || []).join(",") || "—";
+        const s5 = (chart.houses[5] || []).join(",") || "—";
+        const s12 = (chart.houses[12] || []).join(",") || "—";
+        console.info("[DreamSky] chart", chart.name, "H4:", s4, "H5:", s5, "H12:", s12, "→ show H" + currentHouse);
+      } catch (e) { /* */ }
+    }
+
+    // Dream v0: only these three houses
+    const HOUSES = {
+      4: {
+        ja: {
+          num: "HOUSE 4",
+          title: "夜の湖",
+          body: "水面に記憶が映る。根を張る大樹。家の灯だけが静かに残る。",
+          caption: "安心とルーツ — 言葉の前の場所"
+        },
+        en: {
+          num: "HOUSE 4",
+          title: "Night Lake",
+          body: "Memory on water. Roots of a great tree. A single home-light remains.",
+          caption: "Roots & rest — before words"
+        }
+      },
+      5: {
+        ja: {
+          num: "HOUSE 5",
+          title: "宇宙の舞台",
+          body: "中央の光。浮遊する音符と絵。創作物が光になって昇る。",
+          caption: "喜びと自己表現"
+        },
+        en: {
+          num: "HOUSE 5",
+          title: "Cosmic Stage",
+          body: "A central sun. Floating notes and sketches. Creations rise as light.",
+          caption: "Joy & expression"
+        }
+      },
+      12: {
+        ja: {
+          num: "HOUSE 12",
+          title: "溶ける境界",
+          body: "霧と水面。遠い月。歩くと足元から星が生まれる。不吉ではない、静かな溶解。",
+          caption: "境界がゆっくり溶ける"
+        },
+        en: {
+          num: "HOUSE 12",
+          title: "Soft Boundary",
+          body: "Mist and water. A far moon. Stars bloom underfoot. Quiet dissolve — not fear.",
+          caption: "Boundaries soften slowly"
+        }
+      }
+    };
+
+    const BODY_LABEL = {
+      Sun: { ja: "太陽", en: "Sun" },
+      Moon: { ja: "月", en: "Moon" },
+      Mercury: { ja: "水星", en: "Mercury" },
+      Venus: { ja: "金星", en: "Venus" },
+      Mars: { ja: "火星", en: "Mars" },
+      Jupiter: { ja: "木星", en: "Jupiter" },
+      Saturn: { ja: "土星", en: "Saturn" },
+      Uranus: { ja: "天王星", en: "Uranus" },
+      Neptune: { ja: "海王星", en: "Neptune" },
+      Pluto: { ja: "冥王星", en: "Pluto" },
+      "North Node": { ja: "北交点", en: "N. Node" },
+      "South Node": { ja: "南交点", en: "S. Node" }
+    };
+
+    let lang = "ja";
+    let currentHouse = 4;
+    let autoRotate = true;
+    let reducedMotion = false;
+    try {
+      reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (e) {}
+
+    // -----------------------------------------------------------------------
+    // DOM
+    // -----------------------------------------------------------------------
+    const canvas = document.getElementById("scene");
+    const statusEl = document.getElementById("status");
+    const captionLine = document.getElementById("captionLine");
+    const houseNum = document.getElementById("houseNum");
+    const houseTitle = document.getElementById("houseTitle");
+    const houseBody = document.getElementById("houseBody");
+    const bodyChips = document.getElementById("bodyChips");
+    const introEl = document.getElementById("intro");
+    const btnH4 = document.getElementById("btnH4");
+    const btnH5 = document.getElementById("btnH5");
+    const btnH12 = document.getElementById("btnH12");
+    const btnSpin = document.getElementById("btnSpin");
+    const btnLang = document.getElementById("btnLang");
+
+    if (typeof THREE === "undefined") {
+      statusEl.textContent = "Three.js failed to load";
+      return;
+    }
+
+    // -----------------------------------------------------------------------
+    // Three.js — Birth Sky DNA: soft dots, quiet fog, orbit look
+    // -----------------------------------------------------------------------
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x04050b);
+    scene.fog = new THREE.FogExp2(0x04050b, 0.022);
+
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
+    camera.position.set(0, 6, 22);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.rotateSpeed = 0.45;
+    controls.minDistance = 6;
+    controls.maxDistance = 48;
+    controls.enablePan = false;
+    controls.target.set(0, 2, 0);
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.35;
+
+    scene.add(new THREE.AmbientLight(0x4a5a88, 0.55));
+    const keyLight = new THREE.PointLight(0xc8d4ff, 1.0, 80, 2);
+    keyLight.position.set(0, 8, 4);
+    scene.add(keyLight);
+    const fillLight = new THREE.PointLight(0x88a0ff, 0.35, 60, 2);
+    fillLight.position.set(-8, 3, -6);
+    scene.add(fillLight);
+
+    // Soft star texture (Birth Sky style)
+    function makeRadialTexture(stops) {
+      const size = 64;
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const ctx = c.getContext("2d");
+      const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      stops.forEach(function (s) { g.addColorStop(s[0], s[1]); });
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+      const tex = new THREE.CanvasTexture(c);
+      tex.needsUpdate = true;
+      return tex;
+    }
+    const STAR_TEXTURE = makeRadialTexture([
+      [0.0, "rgba(255,255,255,1)"],
+      [0.30, "rgba(255,255,255,0.78)"],
+      [0.55, "rgba(255,255,255,0.32)"],
+      [0.78, "rgba(255,255,255,0.09)"],
+      [1.0, "rgba(255,255,255,0)"]
+    ]);
+
+    function makeStarField(count, spread, size, color, opacity) {
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const r = spread * (0.5 + Math.random() * 0.5);
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = r * Math.cos(phi);
+        positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({
+        color: color, size: size, map: STAR_TEXTURE, sizeAttenuation: true,
+        transparent: true, opacity: opacity, depthWrite: false, fog: false
+      });
+      return new THREE.Points(geo, mat);
+    }
+    const starsFar = makeStarField(1800, 420, 1.4, 0x8da2c8, 0.5);
+    const starsNear = makeStarField(700, 260, 2.2, 0xdfe7ff, 0.75);
+    scene.add(starsFar);
+    scene.add(starsNear);
+
+    // Dream layer — rebuilt per house
+    const dreamRoot = new THREE.Group();
+    scene.add(dreamRoot);
+    let animatables = []; // { type, mesh, ... }
+
+    function disposeObject(obj) {
+      obj.traverse(function (child) {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) child.material.forEach(function (m) { m.dispose(); });
+          else child.material.dispose();
+        }
+      });
+    }
+
+    function clearDream() {
+      while (dreamRoot.children.length) {
+        const c = dreamRoot.children[0];
+        dreamRoot.remove(c);
+        disposeObject(c);
+      }
+      animatables = [];
+    }
+
+    function bodiesIn(house) {
+      return (chart.houses[house] || []).slice();
+    }
+
+    function hasBody(list, name) {
+      return list.indexOf(name) >= 0;
+    }
+
+    function setChartStatus(msg, ok) {
+      const el = document.getElementById("chartStatus");
+      if (!el) return;
+      el.textContent = msg || "";
+      el.classList.toggle("is-ok", !!ok);
+      el.classList.toggle("is-err", msg && !ok);
+    }
+
+    function openChartPanel(open) {
+      const panel = document.getElementById("chartPanel");
+      const btn = document.getElementById("btnChart");
+      if (!panel || !btn) return;
+      panel.classList.toggle("is-open", !!open);
+      btn.setAttribute("aria-pressed", open ? "true" : "false");
+    }
+
+    function applyUiLangForChart() {
+      const title = document.getElementById("chartPanelTitle");
+      const help = document.getElementById("chartPanelHelp");
+      const load = document.getElementById("btnLoadYaml");
+      const neko = document.getElementById("btnNeko");
+      const close = document.getElementById("btnCloseChart");
+      const chartBtn = document.getElementById("btnChart");
+      if (lang === "ja") {
+        if (title) title.textContent = "出生図 YAML";
+        if (help) {
+          help.textContent =
+            "nanami-products の western natal YAML を貼ると、第4 / 5 / 12 の天体で光と粒子が変わります。ブラウザ内のみ・再計算なし。";
+        }
+        if (load) load.textContent = "YAMLを読む";
+        if (neko) neko.textContent = "ねこ編集長";
+        if (close) close.textContent = "閉じる";
+        if (chartBtn) chartBtn.textContent = "Chart / YAML";
+      } else {
+        if (title) title.textContent = "Birth chart YAML";
+        if (help) {
+          help.textContent =
+            "Paste nanami-products western natal YAML. Houses 4 / 5 / 12 change light & particles. Browser-only, no recalculation.";
+        }
+        if (load) load.textContent = "Load YAML";
+        if (neko) neko.textContent = "Neko sample";
+        if (close) close.textContent = "Close";
+        if (chartBtn) chartBtn.textContent = "Chart / YAML";
+      }
+    }
+
+    // ---- shared primitives ------------------------------------------------
+    function waterPlane(color, opacity, y, scale) {
+      const mesh = new THREE.Mesh(
+        new THREE.CircleGeometry(scale || 28, 64),
+        new THREE.MeshStandardMaterial({
+          color: color, transparent: true, opacity: opacity,
+          roughness: 0.15, metalness: 0.35, side: THREE.DoubleSide
+        })
+      );
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.y = y;
+      return mesh;
+    }
+
+    function softSphere(r, color, emissive, intensity) {
+      return new THREE.Mesh(
+        new THREE.SphereGeometry(r, 28, 28),
+        new THREE.MeshStandardMaterial({
+          color: color,
+          emissive: emissive || color,
+          emissiveIntensity: intensity != null ? intensity : 0.5,
+          roughness: 0.45, metalness: 0.05, transparent: true, opacity: 0.92
+        })
+      );
+    }
+
+    function particleCloud(count, radius, y0, y1, color, size) {
+      const pos = new Float32Array(count * 3);
+      const phases = new Float32Array(count);
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * radius;
+        pos[i * 3] = Math.cos(a) * r;
+        pos[i * 3 + 1] = y0 + Math.random() * (y1 - y0);
+        pos[i * 3 + 2] = Math.sin(a) * r;
+        phases[i] = Math.random() * Math.PI * 2;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: color, size: size, map: STAR_TEXTURE, sizeAttenuation: true,
+        transparent: true, opacity: 0.75, depthWrite: false
+      });
+      const pts = new THREE.Points(geo, mat);
+      pts.userData.phases = phases;
+      pts.userData.base = pos.slice();
+      return pts;
+    }
+
+    // ---- body modifiers (applied after house base) ------------------------
+    // 各天体を必ず「見える光体」として置く。YAMLを変えると配置が変わる。
+    const BODY_VIS = {
+      Sun: { color: 0xffe08a, emissive: 0xffc040, r: 1.35, y: 9.5 },
+      Moon: { color: 0xf0f4ff, emissive: 0xc0d0f0, r: 1.15, y: 8.5 },
+      Mercury: { color: 0xa8e8ff, emissive: 0x40c0e0, r: 0.55, y: 5.5 },
+      Venus: { color: 0xffc0d8, emissive: 0xe06090, r: 0.7, y: 6.2 },
+      Mars: { color: 0xff8060, emissive: 0xe04020, r: 0.65, y: 5.8 },
+      Jupiter: { color: 0xffc878, emissive: 0xe09030, r: 1.05, y: 7.5 },
+      Saturn: { color: 0xd0c090, emissive: 0xa09050, r: 0.9, y: 7.0 },
+      Uranus: { color: 0x70e0ff, emissive: 0x20a0d0, r: 0.7, y: 8.0 },
+      Neptune: { color: 0x6080ff, emissive: 0x3040c0, r: 0.75, y: 8.2 },
+      Pluto: { color: 0xc080e0, emissive: 0x7030a0, r: 0.5, y: 4.8 },
+      "North Node": { color: 0xc0ffd0, emissive: 0x40c070, r: 0.55, y: 4.2 },
+      "South Node": { color: 0xe0c0a0, emissive: 0xa07040, r: 0.55, y: 4.0 },
+      Chiron: { color: 0xd0e0ff, emissive: 0x7090c0, r: 0.5, y: 5.0 }
+    };
+
+    function applyBodyEffects(house, bodies, group) {
+      const n = bodies.length;
+      // ベース光をリセット（前ハウスの残留を防ぐ）
+      keyLight.intensity = 0.85 + Math.min(n, 6) * 0.12;
+      keyLight.color.setHex(0xc8d4ff);
+      fillLight.intensity = 0.28 + Math.min(n, 4) * 0.08;
+      fillLight.color.setHex(0x88a0ff);
+
+      // 天体数で粒子密度（空ハウスと満員ハウスの差がはっきり）
+      if (n > 0) {
+        const cloud = particleCloud(
+          40 + n * 55,
+          10 + n * 1.5,
+          0.4,
+          10 + n,
+          n >= 3 ? 0xffe0b0 : 0xc8d8ff,
+          1.4 + Math.min(n, 4) * 0.15
+        );
+        cloud.material.opacity = 0.55 + Math.min(n, 5) * 0.06;
+        group.add(cloud);
+        animatables.push({ type: "rise", mesh: cloud, speed: 0.4 + n * 0.05, amp: 1.0 + n * 0.15 });
+      } else {
+        // 空虚：薄い塵だけ
+        const dust = particleCloud(30, 14, 1, 6, 0x607090, 1.0);
+        dust.material.opacity = 0.22;
+        group.add(dust);
+        animatables.push({ type: "drift", mesh: dust, speed: 0.15, amp: 0.35 });
+      }
+
+      // 全天体を円弧上に配置（必ず見える）
+      bodies.forEach(function (id, i) {
+        const vis = BODY_VIS[id] || { color: 0xd0d8ff, emissive: 0x8090c0, r: 0.55, y: 6 };
+        const a = (i / Math.max(bodies.length, 1)) * Math.PI * 2 - Math.PI / 2;
+        const radius = 4.5 + (i % 3) * 1.1;
+        const mesh = softSphere(vis.r, vis.color, vis.emissive, 1.15);
+        mesh.position.set(Math.cos(a) * radius, vis.y + (i % 2) * 0.6, Math.sin(a) * radius);
+        group.add(mesh);
+        const halo = new THREE.Mesh(
+          new THREE.SphereGeometry(vis.r * 2.1, 16, 16),
+          new THREE.MeshBasicMaterial({
+            color: vis.emissive,
+            transparent: true,
+            opacity: 0.16,
+            side: THREE.BackSide,
+            depthWrite: false
+          })
+        );
+        halo.position.copy(mesh.position);
+        group.add(halo);
+        animatables.push({ type: "pulse", mesh: mesh, base: vis.r, amp: 0.06 + (i % 3) * 0.02, speed: 0.7 + i * 0.12 });
+        animatables.push({ type: "breathe", mesh: halo, baseOp: 0.16, amp: 0.05, speed: 0.5 + i * 0.08 });
+        animatables.push({ type: "bob", mesh: mesh, amp: 0.2, speed: 0.35 + i * 0.05, baseY: mesh.position.y });
+
+        // 天体ごとの追加シグネチャ
+        if (id === "Sun") {
+          keyLight.intensity = 2.0;
+          keyLight.color.setHex(0xffe0a0);
+          const big = softSphere(1.8, 0xffe8b0, 0xffc050, 1.5);
+          big.position.set(0, 11, 0);
+          group.add(big);
+          animatables.push({ type: "pulse", mesh: big, base: 1.8, amp: 0.1, speed: 1.0 });
+        }
+        if (id === "Moon") {
+          fillLight.intensity = 0.9;
+          fillLight.color.setHex(0xd0e0ff);
+        }
+        if (id === "Saturn") {
+          const ring = new THREE.Mesh(
+            new THREE.RingGeometry(vis.r * 1.4, vis.r * 2.2, 48),
+            new THREE.MeshBasicMaterial({
+              color: 0xc8b896, transparent: true, opacity: 0.55,
+              side: THREE.DoubleSide, depthWrite: false
+            })
+          );
+          ring.position.copy(mesh.position);
+          ring.rotation.x = Math.PI / 2.3;
+          group.add(ring);
+          animatables.push({ type: "spin", mesh: ring, speed: 0.12 });
+        }
+        if (id === "Neptune") {
+          const mist = particleCloud(160, 16, 0.5, 12, 0x7080d0, 1.8);
+          mist.material.opacity = 0.5;
+          group.add(mist);
+          animatables.push({ type: "drift", mesh: mist, speed: 0.4, amp: 0.8 });
+          scene.fog.density = Math.min(scene.fog.density + 0.01, 0.05);
+        }
+        if (id === "Mars") {
+          const sparks = particleCloud(70, 8, 2, 9, 0xff6040, 1.6);
+          sparks.material.opacity = 0.55;
+          group.add(sparks);
+          animatables.push({ type: "rise", mesh: sparks, speed: 0.9, amp: 1.6 });
+        }
+        if (id === "Venus") {
+          const soft = particleCloud(60, 7, 1, 7, 0xffb0d0, 1.5);
+          soft.material.opacity = 0.45;
+          group.add(soft);
+          animatables.push({ type: "drift", mesh: soft, speed: 0.25, amp: 0.5 });
+        }
+        if (id === "Jupiter") {
+          keyLight.intensity = Math.max(keyLight.intensity, 1.5);
+          const glow = softSphere(1.3, 0xffd090, 0xe0a040, 1.0);
+          glow.position.copy(mesh.position);
+          glow.position.y += 0.2;
+          group.add(glow);
+        }
+        if (id === "Mercury") {
+          const fast = particleCloud(50, 5, 3, 8, 0xa0f0ff, 1.2);
+          group.add(fast);
+          animatables.push({ type: "rise", mesh: fast, speed: 1.2, amp: 1.4 });
+        }
+        if (id === "North Node" || id === "South Node") {
+          const path = particleCloud(90, 5, 0.15, 3.5, id === "North Node" ? 0xb0ffd0 : 0xffd0b0, 1.9);
+          group.add(path);
+          animatables.push({ type: "rise", mesh: path, speed: 0.55, amp: 1.3 });
+        }
+      });
+
+      // ハウス12のベース霧は薄い。天体があると上書きで濃くなる
+      if (house === 12 && n === 0) {
+        const mist = particleCloud(100, 18, 0.5, 10, 0x8090b0, 1.4);
+        mist.material.opacity = 0.28;
+        group.add(mist);
+        animatables.push({ type: "drift", mesh: mist, speed: 0.2, amp: 0.4 });
+      }
+    }
+
+    function pickInterestingHouse(housesMap) {
+      const order = [5, 12, 4, 9, 8, 10, 1, 7, 11, 6, 2, 3];
+      for (let i = 0; i < order.length; i++) {
+        const h = order[i];
+        if ((housesMap[h] || []).length && (h === 4 || h === 5 || h === 12)) return h;
+      }
+      return 4;
+    }
+
+    // ---- House 4: night lake ---------------------------------------------
+    function buildHouse4(group, bodies) {
+      scene.background.setHex(0x050812);
+      scene.fog.color.setHex(0x050812);
+      scene.fog.density = 0.028;
+
+      const water = waterPlane(0x1a3048, 0.55, 0.05, 32);
+      group.add(water);
+      animatables.push({ type: "ripple", mesh: water, speed: 0.3 });
+
+      // Great tree — roots reach skyward (inverted dream)
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.45, 0.7, 7, 10),
+        new THREE.MeshStandardMaterial({ color: 0x2a2218, roughness: 0.9 })
+      );
+      trunk.position.set(5, 3.5, -3);
+      group.add(trunk);
+      const canopy = softSphere(3.2, 0x1a2830, 0x0a1820, 0.15);
+      canopy.position.set(5, 8.2, -3);
+      group.add(canopy);
+      // inverted roots into sky
+      for (let i = 0; i < 5; i++) {
+        const root = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.04, 0.12, 4 + i * 0.4, 6),
+          new THREE.MeshStandardMaterial({
+            color: 0x3a3028, transparent: true, opacity: 0.7, roughness: 0.85
+          })
+        );
+        const a = (i / 5) * Math.PI * 2;
+        root.position.set(5 + Math.cos(a) * 1.2, 11 + i * 0.3, -3 + Math.sin(a) * 1.2);
+        root.rotation.z = Math.cos(a) * 0.5;
+        root.rotation.x = Math.sin(a) * 0.4;
+        group.add(root);
+      }
+
+      // Home light — single warm lamp
+      const lamp = softSphere(0.35, 0xffd090, 0xffb050, 1.6);
+      lamp.position.set(-4, 1.4, 5);
+      group.add(lamp);
+      const lampGlow = new THREE.PointLight(0xffb060, 1.2, 18, 2);
+      lampGlow.position.copy(lamp.position);
+      group.add(lampGlow);
+      animatables.push({ type: "breathe", mesh: lamp, baseOp: 0.92, amp: 0.08, speed: 0.7, matKey: "opacity" });
+
+      // Memory reflections — soft orbs under water surface
+      for (let i = 0; i < 6; i++) {
+        const m = softSphere(0.25 + Math.random() * 0.2, 0xc8d8f0, 0x6080c0, 0.4);
+        m.material.opacity = 0.35;
+        m.position.set((Math.random() - 0.5) * 16, -0.3 - Math.random() * 0.4, (Math.random() - 0.5) * 16);
+        group.add(m);
+        animatables.push({ type: "bob", mesh: m, amp: 0.08, speed: 0.3 + Math.random() * 0.2, baseY: m.position.y });
+      }
+
+      // faint house silhouette as light only (no architecture)
+      const sill = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.2, 1.4),
+        new THREE.MeshBasicMaterial({ color: 0xffc070, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
+      );
+      sill.position.set(-4, 2.2, 5.2);
+      group.add(sill);
+
+      applyBodyEffects(4, bodies, group);
+    }
+
+    // ---- House 5: cosmic stage -------------------------------------------
+    function buildHouse5(group, bodies) {
+      scene.background.setHex(0x06040e);
+      scene.fog.color.setHex(0x06040e);
+      scene.fog.density = 0.016;
+
+      // Stage platform as light ring (not a theater building)
+      const stage = new THREE.Mesh(
+        new THREE.CircleGeometry(7, 48),
+        new THREE.MeshStandardMaterial({
+          color: 0x1a1428, emissive: 0x302040, emissiveIntensity: 0.35,
+          roughness: 0.5, metalness: 0.2
+        })
+      );
+      stage.rotation.x = -Math.PI / 2;
+      stage.position.y = 0.1;
+      group.add(stage);
+
+      const rim = new THREE.Mesh(
+        new THREE.RingGeometry(6.8, 7.4, 48),
+        new THREE.MeshBasicMaterial({
+          color: 0xffd080, transparent: true, opacity: 0.4, side: THREE.DoubleSide
+        })
+      );
+      rim.rotation.x = -Math.PI / 2;
+      rim.position.y = 0.12;
+      group.add(rim);
+
+      // Spotlight from above (stage sun — reinforced if Sun in house)
+      const spot = new THREE.SpotLight(0xfff0d0, 1.4, 40, Math.PI / 5, 0.5, 1.2);
+      spot.position.set(0, 16, 0);
+      spot.target.position.set(0, 0, 0);
+      group.add(spot);
+      group.add(spot.target);
+
+      // Floating works: notes / sketches / canvases as light sheets
+      const works = [];
+      for (let i = 0; i < 9; i++) {
+        const isNote = i % 3 !== 0;
+        let mesh;
+        if (isNote) {
+          mesh = softSphere(0.18, 0xe8d8ff, 0xa080ff, 0.7);
+        } else {
+          mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.1, 0.8),
+            new THREE.MeshBasicMaterial({
+              color: 0xffe8c0, transparent: true, opacity: 0.55, side: THREE.DoubleSide
+            })
+          );
+        }
+        const a = (i / 9) * Math.PI * 2;
+        mesh.position.set(Math.cos(a) * (3 + (i % 3)), 2 + (i % 4) * 0.9, Math.sin(a) * (3 + (i % 3)));
+        group.add(mesh);
+        works.push(mesh);
+        animatables.push({
+          type: "floatUp",
+          mesh: mesh,
+          speed: 0.25 + (i % 5) * 0.05,
+          amp: 0.4,
+          baseY: mesh.position.y,
+          spin: 0.2 + i * 0.03
+        });
+      }
+
+      // Rising light particles (creations ascending)
+      const rise = particleCloud(120, 9, 0.5, 12, 0xffe0a0, 1.4);
+      group.add(rise);
+      animatables.push({ type: "rise", mesh: rise, speed: 0.7, amp: 2.0 });
+
+      // If Moon in 5 (neko): cooler stage wash + reflective floor glints
+      if (hasBody(bodies, "Moon")) {
+        const glints = particleCloud(40, 6.5, 0.15, 0.4, 0xd0e0ff, 1.8);
+        group.add(glints);
+        animatables.push({ type: "drift", mesh: glints, speed: 0.2, amp: 0.3 });
+      }
+
+      applyBodyEffects(5, bodies, group);
+
+      // Default soft sun if no Sun in house — stage still needs a center
+      if (!hasBody(bodies, "Sun")) {
+        const softSun = softSphere(0.9, 0xffe8c0, 0xffc870, 0.9);
+        softSun.position.set(0, 9, 0);
+        group.add(softSun);
+        animatables.push({ type: "pulse", mesh: softSun, base: 0.9, amp: 0.06, speed: 0.9 });
+      }
+    }
+
+    // ---- House 12: mist / dissolve (gentle, not fearful) -----------------
+    function buildHouse12(group, bodies) {
+      scene.background.setHex(0x070910);
+      scene.fog.color.setHex(0x0a1018);
+      scene.fog.density = 0.038;
+
+      const water = waterPlane(0x141c28, 0.4, 0.0, 40);
+      group.add(water);
+      animatables.push({ type: "ripple", mesh: water, speed: 0.15 });
+
+      // Far moon — always present as dream motif; stronger if Moon in house
+      const moon = softSphere(hasBody(bodies, "Moon") ? 1.6 : 1.2, 0xf0f4ff, 0xc0d0f0, 0.7);
+      moon.position.set(8, 12, -18);
+      group.add(moon);
+      const moonHalo = new THREE.Mesh(
+        new THREE.SphereGeometry(2.8, 20, 20),
+        new THREE.MeshBasicMaterial({
+          color: 0xd0e0ff, transparent: true, opacity: 0.1,
+          side: THREE.BackSide, depthWrite: false
+        })
+      );
+      moonHalo.position.copy(moon.position);
+      group.add(moonHalo);
+      animatables.push({ type: "breathe", mesh: moonHalo, baseOp: 0.1, amp: 0.04, speed: 0.4 });
+
+      // Footstep stars — bloom under the path
+      const footStars = particleCloud(100, 10, 0.05, 1.2, 0xc8d8ff, 1.5);
+      group.add(footStars);
+      animatables.push({ type: "rise", mesh: footStars, speed: 0.35, amp: 0.9 });
+
+      // Soft boundary dissolve — translucent sheets drifting
+      for (let i = 0; i < 5; i++) {
+        const veil = new THREE.Mesh(
+          new THREE.PlaneGeometry(14, 8),
+          new THREE.MeshBasicMaterial({
+            color: 0x8090b0, transparent: true, opacity: 0.06 + i * 0.015,
+            side: THREE.DoubleSide, depthWrite: false
+          })
+        );
+        veil.position.set((i - 2) * 3, 4 + i * 0.5, -4 + i);
+        veil.rotation.y = i * 0.3;
+        group.add(veil);
+        animatables.push({ type: "veil", mesh: veil, speed: 0.15 + i * 0.02, baseOp: veil.material.opacity });
+      }
+
+      // No architecture — only soft vertical light threads (corridor suggestion)
+      for (let i = 0; i < 4; i++) {
+        const thread = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.03, 0.03, 16, 6),
+          new THREE.MeshBasicMaterial({ color: 0xa0b8e0, transparent: true, opacity: 0.12 })
+        );
+        thread.position.set(-6 + i * 4, 8, -2);
+        group.add(thread);
+      }
+
+      applyBodyEffects(12, bodies, group);
+    }
+
+    function buildHouse(num) {
+      clearDream();
+      const bodies = bodiesIn(num);
+      const g = new THREE.Group();
+      dreamRoot.add(g);
+      if (num === 4) buildHouse4(g, bodies);
+      else if (num === 5) buildHouse5(g, bodies);
+      else buildHouse12(g, bodies);
+      updateHud(num, bodies);
+    }
+
+    function updateHud(num, bodies) {
+      const pack = HOUSES[num][lang] || HOUSES[num].ja;
+      houseNum.textContent = pack.num;
+      houseTitle.textContent = pack.title;
+      houseBody.textContent = pack.body;
+      captionLine.textContent = pack.caption;
+      const chartName = lang === "ja" ? chart.name : (chart.nameEn || chart.name);
+      const empty = lang === "ja" ? "天体なし" : "empty";
+      statusEl.textContent =
+        chartName +
+        " · H" + num +
+        " · " +
+        (bodies.length ? bodies.join(", ") : empty) +
+        "  |  4[" + ((chart.houses[4] || []).join(",") || "—") +
+        "] 5[" + ((chart.houses[5] || []).join(",") || "—") +
+        "] 12[" + ((chart.houses[12] || []).join(",") || "—") + "]";
+
+      bodyChips.innerHTML = "";
+      if (!bodies.length) {
+        const em = document.createElement("em");
+        em.textContent = lang === "ja" ? "配置天体なし — 空間そのもの" : "No natal bodies — pure space";
+        bodyChips.appendChild(em);
+      } else {
+        bodies.forEach(function (id) {
+          const span = document.createElement("span");
+          const lab = BODY_LABEL[id];
+          span.textContent = lab ? (lang === "ja" ? lab.ja : lab.en) : id;
+          bodyChips.appendChild(span);
+        });
+      }
+
+      btnH4.setAttribute("aria-pressed", num === 4 ? "true" : "false");
+      btnH5.setAttribute("aria-pressed", num === 5 ? "true" : "false");
+      btnH12.setAttribute("aria-pressed", num === 12 ? "true" : "false");
+    }
+
+    // -----------------------------------------------------------------------
+    // Animation
+    // -----------------------------------------------------------------------
+    function animateDream(t, dt) {
+      if (reducedMotion) return;
+      for (let i = 0; i < animatables.length; i++) {
+        const a = animatables[i];
+        const m = a.mesh;
+        if (!m) continue;
+        if (a.type === "pulse" && m.scale) {
+          const s = a.base + Math.sin(t * a.speed) * a.amp;
+          m.scale.setScalar(s / (a.base || 1));
+        } else if (a.type === "breathe") {
+          if (m.material && m.material.opacity != null) {
+            m.material.opacity = a.baseOp + Math.sin(t * a.speed) * a.amp;
+          }
+        } else if (a.type === "bob") {
+          m.position.y = a.baseY + Math.sin(t * a.speed) * a.amp;
+        } else if (a.type === "spin") {
+          m.rotation.z += dt * a.speed;
+        } else if (a.type === "floatUp") {
+          m.position.y = a.baseY + Math.sin(t * a.speed + a.baseY) * a.amp;
+          m.rotation.y += dt * (a.spin || 0.2);
+          // slow drift upward wrap
+          m.position.y += dt * 0.15;
+          if (m.position.y > a.baseY + 6) m.position.y = a.baseY;
+        } else if (a.type === "rise" || a.type === "drift") {
+          const pos = m.geometry.attributes.position;
+          const base = m.userData.base;
+          const phases = m.userData.phases;
+          if (!pos || !base || !phases) continue;
+          const arr = pos.array;
+          for (let j = 0; j < phases.length; j++) {
+            const o = j * 3;
+            if (a.type === "rise") {
+              let y = base[o + 1] + ((t * a.speed + phases[j]) % 4) * a.amp * 0.5;
+              arr[o] = base[o] + Math.sin(t * 0.3 + phases[j]) * 0.3;
+              arr[o + 1] = y;
+              arr[o + 2] = base[o + 2] + Math.cos(t * 0.25 + phases[j]) * 0.3;
+            } else {
+              arr[o] = base[o] + Math.sin(t * a.speed + phases[j]) * a.amp;
+              arr[o + 1] = base[o + 1] + Math.sin(t * a.speed * 0.7 + phases[j]) * a.amp * 0.5;
+              arr[o + 2] = base[o + 2] + Math.cos(t * a.speed + phases[j]) * a.amp;
+            }
+          }
+          pos.needsUpdate = true;
+        } else if (a.type === "ripple" && m.material) {
+          m.material.opacity = 0.45 + Math.sin(t * a.speed) * 0.08;
+        } else if (a.type === "veil" && m.material) {
+          m.material.opacity = a.baseOp + Math.sin(t * a.speed) * 0.02;
+          m.position.x += Math.sin(t * a.speed) * 0.002;
+        }
+      }
+      // gentle star drift
+      starsFar.rotation.y += dt * 0.01;
+      starsNear.rotation.y += dt * 0.015;
+    }
+
+    // -----------------------------------------------------------------------
+    // UI
+    // -----------------------------------------------------------------------
+    function setHouse(num) {
+      currentHouse = num;
+      buildHouse(num);
+    }
+
+    const btnChart = document.getElementById("btnChart");
+    const yamlInput = document.getElementById("yamlInput");
+    const btnLoadYaml = document.getElementById("btnLoadYaml");
+    const btnNeko = document.getElementById("btnNeko");
+    const btnCloseChart = document.getElementById("btnCloseChart");
+
+    btnH4.addEventListener("click", function () { setHouse(4); });
+    btnH5.addEventListener("click", function () { setHouse(5); });
+    btnH12.addEventListener("click", function () { setHouse(12); });
+    btnSpin.addEventListener("click", function () {
+      autoRotate = !autoRotate;
+      controls.autoRotate = autoRotate;
+      btnSpin.setAttribute("aria-pressed", autoRotate ? "true" : "false");
+    });
+    btnLang.addEventListener("click", function () {
+      lang = lang === "ja" ? "en" : "ja";
+      btnLang.textContent = lang === "ja" ? "EN" : "JA";
+      document.getElementById("introSub").innerHTML =
+        lang === "ja"
+          ? "建物はない。部屋もない。<br>ハウスは、光と粒子と重力だけになる。"
+          : "No buildings. No rooms.<br>A house becomes light, particles, and gravity.";
+      document.getElementById("introHint").textContent =
+        lang === "ja" ? "タップして入る" : "tap to enter";
+      applyUiLangForChart();
+      updateHud(currentHouse, bodiesIn(currentHouse));
+    });
+
+    if (btnChart) {
+      btnChart.addEventListener("click", function () {
+        const panel = document.getElementById("chartPanel");
+        const open = !(panel && panel.classList.contains("is-open"));
+        openChartPanel(open);
+      });
+    }
+    if (btnCloseChart) {
+      btnCloseChart.addEventListener("click", function () { openChartPanel(false); });
+    }
+    function loadYamlFromInput(andEnter) {
+      try {
+        const text = yamlInput ? yamlInput.value : "";
+        const next = parseNatalYaml(text);
+        try {
+          sessionStorage.setItem("ds-last-yaml", text);
+          sessionStorage.setItem("ds-chart-pref", "yaml");
+          // Museum entrance handoff key (same origin when served from nanami-products)
+          sessionStorage.setItem("ht-last-yaml", text);
+          sessionStorage.setItem("ht-chart-pref", "yaml");
+        } catch (e) { /* ignore */ }
+        applyChart(next, {
+          status:
+            (lang === "ja" ? "読込完了: " : "Loaded: ") +
+            next.name +
+            " · " +
+            next.bodyCount +
+            (lang === "ja" ? " 天体 · " : " bodies · ") +
+            (next.summary || ""),
+          ok: true
+        });
+        openChartPanel(false);
+        if (andEnter && typeof enterDream === "function") enterDream();
+        return true;
+      } catch (e) {
+        setChartStatus(String(e.message || e), false);
+        openChartPanel(true);
+        return false;
+      }
+    }
+
+    if (btnLoadYaml) {
+      btnLoadYaml.addEventListener("click", function () {
+        loadYamlFromInput(true);
+      });
+    }
+    if (btnNeko) {
+      btnNeko.addEventListener("click", function () {
+        try {
+          sessionStorage.setItem("ds-chart-pref", "neko");
+          sessionStorage.setItem("ht-chart-pref", "neko");
+        } catch (e) { /* ignore */ }
+        applyChart(cloneChart(NEKO), {
+          status: lang === "ja" ? "ねこ編集長に戻しました" : "Restored Neko sample",
+          ok: true
+        });
+        if (yamlInput) yamlInput.value = "";
+        openChartPanel(false);
+        if (typeof enterDream === "function") enterDream();
+      });
+    }
+
+    function tryRestoreChart() {
+      try {
+        const pref = sessionStorage.getItem("ds-chart-pref") || sessionStorage.getItem("ht-chart-pref");
+        const saved =
+          sessionStorage.getItem("ds-last-yaml") ||
+          sessionStorage.getItem("ht-last-yaml");
+        if (pref === "neko") {
+          chart = cloneChart(NEKO);
+          return "neko";
+        }
+        if (saved) {
+          try {
+            chart = parseNatalYaml(saved);
+            if (yamlInput) yamlInput.value = saved;
+            return "yaml";
+          } catch (e) {
+            console.warn("[DreamSky] restore YAML failed", e);
+          }
+        }
+      } catch (e) { /* ignore */ }
+      chart = cloneChart(NEKO);
+      return "default";
+    }
+
+    // Intro: choose YAML or sample (no auto-skip — user must pick)
+    let enterDream = function () {};
+    function runIntro() {
+      introEl.classList.add("show");
+      let entered = false;
+      enterDream = function () {
+        if (entered) return;
+        entered = true;
+        introEl.classList.add("hide");
+        document.body.classList.add("revealed");
+        openChartPanel(false);
+        setTimeout(function () {
+          introEl.style.display = "none";
+        }, 1200);
+      };
+      const introYaml = document.getElementById("introYaml");
+      const introSample = document.getElementById("introSample");
+      if (introYaml) {
+        introYaml.addEventListener("click", function (e) {
+          e.stopPropagation();
+          openChartPanel(true);
+          setChartStatus(
+            lang === "ja"
+              ? "YAMLを貼って「YAMLを読む」を押してください"
+              : "Paste YAML and press Load",
+            true
+          );
+          if (yamlInput) yamlInput.focus();
+        });
+      }
+      if (introSample) {
+        introSample.addEventListener("click", function (e) {
+          e.stopPropagation();
+          applyChart(cloneChart(NEKO), { status: "", ok: true });
+          enterDream();
+        });
+      }
+      // If YAML already restored, go straight in after short beat
+      try {
+        const pref = sessionStorage.getItem("ds-chart-pref") || sessionStorage.getItem("ht-chart-pref");
+        const saved = sessionStorage.getItem("ds-last-yaml") || sessionStorage.getItem("ht-last-yaml");
+        if (pref === "yaml" && saved && chart.source === "yaml") {
+          setTimeout(function () {
+            if (!entered) enterDream();
+          }, reducedMotion ? 200 : 900);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    function resize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / Math.max(h, 1);
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Boot
+    applyUiLangForChart();
+    tryRestoreChart();
+    setHouse(4);
+    runIntro();
+
+    const clock = new THREE.Clock();
+    function frame() {
+      requestAnimationFrame(frame);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const t = clock.elapsedTime;
+      animateDream(t, dt);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    frame();
+  })();
+  </script>
+</body>
+</html>

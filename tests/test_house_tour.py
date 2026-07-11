@@ -61,6 +61,7 @@ def test_static_modules_served():
         "js/planet-builder.js",
         "js/tour-controller.js",
         "js/ui.js",
+        "js/ambient-sound.js",
         "js/data/sample-chart.js",
         "js/data/houses-ja.js",
         "js/data/houses-en.js",
@@ -147,13 +148,15 @@ def test_template_and_route_contract():
     assert '@app.get("/house-tour"' in routes_src
 
 
-def test_yaml_load_ui_and_parser_module():
+def test_yaml_parser_module_and_portal_handoff():
+    """YAML paste UI lives on entrance only; editions load via sessionStorage + parser."""
     html = client.get("/house-tour").text
-    assert "js-yaml" in html
-    assert 'id="ht-yaml-input"' in html
-    assert 'id="ht-load-yaml"' in html
-    assert 'id="ht-load-neko"' in html
-    assert "ねこ編集長" in html or "Sample: Neko" in html or "yaml_neko" in html
+    assert "js-yaml" in html  # still needed to parse handoff
+    assert 'id="ht-yaml-input"' not in html
+    assert 'id="ht-load-yaml"' not in html
+    assert "ht-yaml-panel" not in html
+    entrance = client.get("/birth-chart-museum").text
+    assert 'id="me-yaml-input"' in entrance
     assert client.get("/static/house-tour/js/parse-yaml.js").status_code == 200
     assert client.get("/static/house-tour/js/data/neko-chart.js").status_code == 200
     parser = (HT / "js" / "parse-yaml.js").read_text(encoding="utf-8")
@@ -162,6 +165,7 @@ def test_yaml_load_ui_and_parser_module():
     assert "chartFromDoc" in parser
     main = (HT / "js" / "main.js").read_text(encoding="utf-8")
     assert "parseNatalYaml" in main
+    assert "ht-last-yaml" in main
     assert "applyChart" in main
     assert "nekoChart" in main
     assert "createCinematicPlayer" in main

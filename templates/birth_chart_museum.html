@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Birth Chart Museum｜入口</title>
+  <meta name="description" content="出生図ミュージアムの入口。抽象版と建築版を選べます。YAMLはここで貼って各版に引き継げます。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Serif+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset_url('house-tour/museum-entrance.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+{% include "_head_icons.html" %}
+</head>
+<body>
+  <div class="me-stars" aria-hidden="true"></div>
+
+  <header class="me-header">
+    <a class="me-logo" href="/">NANAMI PRODUCTS</a>
+    <nav class="me-lang">
+      <button type="button" class="me-lang-btn is-active" data-lang="ja" id="me-lang-ja">日本語</button>
+      <button type="button" class="me-lang-btn" data-lang="en" id="me-lang-en">English</button>
+    </nav>
+  </header>
+
+  <main class="me-main">
+    <p class="me-eyebrow" data-i18n="eyebrow">INTERACTIVE EXHIBITION</p>
+    <h1 class="me-title">BIRTH CHART<br>MUSEUM</h1>
+    <p class="me-lead" data-i18n="lead">
+      ホロスコープを読むのではなく、出生図の中を歩く。<br>
+      体験の入り口を選んでください。
+    </p>
+
+    <!-- YAML on TOP — handoff to editions via sessionStorage -->
+    <section class="me-yaml" aria-label="Natal YAML">
+      <h2 class="me-yaml-title" data-i18n="yaml_title">出生図 YAML（任意）</h2>
+      <p class="me-yaml-help" data-i18n="yaml_help">
+        ここで貼って保存すると、入館後の各版に引き継がれます。入館はボタンで行い、自動では始まりません。
+      </p>
+      <textarea
+        id="me-yaml-input"
+        class="me-yaml-input"
+        rows="5"
+        spellcheck="false"
+        placeholder="version: nanami-products-yaml-detail-v1&#10;systems:&#10;  western:&#10;    natal: …"
+      ></textarea>
+      <div class="me-yaml-actions">
+        <button type="button" class="me-btn me-btn-primary" id="me-yaml-save" data-i18n="yaml_save">この図を使う</button>
+        <button type="button" class="me-btn me-btn-ghost" id="me-yaml-neko" data-i18n="yaml_neko">ねこ編集長</button>
+        <button type="button" class="me-btn me-btn-ghost" id="me-yaml-clear" data-i18n="yaml_clear">クリア</button>
+      </div>
+      <p class="me-yaml-status" id="me-yaml-status" role="status"></p>
+    </section>
+
+    <div class="me-cards">
+      <!-- Abstract -->
+      <article class="me-card me-card-abstract">
+        <p class="me-card-kicker" data-i18n="abs_kicker">本線 · Abstract</p>
+        <h2 class="me-card-title" data-i18n="abs_title">象徴ミュージアム</h2>
+        <p class="me-card-body" data-i18n="abs_body">
+          低ポリの象徴空間。ガイドツアー・YAML読込・日英対応が揃った、コンセプトの中心版です。
+        </p>
+        <ul class="me-card-list">
+          <li data-i18n="abs_f1">ガイドが「何を見るか」を案内</li>
+          <li data-i18n="abs_f2">クリック歩行 · YAML出生図</li>
+          <li data-i18n="abs_f3">日本語 / English</li>
+        </ul>
+        <div class="me-card-actions">
+          <a class="me-btn me-btn-primary" id="me-abs-guide" href="/house-tour?prefer_guide=1">
+            <span data-i18n="abs_cta_guide">入館（ガイド推奨）</span>
+          </a>
+          <a class="me-btn me-btn-ghost" id="me-abs-free" href="/house-tour">
+            <span data-i18n="abs_cta_free">入館（自由）</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Architecture -->
+      <article class="me-card me-card-arch">
+        <p class="me-card-kicker" data-i18n="arch_kicker">実験 · Architecture</p>
+        <h2 class="me-card-title" data-i18n="arch_title">建築ミュージアム</h2>
+        <p class="me-card-body" data-i18n="arch_body">
+          邸宅・劇場・天文台など、現実にありそうな棟として歩ける試作です。素材とスケールを寄せています。
+        </p>
+        <ul class="me-card-list">
+          <li data-i18n="arch_f1">全12棟の建築ボリューム</li>
+          <li data-i18n="arch_f2">4 / 5 / 9 を特に厚く</li>
+          <li data-i18n="arch_f3">入館後にガイド開始（ボタン）</li>
+        </ul>
+        <div class="me-card-actions">
+          <a class="me-btn me-btn-primary" id="me-arch-guide" href="/house-tour-architecture?prefer_guide=1">
+            <span data-i18n="arch_cta_guide">入館（ガイド推奨）</span>
+          </a>
+          <a class="me-btn me-btn-ghost" id="me-arch-free" href="/house-tour-architecture">
+            <span data-i18n="arch_cta_free">入館（自由）</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Dream -->
+      <article class="me-card me-card-dream">
+        <p class="me-card-kicker" data-i18n="dream_kicker">実験 · Dream</p>
+        <h2 class="me-card-title" data-i18n="dream_title">Dream Sky</h2>
+        <p class="me-card-body" data-i18n="dream_body">
+          建物のない象徴空間。第4・5・12を、光と粒子と重力で体験します。上のYAMLがそのまま使えます。
+        </p>
+        <ul class="me-card-list">
+          <li data-i18n="dream_f1">自分の YAML / ねこ編集長</li>
+          <li data-i18n="dream_f2">第4 湖 · 第5 舞台 · 第12 霧</li>
+          <li data-i18n="dream_f3">配置天体で光と粒子が変化</li>
+        </ul>
+        <div class="me-card-actions">
+          <a class="me-btn me-btn-primary" id="me-dream-enter" href="/dream-sky">
+            <span data-i18n="dream_cta">Dream に入る</span>
+          </a>
+        </div>
+      </article>
+    </div>
+
+    <p class="me-note" data-i18n="note">
+      鑑定・注文処理には接続しません。出生図YAMLはブラウザ内だけ。入口で保存したYAMLは各版（Dream含む）に引き継がれます。
+    </p>
+    <p class="me-back"><a href="/" data-i18n="back">← nanami-products へ戻る</a></p>
+  </main>
+
+  <script src="{{ asset_url('house-tour/museum-entrance.js') }}" defer></script>
+</body>
+</html>

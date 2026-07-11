@@ -1,0 +1,691 @@
+/* Transit Flight — immersive space-flight UI
+   Brand: dark navy / black / deep purple / blue / gold accent */
+
+:root {
+  --tf-bg: #050810;
+  --tf-navy: #0a1128;
+  --tf-deep: #0d0a18;
+  --tf-purple: #1a1030;
+  --tf-blue: #1e3a6e;
+  --tf-gold: #c9a96e;
+  --tf-gold-soft: #e8d5b0;
+  --tf-text: #e8e4f0;
+  --tf-muted: #9aa3b8;
+  --tf-panel: rgba(10, 14, 28, 0.72);
+  --tf-panel-border: rgba(201, 169, 110, 0.22);
+  --tf-danger: #c4788a;
+  --tf-font: "Noto Sans JP", "Hiragino Sans", "Segoe UI", system-ui, sans-serif;
+  --tf-display: "Cinzel", "Cormorant Garamond", "Times New Roman", serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--tf-bg);
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Full-viewport canvas host */
+#tf-root {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, #0d1230 0%, #050810 70%);
+}
+
+#tf-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+#tf-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+/* ── Overlay layers ── */
+.tf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.tf-overlay.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.tf-overlay.is-interactive {
+  pointer-events: auto;
+}
+
+/* ── Title screen ── */
+#tf-title {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 45%, rgba(30, 22, 60, 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(5, 8, 16, 0.2) 0%, rgba(5, 8, 16, 0.75) 100%);
+}
+
+.tf-title-inner {
+  text-align: center;
+  padding: 32px 24px;
+  max-width: 520px;
+}
+
+.tf-eyebrow {
+  font-family: var(--tf-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.35em;
+  color: var(--tf-gold);
+  opacity: 0.85;
+  margin-bottom: 16px;
+}
+
+.tf-title-main {
+  font-family: var(--tf-display);
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--tf-gold-soft);
+  margin-bottom: 8px;
+  text-shadow: 0 0 40px rgba(201, 169, 110, 0.25);
+}
+
+.tf-title-sub {
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  color: var(--tf-muted);
+  margin-bottom: 28px;
+}
+
+.tf-profile {
+  display: grid;
+  gap: 6px;
+  margin: 0 auto 28px;
+  padding: 14px 18px;
+  background: var(--tf-panel);
+  border: 1px solid var(--tf-panel-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align: left;
+  font-size: 0.88rem;
+  max-width: 320px;
+}
+
+.tf-profile dt {
+  color: var(--tf-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.tf-profile dd {
+  color: var(--tf-text);
+  margin-bottom: 6px;
+}
+
+.tf-profile dd:last-child {
+  margin-bottom: 0;
+}
+
+.tf-btn {
+  appearance: none;
+  border: 1px solid rgba(201, 169, 110, 0.55);
+  background: linear-gradient(180deg, rgba(40, 32, 20, 0.9), rgba(20, 16, 10, 0.95));
+  color: var(--tf-gold-soft);
+  font-family: var(--tf-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.22em;
+  padding: 14px 36px;
+  border-radius: 999px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, background 0.2s;
+  min-height: 48px;
+  min-width: 180px;
+}
+
+.tf-btn:hover,
+.tf-btn:focus-visible {
+  border-color: var(--tf-gold);
+  box-shadow: 0 0 24px rgba(201, 169, 110, 0.25);
+  outline: none;
+}
+
+.tf-btn:active {
+  transform: scale(0.98);
+}
+
+.tf-btn-secondary {
+  border-color: rgba(154, 163, 184, 0.35);
+  background: rgba(12, 16, 32, 0.75);
+  color: var(--tf-text);
+  font-family: var(--tf-font);
+  letter-spacing: 0.06em;
+  font-size: 0.88rem;
+}
+
+.tf-btn-secondary:hover,
+.tf-btn-secondary:focus-visible {
+  border-color: rgba(201, 169, 110, 0.45);
+  box-shadow: 0 0 16px rgba(201, 169, 110, 0.12);
+}
+
+.tf-hint {
+  margin-top: 18px;
+  font-size: 0.78rem;
+  color: var(--tf-muted);
+  line-height: 1.6;
+}
+
+.tf-hint strong {
+  color: var(--tf-gold-soft);
+  font-weight: 500;
+}
+
+/* YAML / URL load */
+.tf-yaml-panel {
+  width: min(420px, 100%);
+  margin: 0 auto 20px;
+  text-align: left;
+}
+
+.tf-url-input {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 169, 110, 0.22);
+  background: rgba(6, 10, 22, 0.85);
+  color: var(--tf-text);
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  pointer-events: auto;
+  touch-action: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  margin-bottom: 10px;
+}
+
+.tf-url-input:focus {
+  outline: none;
+  border-color: rgba(201, 169, 110, 0.55);
+  box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.2);
+}
+
+.tf-url-input::placeholder {
+  color: rgba(154, 163, 184, 0.55);
+}
+
+.tf-yaml-details {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+}
+
+.tf-yaml-details summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--tf-muted);
+  letter-spacing: 0.04em;
+  list-style: none;
+  margin-bottom: 8px;
+}
+
+.tf-yaml-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.tf-yaml-details summary::before {
+  content: "▸ ";
+  color: var(--tf-gold);
+}
+
+.tf-yaml-details[open] summary::before {
+  content: "▾ ";
+}
+
+.tf-hint code {
+  font-size: 0.72rem;
+  color: var(--tf-gold-soft);
+  word-break: break-all;
+}
+
+.tf-yaml-label {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--tf-muted);
+  margin-bottom: 8px;
+}
+
+.tf-yaml-note {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
+.tf-yaml-input {
+  width: 100%;
+  min-height: 110px;
+  max-height: 200px;
+  resize: vertical;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 169, 110, 0.22);
+  background: rgba(6, 10, 22, 0.85);
+  color: var(--tf-text);
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  pointer-events: auto;
+  touch-action: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.tf-yaml-input:focus {
+  outline: none;
+  border-color: rgba(201, 169, 110, 0.55);
+  box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.2);
+}
+
+.tf-yaml-input::placeholder {
+  color: rgba(154, 163, 184, 0.55);
+}
+
+.tf-yaml-status {
+  min-height: 1.3em;
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--tf-muted);
+}
+
+.tf-yaml-status.is-error {
+  color: #e0a0ae;
+}
+
+.tf-yaml-status.is-ok {
+  color: #9ed4b8;
+}
+
+.tf-yaml-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tf-yaml-actions .tf-btn {
+  flex: 1 1 auto;
+  min-width: 140px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 12px 16px;
+  font-family: var(--tf-font);
+}
+
+/* ── HUD (flight) ── */
+#tf-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+#tf-hud.is-visible {
+  opacity: 1;
+}
+
+.tf-date-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 16px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(5, 8, 16, 0.75) 0%, transparent 100%);
+}
+
+.tf-date-label {
+  font-family: var(--tf-display);
+  font-size: clamp(1rem, 3.5vw, 1.35rem);
+  letter-spacing: 0.12em;
+  color: var(--tf-gold-soft);
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+.tf-date-meta {
+  font-size: 0.72rem;
+  color: var(--tf-muted);
+  letter-spacing: 0.06em;
+  text-align: right;
+  line-height: 1.5;
+}
+
+.tf-progress {
+  position: absolute;
+  top: 52px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tf-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(100, 140, 220, 0.5), var(--tf-gold));
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.tf-controls-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  font-size: 0.72rem;
+  color: var(--tf-muted);
+}
+
+.tf-pause-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 169, 110, 0.35);
+  background: rgba(10, 14, 28, 0.7);
+  color: var(--tf-gold-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.tf-pause-badge.is-on {
+  opacity: 1;
+}
+
+/* Floating event card during flight */
+#tf-event-card {
+  position: fixed;
+  left: 50%;
+  bottom: 56px;
+  transform: translateX(-50%) translateY(12px);
+  z-index: 9;
+  width: min(420px, calc(100% - 28px));
+  padding: 16px 18px;
+  background: var(--tf-panel);
+  border: 1px solid var(--tf-panel-border);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+#tf-event-card.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tf-event-level {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--tf-gold);
+  margin-bottom: 6px;
+}
+
+.tf-event-title {
+  font-family: var(--tf-display);
+  font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+  letter-spacing: 0.08em;
+  color: var(--tf-gold-soft);
+  margin-bottom: 4px;
+  line-height: 1.35;
+}
+
+.tf-event-ja {
+  font-size: 0.82rem;
+  color: var(--tf-muted);
+  margin-bottom: 10px;
+}
+
+.tf-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 0.78rem;
+  color: var(--tf-text);
+  margin-bottom: 8px;
+}
+
+.tf-event-meta span {
+  opacity: 0.9;
+}
+
+.tf-event-theme {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--tf-text);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+}
+
+/* ── End screen ── */
+#tf-end {
+  background: linear-gradient(180deg, rgba(5, 8, 16, 0.35) 0%, rgba(5, 8, 16, 0.88) 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.tf-end-inner {
+  width: min(480px, calc(100% - 32px));
+  margin: 40px auto;
+  padding: 28px 22px;
+  background: var(--tf-panel);
+  border: 1px solid var(--tf-panel-border);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.tf-end-inner h2 {
+  font-family: var(--tf-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.16em;
+  color: var(--tf-gold-soft);
+  margin-bottom: 8px;
+}
+
+.tf-end-lead {
+  font-size: 0.88rem;
+  color: var(--tf-muted);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.tf-summary-list {
+  list-style: none;
+  text-align: left;
+  margin: 0 0 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.tf-summary-list li {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tf-summary-list .s-date {
+  font-size: 0.72rem;
+  color: var(--tf-gold);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.tf-summary-list .s-title {
+  font-size: 0.9rem;
+  color: var(--tf-text);
+  margin-bottom: 2px;
+}
+
+.tf-summary-list .s-theme {
+  font-size: 0.8rem;
+  color: var(--tf-muted);
+  line-height: 1.45;
+}
+
+.tf-end-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+/* ── Error banner ── */
+#tf-error {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  width: min(400px, calc(100% - 32px));
+  padding: 24px 20px;
+  background: rgba(20, 12, 18, 0.95);
+  border: 1px solid rgba(196, 120, 138, 0.4);
+  border-radius: 14px;
+  text-align: center;
+  pointer-events: auto;
+}
+
+#tf-error h2 {
+  font-size: 1rem;
+  color: var(--tf-danger);
+  margin-bottom: 8px;
+}
+
+#tf-error p {
+  font-size: 0.88rem;
+  color: var(--tf-muted);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+/* Loading */
+#tf-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tf-bg);
+  color: var(--tf-muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  transition: opacity 0.4s ease;
+}
+
+#tf-loading.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .tf-overlay,
+  #tf-hud,
+  #tf-event-card,
+  .tf-btn,
+  .tf-progress-fill,
+  .tf-pause-badge {
+    transition: none !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .tf-title-inner {
+    padding: 24px 16px;
+  }
+
+  .tf-btn {
+    width: 100%;
+    max-width: 280px;
+    font-size: 0.9rem;
+    padding: 14px 24px;
+  }
+
+  .tf-date-bar {
+    padding: 12px 12px 8px;
+  }
+
+  .tf-controls-hint {
+    font-size: 0.68rem;
+    bottom: 10px;
+    left: 12px;
+    right: 12px;
+  }
+
+  #tf-event-card {
+    bottom: 48px;
+    padding: 14px 14px;
+  }
+
+  .tf-end-inner {
+    margin: 24px auto;
+    padding: 22px 16px;
+  }
+}

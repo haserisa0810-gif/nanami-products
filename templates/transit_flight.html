@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Transit Flight｜トランジット・フライト</title>
+  <meta name="description" content="ホロスコープのトランジットを、宇宙空間を飛行する3Dシミュレーションとして体験するプロトタイプ。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset_url('transit-flight/transit-flight.css') }}">
+  <!-- asset_version: {{ asset_version }} -->
+  <!-- Three.js はこのページだけに読み込む（他ページ非汚染） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+{% include "_head_icons.html" %}
+</head>
+<body>
+  <div id="tf-loading" aria-live="polite">LOADING</div>
+
+  <div id="tf-error" hidden role="alert">
+    <h2>表示できませんでした</h2>
+    <p id="tf-error-msg">読み込みに失敗しました。</p>
+    <button type="button" class="tf-btn tf-btn-secondary" id="tf-error-retry">再試行</button>
+  </div>
+
+  <div id="tf-root">
+    <canvas id="tf-canvas" aria-label="Transit Flight 3D view"></canvas>
+  </div>
+
+  <!-- Title / Opening -->
+  <div id="tf-title" class="tf-overlay is-interactive" role="dialog" aria-label="Transit Flight title">
+    <div class="tf-title-inner">
+      <p class="tf-eyebrow">NANAMI PRODUCTS</p>
+      <h1 class="tf-title-main">TRANSIT FLIGHT</h1>
+      <p class="tf-title-sub">トランジット・フライト</p>
+
+      <dl class="tf-profile">
+        <dt>対象</dt>
+        <dd id="tf-profile-name">—</dd>
+        <dt>生年月日</dt>
+        <dd id="tf-profile-birth">—</dd>
+        <dt>対象期間</dt>
+        <dd id="tf-profile-period">—</dd>
+      </dl>
+
+      <div class="tf-yaml-panel">
+        <label class="tf-yaml-label" for="tf-url-input">
+          Chart URL で読み込む
+          <span class="tf-yaml-note">MCP と同じ Chart URL / token（推奨）</span>
+        </label>
+        <input
+          type="url"
+          id="tf-url-input"
+          class="tf-url-input"
+          inputmode="url"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="https://chart.nanami-astro.com/chart/chart_…"
+        >
+        <div class="tf-yaml-actions">
+          <button type="button" class="tf-btn" id="tf-load-url">URLで読み込む</button>
+          <button type="button" class="tf-btn tf-btn-secondary" id="tf-use-sample">サンプル</button>
+        </div>
+
+        <details class="tf-yaml-details">
+          <summary>YAMLを直接貼り付ける</summary>
+          <label class="tf-yaml-label" for="tf-yaml-input">
+            チャート YAML
+            <span class="tf-yaml-note">FULL / transit.yaml / detail（トランジット期間付き）</span>
+          </label>
+          <textarea
+            id="tf-yaml-input"
+            class="tf-yaml-input"
+            rows="5"
+            spellcheck="false"
+            placeholder="version: nanami-products-yaml-v1&#10;systems:&#10;  western:&#10;    transit:&#10;      ..."
+          ></textarea>
+          <div class="tf-yaml-actions">
+            <button type="button" class="tf-btn tf-btn-secondary" id="tf-load-yaml">YAMLで読み込む</button>
+          </div>
+        </details>
+
+        <p id="tf-yaml-status" class="tf-yaml-status" role="status" aria-live="polite"></p>
+      </div>
+
+      <button type="button" class="tf-btn" id="tf-start">FLIGHT START</button>
+      <p class="tf-hint">
+        約1分で対象期間のトランジットを飛行します。<br>
+        ディープリンク: <code>/transit-flight?load=ChartURL</code><br>
+        <strong>トランジット期間データ</strong>が必要です（ネイタルのみ不可）。
+      </p>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="tf-hud" aria-hidden="true">
+    <div class="tf-date-bar">
+      <div class="tf-date-label" id="tf-date">——————</div>
+      <div class="tf-date-meta">
+        TRANSIT TIMELINE<br>
+        AUTO FLIGHT
+      </div>
+    </div>
+    <div class="tf-progress" aria-hidden="true">
+      <div class="tf-progress-fill" id="tf-progress-fill"></div>
+    </div>
+    <div class="tf-controls-hint">
+      <span id="tf-controls-hint">—</span>
+      <span class="tf-pause-badge" id="tf-pause-badge"></span>
+    </div>
+  </div>
+
+  <!-- Event detail card -->
+  <div id="tf-event-card" role="status" aria-live="polite">
+    <div class="tf-event-level" id="tf-event-level">LEVEL</div>
+    <div class="tf-event-title" id="tf-event-title">—</div>
+    <div class="tf-event-ja" id="tf-event-ja">—</div>
+    <div class="tf-event-meta" id="tf-event-meta"></div>
+    <div class="tf-event-theme" id="tf-event-theme"></div>
+  </div>
+
+  <!-- End screen -->
+  <div id="tf-end" class="tf-overlay is-hidden" role="dialog" aria-label="Flight complete">
+    <div class="tf-end-inner">
+      <h2>FLIGHT COMPLETE</h2>
+      <p class="tf-end-lead">
+        対象期間の終点に到達しました。<br>
+        飛行中に通過した主なトランジットです。
+      </p>
+      <ul class="tf-summary-list" id="tf-summary-list"></ul>
+      <div class="tf-end-actions">
+        <button type="button" class="tf-btn" id="tf-replay">もう一度飛ぶ</button>
+        <button type="button" class="tf-btn tf-btn-secondary" id="tf-copy-data">AIに渡すデータをコピー</button>
+        <p id="tf-copy-status" class="tf-yaml-status" role="status"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ asset_url('transit-flight/transit-flight.js') }}"></script>
+</body>
+</html>

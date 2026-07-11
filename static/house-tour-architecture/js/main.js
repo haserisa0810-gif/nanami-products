@@ -33,6 +33,7 @@ import {
   applyArchAtmosphere,
   EYE_H,
 } from "./arch-builder.js";
+import { createAmbientSound } from "../../house-tour/js/ambient-sound.js";
 
 (function boot() {
   if (typeof THREE === "undefined") {
@@ -46,7 +47,7 @@ import {
   let housesData = getHousesData();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let quality = localStorage.getItem("ht-quality") || "high";
-  let soundOn = false;
+  const ambient = createAmbientSound();
   let started = false;
   let mapOpen = false;
   let chart = nekoChart;
@@ -95,6 +96,7 @@ import {
         controls.teleport(num);
         controls.syncLastHouse(num);
       }
+      ambient.onHouse(h);
       ui.setGuideLabel(guideLabelText());
       if (!opts.silentTeleport && opts.reason !== "walk") {
         ui.toast(
@@ -252,7 +254,7 @@ import {
     ui.renderHouse(cur, withCusp(housesData[cur] || housesData[0], cur), enrich(bodiesByHouse[cur] || []), {
       silent: true,
     });
-    if (opts.status) setYamlStatus(opts.status, opts.statusOk ? "ok" : "err");
+    // ステータス表示は入口ポータル側。タイトルは profile のみ更新。
   }
 
   function withCusp(h, num) {
@@ -276,40 +278,7 @@ import {
     return m;
   }
 
-  const yamlInput = document.getElementById("ht-yaml-input");
-  const yamlStatus = document.getElementById("ht-yaml-status");
-  function setYamlStatus(msg, kind) {
-    if (!yamlStatus) return;
-    yamlStatus.textContent = msg || "";
-    yamlStatus.classList.remove("is-ok", "is-err");
-    if (kind === "ok") yamlStatus.classList.add("is-ok");
-    if (kind === "err") yamlStatus.classList.add("is-err");
-  }
-
-  document.getElementById("ht-load-yaml")?.addEventListener("click", () => {
-    try {
-      const text = yamlInput ? yamlInput.value : "";
-      const { chart: loaded, bodyCount, warnings } = parseNatalYaml(text);
-      applyChart(loaded, {
-        status:
-          t("status_loaded", { name: loaded.name, n: bodyCount }) +
-          (warnings && warnings.length ? t("status_warn", { n: warnings.length }) : ""),
-        statusOk: true,
-      });
-      ui.toast(t("toast_yaml_ok", { name: loaded.name }), 2800);
-    } catch (e) {
-      setYamlStatus(String(e.message || e), "err");
-      ui.toast(t("toast_yaml_err"), 2800);
-    }
-  });
-  document.getElementById("ht-load-neko")?.addEventListener("click", () => {
-    applyChart(nekoChart, { status: t("status_neko_short"), statusOk: true });
-    ui.toast(t("toast_neko"), 2600);
-  });
-  document.getElementById("ht-use-sample")?.addEventListener("click", () => {
-    applyChart(sampleChart, { status: t("status_sample"), statusOk: true });
-    ui.toast(t("toast_sample"), 2000);
-  });
+  // YAML 入力 UI は入口のみ。ここでは sessionStorage から読む。
 
   document.querySelectorAll("[data-lang-set]").forEach((btn) => {
     btn.addEventListener("click", () => setLang(btn.getAttribute("data-lang-set")));
@@ -318,8 +287,8 @@ import {
     housesData = getHousesData();
     applyDomI18n(document);
     ui.setQualityLabel(quality);
-    ui.setSoundLabel(soundOn);
-    applyChart(chart, { status: yamlStatus ? yamlStatus.textContent : "", statusOk: true });
+    ui.setSoundLabel(ambient.isOn());
+    applyChart(chart, { status: "", statusOk: true });
     ui.setGuideLabel(guideLabelText());
   });
 
@@ -365,9 +334,11 @@ import {
     ui.el.btnMode.textContent = m === "walk" ? t("btn_mode_orbit") : t("btn_mode_walk");
   });
   ui.el.btnSound?.addEventListener("click", () => {
-    soundOn = !soundOn;
-    ui.setSoundLabel(soundOn);
-    ui.toast(soundOn ? t("toast_sound_on") : t("toast_sound_off"));
+    const h = housesData[tour.getCurrent()] || housesData[0];
+    ambient.toggle(h).then((on) => {
+      ui.setSoundLabel(on);
+      ui.toast(on ? t("toast_sound_on") : t("toast_sound_off"), 2200);
+    });
   });
   ui.el.btnQuality?.addEventListener("click", () => {
     quality = quality === "high" ? "low" : "high";
@@ -403,10 +374,58 @@ import {
     ui.showPlanetPanel(planetDetail(id, house, housesData[house], extra));
   });
 
-  // 初期チャート
-  applyChart(nekoChart, { status: t("status_neko"), statusOk: true });
-  ui.renderHouse(0, housesData[0], [], { silent: true });
+  // 初期チャート（入口ポータルの sessionStorage を優先）
+  (function initialFromPortal() {
+    try {
+      const pref = sessionStorage.getItem("ht-chart-pref");
+      const saved = sessionStorage.getItem("ht-last-yaml");
+      if (pref === "neko") {
+        applyChart(nekoChart, { status: t("status_neko"), statusOk: true });
+        return;
+      }
+      if (saved && (pref === "yaml" || !pref)) {
+        try {
+          const { chart: loaded, bodyCount, warnings } = parseNatalYaml(saved);
+          applyChart(loaded, {
+            status:
+              t("status_loaded", { name: loaded.name, n: bodyCount }) +
+              (warnings && warnings.length ? t("status_warn", { n: warnings.length }) : ""),
+            statusOk: true,
+          });
+          return;
+        } catch (e) {
+          ui.toast(t("toast_yaml_err"), 2800);
+        }
+      }
+    } catch (e) { /* ignore */ }
+    applyChart(nekoChart, { status: t("status_neko"), statusOk: true });
+  })();
+  try {
+    ui.renderHouse(0, housesData[0], [], { silent: true });
+  } catch (e) {
+    console.error("[HouseTourArch] initial UI", e);
+  }
   ui.hideLoading();
+
+  // 自動開始はしない（タイトルで YAML / チャート確認してからボタンで開始）
+  if (wantsPreferGuide()) {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (started) return;
+        ui.toast(t("toast_guide_hint") || "準備ができたら「ガイドツアーで巡る」を押してください", 4200);
+      }, 500);
+    });
+  }
+
+  function wantsPreferGuide() {
+    try {
+      const p = new URLSearchParams(window.location.search || "");
+      const v = (p.get("prefer_guide") || p.get("auto_guide") || p.get("guide") || "").toLowerCase();
+      return v === "1" || v === "true" || v === "yes" || v === "on";
+    } catch (e) {
+      return false;
+    }
+  }
 
   function frame() {
     requestAnimationFrame(frame);

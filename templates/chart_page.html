@@ -903,6 +903,11 @@
               {% if lang == 'ja' %}星読みの暦アプリで開く（自動読み込み）{% else %}Open in Hoshiyomi app (auto-load){% endif %}
             </a>
             {% endif %}
+            {% if transit_flight_url %}
+            <a class="download-primary" id="transit-flight-button" href="{{ transit_flight_url }}" target="_blank" rel="noopener">
+              {% if lang == 'ja' %}Transit Flight で体験する（自動読み込み）{% else %}Open in Transit Flight (auto-load){% endif %}
+            </a>
+            {% endif %}
             <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>{{ t.save_zip }}</a>
             <details class="advanced-downloads">
               <summary>{{ t.individual_files }}</summary>

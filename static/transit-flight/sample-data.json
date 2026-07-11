@@ -1,0 +1,73 @@
+{
+  "profile": {
+    "name": "Sample",
+    "birth_date": "1976-08-10",
+    "period_start": "2026-07-01",
+    "period_end": "2027-06-30"
+  },
+  "events": [
+    {
+      "date": "2026-08-06",
+      "transit_planet": "Jupiter",
+      "natal_planet": "Saturn",
+      "aspect": "conjunction",
+      "orb": 0.2,
+      "level": 2,
+      "theme": "成長と責任を結び直す時期"
+    },
+    {
+      "date": "2026-09-22",
+      "transit_planet": "Jupiter",
+      "natal_planet": "Sun",
+      "aspect": "conjunction",
+      "orb": 0.1,
+      "level": 3,
+      "theme": "活動範囲と自己表現が広がりやすい時期"
+    },
+    {
+      "date": "2026-10-26",
+      "transit_planet": "Saturn",
+      "natal_planet": "Pluto",
+      "aspect": "opposition",
+      "orb": 0.4,
+      "level": 3,
+      "theme": "長く続いた構造を見直す時期"
+    },
+    {
+      "date": "2026-12-22",
+      "transit_planet": "Uranus",
+      "natal_planet": "Venus",
+      "aspect": "square",
+      "orb": 0.3,
+      "level": 3,
+      "theme": "価値観・収入・人間関係の再編"
+    },
+    {
+      "date": "2027-01-18",
+      "transit_planet": "Mars",
+      "natal_planet": "Moon",
+      "aspect": "trine",
+      "orb": 0.5,
+      "level": 1,
+      "theme": "感情の動きが行動に乗りやすい時期"
+    },
+    {
+      "date": "2027-02-14",
+      "transit_planet": "Venus",
+      "natal_planet": "Mercury",
+      "aspect": "sextile",
+      "orb": 0.6,
+      "level": 1,
+      "theme": "対話と調和が生まれやすい時期"
+    },
+    {
+      "date": "2027-03-19",
+      "transit_planet": "Jupiter",
+      "natal_planet": "Sun",
+      "aspect": "conjunction",
+      "orb": 0.1,
+      "level": 3,
+      "theme": "可能性を現実の活動へ広げる時期"
+    }
+  ]
+}

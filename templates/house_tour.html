@@ -50,26 +50,6 @@
         <dd id="ht-profile-system">—</dd>
       </dl>
 
-      <div class="ht-yaml-panel">
-        <label class="ht-yaml-label" for="ht-yaml-input">
-          <span data-i18n="yaml_label">自分の出生図 YAML を貼る</span>
-          <span class="ht-yaml-note" data-i18n="yaml_note">detail / full / base（systems.western.natal 入り）</span>
-        </label>
-        <textarea
-          id="ht-yaml-input"
-          class="ht-yaml-input"
-          rows="5"
-          spellcheck="false"
-          placeholder="version: nanami-products-yaml-detail-v1&#10;systems:&#10;  western:&#10;    natal: …"
-        ></textarea>
-        <div class="ht-yaml-actions">
-          <button type="button" class="ht-btn" id="ht-load-yaml" data-i18n="yaml_load">YAMLで読み込む</button>
-          <button type="button" class="ht-btn ht-btn-secondary" id="ht-load-neko" data-i18n="yaml_neko">ねこ編集長</button>
-          <button type="button" class="ht-btn ht-btn-secondary" id="ht-use-sample" data-i18n="yaml_sample">デモ用サンプル</button>
-        </div>
-        <p id="ht-yaml-status" class="ht-yaml-status" role="status" aria-live="polite"></p>
-      </div>
-
       <div class="ht-title-actions">
         <button type="button" class="ht-btn" id="ht-start-guide" data-i18n="start_guide">ガイドツアーで巡る（おすすめ）</button>
         <button type="button" class="ht-btn ht-btn-secondary" id="ht-start-free" data-i18n="start_free">自由に歩く（クリックで移動）</button>
@@ -78,9 +58,11 @@
       <p class="ht-hint">
         <span data-i18n="hint_1">まずはガイドツアー。カメラが「何を見ればいいか」を案内します。</span><br>
         <span data-i18n="hint_2">案内中は「次へ」でショット送り／次の部屋へ。歩きはゆっくりです。</span><br>
-        <span data-i18n="hint_3">YAMLはブラウザ内のみ（サーバーへ送りません）。</span>
+        <span data-i18n="hint_3">出生図の切替はミュージアム入口で。この画面ではツアー開始だけ。</span>
       </p>
       <p class="ht-hint">
+        <a class="ht-edition-link" href="/birth-chart-museum">← ミュージアム入口</a>
+        ·
         <a class="ht-edition-link" href="/house-tour-architecture">Architecture Edition（建築試作）→</a>
       </p>
       <p class="ht-back"><a href="/" data-i18n="back_home">← nanami-products へ戻る</a></p>
@@ -102,7 +84,9 @@
         <button type="button" class="ht-chip-btn" id="ht-btn-sound" data-i18n="btn_sound_off">音: OFF</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-quality" data-i18n="btn_quality_high">品質: 高</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-help" data-i18n="btn_help">操作</button>
+        <button type="button" class="ht-chip-btn" id="ht-btn-title" data-i18n="btn_title">タイトル</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-menu" data-i18n="btn_menu">メニュー</button>
+        <a class="ht-chip-btn ht-chip-entrance" href="/birth-chart-museum" data-i18n="btn_entrance" title="Museum entrance">入口</a>
       </div>
     </div>
 
@@ -203,11 +187,13 @@
     <div class="ht-overlay-card">
       <h3 data-i18n="menu_title">メニュー</h3>
       <div class="ht-menu-actions">
-        <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-title" data-i18n="menu_title_back">タイトルへ戻る</button>
+        <button type="button" class="ht-btn" id="ht-menu-title" data-i18n="menu_title_back">タイトルへ戻る</button>
+        <a class="ht-btn ht-btn-secondary" href="/birth-chart-museum" data-i18n="menu_entrance">ミュージアム入口（版選択）</a>
+        <a class="ht-btn ht-btn-secondary" href="/house-tour-architecture" data-i18n="menu_arch">Architecture Edition</a>
         <a class="ht-btn ht-btn-secondary" href="/" data-i18n="menu_home">サイトTOPへ</a>
-        <button type="button" class="ht-btn" id="ht-menu-close" data-i18n="menu_close">閉じる</button>
+        <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-close" data-i18n="menu_close">閉じる</button>
       </div>
-      <p class="ht-overlay-note" data-i18n="menu_note">音声は既定OFF。YAMLはブラウザ内のみです。</p>
+      <p class="ht-overlay-note" data-i18n="menu_note">音声は既定OFF。出生図の変更・版の切替は入口へ。</p>
     </div>
   </div>
 

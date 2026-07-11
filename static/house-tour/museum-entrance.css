@@ -1,0 +1,378 @@
+/* Birth Chart Museum — entrance portal */
+
+:root {
+  --me-bg: #07080e;
+  --me-ink: #ebe4d6;
+  --me-muted: #9a9186;
+  --me-dim: #6a635c;
+  --me-gold: #c9a96e;
+  --me-gold-soft: #e8d5b0;
+  --me-border: rgba(201, 169, 110, 0.22);
+  --me-font: "Noto Sans JP", "Hiragino Sans", system-ui, sans-serif;
+  --me-display: "Cinzel", "Times New Roman", serif;
+  --me-serif: "Noto Serif JP", "Hiragino Mincho ProN", serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--me-bg);
+  color: var(--me-ink);
+  font-family: var(--me-font);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+.me-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 8%, rgba(201, 169, 110, 0.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 22%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 55%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 25% 70%, rgba(201, 169, 110, 0.4) 0%, transparent 100%),
+    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(30, 28, 48, 0.45) 0%, transparent 70%),
+    linear-gradient(180deg, #0a0b14 0%, #07080e 55%, #05060c 100%);
+}
+
+.me-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 28px;
+}
+
+.me-logo {
+  font-family: var(--me-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  color: var(--me-gold);
+  text-decoration: none;
+}
+
+.me-lang {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--me-border);
+  background: rgba(12, 14, 22, 0.75);
+}
+
+.me-lang-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--me-muted);
+  font-family: var(--me-font);
+  font-size: 0.72rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.me-lang-btn.is-active {
+  background: rgba(201, 169, 110, 0.18);
+  color: var(--me-gold-soft);
+}
+
+.me-main {
+  position: relative;
+  z-index: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  text-align: center;
+}
+
+.me-eyebrow {
+  font-family: var(--me-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  color: var(--me-gold);
+  margin-bottom: 16px;
+}
+
+.me-title {
+  font-family: var(--me-display);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  letter-spacing: 0.14em;
+  color: var(--me-gold-soft);
+  line-height: 1.25;
+  text-shadow: 0 0 48px rgba(201, 169, 110, 0.2);
+  margin-bottom: 16px;
+}
+
+.me-lead {
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: var(--me-muted);
+  margin-bottom: 28px;
+}
+
+/* YAML handoff panel on entrance */
+.me-yaml {
+  text-align: left;
+  max-width: 640px;
+  margin: 0 auto 32px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--me-border);
+  background: linear-gradient(165deg, rgba(16, 18, 28, 0.92), rgba(8, 9, 14, 0.9));
+}
+
+.me-yaml-title {
+  font-family: var(--me-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--me-gold-soft);
+  margin-bottom: 6px;
+}
+
+.me-yaml-help {
+  font-size: 0.75rem;
+  line-height: 1.65;
+  color: var(--me-dim);
+  margin-bottom: 10px;
+}
+
+.me-yaml-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 110px;
+  resize: vertical;
+  border: 1px solid rgba(201, 169, 110, 0.22);
+  border-radius: 10px;
+  padding: 10px 12px;
+  /* 以前の house-tour YAML と同じ黒バック（OS/ブラウザの白フォームを上書き） */
+  color-scheme: dark;
+  background: #0a0c14;
+  background-color: #0a0c14;
+  color: #c8d0e0;
+  caret-color: #e8d5b0;
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  -webkit-text-fill-color: #c8d0e0;
+}
+
+.me-yaml-input::placeholder {
+  color: rgba(154, 145, 134, 0.65);
+  -webkit-text-fill-color: rgba(154, 145, 134, 0.65);
+  opacity: 1;
+}
+
+.me-yaml-input:focus {
+  border-color: rgba(201, 169, 110, 0.55);
+  background: #0a0c14;
+  background-color: #0a0c14;
+  color: #d8e0f0;
+  -webkit-text-fill-color: #d8e0f0;
+  outline: 1px solid rgba(201, 169, 110, 0.35);
+}
+
+/* オートフィルで白くならないように */
+.me-yaml-input:-webkit-autofill,
+.me-yaml-input:-webkit-autofill:hover,
+.me-yaml-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #c8d0e0;
+  caret-color: #e8d5b0;
+  transition: background-color 99999s ease-in-out 0s;
+  box-shadow: 0 0 0 1000px #0a0c14 inset;
+}
+
+.me-yaml-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.me-yaml-actions .me-btn {
+  display: inline-block;
+  padding: 10px 14px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.me-yaml-actions .me-btn-ghost {
+  border: 1px solid var(--me-border);
+  background: transparent;
+  color: var(--me-muted);
+}
+
+.me-yaml-status {
+  min-height: 1.2em;
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--me-dim);
+}
+
+.me-yaml-status.is-ok {
+  color: #9fe0b0;
+}
+
+.me-yaml-status.is-err {
+  color: #e8a0a0;
+}
+
+.me-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .me-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .me-header {
+    padding: 16px;
+  }
+}
+
+.me-card {
+  padding: 24px 22px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--me-border);
+  background: linear-gradient(165deg, rgba(18, 20, 32, 0.92), rgba(10, 11, 18, 0.9));
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.me-card-abstract {
+  border-top: 3px solid rgba(201, 169, 110, 0.55);
+}
+
+.me-card-arch {
+  border-top: 3px solid rgba(122, 154, 184, 0.55);
+}
+
+.me-card-dream {
+  border-top: 3px solid rgba(150, 130, 220, 0.55);
+}
+
+.me-card-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--me-gold);
+  margin-bottom: 8px;
+}
+
+.me-card-title {
+  font-family: var(--me-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: var(--me-ink);
+}
+
+.me-card-body {
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: var(--me-muted);
+  margin-bottom: 14px;
+  flex: 1;
+}
+
+.me-card-list {
+  list-style: none;
+  margin-bottom: 18px;
+  font-size: 0.78rem;
+  color: var(--me-dim);
+  line-height: 1.7;
+}
+
+.me-card-list li::before {
+  content: "·";
+  color: var(--me-gold);
+  margin-right: 8px;
+}
+
+.me-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.me-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  transition: filter 0.15s, transform 0.1s;
+}
+
+.me-btn:active {
+  transform: scale(0.98);
+}
+
+.me-btn-primary {
+  background: linear-gradient(180deg, #d4b87a, var(--me-gold));
+  color: #1a1408;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(201, 169, 110, 0.25);
+}
+
+.me-btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.me-btn-ghost {
+  border: 1px solid var(--me-border);
+  color: var(--me-muted);
+  background: transparent;
+}
+
+.me-btn-ghost:hover {
+  color: var(--me-gold-soft);
+  border-color: rgba(201, 169, 110, 0.4);
+}
+
+.me-note {
+  margin-top: 28px;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--me-dim);
+}
+
+.me-back {
+  margin-top: 16px;
+  font-size: 0.78rem;
+}
+
+.me-back a {
+  color: var(--me-dim);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201, 169, 110, 0.25);
+}
+
+.me-back a:hover {
+  color: var(--me-gold-soft);
+}

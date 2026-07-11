@@ -459,6 +459,14 @@ body {
   cursor: pointer;
   backdrop-filter: blur(10px);
   transition: color 0.15s, border-color 0.15s, background 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+a.ht-chip-btn {
+  color: var(--ht-muted);
 }
 
 .ht-chip-btn:hover,
@@ -466,6 +474,19 @@ body {
   color: var(--ht-gold-soft);
   border-color: rgba(201, 169, 110, 0.45);
   background: rgba(201, 169, 110, 0.1);
+}
+
+/* 入口へ戻る — 少し目立たせる */
+.ht-chip-entrance {
+  border-color: rgba(201, 169, 110, 0.4);
+  color: var(--ht-gold-soft);
+  background: rgba(201, 169, 110, 0.12);
+}
+
+.ht-chip-entrance:hover {
+  color: #1a1408;
+  background: linear-gradient(180deg, #d4b87a, var(--ht-gold));
+  border-color: transparent;
 }
 
 .ht-chip-primary {

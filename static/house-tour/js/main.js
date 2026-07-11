@@ -28,10 +28,16 @@ import {
   getPlanetTexts,
   applyDomI18n,
 } from "./i18n.js";
+import { createAmbientSound } from "./ambient-sound.js";
 
 (function boot() {
   if (typeof THREE === "undefined") {
     console.error("[HouseTour] Three.js missing");
+    const load = document.getElementById("ht-loading");
+    if (load) {
+      load.innerHTML =
+        '<p style="color:#c4788a;text-align:center;line-height:1.7">Three.js の読み込みに失敗しました。<br>再読み込みしてください。</p>';
+    }
     return;
   }
 
@@ -41,10 +47,7 @@ import {
   let housesData = getHousesData();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let quality = localStorage.getItem("ht-quality") || (isProbablyMobile() ? "low" : "high");
-  let soundOn = false;
-  let audioCtx = null;
-  let masterGain = null;
-  let oscNodes = [];
+  const ambient = createAmbientSound();
   let started = false;
   let mapOpen = false;
 
@@ -92,7 +95,7 @@ import {
         controls.teleport(num);
         controls.syncLastHouse(num);
       }
-      if (soundOn) retuneAudio(num);
+      ambient.onHouse(h);
       ui.setGuideLabel(guideLabelText());
       ui.hideCaption();
       if (!opts.silentTeleport && opts.reason !== "walk") {
@@ -162,7 +165,7 @@ import {
           t("caption_done")
         );
         ui.setGuideLabel(guideLabelText());
-        if (soundOn) retuneAudio(num);
+        ambient.onHouse(h);
       },
     });
   }
@@ -233,21 +236,7 @@ import {
   });
   if (controls.setEntryPoints) controls.setEntryPoints(entryWorld || {});
 
-  // ── YAML UI ──
-  const yamlInput = document.getElementById("ht-yaml-input");
-  const yamlStatus = document.getElementById("ht-yaml-status");
-  const btnLoadYaml = document.getElementById("ht-load-yaml");
-  const btnSample = document.getElementById("ht-use-sample");
-  const btnNeko = document.getElementById("ht-load-neko");
-
-  function setYamlStatus(msg, kind) {
-    if (!yamlStatus) return;
-    yamlStatus.textContent = msg || "";
-    yamlStatus.classList.remove("is-ok", "is-err");
-    if (kind === "ok") yamlStatus.classList.add("is-ok");
-    if (kind === "err") yamlStatus.classList.add("is-err");
-  }
-
+  // YAML 入力 UI は入口 /birth-chart-museum のみ。ここでは sessionStorage から読む。
   function loadYamlText(text, opts) {
     opts = opts || {};
     const { chart: loaded, warnings, bodyCount } = parseNatalYaml(text);
@@ -260,49 +249,7 @@ import {
       statusOk: true,
     });
     if (!opts.silentToast) ui.toast(t("toast_yaml_ok", { name: loaded.name }), 2800);
-    try {
-      sessionStorage.setItem("ht-last-yaml", text);
-      sessionStorage.setItem("ht-chart-pref", "yaml");
-    } catch (e) { /* ignore */ }
     return loaded;
-  }
-
-  if (btnLoadYaml) {
-    btnLoadYaml.addEventListener("click", () => {
-      try {
-        loadYamlText(yamlInput ? yamlInput.value : "");
-      } catch (e) {
-        setYamlStatus(String(e.message || e), "err");
-        ui.toast(t("toast_yaml_err"), 2800);
-      }
-    });
-  }
-
-  if (btnNeko) {
-    btnNeko.addEventListener("click", () => {
-      applyChart(nekoChart, {
-        status: t("status_neko_short"),
-        statusOk: true,
-      });
-      ui.toast(t("toast_neko"), 2600);
-      try {
-        sessionStorage.setItem("ht-chart-pref", "neko");
-      } catch (e) { /* ignore */ }
-    });
-  }
-
-  if (btnSample) {
-    btnSample.addEventListener("click", () => {
-      if (yamlInput) yamlInput.value = "";
-      applyChart(sampleChart, {
-        status: t("status_sample"),
-        statusOk: true,
-      });
-      ui.toast(t("toast_sample"), 2000);
-      try {
-        sessionStorage.setItem("ht-chart-pref", "sample");
-      } catch (e) { /* ignore */ }
-    });
   }
 
   // 言語切替
@@ -317,7 +264,7 @@ import {
     housesData = getHousesData();
     applyDomI18n(document);
     ui.setQualityLabel(quality);
-    ui.setSoundLabel(soundOn);
+    ui.setSoundLabel(ambient.isOn());
     // 天体名ラベル再生成
     bodies = bodiesFromChart(chart).map((b) => {
       const pt = getPlanetTexts()[b.id];
@@ -353,7 +300,7 @@ import {
     );
   });
 
-  // 初回: URL ?chart=neko / 前回YAML / ねこ編集長デフォルト寄り
+  // 初回: URL ?chart= / 入口 sessionStorage / ねこ編集長デフォルト
   (function initialChart() {
     const params = new URLSearchParams(window.location.search || "");
     const q = (params.get("chart") || params.get("load") || "").toLowerCase();
@@ -376,24 +323,20 @@ import {
     try {
       const pref = sessionStorage.getItem("ht-chart-pref");
       const saved = sessionStorage.getItem("ht-last-yaml");
-      if (saved && yamlInput) {
-        yamlInput.value = saved;
-        if (pref === "yaml" || !pref) {
-          try {
-            loadYamlText(saved, { silentToast: true });
-            setYamlStatus(t("status_yaml_restored"), "ok");
-            return;
-          } catch (e) {
-            setYamlStatus(t("status_yaml_fail"), "err");
-          }
-        }
-      }
       if (pref === "neko") {
         applyChart(nekoChart, {
           status: t("status_neko"),
           statusOk: true,
         });
         return;
+      }
+      if (saved && (pref === "yaml" || !pref)) {
+        try {
+          loadYamlText(saved, { silentToast: true });
+          return;
+        } catch (e) {
+          ui.toast(t("status_yaml_fail") || t("toast_yaml_err"), 3200);
+        }
       }
     } catch (e) { /* ignore */ }
 
@@ -446,8 +389,7 @@ import {
       enrichBodies(bodiesByHouse[cur] || []),
       { silent: true }
     );
-
-    if (opts.status) setYamlStatus(opts.status, opts.statusOk ? "ok" : "err");
+    // ステータス表示は入口ポータル側。タイトルは profile のみ更新。
   }
 
   function withCuspHint(h, num) {
@@ -531,7 +473,15 @@ import {
         m === "walk" ? t("btn_mode_orbit") : t("btn_mode_walk");
     });
   }
-  if (ui.el.btnSound) ui.el.btnSound.addEventListener("click", toggleSound);
+  if (ui.el.btnSound) {
+    ui.el.btnSound.addEventListener("click", () => {
+      const h = housesData[tour.getCurrent()] || housesData[0];
+      ambient.toggle(h).then((on) => {
+        ui.setSoundLabel(on);
+        ui.toast(on ? t("toast_sound_on") : t("toast_sound_off"), 2200);
+      });
+    });
+  }
   if (ui.el.btnQuality) {
     ui.el.btnQuality.addEventListener("click", () => {
       quality = quality === "high" ? "low" : "high";
@@ -558,12 +508,33 @@ import {
       ui.setMapOpen(false);
     });
   }
+  function returnToTitle() {
+    try {
+      if (cine.isPlaying()) cine.stop();
+    } catch (e) { /* */ }
+    tour.setPhase("idle");
+    tour.startFree();
+    ui.setMenuOpen(false);
+    mapOpen = false;
+    ui.setMapOpen(false);
+    ui.hideCaption();
+    ui.hidePlanetPanel();
+    started = false;
+    controls.setMode("orbit");
+    ui.showMobileStick(false);
+    ui.showTitle();
+    ui.toast(t("toast_back_title"), 2200);
+  }
+
   if (ui.el.btnMenu) {
     ui.el.btnMenu.addEventListener("click", () => {
       const open = ui.el.menuOverlay && ui.el.menuOverlay.hidden;
       ui.setMenuOpen(open);
     });
   }
+  const btnTitle = document.getElementById("ht-btn-title");
+  if (btnTitle) btnTitle.addEventListener("click", returnToTitle);
+
   if (ui.el.planetClose) {
     ui.el.planetClose.addEventListener("click", () => ui.hidePlanetPanel());
   }
@@ -588,13 +559,7 @@ import {
   const menuClose = document.getElementById("ht-menu-close");
   if (menuClose) menuClose.addEventListener("click", () => ui.setMenuOpen(false));
   const menuTitle = document.getElementById("ht-menu-title");
-  if (menuTitle) {
-    menuTitle.addEventListener("click", () => {
-      ui.setMenuOpen(false);
-      started = false;
-      ui.showTitle();
-    });
-  }
+  if (menuTitle) menuTitle.addEventListener("click", returnToTitle);
 
   function begin(controlMode) {
     started = true;
@@ -628,122 +593,37 @@ import {
     return m;
   }
 
-  // audio
-  function ensureAudio() {
-    if (audioCtx) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    audioCtx = new AC();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.0001;
-    masterGain.connect(audioCtx.destination);
-  }
-
-  function stopOscs() {
-    oscNodes.forEach((n) => {
-      try {
-        n.osc.stop();
-        n.osc.disconnect();
-        n.gain.disconnect();
-      } catch (e) { /* */ }
-    });
-    oscNodes = [];
-  }
-
-  function toggleSound() {
-    soundOn = !soundOn;
-    ui.setSoundLabel(soundOn);
-    if (soundOn) {
-      ensureAudio();
-      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-      retuneAudio(tour.getCurrent());
-      if (masterGain) {
-        masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + 0.8);
-      }
-      ui.toast(t("toast_sound_on"));
-    } else {
-      if (masterGain && audioCtx) {
-        masterGain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
-      }
-      stopOscs();
-      ui.toast(t("toast_sound_off"));
-    }
-  }
-
-  function retuneAudio(num) {
-    if (!soundOn || !audioCtx) return;
-    stopOscs();
-    const h = housesData[num] || housesData[0];
-    const base = (h.sound && h.sound.baseHz) || 110;
-    const mood = (h.sound && h.sound.mood) || "warm";
-    let intervals = [1, 5 / 4, 3 / 2];
-    let types = ["sine", "triangle", "sine"];
-    let filterFreq = 1200;
-    if (mood === "deep" || mood === "mist" || mood === "hearth") {
-      intervals = [1, 6 / 5, 3 / 2];
-      filterFreq = 600;
-    }
-    if (mood === "playful" || mood === "chatter") {
-      intervals = [1, 9 / 8, 5 / 4];
-      filterFreq = 2200;
-    }
-    if (mood === "open" || mood === "grand") {
-      intervals = [1, 5 / 4, 2];
-      filterFreq = 2600;
-    }
-    if (mood === "playful") filterFreq = 2400;
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = filterFreq;
-    filter.connect(masterGain);
-    intervals.forEach((ratio, i) => {
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = types[i] || "sine";
-      osc.frequency.value = base * ratio;
-      g.gain.value = 0.0001;
-      osc.connect(g);
-      g.connect(filter);
-      osc.start();
-      g.gain.linearRampToValueAtTime(0.18 / (i + 1), audioCtx.currentTime + 1);
-      oscNodes.push({ osc, gain: g });
-    });
-    if (mood === "playful") {
-      try {
-        const bufferSize = audioCtx.sampleRate * 2;
-        const noiseBuf = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = noiseBuf.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          const burst = Math.sin(i * 0.001) > 0.92 ? 1 : 0.15;
-          data[i] = (Math.random() * 2 - 1) * burst * 0.4;
-        }
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = noiseBuf;
-        noise.loop = true;
-        const ng = audioCtx.createGain();
-        const nf = audioCtx.createBiquadFilter();
-        nf.type = "bandpass";
-        nf.frequency.value = 1800;
-        nf.Q.value = 0.6;
-        ng.gain.value = 0.0001;
-        noise.connect(nf);
-        nf.connect(ng);
-        ng.connect(masterGain);
-        noise.start();
-        ng.gain.linearRampToValueAtTime(0.02, audioCtx.currentTime + 1.2);
-        oscNodes.push({ osc: noise, gain: ng });
-      } catch (e) { /* ignore */ }
-    }
-  }
-
   function isProbablyMobile() {
     return window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
   }
 
-  ui.renderHouse(0, housesData[0], [], { silent: true });
-  ui.updateNavActive(0, housesData);
+  try {
+    ui.renderHouse(0, housesData[0], [], { silent: true });
+    ui.updateNavActive(0, housesData);
+  } catch (e) {
+    console.error("[HouseTour] initial UI", e);
+  }
   ui.hideLoading();
+
+  // 自動開始はしない。prefer_guide=1 はタイトルでガイド開始を促すだけ。
+  if (wantsPreferGuide()) {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (started) return;
+        ui.toast(t("toast_guide_hint") || "準備ができたら「ガイドツアーで巡る」を押してください", 4200);
+      }, 500);
+    });
+  }
+
+  function wantsPreferGuide() {
+    try {
+      const p = new URLSearchParams(window.location.search || "");
+      const v = (p.get("prefer_guide") || p.get("auto_guide") || p.get("guide") || "").toLowerCase();
+      return v === "1" || v === "true" || v === "yes" || v === "on";
+    } catch (e) {
+      return false;
+    }
+  }
 
   function frame() {
     requestAnimationFrame(frame);

@@ -2450,6 +2450,15 @@ def transit_flight_page(request: Request):
 
 # ─── House Tour（出生図12ハウスを3D空間で歩くデモ） ─────────────────
 # 固定サンプルJSONのみ。鑑定・注文・YAML生成とは独立。Three.js はこのページだけ。
+# 入口: /birth-chart-museum → 抽象版 /house-tour · 建築版 /house-tour-architecture
+
+@app.get("/birth-chart-museum", response_class=HTMLResponse)
+def birth_chart_museum_entrance(request: Request):
+    """Birth Chart Museum 入口。抽象版と建築版を選ぶポータル。"""
+    return templates.TemplateResponse(
+        "birth_chart_museum.html", {"request": request}
+    )
+
 
 @app.get("/house-tour", response_class=HTMLResponse)
 def house_tour_page(request: Request):
@@ -2463,6 +2472,17 @@ def house_tour_architecture_page(request: Request):
     return templates.TemplateResponse(
         "house_tour_architecture.html", {"request": request}
     )
+
+
+@app.get("/dream-sky", response_class=HTMLResponse)
+def dream_sky_page(request: Request):
+    """Dream Sky v0 — Birth Sky 系の象徴空間。YAML はクライアントのみ。"""
+    from fastapi.responses import FileResponse
+
+    path = Path(__file__).resolve().parent / "static" / "dream-sky" / "index.html"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="dream-sky not found")
+    return FileResponse(path, media_type="text/html; charset=utf-8")
 
 
 def _transit_flight_max_events(payload: dict) -> int:
