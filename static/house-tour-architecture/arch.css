@@ -31,12 +31,16 @@ body.ht-arch .ht-brand {
   font-size: 0.62rem;
 }
 
-/* ヒーロー棟ナビ強調は JS 無しでも色で分かるようゴールド枠 */
+/* 全棟ナビ。ヒーロー棟は二重リング */
+body.ht-arch .ht-nav-house,
+body.ht-arch .ht-strip-btn {
+  box-shadow: 0 0 0 1px rgba(212, 184, 122, 0.28);
+}
 body.ht-arch .ht-nav-house[data-house="4"],
 body.ht-arch .ht-nav-house[data-house="5"],
 body.ht-arch .ht-nav-house[data-house="9"],
 body.ht-arch .ht-strip-btn[data-house="4"],
 body.ht-arch .ht-strip-btn[data-house="5"],
 body.ht-arch .ht-strip-btn[data-house="9"] {
-  box-shadow: 0 0 0 1px rgba(212, 184, 122, 0.55);
+  box-shadow: 0 0 0 2px rgba(212, 184, 122, 0.65);
 }

@@ -51,9 +51,8 @@ def test_architecture_reuses_abstract_modules():
     assert "createCinematicPlayer" in main
     assert "parseNatalYaml" in main
     builder = (ARCH / "js" / "arch-builder.js").read_text(encoding="utf-8")
-    assert "buildHouse4" in builder
-    assert "buildHouse5" in builder
-    assert "buildHouse9" in builder
+    for n in range(1, 13):
+        assert f"buildHouse{n}" in builder, f"missing buildHouse{n}"
 
 
 def test_abstract_checkpoint_docs_exist():
