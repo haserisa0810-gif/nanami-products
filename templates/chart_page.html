@@ -160,26 +160,36 @@
       gap: 6px;
       margin: 16px 0 10px;
       padding: 5px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border2);
       border-radius: 14px;
-      background: rgba(255,255,255,.55);
+      background: var(--card2);
     }
     .companion-mode-button {
       min-height: 44px;
       padding: 9px 12px;
-      border: 1px solid transparent;
+      border: 1px solid var(--border2);
       border-radius: 10px;
-      background: transparent;
-      color: var(--ink);
+      background: var(--gold-bg);
+      color: var(--text);
       font: inherit;
       font-weight: 700;
       cursor: pointer;
+      box-shadow: none;
+      opacity: 1;
     }
     .companion-mode-button[aria-pressed="true"] {
-      border-color: var(--accent);
-      background: var(--accent);
+      border-color: var(--gold);
+      background: var(--gold);
       color: #fff;
       box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .companion-mode-button:hover {
+      opacity: 1;
+    }
+    .companion-mode-button[aria-pressed="false"]:hover {
+      border-color: var(--gold-dim);
+      background: rgba(155,107,56,.13);
+      color: var(--text);
     }
     .companion-mode-button:focus-visible {
       outline: 3px solid rgba(91, 74, 61, .28);

@@ -119,6 +119,13 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn("let companionMode = 'reading';", self.template)
         self.assertIn("selectCompanionMode('reading');", self.template)
 
+    def test_chart_companion_unselected_button_keeps_visible_text(self) -> None:
+        self.assertIn("background: var(--gold-bg);", self.template)
+        self.assertIn("color: var(--text);", self.template)
+        self.assertIn('.companion-mode-button[aria-pressed="false"]:hover', self.template)
+        self.assertNotIn("color: var(--ink);", self.template)
+        self.assertNotIn("background: var(--accent);", self.template)
+
     def test_chart_companion_switches_description_and_prompt(self) -> None:
         self.assertIn("function selectCompanionMode(mode)", self.template)
         self.assertIn("UI_TEXT.consultationModeDesc", self.template)
