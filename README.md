@@ -1,5 +1,14 @@
 # nanami-products
 
+MCP server for pre-computed astrology chart data (Western / Jyotish / Four Pillars) powered by Swiss Ephemeris.
+
+- **Registered on the [Official MCP Registry](https://registry.modelcontextprotocol.io/)**
+- **Usage Guide**: [guide.nanami-astro.com](https://guide.nanami-astro.com/index.html)
+- Calculation is code, interpretation is AI.
+
+---
+
+
 nanami-astro の計算エンジンを利用した、占星術・四柱推命データ生成サービスです。
 
 ## API連携デモアプリ
