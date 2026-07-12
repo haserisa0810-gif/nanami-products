@@ -157,6 +157,11 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn("today.selected_date", CHART_COMPANION_PROMPT)
         self.assertIn("mundane_house", CHART_COMPANION_PROMPT)
         self.assertIn("生年月日から再計算しない", CHART_COMPANION_PROMPT)
+        self.assertIn("やらなくていいこと・向いていないこと", CHART_COMPANION_PROMPT)
+        self.assertIn("最大1〜2問", CHART_COMPANION_PROMPT)
+        self.assertIn("今は決めない", CHART_COMPANION_PROMPT)
+        self.assertIn("配置の根拠が薄い場合", CHART_COMPANION_PROMPT)
+        self.assertTrue(CHART_COMPANION_PROMPT.rstrip().endswith("以下がYAMLデータです。"))
 
     def test_chart_companion_labels_are_localized(self) -> None:
         self.assertEqual(I18N["ja"]["chart_companion_title"], "Chart Companion β")
