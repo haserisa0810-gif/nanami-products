@@ -169,8 +169,8 @@
       padding: 9px 12px;
       border: 1px solid var(--border2);
       border-radius: 10px;
-      background: var(--gold-bg);
-      color: var(--text);
+      background: var(--card);
+      color: var(--body);
       font: inherit;
       font-weight: 700;
       cursor: pointer;
@@ -178,17 +178,17 @@
       opacity: 1;
     }
     .companion-mode-button[aria-pressed="true"] {
-      border-color: var(--gold);
-      background: var(--gold);
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+      border-color: var(--gold-dim);
+      background: rgba(155,107,56,.11);
+      color: var(--gold);
+      box-shadow: inset 0 0 0 1px rgba(155,107,56,.08);
     }
     .companion-mode-button:hover {
       opacity: 1;
     }
     .companion-mode-button[aria-pressed="false"]:hover {
       border-color: var(--gold-dim);
-      background: rgba(155,107,56,.13);
+      background: var(--gold-bg);
       color: var(--text);
     }
     .companion-mode-button:focus-visible {
