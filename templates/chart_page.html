@@ -154,6 +154,39 @@
       font-weight: 500;
       color: var(--text);
     }
+    .companion-mode-switch {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      margin: 16px 0 10px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.55);
+    }
+    .companion-mode-button {
+      min-height: 44px;
+      padding: 9px 12px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .companion-mode-button[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .companion-mode-button:focus-visible {
+      outline: 3px solid rgba(91, 74, 61, .28);
+      outline-offset: 2px;
+    }
+    .companion-selected-mode { margin: 0 0 4px; font-weight: 700; }
+    .companion-mode-description { margin: 0 0 14px; }
     .ai-data-box .mode-help {
       margin: 0 0 12px;
       color: var(--dim);
@@ -750,8 +783,14 @@
       </div>
 
       <section class="notice-box">
-        <h2>{{ t.send_to_ai }}</h2>
-        <p class="helper-note">{{ t.chart_lead }}</p>
+        <h2 id="chart-companion-title">{{ t["chart_companion_title"] }}</h2>
+        <p class="helper-note">{{ t["chart_companion_lead"] }}</p>
+        <div class="companion-mode-switch" role="group" aria-label="{{ t["chart_companion_title"] }}">
+          <button type="button" class="companion-mode-button" id="companion-reading-mode" aria-pressed="true" onclick="selectCompanionMode('reading')">{{ t["reading_mode"] }}</button>
+          <button type="button" class="companion-mode-button" id="companion-consultation-mode" aria-pressed="false" onclick="selectCompanionMode('consultation')">{{ t["consultation_mode"] }}</button>
+        </div>
+        <p class="companion-selected-mode"><span>{{ t["selected_mode"] }}</span><span id="companion-selected-label">{{ t["reading_mode"] }}</span></p>
+        <p class="companion-mode-description" id="companion-mode-description">{{ t["reading_mode_desc"] }}</p>
         <div class="key-actions">
           <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
           <p class="helper-note-inline">{{ t.helper_note }}</p>
@@ -967,6 +1006,7 @@
     <script>
     const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
     const SHARE_PROMPT = {{ share_prompt_text | tojson }};
+    const CHART_COMPANION_PROMPT = {{ chart_companion_prompt | tojson }};
     const SHARE_YAML = {{ share_yaml_text | tojson }};
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
@@ -1007,7 +1047,12 @@
       yamlOnlyCopied: {{ t["yaml_only_copied"] | tojson }},
       yamlOnlyCopiedLongTerm: {{ t["yaml_only_copied_long_term"] | tojson }},
       yamlOnlyCopyFailed: {{ t["yaml_only_copy_failed"] | tojson }},
+      readingMode: {{ t["reading_mode"] | tojson }},
+      consultationMode: {{ t["consultation_mode"] | tojson }},
+      readingModeDesc: {{ t["reading_mode_desc"] | tojson }},
+      consultationModeDesc: {{ t["consultation_mode_desc"] | tojson }},
     };
+    let companionMode = 'reading';
     let fullYamlCache = FULL_YAML_INLINE;
     let asteroidYamlCache = ASTEROID_YAML || '';
     const TXT_SHARE_TEST_MODE = new URLSearchParams(window.location.search).get('txtShareTest') === 'small';
@@ -1060,6 +1105,26 @@
     function getSelectedAiMode() {
       const checked = document.querySelector('input[name="ai-output-mode"]:checked');
       return checked ? checked.value : 'paste';
+    }
+
+    function getCompanionPrompt(outputMode = getSelectedAiMode()) {
+      if (companionMode === 'consultation') return CHART_COMPANION_PROMPT;
+      return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;
+    }
+
+    function selectCompanionMode(mode) {
+      companionMode = mode === 'consultation' ? 'consultation' : 'reading';
+      const isConsultation = companionMode === 'consultation';
+      const readingButton = document.getElementById('companion-reading-mode');
+      const consultationButton = document.getElementById('companion-consultation-mode');
+      if (readingButton) readingButton.setAttribute('aria-pressed', isConsultation ? 'false' : 'true');
+      if (consultationButton) consultationButton.setAttribute('aria-pressed', isConsultation ? 'true' : 'false');
+      setText('companion-selected-label', isConsultation ? UI_TEXT.consultationMode : UI_TEXT.readingMode);
+      setText('companion-mode-description', isConsultation ? UI_TEXT.consultationModeDesc : UI_TEXT.readingModeDesc);
+      preparedAiTextFiles.paste = null;
+      preparedAiTextFiles.asteroids = null;
+      preparedAiTextFiles.full = null;
+      prepareAiTextFile(getSelectedAiMode());
     }
 
     function getSelectedAiLabel(mode = getSelectedAiMode()) {
@@ -1185,7 +1250,7 @@
     }
 
     function buildAiTextFromYaml(yaml, mode = getSelectedAiMode()) {
-      const prompt = mode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;
+      const prompt = getCompanionPrompt(mode);
       const parts = [
         prompt,
         '',
@@ -1669,6 +1734,7 @@
     initLazyFullYaml();
     initLazyCharts();
     selectAiMode(HAS_YAML_MODE_SELECTOR ? (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full') : 'paste');
+    selectCompanionMode('reading');
 
   </script>
 </body>

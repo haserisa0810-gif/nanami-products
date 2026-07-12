@@ -7,6 +7,7 @@ import yaml
 
 from routes import I18N
 from services.light_yaml import build_detail_astrology_yaml
+from services.prompt_builder import CHART_COMPANION_PROMPT
 from tests.test_light_yaml_transit_summary import _asteroid_dense_full_doc
 
 
@@ -111,6 +112,41 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertNotIn("primaryAction.hidden", self.template)
         self.assertNotIn("fallbackShare.hidden", self.template)
         self.assertNotIn("setDirectShareAvailable", self.template)
+
+    def test_chart_companion_defaults_to_reading_mode(self) -> None:
+        self.assertIn('id="companion-reading-mode" aria-pressed="true"', self.template)
+        self.assertIn('id="companion-consultation-mode" aria-pressed="false"', self.template)
+        self.assertIn("let companionMode = 'reading';", self.template)
+        self.assertIn("selectCompanionMode('reading');", self.template)
+
+    def test_chart_companion_switches_description_and_prompt(self) -> None:
+        self.assertIn("function selectCompanionMode(mode)", self.template)
+        self.assertIn("UI_TEXT.consultationModeDesc", self.template)
+        self.assertIn("if (companionMode === 'consultation') return CHART_COMPANION_PROMPT;", self.template)
+        self.assertIn("return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;", self.template)
+
+    def test_all_ai_actions_use_shared_mode_aware_payload_builder(self) -> None:
+        builder = self.template.split("function buildAiTextFromYaml", 1)[1].split(
+            "function splitText", 1
+        )[0]
+        self.assertIn("const prompt = getCompanionPrompt(mode);", builder)
+        self.assertIn("buildAiTextFromYaml(await getSelectedYaml(mode), mode)", builder)
+        self.assertIn("buildPreparedAiTextFile", self.template)
+        self.assertIn("downloadDefaultAiPasteTxt", self.template)
+        self.assertIn("copyDefaultAiText", self.template)
+
+    def test_chart_companion_prompt_enforces_consultation_opening(self) -> None:
+        self.assertIn("今日は何について相談したいですか", CHART_COMPANION_PROMPT)
+        self.assertIn("最初の回答では、長い総合鑑定を出さない", CHART_COMPANION_PROMPT)
+        self.assertIn("today.selected_date", CHART_COMPANION_PROMPT)
+        self.assertIn("mundane_house", CHART_COMPANION_PROMPT)
+        self.assertIn("生年月日から再計算しない", CHART_COMPANION_PROMPT)
+
+    def test_chart_companion_labels_are_localized(self) -> None:
+        self.assertEqual(I18N["ja"]["chart_companion_title"], "Chart Companion β")
+        self.assertEqual(I18N["ja"]["reading_mode"], "鑑定モード")
+        self.assertEqual(I18N["ja"]["consultation_mode"], "相談モード")
+        self.assertEqual(I18N["en"]["chart_companion_title"], "Chart Companion β")
 
     def test_zip_download_uses_regular_link(self) -> None:
         self.assertIn('<a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>', self.template)

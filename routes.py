@@ -60,7 +60,7 @@ from services.note_transit import (
     get_note_transit_campaign_by_access_key,
 )
 from services.post_chart import build_post_chart
-from services.prompt_builder import build_prompt, ensure_transit_date_guidance
+from services.prompt_builder import CHART_COMPANION_PROMPT, build_prompt, ensure_transit_date_guidance
 from services.shichu_chart import (
     build_shichusuimei_svg_from_yaml,
     is_shichusuimei_png_renderer_available,
@@ -660,6 +660,13 @@ I18N = {
         "transit_title_default": "イベント",
         "transit_title_suffix": "のトランジットYAML",
         "chart_lead": "AI鑑定用に整理された基本データです。「AIに送る」からそのまま使えます。",
+        "chart_companion_title": "Chart Companion β",
+        "chart_companion_lead": "鑑定データを使って、AI鑑定またはAI占い師への相談を始められます。",
+        "reading_mode": "鑑定モード",
+        "consultation_mode": "相談モード",
+        "selected_mode": "選択中：",
+        "reading_mode_desc": "出生図とトランジットをもとに、全体像や今後の流れをまとめて鑑定します。",
+        "consultation_mode_desc": "出生図と現在の星の流れを理解したAI占い師へ、気になっていることを相談できます。",
         "transit_lead": "このデータをAIに貼るだけで、イベント時点の天体配置分析を始められます。<br>出生情報を使わない、トランジットのみのYAMLです。",
         "birthday": "生年月日",
         "date": "日付",
@@ -1024,6 +1031,13 @@ I18N = {
         "transit_title_default": "Event",
         "transit_title_suffix": " transit YAML",
         "chart_lead": "This is the AI-ready core data. Tap \"Send to AI\" to use it as-is.",
+        "chart_companion_title": "Chart Companion β",
+        "chart_companion_lead": "Use your astrology data to start an AI reading or a consultation with an AI astrologer.",
+        "reading_mode": "Reading mode",
+        "consultation_mode": "Consultation mode",
+        "selected_mode": "Selected: ",
+        "reading_mode_desc": "Get a complete reading of your natal chart, transits, and the flow ahead.",
+        "consultation_mode_desc": "Discuss what is on your mind with an AI astrologer who understands your natal chart and current transits.",
         "transit_lead": "Paste this data into an AI tool to analyze the planetary positions at the event time.<br>This YAML contains transit-only data and does not use birth information.",
         "birthday": "Date of birth",
         "date": "Date",
@@ -4205,6 +4219,7 @@ def chart_page(request: Request, token: str):
                 "birth_time_notice": birth_time_notice,
                 "share_yaml_text": share_yaml_text,
                 "share_prompt_text": share_prompt_text,
+                "chart_companion_prompt": CHART_COMPANION_PROMPT.strip() + "\n",
                 "asteroid_yaml_text": asteroid_yaml_text,
                 "chart_url": chart_url,
                 "yaml_url": f"{base_url}/chart/{token}.yaml",
