@@ -13,11 +13,19 @@ from services.asteroid_provider import (
     is_configured as asteroid_api_configured,
     provider_config as asteroid_provider_config,
 )
-
-SIGNS = [
-    "Ari", "Tau", "Gem", "Can", "Leo", "Vir",
-    "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis",
-]
+from services.western_core import (
+    ASPECTS,
+    ORB,
+    SIGNS,
+    angle_diff,
+    aspect_applying,
+    aspect_phase,
+    build_calculation_rules,
+    calc_aspects,
+    house_of,
+    norm360,
+    sign_of,
+)
 
 PLANETS = [
     ("Sun", swe.SUN),
@@ -45,23 +53,6 @@ DISPLAY_ORDER = [
     "Chiron", "Ceres", "Pallas", "Juno", "Vesta", "ASC", "MC", "Vertex",
 ]
 DISPLAY_INDEX = {name: idx for idx, name in enumerate(DISPLAY_ORDER)}
-
-ASPECTS = {
-    "conjunction": 0,
-    "sextile": 60,
-    "square": 90,
-    "trine": 120,
-    "opposition": 180,
-}
-
-ORB = {
-    "conjunction": 8,
-    "sextile": 4,
-    "square": 6,
-    "trine": 6,
-    "opposition": 8,
-}
-
 
 def _ephe_candidates() -> list[Path]:
     candidates: list[Path] = []
@@ -117,58 +108,6 @@ def ephemeris_debug_info() -> dict[str, Any]:
     }
 
 
-def norm360(x: float) -> float:
-    return x % 360
-
-
-def sign_of(lon: float) -> tuple[str, float]:
-    lon = norm360(lon)
-    i = int(lon / 30)
-    return SIGNS[i], lon - i * 30
-
-
-def house_of(lon: float, cusps: list[float]) -> int | None:
-    lon = norm360(lon)
-    if not cusps:
-        return None
-    for i in range(12):
-        start = cusps[i]
-        end = cusps[(i + 1) % 12]
-        if start < end:
-            if start <= lon < end:
-                return i + 1
-        else:
-            if lon >= start or lon < end:
-                return i + 1
-    return None
-
-
-def angle_diff(a: float, b: float) -> float:
-    d = abs(norm360(a) - norm360(b))
-    return min(d, 360 - d)
-
-
-def calc_aspects(planets: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for i in range(len(planets)):
-        for j in range(i + 1, len(planets)):
-            p1 = planets[i]
-            p2 = planets[j]
-            d = angle_diff(p1["lon"], p2["lon"])
-            for name, ang in ASPECTS.items():
-                orb = abs(d - ang)
-                if orb <= ORB[name]:
-                    out.append(
-                        {
-                            "planet1": p1["name"],
-                            "planet2": p2["name"],
-                            "type": name,
-                            "orb": round(orb, 2),
-                        }
-                    )
-    return sorted(out, key=lambda x: (x["orb"], x["planet1"], x["planet2"]))
-
-
 def _normalize_house_system(value: Any) -> str:
     raw = str(value or "P").strip().upper()
     return {"P": "P", "PLACIDUS": "P", "K": "K", "KOCH": "K"}.get(raw, "P")
@@ -216,6 +155,7 @@ def _append_angle(name: str, lon: float | None, fixed_house: int | None, planets
             "degree": deg,
             "retrograde": False,
             "house": fixed_house if fixed_house is not None else house_of(lon, cusps),
+            "speed": None,
         }
     )
 
@@ -232,6 +172,8 @@ def calc_western_from_payload(payload: dict[str, Any], house_system: str = "P") 
     minute = int(payload.get("minute", 0))
     lat = payload.get("lat")
     lng = payload.get("lng")
+    coordinates_provided = lat is not None and lng is not None
+    birth_time_known = payload.get("birth_time") not in (None, "", "不明")
     tz = payload.get("tz_offset_hours", 9)
 
     selected_house_system = _normalize_house_system(payload.get("house_system", house_system))
@@ -296,7 +238,9 @@ def calc_western_from_payload(payload: dict[str, Any], house_system: str = "P") 
             )
             return False
 
-        planets.append(_body_dict(name, xx[0], xx[3] < 0, cusps))
+        body = _body_dict(name, xx[0], xx[3] < 0, cusps)
+        body["speed"] = round(float(xx[3]), 4)
+        planets.append(body)
         return True
 
     for name, body_id in PLANETS:
@@ -307,7 +251,9 @@ def calc_western_from_payload(payload: dict[str, Any], house_system: str = "P") 
     node = next((x for x in planets if x["name"] == "North Node"), None)
     if node is not None:
         south_lon = norm360(node["lon"] + 180)
-        planets.append(_body_dict("South Node", south_lon, bool(node["retrograde"]), cusps))
+        south_node = _body_dict("South Node", south_lon, bool(node["retrograde"]), cusps)
+        south_node["speed"] = node.get("speed")
+        planets.append(south_node)
 
     if include_lilith:
         lilith_body = swe.OSCU_APOG if selected_lilith_mode == "true" else swe.MEAN_APOG
@@ -339,7 +285,14 @@ def calc_western_from_payload(payload: dict[str, Any], house_system: str = "P") 
                                 "reason": "FreeAstro API 応答にこの小惑星が含まれていません",
                             })
                             continue
-                        planets.append(_body_dict(asteroid_name, float(item["lon"]), bool(item.get("retrograde", False)), cusps))
+                        asteroid = _body_dict(
+                            asteroid_name,
+                            float(item["lon"]),
+                            bool(item.get("retrograde", False)),
+                            cusps,
+                        )
+                        asteroid["speed"] = None
+                        planets.append(asteroid)
                     calc_engine["asteroid_api_status"] = "success"
                 except AsteroidProviderError as e:
                     calc_engine["asteroid_api_status"] = "failed"
@@ -368,6 +321,20 @@ def calc_western_from_payload(payload: dict[str, Any], house_system: str = "P") 
 
     planets = _sort_planets(planets)
     aspects = calc_aspects(planets)
+    calculation_rules = build_calculation_rules(
+        house_system=selected_house_system,
+        node_mode=selected_node_mode,
+        lilith_mode=selected_lilith_mode,
+        notes=[
+            "アスペクト対象・orbは従来実装と同一（後方互換）",
+            "South Node関与のアスペクトは axis_mirror=true でマーク",
+        ],
+    )
+    data_quality = {
+        "birth_time": "known" if birth_time_known else "unknown",
+        "houses_available": bool(coordinates_provided and birth_time_known and houses),
+        "coordinates": "provided" if coordinates_provided else "default",
+    }
 
     return {
         "module": "western",
@@ -393,4 +360,7 @@ def calc_western_from_payload(payload: dict[str, Any], house_system: str = "P") 
         "aspects": aspects,
         "angles": {"asc": asc, "mc": mc, "vertex": vertex if include_vertex else None},
         "skipped_bodies": skipped_bodies,
+        "calculation_rules": calculation_rules,
+        "data_quality": data_quality,
+        "engine_version_western": "w0.1.0",
     }

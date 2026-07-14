@@ -1,0 +1,15 @@
+{
+  "synced_at": "2026-07-14T05:42:39.112813+00:00",
+  "source": "C:\\Users\\haser\\dev\\nanami-astro",
+  "files": {
+    "services/western_core.py": {
+      "sha256": "2e0f82fabd9722a50a7e1dcea1a4443b5bac7a905f93af6f26590ff327d94a0c"
+    },
+    "tests/test_western_core_golden.py": {
+      "sha256": "5a5007667ffdf21d52e4206038a16f0621e78b1c7312897740e908c150f609b3"
+    },
+    "tests/fixtures/western_core_golden.json": {
+      "sha256": "38467d86ba7b9a6cca532905c3a1af8996b6b1bd01f1e82df686c101e0743f7c"
+    }
+  }
+}

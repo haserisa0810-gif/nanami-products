@@ -462,6 +462,7 @@ def build_product_yaml(
     if include_western:
         payload = {
             "year": y, "month": m, "day": d, "hour": hour, "minute": minute,
+            "birth_time": birth_time,
             "lat": lat, "lng": lng, "city": pref_name, "tz_offset_hours": tz_offset_hours,
             "house_system": house_system,
             "include_asteroids": include_asteroids,
