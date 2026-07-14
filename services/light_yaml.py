@@ -18,6 +18,24 @@ KEY_BODY_NAMES = {"Sun", "Moon", "ASC", "MC", "Saturn", "Uranus", "Neptune", "Pl
 POSITIVE_ASPECTS = {"trine", "sextile", "conjunction"}
 CAUTION_ASPECTS = {"square", "opposition"}
 
+
+def _natal_output(
+    natal: dict[str, Any],
+    *,
+    aspects: Any,
+) -> dict[str, Any]:
+    output = {
+        "bodies": natal.get("bodies") or {},
+        "aspects": aspects,
+        "summary": natal.get("summary") or {},
+    }
+    if "houses" in natal:
+        output["houses"] = natal.get("houses") or {}
+    provisional = natal.get("time_sensitive_provisional")
+    if isinstance(provisional, dict):
+        output["time_sensitive_provisional"] = provisional
+    return output
+
 MEANING_HINTS = {
     "Sun": "自己表現",
     "Moon": "感情調整",
@@ -522,15 +540,13 @@ def build_light_astrology_yaml(
         },
         "systems": {
             "western": {
-                "natal": {
-                    "bodies": natal.get("bodies") or {},
-                    "houses": natal.get("houses") or {},
-                    "aspects": {
+                "natal": _natal_output(
+                    natal,
+                    aspects={
                         "major_only": True,
                         "items": natal_aspects,
                     },
-                    "summary": natal.get("summary") or {},
-                },
+                ),
                 "asteroids": {"bodies": asteroids or {}} if asteroids else None,
                 "transit": {
                     "period": transit.get("period") or {},
@@ -641,12 +657,10 @@ def _build_natal_yaml(full_yaml_text: str, *, include_asteroids: bool, version: 
         },
         "systems": {
             "western": {
-                "natal": {
-                    "bodies": natal.get("bodies") or {},
-                    "houses": natal.get("houses") or {},
-                    "aspects": natal.get("aspects") or [],
-                    "summary": natal.get("summary") or {},
-                },
+                "natal": _natal_output(
+                    natal,
+                    aspects=natal.get("aspects") or [],
+                ),
                 "asteroids": {"bodies": asteroids or {}} if include_asteroids and asteroids else None,
                 "transit": None,
             },

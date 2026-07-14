@@ -787,6 +787,14 @@
         <section class="notice-box soft time-accuracy-card">
           <p class="mini-label">{{ t["time_accuracy_label"] }}</p>
           <strong>{{ birth_time_notice.short }}</strong>
+          <p>
+            {% if lang == "en" %}
+            If your birth time becomes known later, the houses and ASC/MC must be recalculated accurately. Please contact us about correcting and reissuing the chart (birth time changes only).
+            {% else %}
+            出生時刻が後から判明した場合、ハウス・ASC/MCを含む正確な再計算が必要です。時刻の修正・再発行（時刻のみ変更可）は
+            {% if birth_time_reissue_url %}<a href="{{ birth_time_reissue_url }}" target="_blank" rel="noopener">公式LINEからお問い合わせください</a>。{% else %}公式LINEからお問い合わせください。{% endif %}
+            {% endif %}
+          </p>
         </section>
         {% endif %}
         <p class="hint">{% if chart_has_no_expiry %}{{ t.page_no_expiry }}{% else %}{{ t.page_expiry.format(expires_label=expires_label) }}{% endif %}</p>

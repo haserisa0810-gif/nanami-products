@@ -60,6 +60,8 @@ MOON_TIMEPOINTS = [
     ("noon", 12),
     ("night", 21),
 ]
+TIME_SENSITIVE_ACCURACIES = frozenset({"unknown", "approximate"})
+ANGLE_BODY_NAMES = {"ASC": "asc", "MC": "mc", "Vertex": "vertex"}
 
 def _split_date(value: str) -> tuple[int, int, int]:
     y, m, d = value.split("-")
@@ -98,7 +100,7 @@ def _birth_time_struct(
     return data
 
 def _interpretation_flags(accuracy: str) -> dict[str, Any]:
-    if accuracy in {"unknown", "approximate"}:
+    if accuracy in TIME_SENSITIVE_ACCURACIES:
         return {
             "allow_house_interpretation": False,
             "allow_asc_mc_interpretation": False,
@@ -113,6 +115,45 @@ def _interpretation_flags(accuracy: str) -> dict[str, Any]:
         "moon_reliability": "high",
         "use_houses_as_reference_only": False,
     }
+
+
+def read_natal_houses(natal: dict[str, Any]) -> Any:
+    """v1通常位置、v2暫定位置の順でハウスカスプを読む。"""
+    houses = natal.get("houses")
+    if houses is not None:
+        return houses
+    provisional = natal.get("time_sensitive_provisional") or {}
+    return provisional.get("houses") or {}
+
+
+def read_natal_angles(natal: dict[str, Any]) -> dict[str, Any]:
+    """v1/v2からASC・MC・Vertexを共通形式で読む。"""
+    angles = natal.get("angles")
+    if isinstance(angles, dict):
+        return angles
+    provisional = natal.get("time_sensitive_provisional") or {}
+    angles = provisional.get("angles")
+    if isinstance(angles, dict):
+        return angles
+    bodies = natal.get("bodies") or {}
+    if not isinstance(bodies, dict):
+        return {}
+    return {
+        key: bodies[name]
+        for name, key in ANGLE_BODY_NAMES.items()
+        if isinstance(bodies.get(name), dict)
+    }
+
+
+def read_body_house(natal: dict[str, Any], body_name: str) -> int | None:
+    """v1 body.house、v2暫定配置の順で在住ハウスを読む。"""
+    bodies = natal.get("bodies") or {}
+    body = bodies.get(body_name) if isinstance(bodies, dict) else None
+    if isinstance(body, dict) and body.get("house") is not None:
+        return body.get("house")
+    provisional = natal.get("time_sensitive_provisional") or {}
+    placements = provisional.get("body_house_placements") or {}
+    return placements.get(body_name) if isinstance(placements, dict) else None
 
 def _format_body(p: dict[str, Any]) -> dict[str, Any]:
     return {
@@ -482,17 +523,80 @@ def build_product_yaml(
             for h in raw.get("houses", [])
         }
         skipped_bodies = raw.get("skipped_bodies", []) or []
-        western_system = {
-            "natal": {
+        formatted_aspects = [_format_aspect(a) for a in raw.get("aspects", [])]
+        provisional: dict[str, Any] | None = None
+        if birth_time_accuracy in TIME_SENSITIVE_ACCURACIES:
+            body_house_placements = {
+                name: body["house"]
+                for name, body in bodies.items()
+                if isinstance(body, dict) and body.get("house") is not None
+            }
+            provisional_angles = {
+                key: dict(bodies[name])
+                for name, key in ANGLE_BODY_NAMES.items()
+                if isinstance(bodies.get(name), dict)
+            }
+            angle_aspects = [
+                aspect for aspect in formatted_aspects
+                if aspect.get("body1") in ANGLE_BODY_NAMES or aspect.get("body2") in ANGLE_BODY_NAMES
+            ]
+            formatted_aspects = [
+                aspect for aspect in formatted_aspects
+                if aspect.get("body1") not in ANGLE_BODY_NAMES and aspect.get("body2") not in ANGLE_BODY_NAMES
+            ]
+            core = {
+                name: {key: value for key, value in body.items() if key != "house"}
+                for name, body in core.items()
+                if name not in ANGLE_BODY_NAMES
+            }
+            asteroids = {
+                name: {key: value for key, value in body.items() if key != "house"}
+                for name, body in asteroids.items()
+                if name not in ANGLE_BODY_NAMES
+            }
+            provisional = {
+                "status": (
+                    "assumed_birth_time"
+                    if birth_time_accuracy == "unknown"
+                    else "approximate_birth_time"
+                ),
+                "assumed_time": f"{hour:02d}:{minute:02d}",
+                "valid_for_assertive_interpretation": False,
+                "recalculation_required_when_time_known": True,
+                "reason": (
+                    "birth_time_unknown"
+                    if birth_time_accuracy == "unknown"
+                    else "birth_time_approximate"
+                ),
+                "angles": provisional_angles,
+                "houses": houses,
+                "body_house_placements": body_house_placements,
+                "angle_aspects": angle_aspects,
+            }
+        if provisional is None:
+            natal = {
                 "engine": "Swiss Ephemeris",
                 "house_system": house_system,
                 "subject": raw.get("subject"),
                 "bodies": core,
                 "houses": houses,
-                "aspects": [_format_aspect(a) for a in raw.get("aspects", [])],
+                "aspects": formatted_aspects,
                 "summary": _summaries(raw.get("planets", [])),
                 "skipped_bodies": skipped_bodies,
-            },
+            }
+        else:
+            natal = {
+                "engine": "Swiss Ephemeris",
+                "house_system": house_system,
+                "subject": raw.get("subject"),
+                "bodies": core,
+                "aspects": formatted_aspects,
+                "summary": _summaries(raw.get("planets", [])),
+                "skipped_bodies": skipped_bodies,
+                "time_sensitive_provisional": provisional,
+            }
+        western_system = {
+            "natal": natal,
             "asteroids": asteroids if include_asteroids else None,
             "transit": _build_transit_for_profile(
                 profile=transit_profile,
@@ -574,7 +678,7 @@ def build_product_yaml(
     doc = {
         "version": "nanami-products-yaml-v1",
         "meta": {
-            "schema_version": "1.1",
+            "schema_version": "2.0",
             "product_type": "personal_ai_astrology_yaml",
             "profile_id": profile_id,
             "chart_id": chart_id,

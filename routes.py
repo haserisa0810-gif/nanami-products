@@ -4233,6 +4233,7 @@ def chart_page(request: Request, token: str):
                 "download_zip_url": f"{base_url}/chart/{token}/download.zip",
                 "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
                 "usage_guide_url": "https://guide.nanami-astro.com/",
+                "birth_time_reissue_url": os.getenv("LINE_ADD_FRIEND_URL", "").strip(),
                 "hoshiyomi_app_url": hoshiyomi_app_url,
                 "transit_flight_url": transit_flight_url,
                 "next_transit_url": next_transit_url,

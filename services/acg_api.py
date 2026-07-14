@@ -16,6 +16,7 @@ from typing import Any
 import yaml
 
 from services.acg_core import lines_to_geojson
+from services.yaml_exporter import read_body_house, read_natal_angles
 
 # 貼り付け YAML の受け入れ上限（仕様: 256KB 程度で 413）
 MAX_YAML_BYTES = 256 * 1024
@@ -182,7 +183,18 @@ def personal_context_from_yaml(yaml_text: str) -> dict[str, Any]:
     if not isinstance(doc, dict):
         raise AcgYamlFormatError("対応していないYAML形式です")
 
-    bodies = ((((doc.get("systems") or {}).get("western") or {}).get("natal") or {}).get("bodies") or {})
+    natal = (((doc.get("systems") or {}).get("western") or {}).get("natal") or {})
+    bodies = dict(natal.get("bodies") or {})
+    angles = read_natal_angles(natal)
+    for key, name in (("asc", "ASC"), ("mc", "MC")):
+        if isinstance(angles.get(key), dict):
+            bodies.setdefault(name, angles[key])
+    for name in ("Sun", "Moon"):
+        body = bodies.get(name)
+        if isinstance(body, dict) and body.get("house") is None:
+            body = dict(body)
+            body["house"] = read_body_house(natal, name)
+            bodies[name] = body
     natal_summary = {
         "sun": _format_natal_body(bodies.get("Sun"), include_house=True),
         "moon": _format_natal_body(bodies.get("Moon"), include_house=True),
@@ -198,7 +210,19 @@ def personal_context_from_yaml(yaml_text: str) -> dict[str, Any]:
 
 def personal_geojson(yaml_text: str) -> dict[str, Any]:
     """貼り付け YAML からパーソナル（ネイタル）ACG 線 GeoJSON を返す。保存しない。"""
+    try:
+        doc = yaml.safe_load(yaml_text) or {}
+    except yaml.YAMLError as exc:
+        raise AcgYamlFormatError("対応していないYAML形式です") from exc
     dt_utc = natal_dt_utc_from_yaml(yaml_text)
     result = lines_to_geojson(dt_utc, natal=True)
     result.setdefault("meta", {})["personal_context"] = personal_context_from_yaml(yaml_text)
+    birth_time = doc.get("birth_time") if isinstance(doc, dict) else {}
+    input_block = doc.get("input") if isinstance(doc, dict) else {}
+    accuracy = (
+        (birth_time.get("accuracy") if isinstance(birth_time, dict) else None)
+        or (input_block.get("birth_time_accuracy") if isinstance(input_block, dict) else None)
+        or "exact"
+    )
+    result["time_sensitive_warning"] = accuracy in {"unknown", "approximate"}
     return result

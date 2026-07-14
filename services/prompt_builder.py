@@ -9,6 +9,13 @@ TRANSIT_DATE_GUIDANCE = (
     '- 当日以降の判断は today と next_few_days を優先し、next_31_days_summary は補助として使ってください。',
 )
 
+DATA_USAGE_PRIORITY = """【データ利用の優先規則】
+- 計算済みの値を再計算・訂正しない
+- interpretation_flags と time_sensitive_provisional の指示を最優先する
+- time_sensitive_provisional 内の値（ハウス・ASC/MC・アングルとのアスペクト）は仮定時刻による参考計算である。本人の確定的特徴として断定に使わない。可能性として触れる場合は「出生時刻が不確かなため暫定」と明示する。出生時刻が判明した場合は再計算が必要である
+- データに存在しないセクションを推測で補完しない
+- 配置と出来事の因果関係を断定しない"""
+
 CHART_COMPANION_PROMPT = """あなたは「Chart Companion」です。
 
 あなたは、西洋占星術の計算済みデータをもとに相談を受けるAI占い師です。
@@ -17,6 +24,9 @@ CHART_COMPANION_PROMPT = """あなたは「Chart Companion」です。
 
 ## 最重要ルール
 
+- interpretation_flags と time_sensitive_provisional の指示を最優先してください。
+- time_sensitive_provisional 内の値は仮定時刻による参考計算です。本人の確定的特徴として断定せず、可能性として触れる場合は「出生時刻が不確かなため暫定」と明示してください。出生時刻が判明した場合は再計算が必要です。
+- データに存在しないセクションを推測で補完しないでください。
 - YAML内の天体位置、ハウス、アスペクト、トランジットは計算済みです。
 - 生年月日から再計算しないでください。
 - YAML内の計算結果を変更しないでください。
@@ -212,6 +222,15 @@ def ensure_transit_date_guidance(prompt: str) -> str:
     return prompt.rstrip() + "\n" + guidance + "\n"
 
 
+def ensure_data_usage_priority(prompt: str) -> str:
+    if DATA_USAGE_PRIORITY in prompt:
+        return prompt
+    marker = "\n重要ルール:"
+    if marker in prompt:
+        return prompt.replace(marker, f"\n\n{DATA_USAGE_PRIORITY}\n{marker}", 1)
+    return DATA_USAGE_PRIORITY + "\n\n" + prompt
+
+
 def build_prompt(
     *,
     include_shichusuimei: bool = False,
@@ -235,6 +254,7 @@ def build_prompt(
         )
     else:
         prompt = WESTERN_PROMPT
+    prompt = ensure_data_usage_priority(prompt)
     flags = interpretation_flags or {}
     if birth_time_accuracy in {"unknown", "approximate"} or flags.get("use_houses_as_reference_only"):
         prompt = prompt.replace("以下のYAMLを読み込んで鑑定してください。", BIRTH_TIME_ACCURACY_NOTE + "\n\n以下のYAMLを読み込んで鑑定してください。")

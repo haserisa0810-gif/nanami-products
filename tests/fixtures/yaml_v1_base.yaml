@@ -1,0 +1,30 @@
+version: nanami-products-yaml-v1
+meta:
+  schema_version: "1.1"
+input:
+  title: v1 fixture
+  birth_date: "1990-05-15"
+  birth_time: "08:30"
+  calculation_time: "08:30"
+  birth_time_accuracy: exact
+  prefecture: 東京都
+  birth_place: 東京都
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9
+  gender: unknown
+systems:
+  western:
+    natal:
+      bodies:
+        Sun:
+          sign: Tau
+          house: 10
+        ASC:
+          sign: Can
+          house: 1
+      houses:
+        "1":
+          absolute_longitude: 100.0
+      aspects: []

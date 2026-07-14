@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+from services.yaml_exporter import read_body_house, read_natal_angles, read_natal_houses
+
 PLANET_SYMBOLS = {
     "Sun": "☉",
     "Moon": "☽",
@@ -119,8 +121,17 @@ def _directed_midpoint(start: float, end: float) -> float:
 def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc: dict[str, Any] | None = None) -> str | None:
     doc = doc if isinstance(doc, dict) else (yaml.safe_load(yaml_text) or {})
     natal = (((doc.get("systems") or {}).get("western") or {}).get("natal") or {})
-    bodies = natal.get("bodies") or {}
-    houses = natal.get("houses") or {}
+    bodies = dict(natal.get("bodies") or {})
+    for key, body in read_natal_angles(natal).items():
+        name = {"asc": "ASC", "mc": "MC", "vertex": "Vertex"}.get(str(key).lower())
+        if name and isinstance(body, dict):
+            bodies.setdefault(name, dict(body))
+    for name, body in bodies.items():
+        if isinstance(body, dict) and body.get("house") is None:
+            house = read_body_house(natal, name)
+            if house is not None:
+                body["house"] = house
+    houses = read_natal_houses(natal)
     asteroids = ((doc.get("systems") or {}).get("western") or {}).get("asteroids") or {}
     if not isinstance(bodies, dict) or not isinstance(houses, dict):
         return None
@@ -231,7 +242,10 @@ def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc:
         "trine": {"stroke": "#4b7da8", "stroke_width": "2.4", "opacity": ".78"},
         "opposition": {"stroke": "#9b5f9f", "stroke_width": "2.6", "opacity": ".82"},
     }
-    for aspect in natal.get("aspects") or []:
+    provisional = natal.get("time_sensitive_provisional") or {}
+    drawable_aspects = list(natal.get("aspects") or [])
+    drawable_aspects.extend(provisional.get("angle_aspects") or [])
+    for aspect in drawable_aspects:
         if not isinstance(aspect, dict):
             continue
         body1 = body_by_name.get(str(aspect.get("body1")))
