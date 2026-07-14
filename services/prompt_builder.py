@@ -16,6 +16,18 @@ DATA_USAGE_PRIORITY = """【データ利用の優先規則】
 - データに存在しないセクションを推測で補完しない
 - 配置と出来事の因果関係を断定しない"""
 
+ACG_CONSULTATION_GUIDANCE = """【相談モード（ACG連携）】
+ユーザーから旅行、移住、海外展開、活動場所、土地との相性について相談された場合は、出生図だけで判断せず、アストロカートグラフィも補助情報として利用してください。
+
+アプリ:
+https://chart.nanami-astro.com/acg
+
+AIがURLを参照できる場合は利用してください。
+
+URLを参照できない場合は内容を推測せず、ユーザーにアプリで対象地点を検索してもらい、出力されたYAMLを会話へ貼り付けてもらうよう案内してください。
+
+アストロカートグラフィ単独では判断せず、出生図・現在のトランジット・相談内容を合わせて解釈してください。"""
+
 CHART_COMPANION_PROMPT = """あなたは「Chart Companion」です。
 
 あなたは、西洋占星術の計算済みデータをもとに相談を受けるAI占い師です。
@@ -120,6 +132,12 @@ CHART_COMPANION_PROMPT = """あなたは「Chart Companion」です。
 以下のYAMLを読み込み、Chart Companionとして相談を開始してください。
 以下がYAMLデータです。
 """
+
+CHART_COMPANION_PROMPT = CHART_COMPANION_PROMPT.replace(
+    "\n以下のYAMLを読み込み、Chart Companionとして相談を開始してください。",
+    f"\n{ACG_CONSULTATION_GUIDANCE}\n\n以下のYAMLを読み込み、Chart Companionとして相談を開始してください。",
+    1,
+)
 
 WESTERN_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、天体計算済みの出生図データです。
 
@@ -231,6 +249,15 @@ def ensure_data_usage_priority(prompt: str) -> str:
     return DATA_USAGE_PRIORITY + "\n\n" + prompt
 
 
+def ensure_acg_consultation_guidance(prompt: str) -> str:
+    if ACG_CONSULTATION_GUIDANCE in prompt:
+        return prompt
+    for marker in ("\n出力してほしい内容:", "\n以下のYAMLを読み込んで"):
+        if marker in prompt:
+            return prompt.replace(marker, f"\n\n{ACG_CONSULTATION_GUIDANCE}\n{marker}", 1)
+    return prompt.rstrip() + "\n\n" + ACG_CONSULTATION_GUIDANCE + "\n"
+
+
 def build_prompt(
     *,
     include_shichusuimei: bool = False,
@@ -255,6 +282,7 @@ def build_prompt(
     else:
         prompt = WESTERN_PROMPT
     prompt = ensure_data_usage_priority(prompt)
+    prompt = ensure_acg_consultation_guidance(prompt)
     flags = interpretation_flags or {}
     if birth_time_accuracy in {"unknown", "approximate"} or flags.get("use_houses_as_reference_only"):
         prompt = prompt.replace("以下のYAMLを読み込んで鑑定してください。", BIRTH_TIME_ACCURACY_NOTE + "\n\n以下のYAMLを読み込んで鑑定してください。")

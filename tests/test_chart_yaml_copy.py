@@ -161,6 +161,10 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn("最大1〜2問", CHART_COMPANION_PROMPT)
         self.assertIn("今は決めない", CHART_COMPANION_PROMPT)
         self.assertIn("配置の根拠が薄い場合", CHART_COMPANION_PROMPT)
+        self.assertIn("【相談モード（ACG連携）】", CHART_COMPANION_PROMPT)
+        self.assertIn("https://chart.nanami-astro.com/acg", CHART_COMPANION_PROMPT)
+        self.assertIn("URLを参照できない場合は内容を推測せず", CHART_COMPANION_PROMPT)
+        self.assertIn("出力されたYAMLを会話へ貼り付けて", CHART_COMPANION_PROMPT)
         self.assertTrue(CHART_COMPANION_PROMPT.rstrip().endswith("以下がYAMLデータです。"))
 
     def test_chart_companion_labels_are_localized(self) -> None:
