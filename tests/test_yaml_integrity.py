@@ -85,8 +85,10 @@ class YamlIntegrityTest(unittest.TestCase):
         for prompt in prompts:
             self.assertIn("【相談モード（ACG連携）】", prompt)
             self.assertIn("https://chart.nanami-astro.com/acg", prompt)
-            self.assertIn("URLを参照できない場合は内容を推測せず", prompt)
-            self.assertIn("出力されたYAMLを会話へ貼り付けて", prompt)
+            self.assertIn("ACGアプリへ貼り付ける占術YAMLをこの会話に表示しますか？", prompt)
+            self.assertIn("要約・再計算・書き換えせず", prompt)
+            self.assertIn("元のYAMLを正確に参照できない場合は再構成や推測をせず", prompt)
+            self.assertIn("ACGアプリから出力されたYAMLを会話へ貼り付けて", prompt)
             self.assertIn("出生図・現在のトランジット・相談内容", prompt)
             self.assertEqual(prompt.count("https://chart.nanami-astro.com/acg"), 1)
 
