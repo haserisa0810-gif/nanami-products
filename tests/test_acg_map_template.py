@@ -62,6 +62,15 @@ def test_acg_map_has_japan_orientation_guides() -> None:
     assert 'switchBaseLayer("gsi");' in template
 
 
+def test_acg_personal_input_explains_prompt_and_code_fence_support() -> None:
+    template = _template()
+
+    assert "占術YAMLを貼り付けてください" in template
+    assert "AI向けプロンプトや相談モードを含むYAMLも、そのまま貼り付けられます。" in template
+    assert "YAMLコードブロック全体にも対応" in template
+    assert "ACGでは必要な占術データだけを読み込みます。" in template
+
+
 def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     template = _template()
 

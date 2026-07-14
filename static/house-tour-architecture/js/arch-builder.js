@@ -5,6 +5,7 @@
  */
 import { housePosition, hexColor } from "../../house-tour/js/scene.js";
 import { createMaterialKit, stdMat } from "./materials.js";
+import { attachLivedInProps } from "./life-props.js";
 
 /** 抽象版と同じ円環半径を使い、ショット計算を共有する */
 export { RING_R, EYE_H, WORLD_BOUND } from "../../house-tour/js/scene.js";
@@ -145,7 +146,7 @@ function buildBuilding(ctx, n, houseData, mats, animatables) {
     12: buildHouse12,
   };
   const builder = builders[n] || buildGenericShell;
-  builder({
+  const buildCtx = {
     THREE,
     group,
     arch,
@@ -159,7 +160,11 @@ function buildBuilding(ctx, n, houseData, mats, animatables) {
     lights,
     animatables,
     n,
-  });
+  };
+  builder(buildCtx);
+
+  // 生活感レイヤ（ON/OFF 可・本体建築とは別グループ）
+  attachLivedInProps(buildCtx);
 
   // アプローチ道
   const path = mesh(

@@ -34,6 +34,11 @@ import {
   EYE_H,
 } from "./arch-builder.js";
 import { createAmbientSound } from "../../house-tour/js/ambient-sound.js";
+import {
+  isLivedInEnabled,
+  setLivedInEnabled,
+  setLivedInVisible,
+} from "./life-props.js";
 
 (function boot() {
   if (typeof THREE === "undefined") {
@@ -75,6 +80,29 @@ import { createAmbientSound } from "../../house-tour/js/ambient-sound.js";
 
   const { houseGroups, animatables, entryWorld } = buildCampus(ctx, housesData);
   const cine = createCinematicPlayer(ctx.camera, THREE);
+
+  function syncLivedInButton() {
+    const btn = document.getElementById("ht-btn-lived-in");
+    if (!btn) return;
+    const on = isLivedInEnabled();
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.textContent = on
+      ? t("btn_lived_in_on") || "生活感: ON"
+      : t("btn_lived_in_off") || "生活感: OFF";
+  }
+
+  function toggleLivedIn() {
+    const next = !isLivedInEnabled();
+    setLivedInEnabled(next);
+    setLivedInVisible(houseGroups, next);
+    syncLivedInButton();
+    ui.toast(
+      next
+        ? t("toast_lived_in_on") || "生活感ON — 机上の小物を表示"
+        : t("toast_lived_in_off") || "生活感OFF — 建築のみ（すぐ戻せます）",
+      2800
+    );
+  }
 
   const tour = createTourController({
     onVisit(num, opts) {
@@ -340,6 +368,12 @@ import { createAmbientSound } from "../../house-tour/js/ambient-sound.js";
       ui.toast(on ? t("toast_sound_on") : t("toast_sound_off"), 2200);
     });
   });
+  document.getElementById("ht-btn-lived-in")?.addEventListener("click", toggleLivedIn);
+  document.getElementById("ht-menu-lived-in")?.addEventListener("click", () => {
+    toggleLivedIn();
+    ui.setMenuOpen(false);
+  });
+  syncLivedInButton();
   ui.el.btnQuality?.addEventListener("click", () => {
     quality = quality === "high" ? "low" : "high";
     localStorage.setItem("ht-quality", quality);

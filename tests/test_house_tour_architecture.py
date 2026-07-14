@@ -28,10 +28,28 @@ def test_architecture_assets_served():
         "js/main.js",
         "js/arch-builder.js",
         "js/materials.js",
+        "js/life-props.js",
         "arch.css",
         "README.md",
+        "LIVED_IN.md",
     ):
         assert client.get(f"/static/house-tour-architecture/{rel}").status_code == 200, rel
+
+
+def test_lived_in_props_are_optional_layer():
+    """生活感は別モジュール＋ON/OFF。建築本体と分離。"""
+    life = (ARCH / "js" / "life-props.js").read_text(encoding="utf-8")
+    assert "lived_in_props" in life
+    assert "isLivedInEnabled" in life
+    assert "setLivedInVisible" in life
+    for n in range(1, 13):
+        assert f"fillHouse{n}" in life, f"missing fillHouse{n}"
+    builder = (ARCH / "js" / "arch-builder.js").read_text(encoding="utf-8")
+    assert "attachLivedInProps" in builder
+    main = (ARCH / "js" / "main.js").read_text(encoding="utf-8")
+    assert "toggleLivedIn" in main or "setLivedInVisible" in main
+    html = client.get("/house-tour-architecture").text
+    assert "ht-btn-lived-in" in html
 
 
 def test_architecture_does_not_replace_abstract():

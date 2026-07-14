@@ -1,0 +1,16 @@
+ACG TikTok / Instagram 縦動画 完成版（15秒・9:16）
+
+セリフ
+0.35秒　nanami-astro 編集長「この線、何だと思います？」
+4.05秒　nanami-astro 編集長「実は、生まれた時間で変わる地図なんです。」
+10.38秒 nanami-astro 編集長「あなたにも、自分だけの地図があります。」
+
+クレジット
+ベース動画・地図演出：ユーザー提供 Claude 制作 MP4
+編集長キャラクター画像：OpenAI image generation（Codex built-in imagegen）
+音声：VOICEVOX:玄野武宏
+BGM：制作スクリプトによるオリジナル生成音源
+編集・構成：Codex
+
+画像生成プロンプト方針
+実写の成猫サバトラ／非擬人化／服なし／四足の自然な猫／知的で穏やかな案内役／ネイビー・ゴールドのACG観測室。

@@ -369,8 +369,9 @@
 
       <div class="panel" id="panel-personal" hidden>
         <h2>{{ "Paste YAML" if en else "YAML 貼り付け" }}</h2>
-        <textarea id="yaml-input" placeholder="{{ "Paste the full text of your purchased YAML here" if en else "購入した YAML の全文をここに貼り付けてください" }}"></textarea>
+        <textarea id="yaml-input" placeholder="{{ "Paste your astrology YAML here" if en else "占術YAMLを貼り付けてください" }}"></textarea>
         <button class="action-btn" id="btn-personal" type="button">{{ "Show my sky lines" if en else "わたしの天空線を表示" }}</button>
+        <p class="note">{{ "YAML containing AI prompts or consultation-mode instructions can be pasted as-is, including the complete YAML code block. ACG reads only the required astrology data." if en else "AI向けプロンプトや相談モードを含むYAMLも、そのまま貼り付けられます。YAMLコードブロック全体にも対応し、ACGでは必要な占術データだけを読み込みます。" }}</p>
         <p class="note">{{ "Pasted content is never stored on the server." if en else "貼り付けた内容はサーバーに保存されません。" }}</p>
       </div>
 

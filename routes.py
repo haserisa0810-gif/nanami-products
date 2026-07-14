@@ -2702,7 +2702,10 @@ async def acg_personal(request: Request):
 
     body = await request.body()
     if len(body) > MAX_YAML_BYTES:
-        return JSONResponse({"ok": False, "error": "YAML テキストが大きすぎます。"}, status_code=413)
+        return JSONResponse(
+            {"ok": False, "error": "YAMLテキストが大きすぎます（上限256KB）。"},
+            status_code=413,
+        )
 
     yaml_text = body.decode("utf-8", errors="replace")
     # 仕様は JSON ボディ {"yaml_text": "..."}。生テキスト貼り付けも受け付ける
