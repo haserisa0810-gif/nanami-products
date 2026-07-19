@@ -278,26 +278,46 @@ def issue_personal_edition_codes(*, count: int, product_type: str, provider: str
     issued: list[dict[str, Any]] = []
     with _conn(operation="issue_personal_edition_codes") as con:
         with con.cursor() as cur:
-            # Cloud Run intentionally skips init_db() during startup. Keep this
-            # write path compatible with databases created from older DDL.
-            _ensure_personal_edition_codes_table(cur)
+            cur.execute(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = %s AND table_name = 'personal_edition_codes'
+                """,
+                (SCHEMA,),
+            )
+            columns = {row["column_name"] for row in cur.fetchall()}
+            supports_marketplace_notes = {"marketplace_order_id", "buyer_note"} <= columns
             for _ in range(count):
                 groups = ["".join(secrets.choice(alphabet) for _ in range(4)) for _ in range(3)]
                 code_prefix = "PE-ACG" if product_type == "acg_bundle" else "PE-FULL"
                 code = code_prefix + "-" + "-".join(groups)
                 code_hash = _personal_code_hash(code)
-                cur.execute(f"""
-                    INSERT INTO {SCHEMA}.personal_edition_codes
-                        (code_hash, code_prefix, product_type, provider, locale, expires_at,
-                         marketplace_order_id, buyer_note)
-                    VALUES (%s, %s, %s, %s, %s,
-                            CASE WHEN %s IS NULL THEN NULL ELSE NOW() + (%s * INTERVAL '1 day') END,
-                            %s, %s)
-                    RETURNING id, code_prefix, product_type, provider, locale, status, expires_at,
-                              created_at, used_at, marketplace_order_id, buyer_note
-                """, (code_hash, code[:12], product_type, provider, locale,
-                        expiration_days, expiration_days, marketplace_order_id or None, buyer_note or None))
+                if supports_marketplace_notes:
+                    cur.execute(f"""
+                        INSERT INTO {SCHEMA}.personal_edition_codes
+                            (code_hash, code_prefix, product_type, provider, locale, expires_at,
+                             marketplace_order_id, buyer_note)
+                        VALUES (%s, %s, %s, %s, %s,
+                                CASE WHEN %s IS NULL THEN NULL ELSE NOW() + (%s * INTERVAL '1 day') END,
+                                %s, %s)
+                        RETURNING id, code_prefix, product_type, provider, locale, status, expires_at,
+                                  created_at, used_at, marketplace_order_id, buyer_note
+                    """, (code_hash, code[:12], product_type, provider, locale,
+                            expiration_days, expiration_days, marketplace_order_id or None, buyer_note or None))
+                else:
+                    cur.execute(f"""
+                        INSERT INTO {SCHEMA}.personal_edition_codes
+                            (code_hash, code_prefix, product_type, provider, locale, expires_at)
+                        VALUES (%s, %s, %s, %s, %s,
+                                CASE WHEN %s IS NULL THEN NULL ELSE NOW() + (%s * INTERVAL '1 day') END)
+                        RETURNING id, code_prefix, product_type, provider, locale, status, expires_at,
+                                  created_at, used_at
+                    """, (code_hash, code[:12], product_type, provider, locale,
+                            expiration_days, expiration_days))
                 row = dict(cur.fetchone())
+                row.setdefault("marketplace_order_id", marketplace_order_id or None)
+                row.setdefault("buyer_note", buyer_note or None)
                 row["code"] = code
                 issued.append(row)
     return issued
