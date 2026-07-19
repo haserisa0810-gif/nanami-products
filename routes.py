@@ -2469,17 +2469,54 @@ def admin_personal_edition_code_pdfs_zip(
                 product_type=product_type,
                 lang=lang,
             )
-            archive.writestr(f"{index:03d}_{code}_delivery.pdf", pdf_bytes)
-        readme = (
-            "Each PDF is ready to deliver to one buyer. Do not send the whole ZIP to a buyer.\n"
+            buyer_url = f"{activation_url}#code={code}"
+            is_acg = product_type == "acg_bundle"
+            if lang == "en":
+                buyer_readme = (
+                    "PERSONAL EDITION - START HERE\n\n"
+                    "1. Open ACCESS-CODE.pdf and select the link or scan the QR code.\n"
+                    "2. Enter your birth details. Your code is already filled in.\n"
+                    "3. A private chart page will be issued and your Personal Edition ZIP will download.\n"
+                    "4. Save the private chart page URL. You can download the ZIP again from that page.\n"
+                    + ("5. Your ACG Bundle works both online from the chart page and offline inside the downloaded ZIP.\n" if is_acg else "")
+                    + "\nThe ZIP downloaded after activation contains a separate detailed README and clearly named START files.\n"
+                )
+            else:
+                buyer_readme = (
+                    "PERSONAL EDITION　購入者さまへ\n\n"
+                    "1. 「ACCESS-CODE.pdf」を開き、リンクを押すかQRコードを読み取ります。\n"
+                    "2. 出生情報を入力します。引換コードはURLから自動入力されます。\n"
+                    "3. 専用鑑定ページが発行され、Personal Edition ZIPもダウンロードされます。\n"
+                    "4. 専用鑑定ページURLを保存してください。ページからZIPを再保存できます。\n"
+                    + ("5. ACGは、専用鑑定ページからオンラインでも、ダウンロードしたZIPからローカルでも使えます。\n" if is_acg else "")
+                    + "\nコード使用後に保存されるZIPにも、詳しいREADMEと分かりやすいSTARTファイルが入っています。\n"
+                )
+            buyer_buffer = io.BytesIO()
+            with zipfile.ZipFile(buyer_buffer, "w", compression=zipfile.ZIP_DEFLATED) as buyer_zip:
+                buyer_zip.writestr("ACCESS-CODE.pdf", pdf_bytes)
+                buyer_zip.writestr(
+                    "README-FIRST.txt" if lang == "en" else "はじめに_README.txt",
+                    buyer_readme.encode("utf-8-sig"),
+                )
+                buyer_zip.writestr(
+                    "ACTIVATION-URL.txt" if lang == "en" else "引換ページ_URL.txt",
+                    (buyer_url + "\n").encode("utf-8-sig"),
+                )
+                buyer_zip.writestr(
+                    "OPEN-ACTIVATION-PAGE.url",
+                    ("[InternetShortcut]\r\nURL=" + buyer_url + "\r\n").encode("utf-8"),
+                )
+            archive.writestr(f"{index:03d}_{code}_BUYER-DELIVERY.zip", buyer_buffer.getvalue())
+        admin_readme = (
+            "Each BUYER-DELIVERY ZIP is ready for one buyer. Send one ZIP only; never send this entire master ZIP.\n"
             if lang == "en" else
-            "PDFは1購入者につき1ファイルをお渡しください。このZIP全体を購入者へ送らないでください。\n"
+            "BUYER-DELIVERY ZIPは、1つにつき購入者1名分です。購入者には該当ZIPを1つだけ渡し、この一括ZIP全体は渡さないでください。\n"
         )
-        archive.writestr("README.txt", readme.encode("utf-8-sig"))
+        archive.writestr("ADMIN-README.txt", admin_readme.encode("utf-8-sig"))
     safe_provider = provider if provider in {"etsy", "coconala", "manual"} else "manual"
     response = Response(content=archive_buffer.getvalue(), media_type="application/zip")
     response.headers["Content-Disposition"] = (
-        f'attachment; filename="personal-edition-{safe_provider}-{product_type}-delivery-pdfs.zip"'
+        f'attachment; filename="personal-edition-{safe_provider}-{product_type}-buyer-packages.zip"'
     )
     return _mark_no_store(response)
 
@@ -3792,12 +3829,14 @@ def personal_edition_activate_post(
             birth_time_range=time_info["range"],
             birth_time_note=str(time_info["note"]),
         )
+        chart_token = secrets.token_urlsafe(18)
+        chart_url = f"{_public_base_url(request)}/chart/{chart_token}"
         build_personalized_zip(
             yaml_text=yaml_text,
             lang=str(code_row["locale"]),
             include_acg=code_row["product_type"] == "acg_bundle",
+            chart_url=chart_url if str(code_row["locale"]) == "ja" else f"{chart_url}?lang=en",
         )
-        chart_token = secrets.token_urlsafe(18)
         pg_store.save_chart(
             token=chart_token,
             order_code=None,
@@ -4402,17 +4441,21 @@ def chart_shichusuimei_svg(token: str):
 
 
 @app.get("/chart/{token}/personal-edition.zip")
-def chart_personal_edition_zip(token: str):
+def chart_personal_edition_zip(request: Request, token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
     options = chart.get("options") or {}
     if not options.get("personal_edition"):
         raise HTTPException(status_code=404, detail="Personal Edition ZIP not found")
     include_acg = bool(options.get("acg_enabled"))
     lang = str(options.get("personal_edition_locale") or "ja")
+    chart_url = f"{_public_base_url(request)}/chart/{token}"
+    if lang == "en":
+        chart_url = f"{chart_url}?lang=en"
     zip_bytes = build_personalized_zip(
         yaml_text=chart["yaml_text"],
         lang=lang if lang in {"ja", "en"} else "ja",
         include_acg=include_acg,
+        chart_url=chart_url,
     )
     filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
                 if include_acg else "BirthChartMuseum-PersonalEdition-FULL.zip")

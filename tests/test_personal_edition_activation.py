@@ -60,24 +60,33 @@ def test_admin_can_download_all_delivery_pdfs_as_zip(monkeypatch):
     )
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/zip"
-    assert "personal-edition-etsy-acg_bundle-delivery-pdfs.zip" in response.headers["content-disposition"]
+    assert "personal-edition-etsy-acg_bundle-buyer-packages.zip" in response.headers["content-disposition"]
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-        pdf_names = [name for name in archive.namelist() if name.endswith(".pdf")]
-        assert len(pdf_names) == 2
-        assert archive.read(pdf_names[0]).startswith(b"%PDF-")
-        assert "README.txt" in archive.namelist()
+        delivery_names = [name for name in archive.namelist() if name.endswith("_BUYER-DELIVERY.zip")]
+        assert len(delivery_names) == 2
+        assert "ADMIN-README.txt" in archive.namelist()
+        with zipfile.ZipFile(io.BytesIO(archive.read(delivery_names[0]))) as buyer_zip:
+            assert buyer_zip.read("ACCESS-CODE.pdf").startswith(b"%PDF-")
+            assert "README-FIRST.txt" in buyer_zip.namelist()
+            assert "ACTIVATION-URL.txt" in buyer_zip.namelist()
+            assert "#code=PE-ACG-" in buyer_zip.read("ACTIVATION-URL.txt").decode("utf-8-sig")
 
 
 def test_personalized_zip_contains_chart_and_autoload():
-    data = build_personalized_zip(yaml_text="version: test\nsystems: {}\n", lang="en")
+    data = build_personalized_zip(yaml_text="version: test\nsystems: {}\n", lang="en", chart_url="https://chart.example/chart/private")
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
-        chart_name = next(name for name in names if name.endswith("/app/birth-chart.yaml"))
-        index_name = next(name for name in names if name.endswith("/app/index.html"))
+        chart_name = next(name for name in names if name == "app/birth-chart.yaml")
+        index_name = next(name for name in names if name == "app/index.html")
         assert archive.read(chart_name).decode("utf-8").startswith("version: test")
         html = archive.read(index_name).decode("utf-8")
         assert "fetch('/birth-chart.yaml'" in html
         assert "ht-last-yaml" in html
+        assert "START-MUSEUM-WINDOWS.bat" in names
+        assert "START-MUSEUM-MAC.command" in names
+        assert "README-FIRST.txt" in names
+        assert "PRIVATE-CHART-URL.txt" in names
+        assert not any(name.startswith("BirthChartMuseum-PersonalEdition-") for name in names)
 
 
 def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
@@ -85,14 +94,14 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
     data = build_personalized_zip(yaml_text=yaml_text, lang="ja", include_acg=True)
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
-        geojson_name = next(name for name in names if name.endswith("/app/acg-personal.geojson"))
-        acg_page = next(name for name in names if name.endswith("/app/acg/index.html"))
-        index_name = next(name for name in names if name.endswith("/app/index.html"))
+        geojson_name = next(name for name in names if name == "app/acg-personal.geojson")
+        acg_page = next(name for name in names if name == "app/acg/index.html")
+        index_name = next(name for name in names if name == "app/index.html")
         geojson = archive.read(geojson_name).decode("utf-8")
         assert '"acg_eligible":true' in geojson
         assert '"line_group":"Sun_MC"' in geojson
         assert "acg-personal.geojson" in archive.read(acg_page).decode("utf-8")
-        assert "ACG · あなたの天空線" in archive.read(index_name).decode("utf-8")
+        assert "あなたのACG地図を開く" in archive.read(index_name).decode("utf-8")
 
 
 def test_successful_activation_creates_chart_page(monkeypatch):

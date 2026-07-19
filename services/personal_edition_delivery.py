@@ -41,14 +41,17 @@ def ensure_template_zip(lang: str) -> Path:
     return target
 
 
-def _autoload_script(*, include_acg: bool) -> str:
-    acg_link = """
+def _autoload_script(*, include_acg: bool, lang: str) -> str:
+    acg_link = ""
+    if include_acg:
+        acg_label = "View your ACG map" if lang == "en" else "あなたのACG地図を開く"
+        acg_link = f"""
       var acg = document.createElement('a');
       acg.href = '/acg/';
-      acg.textContent = 'ACG · あなたの天空線';
+      acg.textContent = {json.dumps(acg_label, ensure_ascii=False)};
       acg.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9999;padding:11px 16px;border-radius:999px;background:#c9a227;color:#0a1128;text-decoration:none;font-weight:700;box-shadow:0 5px 18px rgba(0,0,0,.35)';
       document.body.appendChild(acg);
-""" if include_acg else ""
+"""
     return """
   <script>
   document.addEventListener('DOMContentLoaded', function () {
@@ -68,35 +71,108 @@ def _autoload_script(*, include_acg: bool) -> str:
   </script>
 """ % acg_link
 
+def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str:
+    if lang == "en":
+        acg = (
+            "\nACG (included with your bundle)\n"
+            "- Online: open your private chart URL and select 'View your ACG map'.\n"
+            "- Offline: start the Museum, then select the gold ACG button.\n"
+            "- Your personal ACG data is already installed; no YAML paste is required.\n"
+            if include_acg else ""
+        )
+        url = f"\nPrivate chart page\n{chart_url}\n" if chart_url else ""
+        return (
+            "BIRTH CHART MUSEUM - PERSONAL EDITION\n\n"
+            "QUICK START\n"
+            "Windows: unzip everything, then double-click START-MUSEUM-WINDOWS.bat\n"
+            "Mac: unzip everything, then double-click START-MUSEUM-MAC.command\n"
+            "Keep the black server window open while using the Museum. Close it when finished.\n\n"
+            "WHAT EACH ITEM DOES\n"
+            "- START-MUSEUM-WINDOWS.bat: starts the Museum on Windows.\n"
+            "- START-MUSEUM-MAC.command: starts the Museum on Mac.\n"
+            "- app: application files. Do not move or delete this folder.\n"
+            "- OPEN-ONLINE-CHART.url / PRIVATE-CHART-URL.txt: opens your private online chart.\n\n"
+            "MUSEUM\n"
+            "The START file opens the Birth Chart Museum in your browser. Your birth chart is already installed.\n"
+            + acg + url +
+            "\nPrivacy: the local edition runs only on your computer. Personal use only; do not redistribute.\n"
+        )
+    acg = (
+        "\n【ACG（ACG Bundleに含まれます）】\n"
+        "・オンライン：専用鑑定ページの「あなたのACG地図を見る」を押します。\n"
+        "・ZIP版：STARTでミュージアムを起動し、画面の金色のACGボタンを押します。\n"
+        "・あなた専用のACGデータは設定済みです。YAMLの貼り付けは不要です。\n"
+        if include_acg else ""
+    )
+    url = f"\n【専用鑑定ページ】\n{chart_url}\n" if chart_url else ""
+    return (
+        "BIRTH CHART MUSEUM - PERSONAL EDITION\n"
+        "購入者さま向け はじめにお読みください\n\n"
+        "【最初にすること】\n"
+        "1. ZIPを右クリックして「すべて展開」します。ZIPの中から直接起動しないでください。\n"
+        "2. Windows：START-MUSEUM-WINDOWS.bat をダブルクリックします。\n"
+        "   Mac：START-MUSEUM-MAC.command をダブルクリックします。\n"
+        "3. ブラウザでBirth Chart Museumが自動的に開きます。出生データは設定済みです。\n"
+        "4. 使用中は黒いサーバー画面を閉じないでください。終了時に閉じます。\n\n"
+        "【ファイルの役割】\n"
+        "・START-MUSEUM-WINDOWS.bat：Windowsでミュージアムを起動します。\n"
+        "・START-MUSEUM-MAC.command：Macでミュージアムを起動します。\n"
+        "・appフォルダー：アプリ本体です。移動・削除しないでください。\n"
+        "・OPEN-ONLINE-CHART.url：Windowsで専用鑑定ページを開きます。\n"
+        "・専用鑑定ページ_URL.txt：専用鑑定ページURLの控えです。\n\n"
+        "【ミュージアム】\n"
+        "STARTファイルを押すとミュージアムが起動します。YAMLを貼り付ける必要はありません。\n"
+        + acg + url +
+        "\n【ご注意】\n"
+        "ローカル版はお使いのパソコン内だけで動作します。個人利用専用です。再配布・転売はしないでください。\n"
+    )
 
-def build_personalized_zip(*, yaml_text: str, lang: str, include_acg: bool = False) -> bytes:
+
+def build_personalized_zip(
+    *, yaml_text: str, lang: str, include_acg: bool = False, chart_url: str | None = None
+) -> bytes:
     source_path = ensure_template_zip(lang)
     output = io.BytesIO()
     with zipfile.ZipFile(source_path, "r") as source, zipfile.ZipFile(
         output, "w", zipfile.ZIP_DEFLATED
     ) as target:
-        root_name = None
-        for item in source.infolist():
-            data = source.read(item.filename)
-            if root_name is None and "/" in item.filename:
-                root_name = item.filename.split("/", 1)[0]
-            if item.filename.endswith("/app/index.html"):
-                html = data.decode("utf-8")
-                html = html.replace("</head>", _autoload_script(include_acg=include_acg) + "</head>", 1)
-                data = html.encode("utf-8")
-            target.writestr(item, data)
+        source_names = source.namelist()
+        root_name = next((name.split("/", 1)[0] for name in source_names if "/" in name), None)
         if not root_name:
             raise RuntimeError("Personal Edition ZIP root was not found")
-        target.writestr(f"{root_name}/app/birth-chart.yaml", yaml_text.encode("utf-8"))
+        for item in source.infolist():
+            if "/" not in item.filename:
+                continue
+            relative_name = item.filename.split("/", 1)[1]
+            if not relative_name or item.is_dir():
+                continue
+            data = source.read(item.filename)
+            if relative_name == "start.bat":
+                relative_name = "START-MUSEUM-WINDOWS.bat"
+            elif relative_name == "start.command":
+                relative_name = "START-MUSEUM-MAC.command"
+            elif relative_name in {"README.txt", "YOUR_CHART.txt"}:
+                continue
+            if relative_name == "app/index.html":
+                html = data.decode("utf-8")
+                html = html.replace("</head>", _autoload_script(include_acg=include_acg, lang=lang) + "</head>", 1)
+                data = html.encode("utf-8")
+            target.writestr(relative_name, data)
+        target.writestr("app/birth-chart.yaml", yaml_text.encode("utf-8"))
         if include_acg:
             acg_data = personal_geojson(yaml_text)
             target.writestr(
-                f"{root_name}/app/acg-personal.geojson",
+                "app/acg-personal.geojson",
                 json.dumps(acg_data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
             )
-        target.writestr(
-            f"{root_name}/YOUR_CHART.txt",
-            ("Your personal birth chart is already installed.\n"
-             if lang == "en" else "あなた専用の出生図データはインストール済みです。\n").encode("utf-8-sig"),
-        )
+        guide = _buyer_readme(lang=lang, include_acg=include_acg, chart_url=chart_url)
+        guide_name = "README-FIRST.txt" if lang == "en" else "はじめに_README.txt"
+        target.writestr(guide_name, guide.encode("utf-8-sig"))
+        if chart_url:
+            url_name = "PRIVATE-CHART-URL.txt" if lang == "en" else "専用鑑定ページ_URL.txt"
+            target.writestr(url_name, (chart_url + "\n").encode("utf-8-sig"))
+            target.writestr(
+                "OPEN-ONLINE-CHART.url",
+                ("[InternetShortcut]\r\nURL=" + chart_url + "\r\n").encode("utf-8"),
+            )
     return output.getvalue()
