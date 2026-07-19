@@ -34,15 +34,15 @@ export const planetHouseComboEn = {
   "Mercury:6":
     "Mercury is mind and speech. In the 6th, it often works as skill: analyzing daily work and refining habits.",
   "Venus:6":
-    "Venus seeks harmony and preference. In the 6th, care for routine and people may carry a sense of beauty and comfort.",
+    "Venus describes attraction, harmony, and personal taste. In the 6th, care for routine and people may carry a sense of beauty and comfort.",
   "Mars:6":
     "Mars is action and heat. In the 6th, energy may go into practical tasks, health care, and learning technique.",
   "Uranus:7":
-    "Uranus seeks freedom and refresh. In the 7th, one-to-one bonds and agreements may be redesigned in unconventional ways.",
+    "Uranus seeks freedom, renewal, and the unconventional. In the 7th, one-to-one bonds and agreements may be redesigned in unconventional ways.",
   "Pluto:7":
     "Pluto is deep transformation. In the 7th, dialogue and boundaries with others can redefine the relationship itself.",
   "Neptune:9":
-    "Neptune is imagination and ideal. In the 9th, worldview and far horizons may be sought with soft, poetic edges.",
+    "Neptune speaks to imagination, ideals, and blurred boundaries. In the 9th, worldview and far horizons may be sought with soft, poetic edges.",
   "Moon:11":
     "The Moon seeks emotional safety. In the 11th, belonging may be felt among peers, groups, and shared futures.",
   "Sun:9":
@@ -68,7 +68,7 @@ export const planetHouseComboEn = {
   "North Node:12":
     "The North Node points to growth. In the 12th, development may involve rest, the unseen, and soft release of control.",
   "South Node:6":
-    "The South Node is familiar skill. In the 6th, practical service and routine may feel natural — and worth balancing.",
+    "The South Node points to familiar strengths and well-practised patterns. In the 6th, practical service and routine may feel natural — and worth balancing.",
 };
 
 export function comboTextEn(planetId, houseNumber) {

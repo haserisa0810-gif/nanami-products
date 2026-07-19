@@ -13,7 +13,32 @@ import { uiStrings, format } from "./data/ui-strings.js";
 let lang = "ja";
 const listeners = [];
 
+// チャートデータは sign_ja（日本語星座名）で持つ。英語UIでは表示時に変換する。
+const SIGN_EN = {
+  "牡羊座": "Aries",
+  "牡牛座": "Taurus",
+  "双子座": "Gemini",
+  "蟹座": "Cancer",
+  "獅子座": "Leo",
+  "乙女座": "Virgo",
+  "天秤座": "Libra",
+  "蠍座": "Scorpio",
+  "射手座": "Sagittarius",
+  "山羊座": "Capricorn",
+  "水瓶座": "Aquarius",
+  "魚座": "Pisces",
+};
+
+/** 星座名を表示言語に合わせる（英語UIで日本語星座名を出さない） */
+export function localizeSign(raw) {
+  if (!raw) return "";
+  if (lang === "en") return SIGN_EN[raw] || raw;
+  return raw;
+}
+
 export function detectLang() {
+  // 優先順位: URL ?lang → 本人の過去の切替(localStorage) → 配布設定
+  // (window.HT_DEFAULT_LANG: Demo/Personal Edition が注入) → ブラウザ言語 → en
   try {
     const q = new URLSearchParams(window.location.search || "").get("lang");
     if (q === "en" || q === "ja") return q;
@@ -21,6 +46,10 @@ export function detectLang() {
   try {
     const saved = localStorage.getItem("ht-lang");
     if (saved === "en" || saved === "ja") return saved;
+  } catch (e) { /* ignore */ }
+  try {
+    const def = window.HT_DEFAULT_LANG;
+    if (def === "en" || def === "ja") return def;
   } catch (e) { /* ignore */ }
   const nav = (navigator.language || "en").toLowerCase();
   return nav.startsWith("ja") ? "ja" : "en";

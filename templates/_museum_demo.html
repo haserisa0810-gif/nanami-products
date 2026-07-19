@@ -1,0 +1,206 @@
+<!-- Birth Chart Museum Demo overlay — demo ルートのみで include される。
+     Personal Edition build は {% raw %}{% if demo %}{% endraw %} ブロックごと除去する。 -->
+<style>
+  .ht-demo-ribbon {
+    /* HUD 上部のツアー操作（← 前 / 次へ →）と重ならないよう下部中央に置く。
+       下部バーの中央は空領域、キャプションは bottom:88px なので干渉しない。 */
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px 6px 14px;
+    border-radius: 999px;
+    background: rgba(10, 17, 40, 0.82);
+    border: 1px solid rgba(240, 220, 160, 0.45);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: #f3ecd8;
+    white-space: nowrap;
+  }
+  .ht-demo-ribbon .ht-demo-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e8c96a;
+    box-shadow: 0 0 8px rgba(232, 201, 106, 0.9);
+    flex: none;
+  }
+  .ht-demo-ribbon button {
+    font: inherit;
+    letter-spacing: 0.04em;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(232, 201, 106, 0.8);
+    background: rgba(232, 201, 106, 0.16);
+    color: #f6e7b8;
+    cursor: pointer;
+  }
+  .ht-demo-ribbon button:hover {
+    background: rgba(232, 201, 106, 0.3);
+  }
+  #ht-demo-overlay .ht-overlay-card p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: rgba(243, 236, 216, 0.92);
+  }
+  @media (max-width: 640px) {
+    .ht-demo-ribbon {
+      bottom: 84px;
+      max-width: calc(100vw - 16px);
+      white-space: normal;
+    }
+  }
+</style>
+
+<div class="ht-demo-ribbon" id="ht-demo-ribbon" role="note">
+  <span class="ht-demo-dot" aria-hidden="true"></span>
+  <span id="ht-demo-ribbon-text">Sample chart — free demo</span>
+  <button type="button" id="ht-demo-cta">Personal Edition</button>
+</div>
+
+<div id="ht-demo-overlay" class="ht-overlay-panel" hidden>
+  <div class="ht-overlay-card">
+    <h3 id="ht-demo-title">Walk through your own chart</h3>
+    <p id="ht-demo-copy1">You're exploring a sample birth chart (Neko, our editor-in-chief).</p>
+    <p id="ht-demo-copy2">The Personal Edition lets you walk through your own birth chart — offline, on your computer. Windows &amp; macOS. One-time purchase, no account, nothing sent anywhere.</p>
+    <div class="ht-menu-actions" id="ht-demo-actions"></div>
+    <p class="ht-overlay-note" id="ht-demo-note">This demo never asks for your birth data.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var SHOP = { en: "{{ shop_url_en }}", ja: "{{ shop_url_ja }}" };
+  var STR = {
+    en: {
+      ribbon: "Sample chart — free demo",
+      cta: "Personal Edition",
+      title: "Walk through your own chart",
+      copy1: "You’re exploring a sample birth chart (Neko, our editor-in-chief).",
+      copy2: "The Personal Edition lets you walk through your own birth chart — offline, on your computer. Windows & macOS. One-time purchase, no account, nothing sent anywhere.",
+      buy_en: "Get the Personal Edition (Etsy)",
+      buy_ja: "Get it on STORES (Japan)",
+      soon: "Personal Edition — coming soon",
+      close: "Back to the demo",
+      note: "This demo never asks for your birth data."
+    },
+    ja: {
+      ribbon: "サンプル出生図（無料デモ）",
+      cta: "Personal Edition",
+      title: "自分の出生図の中を歩く",
+      copy1: "いま表示されているのはサンプル出生図（ねこ編集長）です。",
+      copy2: "Personal Edition なら、あなた自身の出生図でこのミュージアムを歩けます。Windows / macOS 対応・買い切り・完全ローカル動作（データはどこにも送信されません）。",
+      buy_en: "Etsy で購入（海外向け）",
+      buy_ja: "STORES で購入",
+      soon: "Personal Edition — 近日発売",
+      close: "デモに戻る",
+      note: "このデモがあなたの出生データを求めることはありません。"
+    }
+  };
+
+  function lang() {
+    return document.documentElement.lang === "ja" ? "ja" : "en";
+  }
+
+  function applyDemoI18n() {
+    var s = STR[lang()];
+    var set = function (id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    set("ht-demo-ribbon-text", s.ribbon);
+    set("ht-demo-cta", s.cta);
+    set("ht-demo-title", s.title);
+    set("ht-demo-copy1", s.copy1);
+    set("ht-demo-copy2", s.copy2);
+    set("ht-demo-note", s.note);
+    renderActions(s);
+  }
+
+  function renderActions(s) {
+    var box = document.getElementById("ht-demo-actions");
+    if (!box) return;
+    box.innerHTML = "";
+    var any = false;
+    var mk = function (href, label, primary) {
+      var a = document.createElement("a");
+      a.className = primary ? "ht-btn" : "ht-btn ht-btn-secondary";
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = label;
+      box.appendChild(a);
+    };
+    // 現在の言語のストアを先頭に
+    var order = lang() === "ja" ? ["ja", "en"] : ["en", "ja"];
+    order.forEach(function (k, i) {
+      if (SHOP[k]) {
+        mk(SHOP[k], k === "en" ? s.buy_en : s.buy_ja, i === 0);
+        any = true;
+      }
+    });
+    if (!any) {
+      var p = document.createElement("p");
+      p.className = "ht-overlay-note";
+      p.textContent = s.soon;
+      box.appendChild(p);
+    }
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "ht-btn ht-btn-secondary";
+    close.textContent = s.close;
+    close.addEventListener("click", function () {
+      var ov = document.getElementById("ht-demo-overlay");
+      if (ov) ov.hidden = true;
+    });
+    box.appendChild(close);
+  }
+
+  // 版間リンクをデモ用ルートに付け替え（デモの外に出ない導線にする）
+  function rewriteLinks() {
+    var map = {
+      "/house-tour": "/birth-chart-museum/demo",
+      "/house-tour-architecture": "/birth-chart-museum/demo/architecture",
+      "/birth-chart-museum": "/birth-chart-museum/demo",
+      // 書き換え済みリンクも言語切替のたびに ?lang を更新する
+      "/birth-chart-museum/demo": "/birth-chart-museum/demo",
+      "/birth-chart-museum/demo/architecture": "/birth-chart-museum/demo/architecture"
+    };
+    document.querySelectorAll("a[href]").forEach(function (a) {
+      var href = a.getAttribute("href") || "";
+      var path = href.split("?")[0];
+      if (map[path]) {
+        a.setAttribute("href", map[path] + "?lang=" + lang());
+      }
+    });
+    // 「出生図の切替はミュージアム入口で」はデモでは案内しない
+    document.querySelectorAll('[data-i18n="hint_3"]').forEach(function (el) {
+      el.style.display = "none";
+    });
+  }
+
+  var cta = document.getElementById("ht-demo-cta");
+  if (cta) {
+    cta.addEventListener("click", function () {
+      var ov = document.getElementById("ht-demo-overlay");
+      if (ov) ov.hidden = false;
+    });
+  }
+
+  new MutationObserver(function () {
+    applyDemoI18n();
+    rewriteLinks();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+
+  applyDemoI18n();
+  rewriteLinks();
+})();
+</script>

@@ -4,3 +4,6 @@ __pycache__/
 .env.*
 deploy.env.yaml
 data/location/source/municipality/*.zip
+
+# Birth Chart Museum Personal Edition build output
+personal-edition/dist/

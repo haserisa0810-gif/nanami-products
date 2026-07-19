@@ -142,7 +142,9 @@ def test_template_and_route_contract():
     assert "MUSEUM" in html or "ミュージアム" in html
     assert "ht-caption" in html
     assert "ガイドツアー" in html
-    assert 'href="/"' in html
+    # ホームページへ戻るリンクは置かない（販売用の導線をミュージアム内で完結させる）
+    assert 'href="/"' not in html
+    assert "ht-back" not in html
     # routes
     routes_src = (ROOT / "routes.py").read_text(encoding="utf-8")
     assert '@app.get("/house-tour"' in routes_src

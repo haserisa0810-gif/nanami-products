@@ -27,6 +27,7 @@ import {
   getHousesData,
   getPlanetTexts,
   applyDomI18n,
+  localizeSign,
 } from "./i18n.js";
 import { createAmbientSound } from "./ambient-sound.js";
 
@@ -265,6 +266,7 @@ import { createAmbientSound } from "./ambient-sound.js";
     applyDomI18n(document);
     ui.setQualityLabel(quality);
     ui.setSoundLabel(ambient.isOn());
+    refreshInfoPanelLabel();
     // 天体名ラベル再生成
     bodies = bodiesFromChart(chart).map((b) => {
       const pt = getPlanetTexts()[b.id];
@@ -302,6 +304,15 @@ import { createAmbientSound } from "./ambient-sound.js";
 
   // 初回: URL ?chart= / 入口 sessionStorage / ねこ編集長デフォルト
   (function initialChart() {
+    // Demo モード（/birth-chart-museum/demo）はサンプル固定。
+    // ?chart= も入口 sessionStorage も読まない（購入者YAML読込は有料側の価値）。
+    if (window.HT_DEMO) {
+      applyChart(nekoChart, {
+        status: t("status_neko"),
+        statusOk: true,
+      });
+      return;
+    }
     const params = new URLSearchParams(window.location.search || "");
     const q = (params.get("chart") || params.get("load") || "").toLowerCase();
 
@@ -397,7 +408,11 @@ import { createAmbientSound } from "./ambient-sound.js";
     // 浅いコピーでカスプを補足（元データは壊さない）
     const cusp = chart.cusps[num];
     return Object.assign({}, h, {
-      subtitle: (h.subtitle || "") + (cusp.sign_ja ? " · カスプ " + cusp.sign_ja : ""),
+      subtitle:
+        (h.subtitle || "") +
+        (cusp.sign_ja
+          ? " · " + t("cusp_label", { sign: localizeSign(cusp.sign_ja) })
+          : ""),
     });
   }
 
@@ -464,6 +479,29 @@ import { createAmbientSound } from "./ambient-sound.js";
       ui.setMapOpen(mapOpen);
     });
   }
+  // 解説パネルの表示/非表示（純粋に画面だけ見たいとき用・状態は記憶）
+  let infoVisible = true;
+  try {
+    infoVisible = localStorage.getItem("ht-info-visible") !== "0";
+  } catch (e) { /* ignore */ }
+  function setInfoVisible(next, opts) {
+    infoVisible = next;
+    try {
+      localStorage.setItem("ht-info-visible", next ? "1" : "0");
+    } catch (e) { /* ignore */ }
+    ui.setInfoOpen(next);
+    if (!next && !(opts && opts.silent)) ui.toast(t("toast_panel_off"), 2600);
+  }
+  function refreshInfoPanelLabel() {
+    ui.setInfoOpen(infoVisible);
+  }
+  if (ui.el.btnPanel) {
+    ui.el.btnPanel.addEventListener("click", () => setInfoVisible(!infoVisible));
+  }
+  if (ui.el.infoClose) {
+    ui.el.infoClose.addEventListener("click", () => setInfoVisible(false));
+  }
+  setInfoVisible(infoVisible, { silent: true });
   if (ui.el.btnMode) {
     ui.el.btnMode.addEventListener("click", () => {
       const m = controls.getMode() === "walk" ? "orbit" : "walk";

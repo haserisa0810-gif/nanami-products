@@ -39,6 +39,17 @@ YAML_AMBIGUOUS_DOCUMENT_ERROR = (
     "出生日時データを含むYAMLドキュメントが複数見つかりました。"
     "ACGへ読み込む占術データを1件だけ含めてください。"
 )
+ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR = (
+    "アストロカートグラフィの計算には、正確な出生時刻が必要です。"
+    "出生時刻が不明・推定・暫定の場合、線が世界規模で大きく移動するため生成できません。"
+)
+ACG_TIMEZONE_NOT_CONFIRMED_ERROR = (
+    "出生地のタイムゾーンを確認できませんでした。"
+    "タイムゾーン名とUTCオフセットが記録された鑑定YAMLを使用してください。"
+)
+ACG_BIRTH_PLACE_MISSING_ERROR = (
+    "出生地を確認できませんでした。出生地が記録された鑑定YAMLを使用してください。"
+)
 
 _YAML_FENCE_RE = re.compile(
     r"\A\s*```(?:yaml|yml)?[ \t]*\r?\n(?P<body>[\s\S]*?)\r?\n```[ \t]*\s*\Z",
@@ -137,7 +148,12 @@ def _normalize_acg_document(doc: dict[str, Any]) -> dict[str, Any]:
             "birth_time",
             "calculation_time",
             "timezone_offset_hours",
+            "timezone",
+            "birth_place",
+            "birth_lat",
+            "birth_lng",
             "birth_time_accuracy",
+            "birth_time_note",
         )
         if key in input_block
     }
@@ -258,7 +274,7 @@ def _from_subject_datetime(doc: dict[str, Any]) -> datetime | None:
             "systems.western.natal.subject.datetime はISO 8601形式で指定してください。"
         ) from exc
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone(timedelta(hours=9)))
+        raise AcgYamlFormatError(ACG_TIMEZONE_NOT_CONFIRMED_ERROR)
     return dt.astimezone(timezone.utc)
 
 
@@ -271,15 +287,15 @@ def _from_input_block(doc: dict[str, Any]) -> datetime | None:
         birth = date_type.fromisoformat(str(input_block["birth_date"]).strip())
     except ValueError as exc:
         raise AcgYamlFormatError("input.birth_date は YYYY-MM-DD 形式で指定してください。") from exc
-    time_value = (
-        input_block.get("birth_time")
-        or input_block.get("calculation_time")
-        or "12:00"
-    )
+    time_value = input_block.get("birth_time") or input_block.get("calculation_time")
+    if not time_value:
+        raise AcgYamlFormatError(ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR)
     hour, minute = _parse_hh_mm(time_value)
     tz_raw = input_block.get("timezone_offset_hours")
+    if tz_raw is None:
+        raise AcgYamlFormatError(ACG_TIMEZONE_NOT_CONFIRMED_ERROR)
     try:
-        tz_hours = float(tz_raw) if tz_raw is not None else 9.0
+        tz_hours = float(tz_raw)
     except (TypeError, ValueError) as exc:
         raise AcgYamlFormatError(
             "input.timezone_offset_hours は数値で指定してください。"
@@ -302,6 +318,56 @@ def _natal_dt_utc_from_doc(doc: dict[str, Any]) -> datetime:
     if dt_utc is None:
         raise AcgYamlFormatError(YAML_MISSING_BIRTH_DATA_ERROR)
     return dt_utc
+
+
+def _validate_acg_eligibility(doc: dict[str, Any]) -> None:
+    """個人ACGを確定データだけに限定する入力ゲート。"""
+    natal = _western_natal(doc)
+    input_block = _as_mapping(doc.get("input"))
+    birth_time = _as_mapping(doc.get("birth_time"))
+    accuracy = str(
+        birth_time.get("accuracy")
+        or input_block.get("birth_time_accuracy")
+        or ""
+    ).strip().lower()
+    provisional = bool(_as_mapping(natal.get("time_sensitive_provisional")))
+
+    # 旧YAMLはaccuracyを持たないため、明示された出生時刻がある場合だけexact相当として扱う。
+    explicit_time = input_block.get("birth_time")
+    legacy_exact = not accuracy and bool(explicit_time) and str(explicit_time).lower() not in {
+        "unknown", "approximate", "provisional", "12:00仮置き"
+    }
+    if provisional or (accuracy not in {"exact", "confirmed"} and not legacy_exact):
+        raise AcgYamlFormatError(ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR)
+
+    if not input_block.get("timezone") or input_block.get("timezone_offset_hours") is None:
+        raise AcgYamlFormatError(ACG_TIMEZONE_NOT_CONFIRMED_ERROR)
+
+    has_place = bool(input_block.get("birth_place")) or (
+        input_block.get("birth_lat") is not None and input_block.get("birth_lng") is not None
+    )
+    if not has_place:
+        raise AcgYamlFormatError(ACG_BIRTH_PLACE_MISSING_ERROR)
+
+
+def _acg_calculation_basis(doc: dict[str, Any], dt_utc: datetime) -> dict[str, Any]:
+    input_block = _as_mapping(doc.get("input"))
+    subject = _as_mapping(_western_natal(doc).get("subject"))
+    local_datetime = subject.get("datetime")
+    if not local_datetime:
+        local_datetime = f"{input_block.get('birth_date')}T{input_block.get('calculation_time') or input_block.get('birth_time')}"
+    offset_hours = float(input_block["timezone_offset_hours"])
+    sign = "+" if offset_hours >= 0 else "-"
+    absolute_minutes = round(abs(offset_hours) * 60)
+    offset_text = f"{sign}{absolute_minutes // 60:02d}:{absolute_minutes % 60:02d}"
+    return {
+        "birth_datetime_local": str(local_datetime),
+        "timezone": str(input_block["timezone"]),
+        "utc_offset": offset_text,
+        "birth_datetime_utc": dt_utc.isoformat().replace("+00:00", "Z"),
+        "birth_time_status": "confirmed",
+        "acg_eligible": True,
+    }
 
 
 def natal_dt_utc_from_yaml(yaml_text: str) -> datetime:
@@ -369,15 +435,17 @@ def personal_context_from_yaml(yaml_text: str) -> dict[str, Any]:
 def personal_geojson(yaml_text: str) -> dict[str, Any]:
     """貼り付け YAML からパーソナル（ネイタル）ACG 線 GeoJSON を返す。保存しない。"""
     doc = parse_acg_yaml_document(yaml_text)
+    _validate_acg_eligibility(doc)
     dt_utc = _natal_dt_utc_from_doc(doc)
     result = lines_to_geojson(dt_utc, natal=True)
     result.setdefault("meta", {})["personal_context"] = _personal_context_from_doc(doc)
+    result["meta"]["acg_calculation_basis"] = _acg_calculation_basis(doc, dt_utc)
     birth_time = doc.get("birth_time") if isinstance(doc, dict) else {}
     input_block = doc.get("input") if isinstance(doc, dict) else {}
     accuracy = (
         (birth_time.get("accuracy") if isinstance(birth_time, dict) else None)
         or (input_block.get("birth_time_accuracy") if isinstance(input_block, dict) else None)
-        or "exact"
+        or "confirmed"
     )
-    result["time_sensitive_warning"] = accuracy in {"unknown", "approximate"}
+    result["time_sensitive_warning"] = False
     return result

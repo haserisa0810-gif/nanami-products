@@ -29,6 +29,8 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
+from services.personal_edition_delivery import build_personalized_zip
+from services.personal_edition_code_pdf import build_personal_edition_code_pdf
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
 from services.api_demo import build_demo_response, build_demo_shichu_svg, build_demo_svg
 from services.birth_time import extract_birth_time_notice, resolve_birth_time_accuracy
@@ -846,7 +848,7 @@ I18N = {
         "addon_usage_items": [
             "STORESの購入確認メールに記載された注文番号を入力してください。",
             "小惑星追加は、基本版の出生データを土台に生成します。",
-            "トランジット追加では、基本版YAML または 90日以内の前回鑑定URLを入力してください。",
+            "基本版YAML または 90日以内の前回鑑定URLを入力してください。",
             "生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。",
             "YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。",
             "貼り付けたYAMLは保存しません。",
@@ -858,7 +860,7 @@ I18N = {
         "order_code_hint": "購入確認メールの件名にある注文番号です。追加部品ごとに1回だけ使用できます。",
         "base_data_title": "基本データ入力",
         "base_data_hint_transit": "38日トランジット追加は、基本版の出生データを土台に生成します。",
-        "base_data_hint_standard": "基本版YAMLの内容から出生情報を読み取り、追加部品YAMLだけを生成します。",
+        "base_data_hint_standard": "基本版YAMLまたは前回鑑定URLから出生情報を読み取り、追加部品YAMLだけを生成します。",
         "previous_chart_url_label": "90日以内の前回鑑定URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
         "previous_chart_url_hint": "前回の鑑定結果ページURLから、ネイタル情報を引き継げます。",
@@ -1217,7 +1219,7 @@ I18N = {
         "addon_usage_items": [
             "Enter the order number shown in the STORES purchase confirmation email.",
             "The asteroid add-on is generated on top of the basic birth data.",
-            "For transit add-ons, enter either the basic YAML or a previous chart URL from the last 90 days.",
+            "Enter either the basic YAML or a previous chart URL from the last 90 days.",
             "The generated add-on YAML is used together with the basic YAML when sending it to AI.",
             "You can use the YAML on its own or append it to a full AI-reading prompt.",
             "The pasted YAML is not saved.",
@@ -1229,7 +1231,7 @@ I18N = {
         "order_code_hint": "This is the order number shown in the purchase confirmation email. Each add-on can be used only once.",
         "base_data_title": "Base data input",
         "base_data_hint_transit": "Transit add-ons are generated on top of the basic birth data.",
-        "base_data_hint_standard": "The basic YAML is parsed to read the birth data and generate only the add-on YAML.",
+        "base_data_hint_standard": "The basic YAML or previous chart URL is used to read the birth data and generate only the add-on YAML.",
         "previous_chart_url_label": "Previous chart URL within 90 days",
         "previous_chart_url_placeholder": "https://.../chart/...",
         "previous_chart_url_hint": "You can carry over natal information from the previous chart page URL.",
@@ -2365,6 +2367,167 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
     )
 
 
+@app.post("/internal/personal-edition/codes")
+def internal_issue_personal_edition_codes(request: Request, payload: dict[str, object] = Body(default={})):
+    error = _admin_access_error(request)
+    if error:
+        return error
+    try:
+        count = int(payload.get("count") or 1)
+        expiration_days = int(payload.get("expiration_days") or 30)
+    except (TypeError, ValueError):
+        return _api_error("INVALID_INPUT", "count and expiration_days must be integers", 400)
+    if not 1 <= count <= 100:
+        return _api_error("INVALID_INPUT", "count must be between 1 and 100", 400)
+    provider = str(payload.get("provider") or "coconala").strip().lower()
+    if provider not in {"etsy", "coconala", "manual"}:
+        return _api_error("INVALID_INPUT", "provider must be etsy, coconala, or manual", 400)
+    locale = str(payload.get("lang") or "ja").strip().lower()
+    if locale not in {"ja", "en"}:
+        return _api_error("INVALID_INPUT", "lang must be ja or en", 400)
+    product_type = str(payload.get("product_type") or "western_full").strip()
+    if product_type not in {"western_full", "acg_bundle"}:
+        return _api_error("UNSUPPORTED_PRODUCT", "product_type must be western_full or acg_bundle", 400)
+    try:
+        rows = pg_store.issue_personal_edition_codes(
+            count=count, product_type=product_type, provider=provider,
+            locale=locale, expiration_days=max(1, min(365, expiration_days)),
+        )
+    except Exception as exc:
+        logger.exception("personal_edition_code_issue_failed provider=%s count=%s", provider, count)
+        return _api_error("CODE_ISSUE_FAILED", _public_error_message(exc), 500)
+    logger.info("personal_edition_codes_issued provider=%s product_type=%s count=%s", provider, product_type, count)
+    return JSONResponse(jsonable_encoder({"ok": True, "codes": rows}))
+
+
+@app.get("/admin/personal-edition/codes", response_class=HTMLResponse)
+def admin_personal_edition_codes_get(request: Request):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+    return _mark_no_store(templates.TemplateResponse(
+        "admin_personal_edition_codes.html",
+        {"request": request, "codes": [], "error": None, "form": {}},
+    ))
+
+
+@app.post("/admin/personal-edition/code-pdf")
+def admin_personal_edition_code_pdf(
+    request: Request,
+    code: str = Form(""),
+    product_type: str = Form("western_full"),
+    lang: str = Form("ja"),
+):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+    normalized = code.strip().upper()
+    expected_prefix = "PE-ACG-" if product_type == "acg_bundle" else "PE-FULL-"
+    if (product_type not in {"western_full", "acg_bundle"}
+            or lang not in {"ja", "en"}
+            or not normalized.startswith(expected_prefix)
+            or len(normalized) > 64):
+        raise HTTPException(status_code=400, detail="invalid Personal Edition code")
+    activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
+    pdf_bytes = build_personal_edition_code_pdf(
+        code=normalized,
+        activation_url=activation_url,
+        product_type=product_type,
+        lang=lang,
+    )
+    response = Response(content=pdf_bytes, media_type="application/pdf")
+    response.headers["Content-Disposition"] = f'attachment; filename="{normalized}-access.pdf"'
+    return _mark_no_store(response)
+
+
+@app.post("/admin/personal-edition/code-pdfs.zip")
+def admin_personal_edition_code_pdfs_zip(
+    request: Request,
+    codes: str = Form(""),
+    product_type: str = Form("western_full"),
+    lang: str = Form("ja"),
+    provider: str = Form("manual"),
+):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+    if product_type not in {"western_full", "acg_bundle"} or lang not in {"ja", "en"}:
+        raise HTTPException(status_code=400, detail="invalid PDF bundle settings")
+    expected_prefix = "PE-ACG-" if product_type == "acg_bundle" else "PE-FULL-"
+    normalized_codes = [line.strip().upper() for line in codes.splitlines() if line.strip()]
+    if not normalized_codes or len(normalized_codes) > 100:
+        raise HTTPException(status_code=400, detail="1 to 100 codes are required")
+    if any(not code.startswith(expected_prefix) or len(code) > 64 for code in normalized_codes):
+        raise HTTPException(status_code=400, detail="invalid Personal Edition code")
+    activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
+    archive_buffer = io.BytesIO()
+    with zipfile.ZipFile(archive_buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for index, code in enumerate(normalized_codes, 1):
+            pdf_bytes = build_personal_edition_code_pdf(
+                code=code,
+                activation_url=activation_url,
+                product_type=product_type,
+                lang=lang,
+            )
+            archive.writestr(f"{index:03d}_{code}_delivery.pdf", pdf_bytes)
+        readme = (
+            "Each PDF is ready to deliver to one buyer. Do not send the whole ZIP to a buyer.\n"
+            if lang == "en" else
+            "PDFは1購入者につき1ファイルをお渡しください。このZIP全体を購入者へ送らないでください。\n"
+        )
+        archive.writestr("README.txt", readme.encode("utf-8-sig"))
+    safe_provider = provider if provider in {"etsy", "coconala", "manual"} else "manual"
+    response = Response(content=archive_buffer.getvalue(), media_type="application/zip")
+    response.headers["Content-Disposition"] = (
+        f'attachment; filename="personal-edition-{safe_provider}-{product_type}-delivery-pdfs.zip"'
+    )
+    return _mark_no_store(response)
+
+
+@app.post("/admin/personal-edition/codes", response_class=HTMLResponse)
+def admin_personal_edition_codes_post(
+    request: Request,
+    count: int = Form(1),
+    provider: str = Form("coconala"),
+    lang: str = Form("ja"),
+    expiration_days: int = Form(30),
+    product_type: str = Form("western_full"),
+):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+    if provider == "etsy":
+        lang = "en"
+    elif provider == "coconala":
+        lang = "ja"
+    form = {"count": count, "provider": provider, "lang": lang, "expiration_days": expiration_days,
+            "product_type": product_type}
+    if not 1 <= count <= 100:
+        error = "発行件数は1〜100件で指定してください。"
+        codes = []
+    elif (provider not in {"etsy", "coconala", "manual"} or lang not in {"ja", "en"}
+          or product_type not in {"western_full", "acg_bundle"}):
+        error = "販売先または言語が正しくありません。"
+        codes = []
+    else:
+        try:
+            codes = pg_store.issue_personal_edition_codes(
+                count=count, product_type=product_type, provider=provider, locale=lang,
+                expiration_days=max(1, min(365, expiration_days)),
+            )
+            error = None
+            logger.info("personal_edition_codes_issued_from_admin provider=%s count=%s", provider, count)
+        except Exception as exc:
+            logger.exception("personal_edition_admin_issue_failed")
+            codes = []
+            error = _public_error_message(exc, fallback="コード発行に失敗しました。DB設定を確認してください。")
+    return _mark_no_store(templates.TemplateResponse(
+        "admin_personal_edition_codes.html",
+        {"request": request, "codes": codes, "error": error, "form": form},
+        status_code=500 if error and not codes else 200,
+    ))
+
+
 def _cleanup_grace_days(payload: dict[str, object]) -> int:
     value = payload.get("grace_days", 0)
     try:
@@ -2471,6 +2634,40 @@ def birth_chart_museum_entrance(request: Request):
     """Birth Chart Museum 入口。抽象版と建築版を選ぶポータル。"""
     return templates.TemplateResponse(
         "birth_chart_museum.html", {"request": request}
+    )
+
+
+def _museum_demo_context(request: Request) -> dict:
+    """無料デモ共通コンテキスト。サンプル出生図固定・YAML読込なし・英語デフォルト。
+
+    販売先URLは環境変数 MUSEUM_SHOP_URL_EN / MUSEUM_SHOP_URL_JA。
+    未設定ならデモ内の購入ボタンは「近日発売」表示になる。
+    """
+    from config import MUSEUM_SHOP_URL_EN, MUSEUM_SHOP_URL_JA
+
+    return {
+        "request": request,
+        "demo": True,
+        "demo_default_lang": "en",
+        "shop_url_en": MUSEUM_SHOP_URL_EN,
+        "shop_url_ja": MUSEUM_SHOP_URL_JA,
+    }
+
+
+@app.get("/birth-chart-museum/demo", response_class=HTMLResponse)
+def birth_chart_museum_demo(request: Request):
+    """無料デモ（抽象版）。URLを開けばサンプル出生図で即体験できる。
+
+    海外向けはこのままEnglishデフォルト、日本向けは ?lang=ja を配布する。
+    """
+    return templates.TemplateResponse("house_tour.html", _museum_demo_context(request))
+
+
+@app.get("/birth-chart-museum/demo/architecture", response_class=HTMLResponse)
+def birth_chart_museum_demo_architecture(request: Request):
+    """無料デモ（建築版）。デモ内の版切替リンクから遷移する。"""
+    return templates.TemplateResponse(
+        "house_tour_architecture.html", _museum_demo_context(request)
     )
 
 
@@ -3478,6 +3675,144 @@ def internal_mail_sync(request: Request):
 
 
 # ─── 購入者フロー ────────────────────────────────────────────────
+
+def _personal_edition_context(request: Request, *, error: str | None = None,
+                              form: dict[str, object] | None = None) -> dict[str, object]:
+    lang = _resolve_lang(request)
+    return {
+        "request": request,
+        "lang": lang,
+        "error": error,
+        "form": form or {},
+        "prefectures": PREFECTURE_OPTIONS,
+        "timezone_options": _timezone_options(lang),
+    }
+
+
+@app.get("/personal-edition/activate", response_class=HTMLResponse)
+def personal_edition_activate_get(request: Request):
+    return _mark_no_store(templates.TemplateResponse(
+        "personal_edition_activate.html", _personal_edition_context(request)
+    ))
+
+
+@app.post("/personal-edition/activate")
+def personal_edition_activate_post(
+    request: Request,
+    access_code: str = Form(""),
+    buyer_name: str = Form(""),
+    birth_date: str = Form(""),
+    birth_time: str = Form(""),
+    birth_time_accuracy: str = Form("exact"),
+    prefecture: str = Form(""),
+    birth_place_kind: str = Form("domestic"),
+    birth_place_overseas: str = Form(""),
+    birth_place_city: str = Form(""),
+    birth_lat: str = Form(""),
+    birth_lng: str = Form(""),
+    birth_timezone: str = Form(""),
+    agree_final: str | None = Form(None),
+):
+    lang = _resolve_lang(request)
+    form = {
+        "access_code": access_code, "buyer_name": buyer_name, "birth_date": birth_date,
+        "birth_time": birth_time, "birth_time_accuracy": birth_time_accuracy,
+        "prefecture": prefecture, "birth_place_kind": birth_place_kind,
+        "birth_place_overseas": birth_place_overseas, "birth_place_city": birth_place_city,
+        "birth_lat": birth_lat, "birth_lng": birth_lng, "birth_timezone": birth_timezone,
+        "agree_final": bool(agree_final),
+    }
+
+    def fail(ja: str, en: str, status: int = 400):
+        return _mark_no_store(templates.TemplateResponse(
+            "personal_edition_activate.html",
+            _personal_edition_context(request, error=en if lang == "en" else ja, form=form),
+            status_code=status,
+        ))
+
+    if not access_code.strip():
+        return fail("引換コードを入力してください。", "Enter your access code.")
+    try:
+        code_row = pg_store.get_personal_edition_code(access_code)
+    except Exception as exc:
+        logger.exception("personal_edition_code_lookup_failed")
+        return fail("コードを確認できませんでした。時間をおいて再試行してください。",
+                    "The code could not be verified. Please try again later.", 503)
+    if not code_row:
+        return fail("引換コードが正しくありません。", "The access code is invalid.", 404)
+    status = code_row["status"]
+    if status == "used":
+        return fail("この引換コードは使用済みです。", "This access code has already been used.", 409)
+    if status == "expired":
+        return fail("この引換コードは有効期限が切れています。", "This access code has expired.", 410)
+    if status == "revoked":
+        return fail("この引換コードは無効です。", "This access code has been revoked.", 410)
+    if code_row["product_type"] not in {"western_full", "acg_bundle"}:
+        return fail("この商品種別にはまだ対応していません。",
+                    "This product type is not supported yet.", 400)
+    if not agree_final:
+        return fail("入力内容を確認し、確認欄にチェックしてください。",
+                    "Review your details and select the confirmation checkbox.")
+    try:
+        birth_date_clean = _validate_birth_date(birth_date, lang)
+        time_info = resolve_birth_time_accuracy(
+            selected_accuracy=birth_time_accuracy, birth_time=birth_time
+        )
+        location = _build_birth_location(
+            prefecture=prefecture, birth_place_kind=birth_place_kind,
+            birth_place_overseas=birth_place_overseas, birth_place_city=birth_place_city,
+            birth_lat=birth_lat, birth_lng=birth_lng, birth_timezone=birth_timezone,
+        )
+        if code_row["product_type"] == "acg_bundle" and str(time_info["accuracy"]) != "exact":
+            return fail(
+                "ACG付きBundleは、正確な出生時刻が確認できる方のみ発行できます。",
+                "The ACG Bundle requires a confirmed exact birth time.",
+            )
+    except Exception as exc:
+        return fail(str(exc), str(exc))
+
+    claimed = pg_store.claim_personal_edition_code(access_code)
+    if not claimed:
+        return fail("このコードは現在使用できません。", "This code is not currently available.", 409)
+    try:
+        yaml_text, _prompt_text, _doc = build_product_yaml(
+            title=buyer_name.strip() or None,
+            birth_date=birth_date_clean,
+            birth_time=time_info["calculation_time"],
+            prefecture=prefecture.strip(),
+            birth_place_label=str(location["birth_place"]),
+            birth_lat=float(location["lat"]),
+            birth_lng=float(location["lng"]),
+            tz_name=str(location["tz_name"]),
+            gender="unknown",
+            include_asteroids=True,
+            include_shichusuimei=False,
+            include_transit=True,
+            birth_time_accuracy=str(time_info["accuracy"]),
+            birth_time_range=time_info["range"],
+            birth_time_note=str(time_info["note"]),
+        )
+        zip_bytes = build_personalized_zip(
+            yaml_text=yaml_text,
+            lang=str(code_row["locale"]),
+            include_acg=code_row["product_type"] == "acg_bundle",
+        )
+        if not pg_store.finish_personal_edition_code(access_code):
+            raise RuntimeError("access code completion failed")
+    except Exception as exc:
+        try:
+            pg_store.release_personal_edition_code(access_code)
+        except Exception:
+            logger.exception("personal_edition_code_release_failed")
+        logger.exception("personal_edition_zip_generation_failed error_type=%s", type(exc).__name__)
+        return fail("ZIPの作成に失敗しました。時間をおいて再試行してください。",
+                    "The ZIP could not be created. Please try again later.", 503)
+    response = Response(content=zip_bytes, media_type="application/zip")
+    filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
+                if code_row["product_type"] == "acg_bundle"
+                else "BirthChartMuseum-PersonalEdition-FULL.zip")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return _mark_no_store(response)
 
 @app.get("/start")
 def start(request: Request):

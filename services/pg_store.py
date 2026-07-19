@@ -206,6 +206,7 @@ def init_db() -> None:
             """)
             _ensure_addon_redemptions_table(cur)
             _ensure_transit_addon_links_table(cur)
+            _ensure_personal_edition_codes_table(cur)
             ensure_api_tables(cur)
 
 
@@ -240,6 +241,107 @@ def _ensure_transit_addon_links_table(cur) -> None:
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     """)
+
+
+def _ensure_personal_edition_codes_table(cur) -> None:
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS {SCHEMA}.personal_edition_codes (
+            id             BIGSERIAL PRIMARY KEY,
+            code_hash      TEXT UNIQUE,
+            code_prefix    TEXT NOT NULL,
+            product_type   TEXT NOT NULL,
+            provider       TEXT NOT NULL,
+            locale         TEXT NOT NULL DEFAULT 'ja',
+            status         TEXT NOT NULL DEFAULT 'unused'
+                           CHECK (status IN ('unused', 'processing', 'used', 'revoked', 'expired')),
+            expires_at     TIMESTAMPTZ,
+            created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            processing_at  TIMESTAMPTZ,
+            used_at        TIMESTAMPTZ,
+            attempt_count  INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
+
+def _personal_code_hash(code: str) -> str:
+    normalized = "".join(ch for ch in code.upper() if ch.isalnum())
+    return hashlib.sha256(normalized.encode("ascii")).hexdigest()
+
+
+def issue_personal_edition_codes(*, count: int, product_type: str, provider: str,
+                                 locale: str, expiration_days: int | None = 30) -> list[dict[str, Any]]:
+    alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+    issued: list[dict[str, Any]] = []
+    with _conn(operation="issue_personal_edition_codes") as con:
+        with con.cursor() as cur:
+            for _ in range(count):
+                groups = ["".join(secrets.choice(alphabet) for _ in range(4)) for _ in range(3)]
+                code_prefix = "PE-ACG" if product_type == "acg_bundle" else "PE-FULL"
+                code = code_prefix + "-" + "-".join(groups)
+                code_hash = _personal_code_hash(code)
+                cur.execute(f"""
+                    INSERT INTO {SCHEMA}.personal_edition_codes
+                        (code_hash, code_prefix, product_type, provider, locale, expires_at)
+                    VALUES (%s, %s, %s, %s, %s,
+                            CASE WHEN %s IS NULL THEN NULL ELSE NOW() + (%s * INTERVAL '1 day') END)
+                    RETURNING id, code_prefix, product_type, provider, locale, status, expires_at, created_at
+                """, (code_hash, code[:12], product_type, provider, locale,
+                        expiration_days, expiration_days))
+                row = dict(cur.fetchone())
+                row["code"] = code
+                issued.append(row)
+    return issued
+
+
+def get_personal_edition_code(code: str) -> dict[str, Any] | None:
+    with _conn(operation="get_personal_edition_code") as con:
+        with con.cursor() as cur:
+            code_hash = _personal_code_hash(code)
+            cur.execute(f"""
+                UPDATE {SCHEMA}.personal_edition_codes SET status = 'expired'
+                WHERE code_hash = %s AND status = 'unused'
+                  AND expires_at IS NOT NULL AND expires_at <= NOW()
+            """, (code_hash,))
+            cur.execute(f"SELECT * FROM {SCHEMA}.personal_edition_codes WHERE code_hash = %s", (code_hash,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
+def claim_personal_edition_code(code: str) -> dict[str, Any] | None:
+    with _conn(operation="claim_personal_edition_code") as con:
+        with con.cursor() as cur:
+            cur.execute(f"""
+                UPDATE {SCHEMA}.personal_edition_codes
+                SET status = 'processing', processing_at = NOW(), attempt_count = attempt_count + 1
+                WHERE code_hash = %s
+                  AND (expires_at IS NULL OR expires_at > NOW())
+                  AND (status = 'unused' OR
+                       (status = 'processing' AND processing_at < NOW() - INTERVAL '15 minutes'))
+                RETURNING *
+            """, (_personal_code_hash(code),))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
+def finish_personal_edition_code(code: str) -> bool:
+    with _conn(operation="finish_personal_edition_code") as con:
+        with con.cursor() as cur:
+            cur.execute(f"""
+                UPDATE {SCHEMA}.personal_edition_codes
+                SET status = 'used', used_at = NOW(), processing_at = NULL
+                WHERE code_hash = %s AND status = 'processing'
+            """, (_personal_code_hash(code),))
+            return cur.rowcount == 1
+
+
+def release_personal_edition_code(code: str) -> None:
+    with _conn(operation="release_personal_edition_code") as con:
+        with con.cursor() as cur:
+            cur.execute(f"""
+                UPDATE {SCHEMA}.personal_edition_codes
+                SET status = 'unused', processing_at = NULL
+                WHERE code_hash = %s AND status = 'processing'
+            """, (_personal_code_hash(code),))
 
 
 def _chart_columns(cur) -> set[str]:

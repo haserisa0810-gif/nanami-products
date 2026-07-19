@@ -3,9 +3,14 @@ from __future__ import annotations
 import math
 from datetime import datetime, timezone
 
+import swisseph as swe
+
 from services.acg_core import (
     LAT_MAX,
     MERIDIAN_LAT,
+    _equatorial_bodies,
+    _gst_deg,
+    _julday_utc,
     _norm180,
     _split_antimeridian,
     lines_to_geojson,
@@ -159,3 +164,56 @@ def test_regression_2026_08_13_eclipse_mc_longitude():
     assert math.isclose(sun_mc, 136.238, abs_tol=0.01)
     assert math.isclose(moon_mc, 141.477, abs_tol=0.01)
     assert abs(_norm180(sun_mc - moon_mc)) < 10.0
+
+
+def test_every_generated_angle_matches_independent_horizontal_conversion():
+    """Swiss Ephemeris の独立した赤道座標→地平座標変換で全40線を検算する。
+
+    ASC/DSC 上では天体の真高度が0度、MC/ICでは地方時角がそれぞれ
+    0度/180度になることを全対象天体について確認する。これにより経度符号、
+    ASC/DSCの取り違え、恒星時の単位間違いを回帰テストで検出する。
+    """
+    fc = lines_to_geojson(DT_2026_07_02)
+    jd, _ = _julday_utc(DT_2026_07_02)
+    gst = _gst_deg(jd)
+    equatorial = {str(body["name"]): body for body in _equatorial_bodies(jd)}
+
+    checked_horizon_groups: set[str] = set()
+    for feature in fc["features"]:
+        props = feature["properties"]
+        body = equatorial[props["planet"]]
+        ra = float(body["ra"])
+        dec = float(body["dec"])
+        angle = props["angle"]
+
+        if angle in {"MC", "IC"}:
+            lon = feature["geometry"]["coordinates"][0][0]
+            local_hour_angle = _norm180(gst + lon - ra)
+            if angle == "MC":
+                assert math.isclose(local_hour_angle, 0.0, abs_tol=0.002)
+            else:
+                assert math.isclose(abs(local_hour_angle), 180.0, abs_tol=0.002)
+            continue
+
+        group = props["line_group"]
+        for lon, lat in feature["geometry"]["coordinates"]:
+            # 日付変更線の補間点ではなく、計算コアが直接生成した整数緯度点を検算。
+            if abs(lon) == 180.0 or not float(lat).is_integer():
+                continue
+            _azimuth, true_altitude, _apparent_altitude = swe.azalt(
+                jd,
+                swe.EQU2HOR,
+                (lon, lat, 0.0),
+                0.0,
+                15.0,
+                (ra, dec, 1.0),
+            )
+            assert abs(true_altitude) < 0.002
+            local_hour_angle = _norm180(gst + lon - ra)
+            if angle == "ASC":
+                assert local_hour_angle <= 0.001
+            else:
+                assert local_hour_angle >= -0.001
+            checked_horizon_groups.add(group)
+
+    assert len(checked_horizon_groups) == 20

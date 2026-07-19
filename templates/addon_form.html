@@ -172,10 +172,10 @@
         'western_31days_transit_addon',
         'western_long_term_transits_addon',
       ].includes(addonType.value);
-      if (previousChartUrlWrap) previousChartUrlWrap.hidden = !isTransit;
+      if (previousChartUrlWrap) previousChartUrlWrap.hidden = false;
       if (transitPeriodSection) transitPeriodSection.hidden = !isTransit;
-      if (baseYaml) baseYaml.required = !isTransit;
-      if (previousChartUrl) previousChartUrl.disabled = !isTransit;
+      if (baseYaml) baseYaml.required = false;
+      if (previousChartUrl) previousChartUrl.disabled = false;
       if (baseDataHint) {
         baseDataHint.textContent = isTransit
           ? {{ t.base_data_hint_transit | tojson }}

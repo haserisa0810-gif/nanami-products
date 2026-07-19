@@ -24,3 +24,7 @@ report.md
 neon_setup.sql
 deploy.sh
 ChatGPT Image*.png
+
+personal-edition/dist/
+output/
+tmp/

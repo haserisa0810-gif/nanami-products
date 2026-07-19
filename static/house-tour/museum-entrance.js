@@ -27,16 +27,16 @@
       abs_f3: "日本語 / English",
       abs_cta_guide: "入館（ガイド推奨）",
       abs_cta_free: "入館（自由）",
-      arch_kicker: "実験 · Architecture",
+      arch_kicker: "別館 · Architecture",
       arch_title: "建築ミュージアム",
       arch_body:
-        "邸宅・劇場・天文台など、現実にありそうな棟として歩ける試作です。素材とスケールを寄せています。",
+        "邸宅・劇場・天文台など、現実にありそうな棟として歩ける建築版です。素材とスケールを寄せています。",
       arch_f1: "全12棟の建築ボリューム",
       arch_f2: "4 / 5 / 9 を特に厚く",
       arch_f3: "入館後にガイド開始（ボタン）",
       arch_cta_guide: "入館（ガイド推奨）",
       arch_cta_free: "入館（自由）",
-      dream_kicker: "実験 · Dream",
+      dream_kicker: "番外 · Dream",
       dream_title: "Dream Sky",
       dream_body:
         "建物のない象徴空間。第4・5・12を光と粒子で体験。上のYAMLがそのまま使えます。",
@@ -45,7 +45,6 @@
       dream_f3: "配置天体で光と粒子が変化",
       dream_cta: "Dream に入る",
       note: "鑑定・注文には接続しません。YAMLはブラウザ内のみ。入口の図は各版（Dream含む）に引き継がれます。",
-      back: "← nanami-products へ戻る",
     },
     en: {
       eyebrow: "INTERACTIVE EXHIBITION",
@@ -69,7 +68,7 @@
       abs_f3: "Japanese / English",
       abs_cta_guide: "Enter (guide recommended)",
       abs_cta_free: "Enter freely",
-      arch_kicker: "Experiment · Architecture",
+      arch_kicker: "Architectural Collection",
       arch_title: "Architecture Museum",
       arch_body:
         "Walkable buildings that could exist — home, theater, observatory. Materials and scale first.",
@@ -78,7 +77,7 @@
       arch_f3: "Start guide with a button after entry",
       arch_cta_guide: "Enter (guide recommended)",
       arch_cta_free: "Enter freely",
-      dream_kicker: "Experiment · Dream",
+      dream_kicker: "Dream · Ambient",
       dream_title: "Dream Sky",
       dream_body:
         "No buildings — houses 4 / 5 / 12 as light and particles. Uses the YAML saved above.",
@@ -87,7 +86,6 @@
       dream_f3: "Bodies change light & particles",
       dream_cta: "Enter Dream",
       note: "No order/billing. YAML stays in-browser and carries into each edition including Dream.",
-      back: "← Back to nanami-products",
     },
   };
 
@@ -95,11 +93,14 @@
   var NEKO_MARKER = "__neko__";
 
   function detectLang() {
+    // URL ?lang → 本人の過去の切替 → 配布設定(HT_DEFAULT_LANG) → ブラウザ言語 → en
     try {
       var q = new URLSearchParams(location.search).get("lang");
       if (q === "en" || q === "ja") return q;
       var s = localStorage.getItem("ht-lang");
       if (s === "en" || s === "ja") return s;
+      var d = window.HT_DEFAULT_LANG;
+      if (d === "en" || d === "ja") return d;
     } catch (e) {}
     return (navigator.language || "en").toLowerCase().indexOf("ja") === 0 ? "ja" : "en";
   }

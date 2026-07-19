@@ -16,7 +16,7 @@ def test_architecture_page_loads():
     res = client.get("/house-tour-architecture")
     assert res.status_code == 200
     html = res.text
-    assert "ARCHITECTURE" in html
+    assert "ARCHITECTURAL COLLECTION" in html
     assert "house-tour-architecture/js/main.js" in html
     assert "three.min.js" in html
     assert 'href="/house-tour"' in html

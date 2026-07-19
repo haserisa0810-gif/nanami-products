@@ -316,6 +316,8 @@ import {
     applyDomI18n(document);
     ui.setQualityLabel(quality);
     ui.setSoundLabel(ambient.isOn());
+    syncLivedInButton();
+    refreshInfoPanelLabel();
     applyChart(chart, { status: "", statusOk: true });
     ui.setGuideLabel(guideLabelText());
   });
@@ -355,6 +357,25 @@ import {
     mapOpen = !mapOpen;
     ui.setMapOpen(mapOpen);
   });
+  // 解説パネルの表示/非表示（本館と共通の localStorage キーで記憶）
+  let infoVisible = true;
+  try {
+    infoVisible = localStorage.getItem("ht-info-visible") !== "0";
+  } catch (e) { /* ignore */ }
+  function setInfoVisible(next, opts) {
+    infoVisible = next;
+    try {
+      localStorage.setItem("ht-info-visible", next ? "1" : "0");
+    } catch (e) { /* ignore */ }
+    ui.setInfoOpen(next);
+    if (!next && !(opts && opts.silent)) ui.toast(t("toast_panel_off"), 2600);
+  }
+  function refreshInfoPanelLabel() {
+    ui.setInfoOpen(infoVisible);
+  }
+  ui.el.btnPanel?.addEventListener("click", () => setInfoVisible(!infoVisible));
+  ui.el.infoClose?.addEventListener("click", () => setInfoVisible(false));
+  setInfoVisible(infoVisible, { silent: true });
   ui.el.btnMode?.addEventListener("click", () => {
     const m = controls.getMode() === "walk" ? "orbit" : "walk";
     controls.setMode(m);
@@ -410,6 +431,11 @@ import {
 
   // 初期チャート（入口ポータルの sessionStorage を優先）
   (function initialFromPortal() {
+    // Demo モードはサンプル固定（入口 sessionStorage を読まない）
+    if (window.HT_DEMO) {
+      applyChart(nekoChart, { status: t("status_neko"), statusOk: true });
+      return;
+    }
     try {
       const pref = sessionStorage.getItem("ht-chart-pref");
       const saved = sessionStorage.getItem("ht-last-yaml");

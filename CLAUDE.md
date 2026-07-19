@@ -94,6 +94,8 @@ Neon/PostgreSQL。`DATABASE_URL` 環境変数から接続。スキーマ `nanami
 | `SWEPH_EPHE_PATH` | `""` | Override ephemeris directory |
 | `FREEASTRO_API_TIMEOUT` | `12` | Seconds for asteroid API calls |
 | `HOSHIYOMI_APP_URL` | `""` | 星読みの暦アプリ（hoshiyomi/）のベースURL。設定すると `/chart/{token}` に「アプリで開く（自動読み込み）」ボタンが出る（`?load=` にYAML/SVGのURLを渡す。公開チャートのYAML/SVGはCORS許可済み） |
+| `MUSEUM_SHOP_URL_EN` | `""` | Birth Chart Museum Demo の海外向け販売URL（Etsy）。未設定なら購入ボタンは「近日発売」表示 |
+| `MUSEUM_SHOP_URL_JA` | `""` | 同・日本向け販売URL（STORES） |
 
 ### 四柱推命 Calculation Notes (`shichusuimei_calc.py`)
 
@@ -102,6 +104,22 @@ Neon/PostgreSQL。`DATABASE_URL` 環境変数から接続。スキーマ `nanami
 - `day_change_at_23=True` shifts 00:00–00:59 births to the previous calendar day
 - 大運 (major luck cycles) direction: yang year stem + male = forward; all other combos follow the standard table
 - Gender normalization defaults to `"female"` for any unrecognized input
+
+### Birth Chart Museum Personal Edition (`personal-edition/`) と Web Demo
+
+販売用ローカル版（Etsy=英語 / STORES=日本語）。`python personal-edition/build.py` が Web 版
+（`templates/birth_chart_museum.html`・`house_tour*.html`・`static/house-tour*`・`static/dream-sky`）
+から静的化した ZIP を EN / JA の2バリアントで `personal-edition/dist/` に生成する。
+CDN（three.js r128 / js-yaml 4.1.0 / OrbitControls / Cinzel フォント）は
+`personal-edition/vendor/` に同梱済み。Web 版は変更しない。
+テンプレート構造を変えると build.py の置換アサーションが失敗するので、その際は build.py も更新する。
+詳細は `personal-edition/README.md`。
+
+無料デモ: `GET /birth-chart-museum/demo`（抽象版）・`/birth-chart-museum/demo/architecture`（建築版）。
+サンプル出生図（ねこ編集長）固定・YAML/sessionStorage 読込なし・英語デフォルト
+（日本向けは `?lang=ja` を配布）。demo UI は `templates/_museum_demo.html` を
+`{% if demo %}` で include し、Personal Edition ビルドでは丸ごと除去される。
+初期言語の優先順位: URL `?lang` → localStorage → `window.HT_DEFAULT_LANG`（配布設定）→ ブラウザ言語 → en。
 
 ### Prompt (`services/prompt_builder.py`)
 

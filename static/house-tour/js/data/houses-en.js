@@ -1,5 +1,5 @@
 /**
- * 12 houses — English copy (for future locale switch)
+ * 12 houses — English copy
  */
 export const housesEn = {
   0: {
@@ -79,7 +79,7 @@ export const housesEn = {
     keywords: ["Words", "Learning", "Information", "Movement"],
     short: "How you receive, think, and share information day to day.",
     detail: "Study, letters, short journeys, and nearby minds.",
-    architecture: "A study corridor where letters and letters of light drift.",
+    architecture: "A study corridor where letters and fragments of light drift.",
     spaceLabel: "Corridor of words",
     lightLabel: "Cool daylight",
     soundLabel: "Quick bright tones",
@@ -192,8 +192,8 @@ export const housesEn = {
     subtitle: "Shared · Inheritance · Change",
     title_en: "Depth",
     keywords: ["Shared bonds", "Inheritance", "Loss & renewal", "Depth"],
-    short: "Deep joining — what is shared, inherited, released, renewed.",
-    detail: "Not horror. Locked chests, water, ash and sprout — transformation.",
+    short: "What is shared, inherited, released, and renewed.",
+    detail: "Locked chests, still water, ash and new sprouts — a vault of transformation.",
     architecture: "A deep vault with water and sealed chests.",
     spaceLabel: "Vault of change",
     lightLabel: "A single slit of light",
@@ -239,7 +239,7 @@ export const housesEn = {
     title_en: "Summit",
     keywords: ["Role", "Career", "Responsibility", "Public face"],
     short: "What you carry in the world — role, duty, and direction.",
-    detail: "Not fame alone. A summit view of responsibility and craft.",
+    detail: "A summit view of responsibility, craft, and public direction.",
     architecture: "A public terrace overlooking a city of light.",
     spaceLabel: "Public summit",
     lightLabel: "Light from above",
@@ -285,7 +285,7 @@ export const housesEn = {
     title_en: "Sanctuary",
     keywords: ["Unconscious", "Rest", "Hidden", "Dream", "Release"],
     short: "What rests beneath words — rest, dream, and soft boundaries.",
-    detail: "Not misfortune. Mist, water, moonlight — an inward sanctuary.",
+    detail: "Mist, water, and moonlight — an inward sanctuary of rest and release.",
     architecture: "A misted cloister with quiet water.",
     spaceLabel: "Mist sanctuary",
     lightLabel: "Dissolving twilight",

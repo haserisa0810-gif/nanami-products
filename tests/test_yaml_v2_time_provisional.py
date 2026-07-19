@@ -5,10 +5,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import yaml
+import pytest
 from fastapi.testclient import TestClient
 
 import routes
-from services.acg_api import personal_geojson
+from services.acg_api import ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR, AcgYamlFormatError, personal_geojson
 from services.chart_svg import build_horoscope_svg_from_yaml
 from services.light_yaml import build_base_astrology_yaml
 from services.mcp_chart_service import build_section_yaml
@@ -156,15 +157,13 @@ def test_prompt_contains_time_sensitive_priority_rules():
     assert "データに存在しないセクションを推測で補完しない" in prompt
 
 
-def test_acg_v2_unknown_returns_warning():
+def test_acg_v2_unknown_is_rejected_before_calculation():
     yaml_text, _prompt, _doc = _build(birth_time=None, accuracy="unknown")
-    fake_geojson = {"type": "FeatureCollection", "features": [], "meta": {"mode": "natal"}}
 
-    with patch("services.acg_api.lines_to_geojson", return_value=fake_geojson):
-        result = personal_geojson(yaml_text)
-
-    assert result["type"] == "FeatureCollection"
-    assert result["time_sensitive_warning"] is True
+    with patch("services.acg_api.lines_to_geojson") as calculate:
+        with pytest.raises(AcgYamlFormatError, match=ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR):
+            personal_geojson(yaml_text)
+    calculate.assert_not_called()
 
 
 def _chart(doc, yaml_text):

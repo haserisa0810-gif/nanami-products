@@ -3,6 +3,7 @@
  * 説明文を読まなくても、建築・オブジェクト・光・広さで意味が伝わること。
  */
 import { RING_R, housePosition, hexColor } from "./scene.js";
+import { enhanceFirstHouse } from "./planet-builder.js";
 
 /**
  * ハウスごとの建築スケールと入口オフセット（ローカル座標）
@@ -10,7 +11,8 @@ import { RING_R, housePosition, hexColor } from "./scene.js";
  */
 /** ミュージアム展示室スケール。入口は中庭側（+z）から遠景で見えるよう余白を取る */
 const ARCH = {
-  1: { w: 14, d: 20, h: 9, style: "gateway", entryZ: 10, labelY: 10 },
+  // 浮遊神殿ゲート（R≈8, 柱H≈12）を収める広めの第1ハウス
+  1: { w: 20, d: 28, h: 14, style: "gateway", entryZ: 12, labelY: 15 },
   2: { w: 16, d: 22, h: 7.5, style: "storehouse", entryZ: 11, labelY: 9 },
   3: { w: 11, d: 26, h: 8, style: "corridor", entryZ: 12, labelY: 9 },
   4: { w: 15, d: 18, h: 9, style: "home", entryZ: 10, labelY: 10 },
@@ -325,9 +327,21 @@ function silhouetteFigure(THREE, mat, x, y, z, scale) {
 
 const BUILDERS = {};
 
-/** 1: 夜明けの門 — 大きなアーチと姿見、足跡、開き扉 */
+/** 1: 夜明けの門 — 浮遊神殿ゲート + 姿見・足跡・開き扉 + Dream Sky 粒子 */
 BUILDERS[1] = function (c) {
-  const { THREE, group, arch, primary, secondary, accent, lightCol, animatables, planetSlots, lights } = c;
+  const {
+    THREE,
+    group,
+    arch,
+    primary,
+    secondary,
+    accent,
+    lightCol,
+    quality,
+    animatables,
+    planetSlots,
+    lights,
+  } = c;
   const { w, d, h } = arch;
   floorSlab(THREE, group, w, d, secondary.getHex());
 
@@ -351,6 +365,14 @@ BUILDERS[1] = function (c) {
   doorR.position.set(w * 0.18, h * 0.4, d * 0.32);
   doorR.rotation.y = -0.4;
   group.add(doorR);
+
+  // 浮遊神殿ゲートウェイ + Dream Sky 風粒子（planet-builder / スニペット寸法）
+  enhanceFirstHouse(THREE, group, {
+    quality,
+    animatables,
+    arch,
+    gateScale: 0.85,
+  });
 
   // 奥の大姿見
   group.add(mesh(THREE, new THREE.BoxGeometry(5, 7, 0.15), matMirror(THREE), 0, 3.8, -d * 0.4));
@@ -390,7 +412,11 @@ BUILDERS[1] = function (c) {
   addSpot(THREE, group, lights, lightCol.getHex(), 1.4,
     new THREE.Vector3(-8, 12, 10), new THREE.Vector3(0, 1, -4), Math.PI / 5);
 
-  planetSlots.push(new THREE.Vector3(0, 3.5, -d * 0.15));
+  // 第1ハウス天体スロット（ゲート前に浮遊・スニペット z≈-10 相当）
+  planetSlots.push(new THREE.Vector3(0, 3.5, -d * 0.28));
+  planetSlots.push(new THREE.Vector3(-2.0, 4.2, -d * 0.32));
+  planetSlots.push(new THREE.Vector3(2.0, 3.0, -d * 0.3));
+  planetSlots.push(new THREE.Vector3(0, 5.5, -d * 0.35));
 };
 
 /** 2: 保管庫 — 棚・道具・作品・食料・鍵（金運だけにしない） */
@@ -1368,6 +1394,7 @@ BUILDERS.default = BUILDERS[1];
 
 function addHouseAmbientParticles(THREE, group, n, primary, accent, arch, animatables) {
   if (n === 12) return; // 既に濃霧を入れた
+  if (n === 1) return; // enhanceFirstHouse で Dream Sky 粒子を既に配置
   let kind = "dust";
   let color = primary.getHex();
   let size = 0.12;

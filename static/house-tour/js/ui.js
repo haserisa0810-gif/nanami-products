@@ -40,6 +40,8 @@ export function createUI(root) {
     btnNext: $("ht-btn-next"),
     btnPrev: $("ht-btn-prev"),
     btnMap: $("ht-btn-map"),
+    btnPanel: $("ht-btn-panel"),
+    infoClose: $("ht-info-close"),
     locTitle: $("ht-loc-title"),
     locSub: $("ht-loc-sub"),
     crosshair: $("ht-crosshair"),
@@ -98,20 +100,27 @@ export function createUI(root) {
   }
 
   function fillProfile(chart) {
-    if (el.profileName) el.profileName.textContent = chart.name || "—";
+    const isEn = getLang() === "en";
+    if (el.profileName) {
+      el.profileName.textContent =
+        (isEn && chart.name_en ? chart.name_en : chart.name) || "—";
+    }
     if (el.profileBirth) {
+      const place = isEn && chart.birth_place_en ? chart.birth_place_en : chart.birth_place;
       el.profileBirth.textContent =
         (chart.birth_date || "") +
         (chart.birth_time ? " " + chart.birth_time : "") +
-        (chart.birth_place ? " · " + chart.birth_place : "");
+        (place ? " · " + place : "");
     }
     if (el.profileSystem) {
       const sys = chart.house_system || "Placidus";
-      const tag =
-        chart.source === "yaml" || chart.source === "yaml-sample-neko"
-          ? t("system_yaml")
-          : t("system_demo");
-      el.profileSystem.textContent = sys + " · " + tag;
+      let tag;
+      if (chart.source === "yaml-sample-neko") tag = t("system_sample");
+      else if (chart.source === "yaml") tag = t("system_yaml");
+      else tag = t("system_demo");
+      el.profileSystem.textContent = isEn
+        ? sys + " house system · " + tag
+        : sys + " · " + tag;
     }
   }
 
@@ -175,8 +184,12 @@ export function createUI(root) {
     }
     if (el.infoTitle) el.infoTitle.textContent = h.title || "";
     if (el.infoEn) {
+      // 英語UIでは title と title_en が同じ文字列になり二重表示になるため、
+      // subtitle のみ表示（ハウス番号は infoNum が既に示している）
       el.infoEn.textContent =
-        (h.subtitle || h.title_en || "") + (num ? " · House " + num : "");
+        getLang() === "en"
+          ? h.subtitle || ""
+          : (h.subtitle || h.title_en || "") + (num ? " · House " + num : "");
     }
     if (el.senseSpace) el.senseSpace.textContent = h.spaceLabel || "—";
     if (el.senseLight) el.senseLight.textContent = h.lightLabel || "—";
@@ -361,6 +374,15 @@ export function createUI(root) {
     if (el.mapOverlay) el.mapOverlay.hidden = !open;
   }
 
+  /** 解説パネルの表示/非表示（トグルボタンのラベルも同期） */
+  function setInfoOpen(open) {
+    if (el.info) el.info.classList.toggle("is-hidden", !open);
+    if (el.btnPanel) {
+      el.btnPanel.textContent = open ? t("btn_panel_on") : t("btn_panel_off");
+      el.btnPanel.classList.toggle("is-active", open);
+    }
+  }
+
   function setMenuOpen(open) {
     if (el.menuOverlay) el.menuOverlay.hidden = !open;
   }
@@ -401,6 +423,7 @@ export function createUI(root) {
     setQualityLabel,
     setMapOpen,
     setMenuOpen,
+    setInfoOpen,
     showMobileStick,
     updateStickKnob,
     resetStickKnob,

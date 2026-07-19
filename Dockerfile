@@ -27,5 +27,6 @@ COPY data/ ./data/
 COPY ephe/ ./ephe/
 COPY cards/ ./cards/
 COPY kaii/ ./kaii/
+COPY personal-edition/ ./personal-edition/
 
 CMD ["sh", "-c", "python -m uvicorn routes:app --host 0.0.0.0 --port ${PORT:-8080}"]

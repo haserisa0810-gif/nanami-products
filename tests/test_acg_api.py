@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 import routes
 from services import acg_api
 from services.acg_api import (
+    ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR,
+    ACG_TIMEZONE_NOT_CONFIRMED_ERROR,
     AcgInputError,
     AcgYamlFormatError,
     YAML_AMBIGUOUS_DOCUMENT_ERROR,
@@ -27,6 +29,9 @@ version: nanami-products-yaml-v1
 input:
   birth_date: "1990-01-15"
   birth_time: "08:30"
+  birth_time_accuracy: exact
+  birth_place: "Tokyo, Japan"
+  timezone: Asia/Tokyo
   timezone_offset_hours: 9.0
 """
 
@@ -55,6 +60,13 @@ systems:
 """
 
 PROMPT_ENRICHED_YAML = """
+input:
+  birth_date: "1990-01-15"
+  birth_time: "08:30"
+  birth_time_accuracy: exact
+  birth_place: "Tokyo, Japan"
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
 assistant_profile:
   name: Chart Companion
   role: 西洋占星術の相談AI
@@ -315,7 +327,42 @@ class AcgEndpointsTest(unittest.TestCase):
         groups = {f["properties"]["line_group"] for f in body["features"]}
         self.assertEqual(len(groups), 40)
         self.assertGreaterEqual(len(body["features"]), 40)
+        basis = body["meta"]["acg_calculation_basis"]
+        self.assertTrue(basis["acg_eligible"])
+        self.assertEqual(basis["birth_time_status"], "confirmed")
+        self.assertEqual(basis["timezone"], "Asia/Tokyo")
+        self.assertEqual(basis["birth_datetime_utc"], "1534-06-22T18:41:01Z")
         self.assertIn("no-store", res.headers.get("cache-control", ""))
+
+    def test_personal_endpoint_rejects_unknown_or_provisional_birth_time(self) -> None:
+        yaml_text = INPUT_ONLY_YAML.replace(
+            "birth_time_accuracy: exact", "birth_time_accuracy: unknown"
+        )
+        res = self.client.post("/api/acg/personal", json={"yaml_text": yaml_text})
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.json()["error"], ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR)
+
+        provisional = INPUT_ONLY_YAML + """
+systems:
+  western:
+    natal:
+      time_sensitive_provisional:
+        reason: unknown_birth_time
+"""
+        res = self.client.post("/api/acg/personal", json={"yaml_text": provisional})
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.json()["error"], ACG_BIRTH_TIME_NOT_CONFIRMED_ERROR)
+
+    def test_personal_endpoint_rejects_missing_timezone_instead_of_jst_fallback(self) -> None:
+        yaml_text = INPUT_ONLY_YAML.replace("  timezone: Asia/Tokyo\n", "")
+        res = self.client.post("/api/acg/personal", json={"yaml_text": yaml_text})
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.json()["error"], ACG_TIMEZONE_NOT_CONFIRMED_ERROR)
+
+        yaml_text = INPUT_ONLY_YAML.replace("  timezone_offset_hours: 9.0\n", "")
+        res = self.client.post("/api/acg/personal", json={"yaml_text": yaml_text})
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.json()["error"], ACG_TIMEZONE_NOT_CONFIRMED_ERROR)
 
     def test_personal_endpoint_matches_core_for_same_datetime(self) -> None:
         """検収基準: 同一日時を直接指定した計算出力とMC線経度が一致。"""

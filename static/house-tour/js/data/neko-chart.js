@@ -4,10 +4,11 @@
  */
 export const nekoChart = {
   name: "ねこ編集長",
-  name_en: "Neko Editor-in-Chief",
+  name_en: "Neko — Sample Chart",
   birth_date: "2022-02-22",
   birth_time: "12:00",
   birth_place: "神奈川県 横浜市",
+  birth_place_en: "Yokohama, Japan",
   house_system: "Placidus",
   note: "提供YAML（detail）から抽出。再計算なし。",
   source: "yaml-sample-neko",

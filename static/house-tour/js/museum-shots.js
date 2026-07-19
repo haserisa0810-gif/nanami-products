@@ -74,16 +74,16 @@ export function buildShotsForHouse(n, houseGroup, THREE, housesData, lang) {
       position: far,
       lookAt: { x: centerWorld.x, y: arch.h * 0.35, z: centerWorld.z },
       duration: 3.0,
-      label: en ? title + " — far view" : title + " — 遠景",
+      label: en ? "Arriving at the " + title : title + " — 遠景",
       caption: en
-        ? "This is " + title + (space ? " (" + space + ")" : "") + "."
+        ? "This is the " + title + (space ? " — " + space.toLowerCase() : "") + "."
         : "こちらが" + title + "です。" + (space ? "（" + space + "）" : ""),
     },
     {
       position: mid,
       lookAt: toWorld(0, arch.h * 0.35, 0),
       duration: 2.5,
-      label: en ? "Approaching" : "近づく",
+      label: en ? "Approaching the entrance" : "近づく",
       caption: en
         ? "We approach so you can see the building as a whole."
         : "建物の姿を確認しながら、入口へ進みます。",
@@ -148,8 +148,8 @@ function defaultApproach(n, THREE, title, space, en) {
       position: { x: far.x, y: far.y, z: far.z },
       lookAt: { x: pos.x, y: 3, z: pos.z },
       duration: 3,
-      label: en ? title + " — far view" : title + " — 遠景",
-      caption: en ? "This is " + title + "." : "こちらが" + title + "です。",
+      label: en ? "Arriving at the " + title : title + " — 遠景",
+      caption: en ? "This is the " + title + "." : "こちらが" + title + "です。",
     },
     {
       position: { x: mid.x, y: mid.y, z: mid.z },

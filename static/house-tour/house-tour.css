@@ -708,6 +708,31 @@ a.ht-chip-btn {
   transition: border-color 0.4s, opacity 0.35s, transform 0.35s;
 }
 
+/* 解説パネルの表示/非表示（純粋に画面だけ見たいとき用） */
+.ht-info.is-hidden {
+  display: none;
+}
+
+.ht-info-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--ht-border);
+  background: transparent;
+  color: var(--ht-dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ht-info-close:hover {
+  color: var(--ht-text);
+  border-color: var(--ht-accent);
+}
+
 .ht-info.is-center {
   border-left-color: var(--ht-gold);
 }

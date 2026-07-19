@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Personal ACG Map</title>
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <style>
+    :root{--base:#0a1128;--panel:#101a3c;--gold:#c9a227;--text:#eceae2;--dim:#aeb4c7}
+    *{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--base);color:var(--text);font-family:"Noto Sans JP","Yu Gothic",sans-serif;display:grid;grid-template-rows:auto 1fr}
+    header{padding:10px 14px;border-bottom:1px solid rgba(201,162,39,.3);display:flex;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:1rem;color:var(--gold);margin:0}.note{font-size:.74rem;color:var(--dim);margin:0}.back{margin-left:auto;color:var(--gold);text-decoration:none;font-size:.78rem}
+    main{display:grid;grid-template-columns:280px 1fr;min-height:0}.side{padding:12px;background:var(--panel);overflow:auto}.side h2{font-size:.82rem;color:var(--gold);margin:0 0 8px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}button{padding:9px;border:1px solid rgba(201,162,39,.55);border-radius:7px;background:transparent;color:var(--gold);cursor:pointer}button.active{background:var(--gold);color:var(--base);font-weight:700}.status{font-size:.76rem;color:var(--dim);line-height:1.6}.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:.78rem}.checks label{display:flex;gap:6px;align-items:center}.badge{position:absolute;z-index:600;top:10px;left:50%;transform:translateX(-50%);background:rgba(16,26,60,.94);border:1px solid rgba(201,162,39,.4);border-radius:999px;padding:6px 12px;font-size:.72rem}.map-wrap{position:relative;min-width:0}#map{width:100%;height:100%}
+    @media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:auto 1fr}.side{max-height:33vh}.map-wrap{min-height:55vh}.back{margin-left:0}}
+  </style>
+</head>
+<body>
+<header><h1>ACG · あなたの天空線</h1><p class="note">出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。</p><a class="back" href="/">ミュージアムへ戻る</a></header>
+<main>
+  <aside class="side">
+    <h2>表示テーマ</h2>
+    <div class="buttons"><button class="active" data-preset="basic">基本</button><button data-preset="work">仕事</button><button data-preset="relation">人の縁</button><button data-preset="all">すべて</button></div>
+    <h2>アングル</h2><div class="checks" id="angles"></div>
+    <p class="status" id="status">個人線データを読み込んでいます…</p>
+  </aside>
+  <div class="map-wrap"><div id="map"></div><div class="badge">個人の天空線</div></div>
+</main>
+<script src="/static/vendor/leaflet/leaflet.js"></script>
+<script>
+(function(){
+  var colors={Sun:'#f2c04b',Moon:'#c9d4e8',Mercury:'#7fd0c8',Venus:'#f0a3c0',Mars:'#ef6f61',Jupiter:'#e8a13c',Saturn:'#b0a080',Uranus:'#63c7d5',Neptune:'#6f8edb',Pluto:'#9b78c6'};
+  var presets={basic:{p:['Sun','Moon','Venus','Jupiter','Saturn'],a:['MC','IC','ASC']},work:{p:['Sun','Mercury','Mars','Jupiter','Saturn','Venus'],a:['MC','ASC','IC']},relation:{p:['Venus','Moon','Jupiter','Mercury','Sun'],a:['ASC','DSC','IC']},all:{p:Object.keys(colors),a:['MC','IC','ASC','DSC']}};
+  var selected=presets.basic,data=null,layer=L.layerGroup(),map=L.map('map',{worldCopyJump:true}).setView([25,15],2);layer.addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+  function style(a){return a==='IC'?{dashArray:'8 5'}:a==='ASC'?{dashArray:'1 5'}:a==='DSC'?{dashArray:'2 6'}:{}}
+  function render(){if(!data)return;layer.clearLayers();data.features.forEach(function(f){var p=f.properties||{};if(selected.p.indexOf(p.planet)<0||selected.a.indexOf(p.angle)<0)return;var s=style(p.angle);s.color=colors[p.planet]||'#ddd';s.weight=3;s.opacity=.85;L.geoJSON(f,{style:s,onEachFeature:function(_f,l){l.bindPopup('<strong>'+p.label+'</strong><br>'+String(p.meaning||''));}}).addTo(layer);});}
+  ['MC','IC','ASC','DSC'].forEach(function(a){var label=document.createElement('label'),cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.a.indexOf(a)>=0;cb.dataset.angle=a;cb.onchange=function(){var x=cb.dataset.angle,i=selected.a.indexOf(x);if(cb.checked&&i<0)selected.a.push(x);if(!cb.checked&&i>=0)selected.a.splice(i,1);render();};label.append(cb,document.createTextNode(a));document.getElementById('angles').appendChild(label);});
+  document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=function(){document.querySelectorAll('[data-preset]').forEach(function(x){x.classList.remove('active')});b.classList.add('active');selected={p:presets[b.dataset.preset].p.slice(),a:presets[b.dataset.preset].a.slice()};document.querySelectorAll('[data-angle]').forEach(function(c){c.checked=selected.a.indexOf(c.dataset.angle)>=0});render();};});
+  fetch('/acg-personal.geojson',{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('not found');return r.json()}).then(function(x){data=x;render();document.getElementById('status').textContent='計算基準: '+((x.meta&&x.meta.datetime_utc)||'確認済み出生日時');}).catch(function(){document.getElementById('status').textContent='個人線データを読み込めませんでした。';});
+})();
+</script>
+</body></html>

@@ -31,13 +31,14 @@ class LongTermTransitAddonFormTest(unittest.TestCase):
 
         self.assertEqual(get_chart.call_count, 2)
 
-    def test_ui_treats_long_term_transits_as_a_transit_addon(self) -> None:
+    def test_ui_allows_previous_chart_url_for_every_addon(self) -> None:
         template = Path("templates/addon_form.html").read_text(encoding="utf-8")
 
         self.assertIn("'western_long_term_transits_addon'", template)
-        self.assertIn("previousChartUrl.disabled = !isTransit", template)
+        self.assertIn("previousChartUrlWrap.hidden = false", template)
+        self.assertIn("previousChartUrl.disabled = false", template)
         self.assertIn("transitPeriodSection.hidden = !isTransit", template)
-        self.assertIn("baseYaml.required = !isTransit", template)
+        self.assertIn("baseYaml.required = false", template)
 
     @patch("routes._redeem_and_save_transit_addon_or_raise", return_value=("generated-token", None))
     @patch("routes._resolve_order_provider", return_value="stores")

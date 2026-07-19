@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Birth Chart Museum — Architecture Edition</title>
-  <meta name="description" content="Architectural museum walkthrough of natal chart houses. Experiment edition.">
+  <title>Birth Chart Museum — Architectural Collection</title>
+  <meta name="description" content="Walk the twelve houses of a natal chart as architectural wings.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Serif+JP:wght@300;400;500&display=swap" rel="stylesheet">
@@ -14,6 +14,9 @@
   <!-- asset_version: {{ asset_version }} -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+{% if demo %}
+  <script>window.HT_DEMO = true; window.HT_DEFAULT_LANG = "{{ demo_default_lang }}";</script>
+{% endif %}
 {% include "_head_icons.html" %}
 </head>
 <body class="ht-arch">
@@ -33,14 +36,14 @@
 
   <div id="ht-title" role="dialog" aria-label="Architecture edition title">
     <div class="ht-title-card">
-      <p class="ht-eyebrow">NANAMI PRODUCTS · ARCHITECTURE EDITION</p>
+      <p class="ht-eyebrow">NANAMI ASTRO · ARCHITECTURAL COLLECTION</p>
       <h1 class="ht-title-main">BIRTH CHART<br>MUSEUM</h1>
-      <p class="ht-title-sub">Architecture Prototype</p>
-      <p class="ht-edition-badge">Architecture Edition · 全12棟（建築寄り試作）</p>
+      <p class="ht-title-sub">The Architectural Collection</p>
+      <p class="ht-edition-badge" data-i18n="arch_badge">Architectural Collection · 全12棟の建築空間</p>
       <p class="ht-concept">
-        フォトリアルではなく、<strong>博物館として歩ける建築</strong>を目指した試作です。<br>
-        第4邸宅・第5劇場・第9天文台を特に厚くし、他棟も建築シェルではなく棟ごとに作り分けています。<br>
-        <span class="ht-concept-sub">抽象版のUX（ガイド / 日英）を再利用。出生図は入口で設定。</span>
+        <span data-i18n="arch_concept_1">フォトリアルではなく、博物館として歩ける建築を目指した版です。</span><br>
+        <span data-i18n="arch_concept_2">第4邸宅・第5劇場・第9天文台を特に厚くし、全12棟を棟ごとに作り分けています。</span><br>
+        <span class="ht-concept-sub" data-i18n="arch_concept_3">本館と同じガイドツアー・日英対応。出生図の設定はミュージアム入口で。</span>
       </p>
       <dl class="ht-profile">
         <dt data-i18n="profile_chart">出生図</dt>
@@ -57,19 +60,18 @@
         <button type="button" class="ht-btn ht-btn-secondary" id="ht-start-orbit" data-i18n="start_orbit">全体を俯瞰</button>
       </div>
       <p class="ht-hint">
-        特に厚い棟: <strong>4 邸宅 · 5 劇場 · 9 天文台/図書館</strong>。全12棟に建築ボリュームあり。<br>
-        <a class="ht-edition-link" href="/birth-chart-museum">← ミュージアム入口</a>
+        <span data-i18n="arch_hint">見どころ: 4 邸宅 · 5 劇場 · 9 天文台/図書館。全12棟に建築ボリュームあり。</span><br>
+        <a class="ht-edition-link" href="/birth-chart-museum" data-i18n="link_entrance">← ミュージアム入口</a>
         ·
-        <a class="ht-edition-link" href="/house-tour">抽象版（本線）→</a>
+        <a class="ht-edition-link" href="/house-tour" data-i18n="link_abstract">本館（象徴版）→</a>
       </p>
-      <p class="ht-back"><a href="/" data-i18n="back_home">← nanami-products へ戻る</a></p>
     </div>
   </div>
 
   <div id="ht-hud" class="is-hidden" aria-hidden="true">
     <div class="ht-topbar">
       <div>
-        <div class="ht-brand">ARCHITECTURE EDITION</div>
+        <div class="ht-brand">ARCHITECTURAL COLLECTION</div>
         <div class="ht-mode-label" id="ht-mode-label">—</div>
         <div class="ht-guide-label" id="ht-guide-label"></div>
       </div>
@@ -78,17 +80,19 @@
         <button type="button" class="ht-chip-btn ht-chip-primary" id="ht-btn-next" data-i18n="btn_next">次へ →</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-map" data-i18n="btn_map">マップ</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-mode" data-i18n="btn_mode_orbit">俯瞰</button>
+        <button type="button" class="ht-chip-btn" id="ht-btn-panel">解説: ON</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-sound" data-i18n="btn_sound_off">音: OFF</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-lived-in" aria-pressed="true">生活感: ON</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-quality" data-i18n="btn_quality_high">品質: 高</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-help" data-i18n="btn_help">操作</button>
         <button type="button" class="ht-chip-btn" id="ht-btn-menu" data-i18n="btn_menu">メニュー</button>
-        <a class="ht-chip-btn" href="/birth-chart-museum" title="Museum entrance">入口</a>
-        <a class="ht-chip-btn" href="/house-tour" title="Abstract edition">Abstract</a>
+        <a class="ht-chip-btn" href="/birth-chart-museum" title="Museum entrance" data-i18n="btn_entrance">入口</a>
+        <a class="ht-chip-btn" href="/house-tour" title="Main museum" data-i18n="btn_abstract">本館</a>
       </div>
     </div>
 
     <aside class="ht-info is-center" id="ht-info" aria-live="polite">
+      <button type="button" class="ht-info-close" id="ht-info-close" aria-label="Hide panel">×</button>
       <div class="ht-info-num" id="ht-info-num">CORE</div>
       <h2 class="ht-info-title" id="ht-info-title">—</h2>
       <div class="ht-info-en" id="ht-info-en"></div>
@@ -174,10 +178,9 @@
       <h3 data-i18n="menu_title">メニュー</h3>
       <div class="ht-menu-actions">
         <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-title" data-i18n="menu_title_back">タイトルへ</button>
-        <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-lived-in">生活感 ON/OFF（雰囲気を戻す）</button>
-        <a class="ht-btn ht-btn-secondary" href="/birth-chart-museum">ミュージアム入口</a>
-        <a class="ht-btn ht-btn-secondary" href="/house-tour">Abstract Museum</a>
-        <a class="ht-btn ht-btn-secondary" href="/" data-i18n="menu_home">TOP</a>
+        <button type="button" class="ht-btn ht-btn-secondary" id="ht-menu-lived-in" data-i18n="menu_lived_in">生活感 ON/OFF</button>
+        <a class="ht-btn ht-btn-secondary" href="/birth-chart-museum" data-i18n="menu_entrance">ミュージアム入口</a>
+        <a class="ht-btn ht-btn-secondary" href="/house-tour" data-i18n="menu_abstract">本館（象徴版）</a>
         <button type="button" class="ht-btn" id="ht-menu-close" data-i18n="menu_close">閉じる</button>
       </div>
     </div>
@@ -185,5 +188,8 @@
   <div id="ht-toast" role="status"></div>
 
   <script type="module" src="{{ asset_url('house-tour-architecture/js/main.js') }}"></script>
+{% if demo %}
+{% include "_museum_demo.html" %}
+{% endif %}
 </body>
 </html>
