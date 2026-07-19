@@ -278,6 +278,9 @@ def issue_personal_edition_codes(*, count: int, product_type: str, provider: str
     issued: list[dict[str, Any]] = []
     with _conn(operation="issue_personal_edition_codes") as con:
         with con.cursor() as cur:
+            # Cloud Run intentionally skips init_db() during startup. Keep this
+            # write path compatible with databases created from older DDL.
+            _ensure_personal_edition_codes_table(cur)
             for _ in range(count):
                 groups = ["".join(secrets.choice(alphabet) for _ in range(4)) for _ in range(3)]
                 code_prefix = "PE-ACG" if product_type == "acg_bundle" else "PE-FULL"
