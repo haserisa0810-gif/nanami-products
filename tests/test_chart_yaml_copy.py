@@ -4,10 +4,11 @@ import unittest
 from pathlib import Path
 
 import yaml
+from starlette.requests import Request
 
-from routes import I18N
+from routes import I18N, _chart_i18n_context
 from services.light_yaml import build_detail_astrology_yaml
-from services.prompt_builder import CHART_COMPANION_PROMPT
+from services.prompt_builder import CHART_COMPANION_PROMPT, SHICHUSUIMEI_CHART_COMPANION_PROMPT
 from tests.test_light_yaml_transit_summary import _asteroid_dense_full_doc
 
 
@@ -175,11 +176,49 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertEqual(I18N["ja"]["consultation_mode"], "相談モード")
         self.assertEqual(I18N["en"]["chart_companion_title"], "Chart Companion β")
 
+    def test_shichu_companion_uses_four_pillars_wording(self) -> None:
+        request = Request({
+            "type": "http",
+            "method": "GET",
+            "scheme": "https",
+            "server": ("chart.nanami-astro.com", 443),
+            "path": "/chart/test",
+            "query_string": b"",
+            "headers": [],
+        })
+        context = _chart_i18n_context(request, "shichu")
+        self.assertIn("四柱推命", context["t"]["chart_companion_lead"])
+        self.assertIn("命式", context["t"]["reading_mode_desc"])
+        self.assertIn("四柱推命の計算済みデータ", SHICHUSUIMEI_CHART_COMPANION_PROMPT)
+        self.assertNotIn("西洋占星術", SHICHUSUIMEI_CHART_COMPANION_PROMPT)
+        self.assertNotIn("https://chart.nanami-astro.com/acg", SHICHUSUIMEI_CHART_COMPANION_PROMPT)
+        self.assertIn("if product_type == \"shichu\"", Path("routes.py").read_text(encoding="utf-8"))
+
+    def test_language_urls_drop_one_time_zip_download_flag(self) -> None:
+        request = Request({
+            "type": "http",
+            "method": "GET",
+            "scheme": "https",
+            "server": ("chart.nanami-astro.com", 443),
+            "path": "/chart/test",
+            "query_string": b"chart_download=1&lang=ja",
+            "headers": [],
+        })
+        urls = _chart_i18n_context(request, "western_basic")["lang_urls"]
+        self.assertNotIn("chart_download", urls["ja"])
+        self.assertNotIn("chart_download", urls["en"])
+
     def test_zip_download_uses_regular_link(self) -> None:
         self.assertIn('<a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>', self.template)
         self.assertNotIn("downloadFullArchiveZip", self.template)
         self.assertNotIn("downloadZipFromUrl", self.template)
         self.assertNotIn("fetchZipBlob", self.template)
+
+    def test_issued_chart_can_auto_download_zip(self) -> None:
+        self.assertIn("{% if auto_download_chart_zip %}", self.template)
+        self.assertIn('<iframe src="{{ download_zip_url }}" title="Chart data ZIP download" hidden></iframe>', self.template)
+        self.assertIn("issuedUrl.searchParams.delete('chart_download');", self.template)
+        self.assertIn("window.history.replaceState", self.template)
 
     def test_can_share_files_is_not_used_for_text_share_support(self) -> None:
         text_share_fn = self.template.split("function canUseTextShare()", 1)[1].split(

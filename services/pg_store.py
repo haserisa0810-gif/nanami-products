@@ -261,6 +261,8 @@ def _ensure_personal_edition_codes_table(cur) -> None:
             attempt_count  INTEGER NOT NULL DEFAULT 0
         )
     """)
+    cur.execute(f"ALTER TABLE {SCHEMA}.personal_edition_codes ADD COLUMN IF NOT EXISTS marketplace_order_id TEXT")
+    cur.execute(f"ALTER TABLE {SCHEMA}.personal_edition_codes ADD COLUMN IF NOT EXISTS buyer_note TEXT")
 
 
 def _personal_code_hash(code: str) -> str:
@@ -269,7 +271,9 @@ def _personal_code_hash(code: str) -> str:
 
 
 def issue_personal_edition_codes(*, count: int, product_type: str, provider: str,
-                                 locale: str, expiration_days: int | None = 30) -> list[dict[str, Any]]:
+                                 locale: str, expiration_days: int | None = 30,
+                                 marketplace_order_id: str | None = None,
+                                 buyer_note: str | None = None) -> list[dict[str, Any]]:
     alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
     issued: list[dict[str, Any]] = []
     with _conn(operation="issue_personal_edition_codes") as con:
@@ -281,12 +285,15 @@ def issue_personal_edition_codes(*, count: int, product_type: str, provider: str
                 code_hash = _personal_code_hash(code)
                 cur.execute(f"""
                     INSERT INTO {SCHEMA}.personal_edition_codes
-                        (code_hash, code_prefix, product_type, provider, locale, expires_at)
+                        (code_hash, code_prefix, product_type, provider, locale, expires_at,
+                         marketplace_order_id, buyer_note)
                     VALUES (%s, %s, %s, %s, %s,
-                            CASE WHEN %s IS NULL THEN NULL ELSE NOW() + (%s * INTERVAL '1 day') END)
-                    RETURNING id, code_prefix, product_type, provider, locale, status, expires_at, created_at
+                            CASE WHEN %s IS NULL THEN NULL ELSE NOW() + (%s * INTERVAL '1 day') END,
+                            %s, %s)
+                    RETURNING id, code_prefix, product_type, provider, locale, status, expires_at,
+                              created_at, used_at, marketplace_order_id, buyer_note
                 """, (code_hash, code[:12], product_type, provider, locale,
-                        expiration_days, expiration_days))
+                        expiration_days, expiration_days, marketplace_order_id or None, buyer_note or None))
                 row = dict(cur.fetchone())
                 row["code"] = code
                 issued.append(row)

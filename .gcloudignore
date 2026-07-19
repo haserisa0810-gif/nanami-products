@@ -28,5 +28,6 @@ ChatGPT Image*.png
 personal-edition/dist/
 output/
 tmp/
+work/
 .venv/
 tmp_youtube/

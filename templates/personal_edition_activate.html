@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if lang == 'en' %}Activate Personal Edition{% else %}Personal Editionを発行{% endif %}</title>
   <link rel="stylesheet" href="/static/style.css">
@@ -20,13 +21,13 @@
     </div>
     <p class="eyebrow">BIRTH CHART MUSEUM · PERSONAL</p>
     <h1>{% if lang == 'en' %}Create your Personal Edition{% else %}あなた専用のPersonal Editionを作成{% endif %}</h1>
-    <p class="lead">{% if lang == 'en' %}Enter the code included with your purchase and your birth details. A private chart page will be issued and your personalized ZIP will download automatically.{% else %}納品ファイルに記載された引換コードと出生情報を入力してください。作成後、専用の鑑定ページを発行し、あなた専用のZIPも自動で保存します。{% endif %}</p>
+    <p class="lead">{% if lang == 'en' %}Enter the personal activation code sent through Etsy Messages and your birth details. A private chart page will be issued and your personalized ZIP will download automatically.{% else %}別途お送りしたアクティベーションコードと出生情報を入力してください。作成後、専用の鑑定ページを発行し、あなた専用のZIPも自動で保存します。{% endif %}</p>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
     <form method="post" action="/personal-edition/activate?lang={{ lang }}" class="form">
       <div class="form-section">
         <h2>{% if lang == 'en' %}Access code{% else %}引換コード{% endif %}</h2>
-        <label>{% if lang == 'en' %}Code included with your purchase{% else %}納品ファイルに記載されたコード{% endif %}<span class="required">*</span>
+        <label>{% if lang == 'en' %}Personal activation code{% else %}アクティベーションコード{% endif %}<span class="required">*</span>
           <input name="access_code" required autocomplete="off" value="{{ form.access_code or '' }}" placeholder="PE-FULL-XXXX-XXXX-XXXX">
         </label>
         <label>{% if lang == 'en' %}Name (optional){% else %}お名前（任意）{% endif %}
@@ -37,7 +38,7 @@
       <div class="form-section">
         <h2>{% if lang == 'en' %}Birth details{% else %}出生情報{% endif %}</h2>
         <label>{% if lang == 'en' %}Birth date{% else %}生年月日{% endif %}<span class="required">*</span>
-          {% if lang == 'en' %}<input name="birth_date" type="text" required inputmode="numeric" autocomplete="bday" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" title="Enter the date as YYYY-MM-DD" value="{{ form.birth_date or '' }}">{% else %}<input name="birth_date" type="date" required value="{{ form.birth_date or '' }}">{% endif %}
+          {% if lang == 'en' %}<input name="birth_date" type="text" id="pe-birth-date" required inputmode="numeric" autocomplete="bday" placeholder="YYYYMMDD or YYYY-MM-DD" pattern="(?:\d{8}|\d{4}-\d{2}-\d{2})" title="Enter the date as YYYYMMDD or YYYY-MM-DD" value="{{ form.birth_date or '' }}">{% else %}<input name="birth_date" type="date" required value="{{ form.birth_date or '' }}">{% endif %}
         </label>
         <label>{% if lang == 'en' %}Birth time accuracy{% else %}出生時刻の精度{% endif %}<span class="required">*</span>
           {% set accuracy = form.birth_time_accuracy or 'exact' %}
@@ -93,14 +94,22 @@ function syncPEFields(){
   document.getElementById('pe-time-field').hidden=!exact;
 }
 function applyAccessCodeFromUrl(){
-  const params=new URLSearchParams(location.hash.replace(/^#/,''));
+  const params=new URLSearchParams(location.search);
   const code=(params.get('code')||'').trim().toUpperCase();
   if(!/^PE-(?:FULL|ACG)-[A-Z0-9-]{10,40}$/.test(code))return;
   const input=document.querySelector('[name="access_code"]');
   if(input&&!input.value)input.value=code;
 }
+function normalizePEBirthDate(){
+  const input=document.getElementById('pe-birth-date');
+  if(!input)return;
+  const digits=input.value.trim().replace(/\D/g,'');
+  if(digits.length===8)input.value=`${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`;
+}
 document.querySelectorAll('[name="birth_place_kind"]').forEach(e=>e.addEventListener('change',syncPEFields));
 document.getElementById('pe-time-accuracy').addEventListener('change',syncPEFields);
+document.getElementById('pe-birth-date')?.addEventListener('blur',normalizePEBirthDate);
+document.querySelector('form')?.addEventListener('submit',normalizePEBirthDate);
 applyAccessCodeFromUrl();
 syncPEFields();
 </script>

@@ -10,6 +10,7 @@ import os
 import sys
 import threading
 import webbrowser
+import argparse
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -37,6 +38,9 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--open-path", default="/")
+    args = parser.parse_args()
     if not os.path.isdir(APP_DIR):
         sys.exit("app folder not found: %s" % APP_DIR)
     httpd = None
@@ -53,7 +57,8 @@ def main():
     if httpd is None:
         sys.exit("No free port found (8787-8796).")
 
-    url = "http://localhost:%d/" % port
+    open_path = "/" + args.open_path.lstrip("/")
+    url = "http://localhost:%d%s" % (port, open_path)
     print()
     print("  BIRTH CHART MUSEUM - Personal Edition")
     print("  ------------------------------------------------")

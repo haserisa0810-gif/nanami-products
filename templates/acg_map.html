@@ -64,6 +64,11 @@
       opacity: 1;
     }
     .lang-switch a:hover:not(.active) { opacity: 1; }
+    .sample-badge {
+      position: absolute; top: 12px; right: 112px; padding: 7px 12px;
+      border-radius: 999px; background: var(--brand-line); color: var(--brand-base);
+      font-size: .75rem; font-weight: 800; letter-spacing: .04em;
+    }
     header.acg-header h1 {
       margin: 0;
       font-size: 1.05rem;
@@ -418,6 +423,7 @@
 </head>
 <body>
   <header class="acg-header">
+    {% if demo_mode %}<span class="sample-badge">Sample Data</span>{% endif %}
     <nav class="lang-switch" aria-label="Language">
       <a href="?lang=ja"{% if not en %} class="active"{% endif %}>日本語</a>
       <a href="?lang=en"{% if en %} class="active"{% endif %}>EN</a>
@@ -534,6 +540,7 @@
     "use strict";
 
     var EN = {{ "true" if en else "false" }};  // 英語表示（?lang=en）
+    var DEMO_MODE = {{ "true" if demo_mode else "false" }};
 
     var NAME_JA = EN ? {
       // 英語では planet キーがそのまま表示名になる。別名だけ吸収する
@@ -2013,7 +2020,21 @@
     var today = new Date().toISOString().slice(0, 10);
     document.getElementById("mundane-date").value = today;
     var loadUrl = new URLSearchParams(window.location.search).get("load");
-    if (loadUrl) {
+    if (DEMO_MODE) {
+      selectTab("personal");
+      setStatus("Loading Chief Editor Neko's sample lines...");
+      fetch("/api/acg/demo/neko")
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          if (!res.ok) { throw new Error("Sample ACG could not be loaded."); }
+          personalContext = (res.body.meta && res.body.meta.personal_context) || null;
+          personalCalculationBasis = (res.body.meta && res.body.meta.acg_calculation_basis) || null;
+          hasPersonalYaml = true;
+          applyGeojson(res.body, "personal");
+          setStatus("Showing Chief Editor Neko's sample sky lines.");
+        })
+        .catch(function (e) { setStatus(e.message, true); });
+    } else if (loadUrl) {
       try {
         var resolvedLoadUrl = new URL(loadUrl, window.location.origin);
         if (resolvedLoadUrl.origin !== window.location.origin) { throw new Error("invalid origin"); }

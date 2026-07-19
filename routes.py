@@ -31,6 +31,7 @@ from markupsafe import Markup
 from services import pg_store, stores_mail_sync
 from services.personal_edition_delivery import build_personalized_zip
 from services.personal_edition_code_pdf import build_personal_edition_code_pdf
+from services.common_access_package import ETSY_PACKAGE_FILENAME, build_common_access_package
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
 from services.api_demo import build_demo_response, build_demo_shichu_svg, build_demo_svg
 from services.birth_time import extract_birth_time_notice, resolve_birth_time_accuracy
@@ -62,7 +63,12 @@ from services.note_transit import (
     get_note_transit_campaign_by_access_key,
 )
 from services.post_chart import build_post_chart
-from services.prompt_builder import CHART_COMPANION_PROMPT, build_prompt, ensure_transit_date_guidance
+from services.prompt_builder import (
+    CHART_COMPANION_PROMPT,
+    SHICHUSUIMEI_CHART_COMPANION_PROMPT,
+    build_prompt,
+    ensure_transit_date_guidance,
+)
 from services.shichu_chart import (
     build_shichusuimei_svg_from_yaml,
     is_shichusuimei_png_renderer_available,
@@ -1332,9 +1338,10 @@ def _resolve_lang(request: Request) -> str:
 
 
 def _lang_urls(request: Request) -> dict[str, str]:
+    url = request.url.remove_query_params("chart_download")
     return {
-        "ja": str(request.url.include_query_params(lang="ja")),
-        "en": str(request.url.include_query_params(lang="en")),
+        "ja": str(url.include_query_params(lang="ja")),
+        "en": str(url.include_query_params(lang="en")),
     }
 
 
@@ -1395,6 +1402,27 @@ def _i18n_context(request: Request) -> dict:
         "t": I18N.get(lang, I18N["ja"]),
         "lang_urls": _lang_urls(request),
     }
+
+
+def _chart_i18n_context(request: Request, product_type: str | None) -> dict:
+    context = _i18n_context(request)
+    if product_type != "shichu":
+        return context
+    t = dict(context["t"])
+    if context["lang"] == "en":
+        t.update({
+            "chart_companion_lead": "Use your Four Pillars data to start an AI reading or consult an AI practitioner.",
+            "reading_mode_desc": "Get a complete reading based on your Four Pillars chart, elemental balance, luck cycles, and annual influences.",
+            "consultation_mode_desc": "Discuss what is on your mind with an AI practitioner who understands your Four Pillars chart and changing luck cycles.",
+        })
+    else:
+        t.update({
+            "chart_companion_lead": "四柱推命の命式データを使って、AI鑑定またはAI占い師への相談を始められます。",
+            "reading_mode_desc": "命式・五行バランス・通変星・大運・流年をもとに、全体像や運気の流れをまとめて鑑定します。",
+            "consultation_mode_desc": "命式と運気の流れを理解したAI占い師へ、気になっていることを相談できます。",
+        })
+    context["t"] = t
+    return context
 
 
 def _product_context(product_type: str, lang: str = "ja") -> dict:
@@ -2411,6 +2439,22 @@ def admin_personal_edition_codes_get(request: Request):
     ))
 
 
+@app.get("/admin/personal-edition/common-access-package.zip")
+def admin_common_access_package(request: Request, lang: str = "en"):
+    auth_error = _admin_basic_auth_error(request)
+    if auth_error:
+        return auth_error
+    if lang not in {"en", "ja"}:
+        raise HTTPException(status_code=400, detail="lang must be en or ja")
+    activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
+    response = Response(
+        content=build_common_access_package(activation_url=activation_url, lang=lang),
+        media_type="application/zip",
+    )
+    response.headers["Content-Disposition"] = f'attachment; filename="{ETSY_PACKAGE_FILENAME}"'
+    return _mark_no_store(response)
+
+
 @app.post("/admin/personal-edition/code-pdf")
 def admin_personal_edition_code_pdf(
     request: Request,
@@ -2460,6 +2504,61 @@ def admin_personal_edition_code_pdfs_zip(
     if any(not code.startswith(expected_prefix) or len(code) > 64 for code in normalized_codes):
         raise HTTPException(status_code=400, detail="invalid Personal Edition code")
     activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
+
+    # A single issued code should download as the buyer-ready ZIP itself. An
+    # outer/master ZIP is only necessary when one response contains packages
+    # for multiple buyers.
+    if len(normalized_codes) == 1:
+        code = normalized_codes[0]
+        pdf_bytes = build_personal_edition_code_pdf(
+            code=code,
+            activation_url=activation_url,
+            product_type=product_type,
+            lang=lang,
+        )
+        buyer_url = f"{activation_url}&code={quote(code)}"
+        is_acg = product_type == "acg_bundle"
+        if lang == "en":
+            buyer_readme = (
+                "PERSONAL EDITION - START HERE\n\n"
+                "1. Open ACCESS-CODE.pdf and select the link or scan the QR code.\n"
+                "2. Enter your birth details. Your code is already filled in.\n"
+                "3. A private chart page will be issued and your Personal Edition ZIP will download.\n"
+                "4. Save the private chart page URL. You can download the ZIP again from that page.\n"
+                + ("5. Your ACG Bundle works both online from the chart page and offline inside the downloaded ZIP.\n" if is_acg else "")
+                + "\nThe ZIP downloaded after activation contains a separate detailed README and clearly named START files.\n"
+            )
+        else:
+            buyer_readme = (
+                "PERSONAL EDITION　購入者さまへ\n\n"
+                "1. 「ACCESS-CODE.pdf」を開き、リンクを押すかQRコードを読み取ります。\n"
+                "2. 出生情報を入力します。引換コードはURLから自動入力されます。\n"
+                "3. 専用鑑定ページが発行され、Personal Edition ZIPもダウンロードされます。\n"
+                "4. 専用鑑定ページURLを保存してください。ページからZIPを再保存できます。\n"
+                + ("5. ACGは、専用鑑定ページからオンラインでも、ダウンロードしたZIPからローカルでも使えます。\n" if is_acg else "")
+                + "\nコード使用後に保存されるZIPにも、詳しいREADMEと分かりやすいSTARTファイルが入っています。\n"
+            )
+        buyer_buffer = io.BytesIO()
+        with zipfile.ZipFile(buyer_buffer, "w", compression=zipfile.ZIP_DEFLATED) as buyer_zip:
+            buyer_zip.writestr("ACCESS-CODE.pdf", pdf_bytes)
+            buyer_zip.writestr(
+                "README-FIRST.txt" if lang == "en" else "はじめに_README.txt",
+                buyer_readme.encode("utf-8-sig"),
+            )
+            buyer_zip.writestr(
+                "ACTIVATION-URL.txt" if lang == "en" else "引換ページ_URL.txt",
+                (buyer_url + "\n").encode("utf-8-sig"),
+            )
+            buyer_zip.writestr(
+                "OPEN-ACTIVATION-PAGE.url",
+                ("[InternetShortcut]\r\nURL=" + buyer_url + "\r\n").encode("utf-8"),
+            )
+        response = Response(content=buyer_buffer.getvalue(), media_type="application/zip")
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="{code}_BUYER-DELIVERY.zip"'
+        )
+        return _mark_no_store(response)
+
     archive_buffer = io.BytesIO()
     with zipfile.ZipFile(archive_buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for index, code in enumerate(normalized_codes, 1):
@@ -2469,7 +2568,7 @@ def admin_personal_edition_code_pdfs_zip(
                 product_type=product_type,
                 lang=lang,
             )
-            buyer_url = f"{activation_url}#code={code}"
+            buyer_url = f"{activation_url}&code={quote(code)}"
             is_acg = product_type == "acg_bundle"
             if lang == "en":
                 buyer_readme = (
@@ -2529,6 +2628,8 @@ def admin_personal_edition_codes_post(
     lang: str = Form("ja"),
     expiration_days: int = Form(30),
     product_type: str = Form("western_full"),
+    marketplace_order_id: str = Form(""),
+    buyer_note: str = Form(""),
 ):
     auth_error = _admin_basic_auth_error(request)
     if auth_error:
@@ -2538,7 +2639,8 @@ def admin_personal_edition_codes_post(
     elif provider == "coconala":
         lang = "ja"
     form = {"count": count, "provider": provider, "lang": lang, "expiration_days": expiration_days,
-            "product_type": product_type}
+            "product_type": product_type, "marketplace_order_id": marketplace_order_id,
+            "buyer_note": buyer_note}
     if not 1 <= count <= 100:
         error = "発行件数は1〜100件で指定してください。"
         codes = []
@@ -2551,7 +2653,30 @@ def admin_personal_edition_codes_post(
             codes = pg_store.issue_personal_edition_codes(
                 count=count, product_type=product_type, provider=provider, locale=lang,
                 expiration_days=max(1, min(365, expiration_days)),
+                marketplace_order_id=marketplace_order_id.strip() or None,
+                buyer_note=buyer_note.strip() or None,
             )
+            activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang=en"
+            for item in codes:
+                code = str(item["code"])
+                prefilled_url = f"{activation_url}&code={quote(code)}"
+                item["activation_url"] = activation_url
+                item["prefilled_url"] = prefilled_url
+                item["english_message"] = (
+                    "Thank you for your purchase!\n\n"
+                    f"Your personal activation code is:\n\n{code}\n\n"
+                    f"You can open the activation page here:\n{prefilled_url}\n\n"
+                    "Please enter your birth details to generate your personalized astrology page and download package.\n\n"
+                    "Astrocartography requires an accurate birth time. Please check your birth date, exact birth time, and birthplace before activation.\n\n"
+                    "If you have any trouble, please contact me through Etsy Messages."
+                )
+                item["japanese_message"] = (
+                    "ご購入ありがとうございます。\n\n"
+                    f"お客様専用のアクティベーションコード：\n{code}\n\n"
+                    f"コード入力済みページ：\n{prefilled_url}\n\n"
+                    "出生情報を入力して、専用の鑑定ページとダウンロードパッケージを作成してください。\n"
+                    "アストロカートグラフィには正確な出生時刻が必要です。"
+                )
             error = None
             logger.info("personal_edition_codes_issued_from_admin provider=%s count=%s", provider, count)
         except Exception as exc:
@@ -2634,8 +2759,46 @@ def acg_map_page(request: Request):
             "request": request,
             "lang": _resolve_lang(request),
             "public_base_url": _public_base_url(request),
+            "demo_mode": request.query_params.get("demo") == "neko",
         },
     )
+
+
+NEKO_DEMO_YAML_PATH = Path(__file__).resolve().parent / "data" / "demo" / "chief_editor_neko.yaml"
+
+
+def _neko_demo_yaml() -> str:
+    """Return the bundled sample without exposing it through a download route."""
+    try:
+        return NEKO_DEMO_YAML_PATH.read_text(encoding="utf-8")
+    except OSError as exc:
+        logger.exception("neko_demo_yaml_unavailable")
+        raise HTTPException(status_code=503, detail="Demo data is unavailable") from exc
+
+
+@app.get("/demo/neko", response_class=HTMLResponse)
+def neko_demo_page(request: Request):
+    from config import MUSEUM_SHOP_URL_EN
+
+    response = templates.TemplateResponse(
+        "neko_demo.html",
+        {
+            "request": request,
+            "shop_url": MUSEUM_SHOP_URL_EN,
+        },
+    )
+    response.headers["Cache-Control"] = "public, max-age=300"
+    return response
+
+
+@app.get("/demo/neko/horoscope.svg")
+def neko_demo_horoscope_svg():
+    svg = optimize_svg(build_horoscope_svg_from_yaml(_neko_demo_yaml(), compact=True))
+    if not svg:
+        raise HTTPException(status_code=404, detail="Sample chart is unavailable")
+    response = Response(content=svg, media_type="image/svg+xml; charset=utf-8")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 @app.get("/acg/globe-demo", response_class=HTMLResponse)
@@ -2962,6 +3125,21 @@ async def acg_personal(request: Request):
 
 
 # ─── 計算結果API ────────────────────────────────────────────────
+
+
+@app.get("/api/acg/demo/neko")
+def acg_neko_demo():
+    """Fixed ACG sample. The source YAML is intentionally never returned."""
+    from services.acg_api import AcgInputError, AcgYamlFormatError, personal_geojson
+
+    try:
+        geojson = personal_geojson(_neko_demo_yaml())
+    except (AcgYamlFormatError, AcgInputError) as exc:
+        logger.exception("neko_demo_acg_failed")
+        raise HTTPException(status_code=503, detail="Demo ACG is unavailable") from exc
+    response = JSONResponse(geojson)
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 def _api_error(code: str, message: str, status_code: int) -> JSONResponse:
@@ -3728,8 +3906,10 @@ def _personal_edition_context(request: Request, *, error: str | None = None,
 
 @app.get("/personal-edition/activate", response_class=HTMLResponse)
 def personal_edition_activate_get(request: Request):
+    code = request.query_params.get("code", "").strip().upper()
     return _mark_no_store(templates.TemplateResponse(
-        "personal_edition_activate.html", _personal_edition_context(request)
+        "personal_edition_activate.html",
+        _personal_edition_context(request, form={"access_code": code} if code else None),
     ))
 
 
@@ -4156,7 +4336,10 @@ def redeem_post(
             )
             return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。別の注文番号をご確認ください。", status=409)
 
-        return RedirectResponse(f"/chart/{token}", status_code=303)
+        chart_redirect = f"/chart/{token}"
+        if order_provider_clean in {"stores", "payhip"}:
+            chart_redirect = f"{chart_redirect}?chart_download=1"
+        return RedirectResponse(chart_redirect, status_code=303)
 
     try:
         birth_date_clean = _validate_birth_date(birth_date, lang)
@@ -4305,8 +4488,13 @@ def redeem_post(
         )
 
     chart_redirect = f"/chart/{token}"
+    redirect_params = []
+    if order_provider_clean in {"stores", "payhip"}:
+        redirect_params.append("chart_download=1")
     if lang != "ja":
-        chart_redirect = f"{chart_redirect}?lang={lang}"
+        redirect_params.append(f"lang={lang}")
+    if redirect_params:
+        chart_redirect = f"{chart_redirect}?{'&'.join(redirect_params)}"
     return RedirectResponse(chart_redirect, status_code=303)
 
 
@@ -4465,10 +4653,12 @@ def chart_personal_edition_zip(request: Request, token: str):
     return response
 
 @app.get("/chart/{token}/download.zip")
-def chart_download_zip(token: str):
+def chart_download_zip(request: Request, token: str):
     chart = _load_chart_or_404(token)
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
+    order_provider = str(options.get("order_provider") or "").strip().lower()
+    chart_page_url = f"{_public_base_url(request)}/chart/{token}"
     try:
         loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
         chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
@@ -4513,6 +4703,14 @@ def chart_download_zip(token: str):
         if chart.get("shichusuimei_svg"):
             zf.writestr("shichusuimei.svg", optimize_svg(chart["shichusuimei_svg"]) or "")
         zf.writestr("prompt.txt", prompt_text)
+        if order_provider in {"stores", "payhip"}:
+            zf.writestr(
+                "CHART-PAGE-URL.txt",
+                "鑑定ページURL\n"
+                f"{chart_page_url}\n\n"
+                "URLには有効期限があります。期限内にアクセスしてください。\n"
+                "このZIP内の鑑定データは、URLの期限後も手元で利用できます。\n",
+            )
         zf.writestr("README.txt", _chart_zip_readme(chart))
     response = Response(content=buffer.getvalue(), media_type="application/zip")
     response.headers["Content-Disposition"] = f'attachment; filename="{_chart_zip_filename(token)}"'
@@ -4625,7 +4823,7 @@ def chart_page(request: Request, token: str):
             "chart_page.html",
             {
                 "request": request,
-                **_i18n_context(request),
+                **_chart_i18n_context(request, product_type),
                 "token": token,
                 "chart": chart,
                 "is_transit_yaml": is_transit_yaml,
@@ -4645,7 +4843,11 @@ def chart_page(request: Request, token: str):
                 "birth_time_notice": birth_time_notice,
                 "share_yaml_text": share_yaml_text,
                 "share_prompt_text": share_prompt_text,
-                "chart_companion_prompt": CHART_COMPANION_PROMPT.strip() + "\n",
+                "chart_companion_prompt": (
+                    SHICHUSUIMEI_CHART_COMPANION_PROMPT
+                    if product_type == "shichu"
+                    else CHART_COMPANION_PROMPT
+                ).strip() + "\n",
                 "asteroid_yaml_text": asteroid_yaml_text,
                 "chart_url": chart_url,
                 "yaml_url": f"{base_url}/chart/{token}.yaml",
@@ -4657,6 +4859,7 @@ def chart_page(request: Request, token: str):
                 "horoscope_svg_url": f"{base_url}/chart/{token}/horoscope.svg",
                 "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
                 "download_zip_url": f"{base_url}/chart/{token}/download.zip",
+                "auto_download_chart_zip": request.query_params.get("chart_download") == "1",
                 "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
                 "usage_guide_url": "https://guide.nanami-astro.com/",
                 "birth_time_reissue_url": os.getenv("LINE_ADD_FRIEND_URL", "").strip(),

@@ -3,7 +3,8 @@
 # localhost, sends nothing anywhere. Close this window to stop the museum.
 param(
   [int]$Port = 0,
-  [string]$Root = ""
+  [string]$Root = "",
+  [string]$OpenPath = "/"
 )
 
 $ErrorActionPreference = "Stop"
@@ -60,7 +61,8 @@ if (-not $listener) {
   exit 1
 }
 
-$url = "http://localhost:$Port/"
+$OpenPath = "/" + $OpenPath.TrimStart("/")
+$url = "http://localhost:$Port$OpenPath"
 Write-Host ""
 Write-Host "  BIRTH CHART MUSEUM — Personal Edition"
 Write-Host "  ------------------------------------------------"

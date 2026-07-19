@@ -7,3 +7,8 @@ data/location/source/municipality/*.zip
 
 # Birth Chart Museum Personal Edition build output
 personal-edition/dist/
+
+# Local Codex/Claude work products and test scratch data
+.claude/settings.local.json
+tmp/
+work/

@@ -13,7 +13,7 @@ from services.acg_api import personal_geojson
 
 ROOT = Path(__file__).resolve().parent.parent
 PE_DIR = ROOT / "personal-edition"
-VERSION = "1.1.0"
+VERSION = "1.1.2"
 _build_lock = threading.Lock()
 
 
@@ -75,8 +75,10 @@ def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str
     if lang == "en":
         acg = (
             "\nACG (included with your bundle)\n"
+            "- Windows: double-click START-ACG-WINDOWS.bat.\n"
+            "- Mac: double-click START-ACG-MAC.command.\n"
             "- Online: open your private chart URL and select 'View your ACG map'.\n"
-            "- Offline: start the Museum, then select the gold ACG button.\n"
+            "- You can also start the Museum, then select the gold ACG button.\n"
             "- Your personal ACG data is already installed; no YAML paste is required.\n"
             if include_acg else ""
         )
@@ -84,10 +86,12 @@ def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str
         return (
             "BIRTH CHART MUSEUM - PERSONAL EDITION\n\n"
             "QUICK START\n"
+            + ("ACG on Windows: double-click START-ACG-WINDOWS.bat\nACG on Mac: double-click START-ACG-MAC.command\n" if include_acg else "") +
             "Windows: unzip everything, then double-click START-MUSEUM-WINDOWS.bat\n"
             "Mac: unzip everything, then double-click START-MUSEUM-MAC.command\n"
             "Keep the black server window open while using the Museum. Close it when finished.\n\n"
             "WHAT EACH ITEM DOES\n"
+            + ("- START-ACG-WINDOWS.bat: opens your personal ACG map on Windows.\n- START-ACG-MAC.command: opens your personal ACG map on Mac.\n" if include_acg else "") +
             "- START-MUSEUM-WINDOWS.bat: starts the Museum on Windows.\n"
             "- START-MUSEUM-MAC.command: starts the Museum on Mac.\n"
             "- app: application files. Do not move or delete this folder.\n"
@@ -99,22 +103,29 @@ def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str
         )
     acg = (
         "\n【ACG（ACG Bundleに含まれます）】\n"
+        "・Windows：START-ACG-WINDOWS.bat をダブルクリックします。\n"
+        "・Mac：START-ACG-MAC.command をダブルクリックします。\n"
         "・オンライン：専用鑑定ページの「あなたのACG地図を見る」を押します。\n"
-        "・ZIP版：STARTでミュージアムを起動し、画面の金色のACGボタンを押します。\n"
+        "・ミュージアム画面の金色のACGボタンから開くこともできます。\n"
         "・あなた専用のACGデータは設定済みです。YAMLの貼り付けは不要です。\n"
         if include_acg else ""
     )
     url = f"\n【専用鑑定ページ】\n{chart_url}\n" if chart_url else ""
+    museum_step = 3 if include_acg else 2
+    browser_step = museum_step + 1
+    close_step = museum_step + 2
     return (
         "BIRTH CHART MUSEUM - PERSONAL EDITION\n"
         "購入者さま向け はじめにお読みください\n\n"
         "【最初にすること】\n"
         "1. ZIPを右クリックして「すべて展開」します。ZIPの中から直接起動しないでください。\n"
-        "2. Windows：START-MUSEUM-WINDOWS.bat をダブルクリックします。\n"
+        + ("2. ACGを開く：WindowsはSTART-ACG-WINDOWS.bat、MacはSTART-ACG-MAC.commandをダブルクリックします。\n" if include_acg else "") +
+        f"{museum_step}. ミュージアムを開く：WindowsはSTART-MUSEUM-WINDOWS.bat をダブルクリックします。\n"
         "   Mac：START-MUSEUM-MAC.command をダブルクリックします。\n"
-        "3. ブラウザでBirth Chart Museumが自動的に開きます。出生データは設定済みです。\n"
-        "4. 使用中は黒いサーバー画面を閉じないでください。終了時に閉じます。\n\n"
+        f"{browser_step}. ブラウザで画面が自動的に開きます。出生データは設定済みです。\n"
+        f"{close_step}. 使用中は黒いサーバー画面を閉じないでください。終了時に閉じます。\n\n"
         "【ファイルの役割】\n"
+        + ("・START-ACG-WINDOWS.bat：Windowsであなた専用のACG地図を開きます。\n・START-ACG-MAC.command：Macであなた専用のACG地図を開きます。\n" if include_acg else "") +
         "・START-MUSEUM-WINDOWS.bat：Windowsでミュージアムを起動します。\n"
         "・START-MUSEUM-MAC.command：Macでミュージアムを起動します。\n"
         "・appフォルダー：アプリ本体です。移動・削除しないでください。\n"

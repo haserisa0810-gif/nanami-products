@@ -1,92 +1,62 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Personal Edition コード管理</title>
+  <title>Personal Edition code management</title>
   <link rel="stylesheet" href="/static/style.css">
   {% include "_head_icons.html" %}
   <style>
-    .code-output{display:grid;gap:10px;margin-top:18px}.code-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:10px;border:1px solid rgba(255,255,255,.15);border-radius:10px}.code-row code{display:block;min-width:0;font-size:1rem;white-space:nowrap;overflow-x:auto;writing-mode:horizontal-tb;letter-spacing:.04em}.code-row button{width:auto!important;min-width:80px;margin:0!important;padding:9px 13px!important;white-space:nowrap}.code-row form{margin:0}.pdf-btn{width:auto!important;min-width:80px!important;margin:0!important;padding:9px 13px!important;white-space:nowrap;background:#555d99!important;color:#fff!important;border:0!important;border-radius:999px!important;font-weight:700!important}.zip-btn{margin-top:12px!important;background:#a66f32!important}.admin-note{font-size:.9rem;opacity:.78}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.copy-all{margin-top:12px}@media(max-width:640px){.code-row{grid-template-columns:1fr 1fr}.code-row code{grid-column:1/-1}}
+    .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.code-output{display:grid;gap:18px;margin-top:18px}.code-row{padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:10px}.copy-grid{display:grid;gap:8px}.copy-grid textarea,.copy-grid input{width:100%}.button-row{display:flex;flex-wrap:wrap;gap:8px}.button-row button,.button-row a{width:auto!important;margin:0!important;padding:9px 13px!important}.admin-note{font-size:.9rem;opacity:.78}.status{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem}
   </style>
 </head>
 <body>
-<main class="wrap">
-  <div class="card buyer-card">
-    <p class="eyebrow">NANAMI PRODUCTS · ADMIN</p>
-    <h1>Personal Edition<br>引換コード発行</h1>
-    <p class="lead">FULL版のEtsy・ココナラ納品用コードを事前発行します。</p>
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
-    <form method="post" action="/admin/personal-edition/codes" class="form">
-      <div class="form-section">
-        <div class="admin-grid">
-          <label>商品種別
-            {% set product_type = form.product_type or 'western_full' %}
-            <select name="product_type">
-              <option value="western_full" {% if product_type == 'western_full' %}selected{% endif %}>Personal Edition FULL</option>
-              <option value="acg_bundle" {% if product_type == 'acg_bundle' %}selected{% endif %}>ACG Premium Bundle</option>
-            </select>
-          </label>
-          <label>販売先
-            <select name="provider">
-              {% set provider = form.provider or 'coconala' %}
-              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>ココナラ</option>
-              <option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>Etsy</option>
-              <option value="manual" {% if provider == 'manual' %}selected{% endif %}>その他・手動</option>
-            </select>
-          </label>
-          <label>初期言語
-            {% set lang = form.lang or 'ja' %}
-            <select name="lang"><option value="ja" {% if lang == 'ja' %}selected{% endif %}>日本語</option><option value="en" {% if lang == 'en' %}selected{% endif %}>English</option></select>
-          </label>
-          <label>発行件数
-            <input name="count" type="number" min="1" max="100" required value="{{ form.count or 1 }}">
-          </label>
-          <label>有効日数
-            <input name="expiration_days" type="number" min="1" max="365" required value="{{ form.expiration_days or 30 }}">
-          </label>
-        </div>
-        <p class="admin-note">ACG Bundleは正確な出生時刻が必須です。平文コードはこの発行結果でのみ確認できます。</p>
-      </div>
-      <button type="submit" class="primary-link" onclick="return confirm('引換コードを発行しますか？')">コードを発行</button>
-    </form>
+<main class="wrap"><div class="card buyer-card">
+  <p class="eyebrow">NANAMI PRODUCTS / ADMIN</p>
+  <h1>Personal Edition codes</h1>
+  <p class="lead">For Etsy, upload one common Access Package and send each buyer only their personal code or prefilled URL through Etsy Messages.</p>
+  <p><a class="primary-link" href="/admin/personal-edition/common-access-package.zip?lang=en">Generate Etsy Common Access Package</a></p>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="/admin/personal-edition/codes" class="form">
+    <div class="form-section admin-grid">
+      {% set product_type = form.product_type or 'western_full' %}
+      <label>Product<select name="product_type"><option value="western_full" {% if product_type == 'western_full' %}selected{% endif %}>Personal Edition FULL</option><option value="acg_bundle" {% if product_type == 'acg_bundle' %}selected{% endif %}>ACG Premium Bundle</option></select></label>
+      {% set provider = form.provider or 'etsy' %}
+      <label>Marketplace<select name="provider"><option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>Etsy</option><option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>Coconala</option><option value="manual" {% if provider == 'manual' %}selected{% endif %}>Manual</option></select></label>
+      {% set lang = form.lang or 'en' %}
+      <label>Language<select name="lang"><option value="en" {% if lang == 'en' %}selected{% endif %}>English</option><option value="ja" {% if lang == 'ja' %}selected{% endif %}>Japanese</option></select></label>
+      <label>Quantity<input name="count" type="number" min="1" max="100" required value="{{ form.count or 1 }}"></label>
+      <label>Valid days<input name="expiration_days" type="number" min="1" max="365" required value="{{ form.expiration_days or 30 }}"></label>
+      <label>Etsy order ID (optional)<input name="marketplace_order_id" value="{{ form.marketplace_order_id or '' }}"></label>
+      <label>Buyer note (optional)<input name="buyer_note" value="{{ form.buyer_note or '' }}"></label>
+    </div>
+    <button type="submit" class="primary-link">Issue access code</button>
+  </form>
 
-    {% if codes %}
-    <section class="form-section code-output">
-      <h2>発行結果（{{ codes|length }}件）</h2>
-      <p class="admin-note">この画面を閉じる前にコピーしてください。DBから平文を再表示することはできません。</p>
-      <textarea id="all-codes" rows="{{ [codes|length + 1, 12]|min }}" readonly>{% for item in codes %}{{ item.code }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
-      <button type="button" class="primary-link copy-all" id="copy-all">すべてコピー</button>
-      <form method="post" action="/admin/personal-edition/code-pdfs.zip">
-        <textarea name="codes" hidden>{% for item in codes %}{{ item.code }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
-        <input type="hidden" name="product_type" value="{{ codes[0].product_type }}">
-        <input type="hidden" name="lang" value="{{ codes[0].locale }}">
-        <input type="hidden" name="provider" value="{{ codes[0].provider }}">
-        <button type="submit" class="primary-link zip-btn">購入者別の納品ZIPをまとめて保存</button>
-      </form>
-      {% for item in codes %}
-      <div class="code-row">
-        <code>{{ item.code }}</code>
-        <button type="button" data-copy="{{ item.code }}">コピー</button>
-        <form method="post" action="/admin/personal-edition/code-pdf">
-          <input type="hidden" name="code" value="{{ item.code }}">
-          <input type="hidden" name="product_type" value="{{ item.product_type }}">
-          <input type="hidden" name="lang" value="{{ item.locale }}">
-          <button type="submit" class="pdf-btn">PDF保存</button>
-        </form>
+  {% if codes %}<section class="form-section code-output">
+    <h2>Issued codes ({{ codes|length }})</h2>
+    <p class="admin-note">Copy these values before leaving this page. Only a hash of each code is stored.</p>
+    {% for item in codes %}<article class="code-row">
+      <div class="status"><span>Status: {{ item.status }}</span><span>Product: {{ item.product_type }}</span><span>Expires: {{ item.expires_at or 'none' }}</span>{% if item.marketplace_order_id %}<span>Etsy order: {{ item.marketplace_order_id }}</span>{% endif %}</div>
+      <div class="copy-grid">
+        <label>Access Code<input id="code-{{ loop.index }}" readonly value="{{ item.code }}"></label>
+        <label>Activation URL<input id="url-{{ loop.index }}" readonly value="{{ item.activation_url }}"></label>
+        <label>Prefilled Activation URL<input id="prefilled-{{ loop.index }}" readonly value="{{ item.prefilled_url }}"></label>
+        <label>English Message<textarea id="english-{{ loop.index }}" rows="12" readonly>{{ item.english_message }}</textarea></label>
+        <label>Japanese Message<textarea id="japanese-{{ loop.index }}" rows="9" readonly>{{ item.japanese_message }}</textarea></label>
       </div>
-      {% endfor %}
-    </section>
-    {% endif %}
-  </div>
-</main>
+      <div class="button-row">
+        <button type="button" data-copy-target="code-{{ loop.index }}">Copy Code</button>
+        <button type="button" data-copy-target="prefilled-{{ loop.index }}">Copy URL</button>
+        <button type="button" data-copy-target="english-{{ loop.index }}">Copy English Message</button>
+      </div>
+    </article>{% endfor %}
+  </section>{% endif %}
+  <div id="copy-status" role="status" aria-live="polite"></div>
+</div></main>
 <script>
-document.getElementById('copy-all')?.addEventListener('click',async()=>{await navigator.clipboard.writeText(document.getElementById('all-codes').value);});
-document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{await navigator.clipboard.writeText(button.dataset.copy);button.textContent='コピー済み';}));
-const providerSelect=document.querySelector('[name="provider"]');
-const langSelect=document.querySelector('[name="lang"]');
-providerSelect?.addEventListener('change',()=>{if(providerSelect.value==='etsy')langSelect.value='en';if(providerSelect.value==='coconala')langSelect.value='ja';});
+document.querySelectorAll('[data-copy-target]').forEach(button=>button.addEventListener('click',async()=>{const field=document.getElementById(button.dataset.copyTarget);await navigator.clipboard.writeText(field.value);document.getElementById('copy-status').textContent='Copied';setTimeout(()=>document.getElementById('copy-status').textContent='',1600);}));
+const provider=document.querySelector('[name="provider"]'),lang=document.querySelector('[name="lang"]');provider?.addEventListener('change',()=>{if(provider.value==='etsy')lang.value='en';if(provider.value==='coconala')lang.value='ja';});
 </script>
-</body>
-</html>
+</body></html>

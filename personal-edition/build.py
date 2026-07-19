@@ -31,7 +31,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-VERSION = "1.1.0"
+VERSION = "1.1.2"
 PRODUCT = "BirthChartMuseum-PersonalEdition"
 
 # 配布バリアント: Etsy=英語デフォルト / STORES=日本語デフォルト。
@@ -211,9 +211,17 @@ def copy_runtime() -> None:
     rt = PE_DIR / "runtime"
     # start.bat は CRLF、start.command は LF で確実に出力する
     bat = (rt / "start.bat").read_text(encoding="utf-8").replace("\r\n", "\n")
-    (OUT / "start.bat").write_bytes(bat.replace("\n", "\r\n").encode("utf-8"))
+    (OUT / "START-MUSEUM-WINDOWS.bat").write_bytes(
+        bat.replace("\n", "\r\n").encode("utf-8")
+    )
+    acg_bat = (rt / "start-acg.bat").read_text(encoding="utf-8").replace("\r\n", "\n")
+    (OUT / "START-ACG-WINDOWS.bat").write_bytes(
+        acg_bat.replace("\n", "\r\n").encode("utf-8")
+    )
     cmd = (rt / "start.command").read_text(encoding="utf-8").replace("\r\n", "\n")
-    (OUT / "start.command").write_bytes(cmd.encode("utf-8"))
+    (OUT / "START-MUSEUM-MAC.command").write_bytes(cmd.encode("utf-8"))
+    acg_cmd = (rt / "start-acg.command").read_text(encoding="utf-8").replace("\r\n", "\n")
+    (OUT / "START-ACG-MAC.command").write_bytes(acg_cmd.encode("utf-8"))
     # README は古いメモ帳対策で BOM 付き UTF-8
     readme = (rt / "README.txt").read_text(encoding="utf-8")
     (OUT / "README.txt").write_bytes(readme.replace("\r\n", "\n").encode("utf-8-sig"))

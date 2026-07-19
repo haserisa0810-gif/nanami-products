@@ -6,10 +6,23 @@ import zipfile
 from unittest.mock import patch
 
 import yaml
+from starlette.requests import Request
 
 from routes import chart_download_zip
 from tests.test_light_yaml_transit_summary import _full_doc
 from tests.test_long_term_transit_addon_chart import _samples_long_term_doc
+
+
+def _download_request(token: str) -> Request:
+    return Request({
+        "type": "http",
+        "method": "GET",
+        "scheme": "https",
+        "server": ("chart.nanami-astro.com", 443),
+        "path": f"/chart/{token}/download.zip",
+        "query_string": b"",
+        "headers": [],
+    })
 
 
 class ChartDownloadZipTest(unittest.TestCase):
@@ -53,7 +66,7 @@ systems:
         }
 
         with patch("routes._load_chart_or_404", return_value=chart):
-            response = chart_download_zip("testtoken")
+            response = chart_download_zip(_download_request("testtoken"), "testtoken")
 
         with zipfile.ZipFile(io.BytesIO(response.body)) as archive:
             detail_yaml = archive.read("detail.yaml").decode("utf-8")
@@ -85,7 +98,7 @@ systems:
         }
 
         with patch("routes._load_chart_or_404", return_value=chart):
-            response = chart_download_zip("longtoken")
+            response = chart_download_zip(_download_request("longtoken"), "longtoken")
 
         with zipfile.ZipFile(io.BytesIO(response.body)) as archive:
             names = set(archive.namelist())
@@ -101,6 +114,22 @@ systems:
         self.assertIn("samples", full_long["systems"]["western"]["transit_long_term"])
         self.assertIn("transit_long_term:\n      period:", ai_paste)
         self.assertNotIn("samples:", ai_paste)
+
+    def test_stores_and_payhip_zips_include_chart_page_url(self) -> None:
+        for provider in ("stores", "payhip"):
+            chart = {
+                "options": {"product_type": "western_basic", "order_provider": provider},
+                "yaml_text": "version: test\n",
+                "prompt_text": "AI prompt",
+                "share_yaml_text": None,
+                "horoscope_svg": None,
+                "shichusuimei_svg": None,
+            }
+            with self.subTest(provider=provider), patch("routes._load_chart_or_404", return_value=chart):
+                response = chart_download_zip(_download_request("urltoken"), "urltoken")
+            with zipfile.ZipFile(io.BytesIO(response.body)) as archive:
+                url_text = archive.read("CHART-PAGE-URL.txt").decode("utf-8")
+            self.assertIn("https://chart.nanami-astro.com/chart/urltoken", url_text)
 
 
 if __name__ == "__main__":
