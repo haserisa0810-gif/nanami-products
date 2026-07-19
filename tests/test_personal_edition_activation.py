@@ -18,6 +18,8 @@ def test_activation_page_is_independent_from_redeem():
     assert "/redeem/western-full" not in response.text
     assert "applyAccessCodeFromUrl" in response.text
     assert "location.hash" in response.text
+    assert 'placeholder="YYYY-MM-DD"' in response.text
+    assert 'name="birth_date" type="text"' in response.text
 
 
 def test_admin_code_page_is_available_locally(monkeypatch):

@@ -37,7 +37,7 @@
       <div class="form-section">
         <h2>{% if lang == 'en' %}Birth details{% else %}出生情報{% endif %}</h2>
         <label>{% if lang == 'en' %}Birth date{% else %}生年月日{% endif %}<span class="required">*</span>
-          <input name="birth_date" type="date" required value="{{ form.birth_date or '' }}">
+          {% if lang == 'en' %}<input name="birth_date" type="text" required inputmode="numeric" autocomplete="bday" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" title="Enter the date as YYYY-MM-DD" value="{{ form.birth_date or '' }}">{% else %}<input name="birth_date" type="date" required value="{{ form.birth_date or '' }}">{% endif %}
         </label>
         <label>{% if lang == 'en' %}Birth time accuracy{% else %}出生時刻の精度{% endif %}<span class="required">*</span>
           {% set accuracy = form.birth_time_accuracy or 'exact' %}
