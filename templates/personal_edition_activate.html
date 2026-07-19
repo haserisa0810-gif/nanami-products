@@ -20,7 +20,7 @@
     </div>
     <p class="eyebrow">BIRTH CHART MUSEUM · PERSONAL</p>
     <h1>{% if lang == 'en' %}Create your Personal Edition{% else %}あなた専用のPersonal Editionを作成{% endif %}</h1>
-    <p class="lead">{% if lang == 'en' %}Enter the code included with your purchase and your birth details. Your personalized ZIP will be downloaded after creation.{% else %}納品ファイルに記載された引換コードと出生情報を入力してください。作成後、あなた専用のZIPを保存できます。{% endif %}</p>
+    <p class="lead">{% if lang == 'en' %}Enter the code included with your purchase and your birth details. A private chart page will be issued and your personalized ZIP will download automatically.{% else %}納品ファイルに記載された引換コードと出生情報を入力してください。作成後、専用の鑑定ページを発行し、あなた専用のZIPも自動で保存します。{% endif %}</p>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
     <form method="post" action="/personal-edition/activate?lang={{ lang }}" class="form">
@@ -80,7 +80,7 @@
         </div>
       </div>
       <label class="check-row"><input type="checkbox" name="agree_final" value="1" {% if form.agree_final %}checked{% endif %}> <span>{% if lang == 'en' %}I have reviewed my birth details. The code is consumed after the ZIP is successfully created.{% else %}出生情報を確認しました。ZIPの作成成功後、このコードは使用済みになります。{% endif %}</span></label>
-      <button type="submit" class="primary-link">{% if lang == 'en' %}Create and save ZIP{% else %}作成してZIPを保存{% endif %}</button>
+      <button type="submit" class="primary-link">{% if lang == 'en' %}Issue chart page and save ZIP{% else %}鑑定ページを発行してZIPを保存{% endif %}</button>
     </form>
   </div>
 </main>

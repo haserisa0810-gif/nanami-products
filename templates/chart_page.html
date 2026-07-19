@@ -969,6 +969,12 @@
             <a class="download-primary" id="personal-edition-download-button" href="{{ personal_edition_zip_url }}" download>
               {% if lang == 'ja' %}Personal Edition ZIPを保存{% else %}Download Personal Edition ZIP{% endif %}
             </a>
+            {% if auto_download_personal_edition %}
+            <iframe src="{{ personal_edition_zip_url }}" title="Personal Edition ZIP download" hidden></iframe>
+            <p class="hint" id="personal-edition-download-notice">
+              {% if lang == 'ja' %}鑑定ページを発行しました。Personal Edition ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。{% else %}Your chart page is ready. Your Personal Edition ZIP download is starting. If it does not start, use the button above.{% endif %}
+            </p>
+            {% endif %}
             {% if personal_edition_acg %}
             <a class="download-primary" id="personal-acg-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
               {% if lang == 'ja' %}あなたのACG地図を見る{% else %}View your ACG map{% endif %}

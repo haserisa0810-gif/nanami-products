@@ -3827,9 +3827,9 @@ def personal_edition_activate_post(
         logger.exception("personal_edition_zip_generation_failed error_type=%s", type(exc).__name__)
         return fail("ZIPの作成に失敗しました。時間をおいて再試行してください。",
                     "The ZIP could not be created. Please try again later.", 503)
-    chart_redirect = f"/chart/{chart_token}"
+    chart_redirect = f"/chart/{chart_token}?personal_download=1"
     if lang != "ja":
-        chart_redirect = f"{chart_redirect}?lang={lang}"
+        chart_redirect = f"{chart_redirect}&lang={lang}"
     return RedirectResponse(chart_redirect, status_code=303)
 
 @app.get("/start")
@@ -4589,6 +4589,7 @@ def chart_page(request: Request, token: str):
                 "is_personal_edition": is_personal_edition,
                 "personal_edition_acg": personal_edition_acg,
                 "personal_edition_zip_url": f"{base_url}/chart/{token}/personal-edition.zip",
+                "auto_download_personal_edition": is_personal_edition and request.query_params.get("personal_download") == "1",
                 "personal_acg_url": f"/acg?load={quote(f'/chart/{token}.yaml', safe='')}",
                 "can_continue_with_transit": can_continue_with_transit,
                 "has_31day_transit": has_31day_transit,

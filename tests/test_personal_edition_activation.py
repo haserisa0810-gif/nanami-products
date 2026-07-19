@@ -122,6 +122,7 @@ def test_successful_activation_creates_chart_page(monkeypatch):
     }, follow_redirects=False)
     assert response.status_code == 303
     assert response.headers["location"].startswith("/chart/")
+    assert "personal_download=1" in response.headers["location"]
     assert events[0] == "zip"
     assert events[1][0] == "chart"
     assert events[1][1]["options"]["personal_edition"] is True
