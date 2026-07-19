@@ -97,8 +97,11 @@ def test_admin_issue_page_builds_etsy_message_and_prefilled_url(monkeypatch):
               "buyer_note": "buyer memo"},
     )
     assert response.status_code == 200
-    assert "Copy English Message" in response.text
+    assert "Copy Etsy Message" in response.text
     assert "Thank you for your purchase!" in response.text
+    assert "Activate your Personal Edition here:" in response.text
+    assert "Personalized Birth Chart" in response.text
+    assert "can be used only once after successful activation" in response.text
     assert "?lang=en&amp;code=PE-ACG-7K9M-4X2P-H8RW" in response.text
     assert captured["marketplace_order_id"] == "ETSY-123"
     assert captured["buyer_note"] == "buyer memo"

@@ -2663,12 +2663,21 @@ def admin_personal_edition_codes_post(
                 item["activation_url"] = activation_url
                 item["prefilled_url"] = prefilled_url
                 item["english_message"] = (
-                    "Thank you for your purchase!\n\n"
+                    "Thank you for your purchase! 😊\n\n"
                     f"Your personal activation code is:\n\n{code}\n\n"
-                    f"You can open the activation page here:\n{prefilled_url}\n\n"
-                    "Please enter your birth details to generate your personalized astrology page and download package.\n\n"
-                    "Astrocartography requires an accurate birth time. Please check your birth date, exact birth time, and birthplace before activation.\n\n"
-                    "If you have any trouble, please contact me through Etsy Messages."
+                    f"Activate your Personal Edition here:\n\n{prefilled_url}\n\n"
+                    "Enter your birth details to generate your personalized astrology package, including:\n\n"
+                    "• Personalized Birth Chart\n"
+                    "• Astrocartography (ACG)\n"
+                    "• AI-ready YAML Data\n"
+                    "• Interactive Chart Page\n"
+                    "• Local Application Package\n\n"
+                    "Important\n\n"
+                    "Astrocartography requires an accurate birth time.\n\n"
+                    "Please make sure your birth date, exact birth time, and birthplace are correct before activation.\n\n"
+                    "Your activation code is intended for your personal purchase and can be used only once after successful activation.\n\n"
+                    "If you have any questions or experience any technical issues, please contact me through Etsy Messages.\n\n"
+                    "Thank you, and enjoy exploring your chart! ✨"
                 )
                 item["japanese_message"] = (
                     "ご購入ありがとうございます。\n\n"
