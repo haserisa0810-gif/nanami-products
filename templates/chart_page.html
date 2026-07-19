@@ -965,6 +965,16 @@
               {% if lang == 'ja' %}Transit Flight で体験する（自動読み込み）{% else %}Open in Transit Flight (auto-load){% endif %}
             </a>
             {% endif %}
+            {% if is_personal_edition %}
+            <a class="download-primary" id="personal-edition-download-button" href="{{ personal_edition_zip_url }}" download>
+              {% if lang == 'ja' %}Personal Edition ZIPを保存{% else %}Download Personal Edition ZIP{% endif %}
+            </a>
+            {% if personal_edition_acg %}
+            <a class="download-primary" id="personal-acg-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
+              {% if lang == 'ja' %}あなたのACG地図を見る{% else %}View your ACG map{% endif %}
+            </a>
+            {% endif %}
+            {% endif %}
             <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>{{ t.save_zip }}</a>
             <details class="advanced-downloads">
               <summary>{{ t.individual_files }}</summary>

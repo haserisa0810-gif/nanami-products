@@ -2012,7 +2012,31 @@
     applyPreset("basic");
     var today = new Date().toISOString().slice(0, 10);
     document.getElementById("mundane-date").value = today;
-    loadMundane(today);
+    var loadUrl = new URLSearchParams(window.location.search).get("load");
+    if (loadUrl) {
+      try {
+        var resolvedLoadUrl = new URL(loadUrl, window.location.origin);
+        if (resolvedLoadUrl.origin !== window.location.origin) { throw new Error("invalid origin"); }
+        selectTab("personal");
+        setStatus(EN ? "Loading your ACG map..." : "あなたのACG地図を読み込んでいます…");
+        fetch(resolvedLoadUrl.pathname + resolvedLoadUrl.search, { cache: "no-store" })
+          .then(function (response) {
+            if (!response.ok) { throw new Error("chart load failed"); }
+            return response.text();
+          })
+          .then(function (yamlText) {
+            document.getElementById("yaml-input").value = yamlText;
+            loadPersonal();
+          })
+          .catch(function () {
+            setStatus(EN ? "Your ACG map could not be loaded." : "ACG地図を読み込めませんでした。", true);
+          });
+      } catch (error) {
+        setStatus(EN ? "The ACG link is invalid." : "ACGリンクが正しくありません。", true);
+      }
+    } else {
+      loadMundane(today);
+    }
   })();
   </script>
 </body>

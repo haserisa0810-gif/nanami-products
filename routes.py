@@ -3792,10 +3792,30 @@ def personal_edition_activate_post(
             birth_time_range=time_info["range"],
             birth_time_note=str(time_info["note"]),
         )
-        zip_bytes = build_personalized_zip(
+        build_personalized_zip(
             yaml_text=yaml_text,
             lang=str(code_row["locale"]),
             include_acg=code_row["product_type"] == "acg_bundle",
+        )
+        chart_token = secrets.token_urlsafe(18)
+        pg_store.save_chart(
+            token=chart_token,
+            order_code=None,
+            buyer_name=buyer_name.strip() or None,
+            birth_date=birth_date_clean,
+            birth_time=time_info.get("birth_time") or time_info["calculation_time"],
+            birth_place=str(location["birth_place"]),
+            options={
+                "product_type": "western_full",
+                "personal_edition": True,
+                "personal_edition_product_type": code_row["product_type"],
+                "personal_edition_locale": code_row["locale"],
+                "acg_enabled": code_row["product_type"] == "acg_bundle",
+                "expires_policy": "no_expiry",
+            },
+            yaml_text=yaml_text,
+            prompt_text=_prompt_text,
+            expires_at=None,
         )
         if not pg_store.finish_personal_edition_code(access_code):
             raise RuntimeError("access code completion failed")
@@ -3807,12 +3827,10 @@ def personal_edition_activate_post(
         logger.exception("personal_edition_zip_generation_failed error_type=%s", type(exc).__name__)
         return fail("ZIPの作成に失敗しました。時間をおいて再試行してください。",
                     "The ZIP could not be created. Please try again later.", 503)
-    response = Response(content=zip_bytes, media_type="application/zip")
-    filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
-                if code_row["product_type"] == "acg_bundle"
-                else "BirthChartMuseum-PersonalEdition-FULL.zip")
-    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
-    return _mark_no_store(response)
+    chart_redirect = f"/chart/{chart_token}"
+    if lang != "ja":
+        chart_redirect = f"{chart_redirect}?lang={lang}"
+    return RedirectResponse(chart_redirect, status_code=303)
 
 @app.get("/start")
 def start(request: Request):
@@ -4383,6 +4401,26 @@ def chart_shichusuimei_svg(token: str):
     return response
 
 
+@app.get("/chart/{token}/personal-edition.zip")
+def chart_personal_edition_zip(token: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    options = chart.get("options") or {}
+    if not options.get("personal_edition"):
+        raise HTTPException(status_code=404, detail="Personal Edition ZIP not found")
+    include_acg = bool(options.get("acg_enabled"))
+    lang = str(options.get("personal_edition_locale") or "ja")
+    zip_bytes = build_personalized_zip(
+        yaml_text=chart["yaml_text"],
+        lang=lang if lang in {"ja", "en"} else "ja",
+        include_acg=include_acg,
+    )
+    filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
+                if include_acg else "BirthChartMuseum-PersonalEdition-FULL.zip")
+    response = Response(content=zip_bytes, media_type="application/zip")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return response
+
 @app.get("/chart/{token}/download.zip")
 def chart_download_zip(token: str):
     chart = _load_chart_or_404(token)
@@ -4465,6 +4503,8 @@ def chart_page(request: Request, token: str):
         step_start = time.perf_counter()
         options = chart.get("options") or {}
         product_type = _chart_product_type(options)
+        is_personal_edition = bool(options.get("personal_edition"))
+        personal_edition_acg = is_personal_edition and bool(options.get("acg_enabled"))
         is_transit_yaml = product_type == "transit_yaml"
         chart_doc = None
         if not is_transit_yaml:
@@ -4546,6 +4586,10 @@ def chart_page(request: Request, token: str):
                 "token": token,
                 "chart": chart,
                 "is_transit_yaml": is_transit_yaml,
+                "is_personal_edition": is_personal_edition,
+                "personal_edition_acg": personal_edition_acg,
+                "personal_edition_zip_url": f"{base_url}/chart/{token}/personal-edition.zip",
+                "personal_acg_url": f"/acg?load={quote(f'/chart/{token}.yaml', safe='')}",
                 "can_continue_with_transit": can_continue_with_transit,
                 "has_31day_transit": has_31day_transit,
                 "has_western_asteroids": has_western_asteroids,
