@@ -163,6 +163,24 @@
   }
   button.plain:hover{background:rgba(138,116,67,.12)}
   button.plain:focus-visible{outline:2px solid var(--shu);outline-offset:2px}
+
+  /* ── 夜ノ音 ─────────────────── */
+  .oto-row{display:flex;gap:12px}
+  .oto-btn{
+    flex:1;padding:16px 8px;font-family:var(--mincho);
+    font-size:14px;font-weight:700;letter-spacing:.3em;text-indent:.3em;
+    background:none;border:1px solid var(--aitetsu);color:var(--washi-dim);
+    border-radius:2px;cursor:pointer;transition:all .4s;
+  }
+  .oto-btn small{display:block;font-size:10px;font-weight:400;letter-spacing:.15em;margin-top:6px}
+  .oto-btn:hover{border-color:var(--kin)}
+  .oto-btn:focus-visible{outline:2px solid var(--shu);outline-offset:2px}
+  .oto-btn.on{border-color:var(--shu);color:var(--washi);background:rgba(168,35,43,.1)}
+  .oto-btn.on.harai{border-color:var(--kin);background:rgba(138,116,67,.12)}
+  .oto-wave{
+    display:block;width:100%;height:54px;margin-top:14px;
+    border:1px solid var(--aitetsu);border-radius:2px;background:rgba(35,43,51,.2);
+  }
   .loc-label{font-size:12px;color:var(--washi-dim);letter-spacing:.1em}
   footer{margin-top:48px;font-size:11px;color:var(--washi-dim);line-height:2;letter-spacing:.08em;border-top:1px solid var(--aitetsu);padding-top:18px}
   footer .shu{color:var(--shu)}
@@ -281,6 +299,16 @@
         <p id="aiKaidan"></p>
       </div>
     </div>
+  </section>
+
+  <section>
+    <h2>夜ノ音</h2>
+    <div class="oto-row">
+      <button class="oto-btn" id="manekiBtn">招キノ音<small>一九ヘルツ</small></button>
+      <button class="oto-btn harai" id="haraiBtn">祓イノ音<small>四〇九六ヘルツ</small></button>
+    </div>
+    <canvas class="oto-wave" id="otoWave" aria-hidden="true"></canvas>
+    <p class="note">招キノ音は19Hzの超低周波。英国の技術者が「幽霊の気配」の原因として報告した周波数だが、効果に科学的裏付けはなく、多くの端末のスピーカーでは再生されない——発振していても、あなたには聞こえない。祓イノ音は4096Hz。水晶の音叉として浄化に用いられる周波数で、こちらは澄んで聞こえる。いずれも演出である。イヤホンや低音の出る環境では音量に注意。</p>
   </section>
 
   <div class="loc-row">
@@ -822,6 +850,110 @@ ${yamlText.slice(0, 6000)}
     refreshReikanBtn();
     if (lastState) lastState.personalContext = personalContext;
   });
+
+  // ───────── 夜ノ音（Web Audio） ─────────
+  let audioCtx = null, manekiNodes = null, haraiTimer = null, waveRAF = null, waveMode = null;
+
+  function ensureCtx(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function startManeki(){
+    const ctx = ensureCtx();
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 2);
+    master.connect(ctx.destination);
+    // 19Hz基音 + 薄い倍音（38/76Hz）。倍音があると鳴る機種が増える
+    const spec = [[19, .5], [38, .12], [76, .05]];
+    const oscs = spec.map(([f, g]) => {
+      const o = ctx.createOscillator(), gn = ctx.createGain();
+      o.type = "sine"; o.frequency.value = f; gn.gain.value = g;
+      o.connect(gn); gn.connect(master); o.start();
+      return o;
+    });
+    manekiNodes = { oscs, master };
+  }
+  function stopManeki(){
+    if (!manekiNodes) return;
+    const ctx = audioCtx, { oscs, master } = manekiNodes;
+    master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+    setTimeout(() => oscs.forEach(o => o.stop()), 1100);
+    manekiNodes = null;
+  }
+
+  function strikeHarai(){
+    const ctx = ensureCtx();
+    const t = ctx.currentTime;
+    // 4096Hzを りんを打つように減衰させる。わずかなデチューンで揺らぎ
+    [[4096, .18], [4102, .07], [8192, .02]].forEach(([f, g]) => {
+      const o = ctx.createOscillator(), gn = ctx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      gn.gain.setValueAtTime(g, t);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t + 5);
+      o.connect(gn); gn.connect(ctx.destination);
+      o.start(t); o.stop(t + 5.2);
+    });
+  }
+  function startHarai(){
+    strikeHarai();
+    haraiTimer = setInterval(strikeHarai, 7000);
+  }
+  function stopHarai(){
+    clearInterval(haraiTimer);
+    haraiTimer = null;
+  }
+
+  // 波形表示（ゆっくり流れる描画。点滅させない）
+  function drawWave(){
+    const cv = $("otoWave");
+    const g = cv.getContext("2d");
+    const w = cv.width = cv.clientWidth * (devicePixelRatio || 1);
+    const h = cv.height = cv.clientHeight * (devicePixelRatio || 1);
+    const t0 = performance.now();
+    const loop = () => {
+      const t = (performance.now() - t0) / 1000;
+      g.clearRect(0, 0, w, h);
+      if (waveMode){
+        g.strokeStyle = waveMode === "maneki" ? "rgba(168,35,43,.8)" : "rgba(138,116,67,.9)";
+        g.lineWidth = 1.5 * (devicePixelRatio || 1);
+        g.beginPath();
+        const cycles = waveMode === "maneki" ? 3 : 24;   // 見た目上の波数
+        const speed  = waveMode === "maneki" ? .5 : 1.5; // ゆっくり流す
+        for (let x = 0; x <= w; x += 2){
+          const y = h/2 + Math.sin(x/w * cycles * 2*Math.PI - t*speed*2*Math.PI) * h*.32;
+          x === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
+        }
+        g.stroke();
+        waveRAF = requestAnimationFrame(loop);
+      } else {
+        g.strokeStyle = "rgba(143,134,114,.4)";
+        g.lineWidth = 1 * (devicePixelRatio || 1);
+        g.beginPath(); g.moveTo(0, h/2); g.lineTo(w, h/2); g.stroke();
+        waveRAF = null;
+      }
+    };
+    if (waveRAF) cancelAnimationFrame(waveRAF);
+    waveRAF = requestAnimationFrame(loop);
+  }
+
+  function setOto(mode){
+    // 同時発振はしない。同じボタン再押下で停止
+    const next = (waveMode === mode) ? null : mode;
+    if (manekiNodes) stopManeki();
+    if (haraiTimer) stopHarai();
+    if (next === "maneki") startManeki();
+    if (next === "harai") startHarai();
+    waveMode = next;
+    $("manekiBtn").classList.toggle("on", next === "maneki");
+    $("haraiBtn").classList.toggle("on", next === "harai");
+    drawWave();
+  }
+  $("manekiBtn").addEventListener("click", () => setOto("maneki"));
+  $("haraiBtn").addEventListener("click", () => setOto("harai"));
+  drawWave();
 
   $("locBtn").addEventListener("click", () => {
     if (!navigator.geolocation){ $("locLabel").textContent = "この端末では位置情報が使えない"; return; }
