@@ -79,11 +79,11 @@ def _text(x: float, y: float, value: str, **attrs: Any) -> str:
     return f'<text x="{x:.2f}" y="{y:.2f}" {_attrs(**attrs)}>{html.escape(value)}</text>'
 
 
-def _display_title(value: Any, fallback: str) -> str:
+def _display_title(value: Any, fallback: str, *, honorific: bool = True) -> str:
     title = str(value or "").strip()
     if not title:
         return fallback
-    if title.endswith("さん"):
+    if not honorific or title.endswith("さん"):
         return title
     return f"{title}さん"
 
@@ -118,7 +118,13 @@ def _directed_midpoint(start: float, end: float) -> float:
     return (start + span / 2) % 360
 
 
-def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc: dict[str, Any] | None = None) -> str | None:
+def build_horoscope_svg_from_yaml(
+    yaml_text: str,
+    *,
+    compact: bool = False,
+    doc: dict[str, Any] | None = None,
+    honorific: bool = True,
+) -> str | None:
     doc = doc if isinstance(doc, dict) else (yaml.safe_load(yaml_text) or {})
     natal = (((doc.get("systems") or {}).get("western") or {}).get("natal") or {})
     bodies = dict(natal.get("bodies") or {})
@@ -139,7 +145,7 @@ def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc:
         return None
 
     input_block = doc.get("input") or {}
-    title = _display_title(input_block.get("title"), "Natal chart")
+    title = _display_title(input_block.get("title"), "Natal chart", honorific=honorific)
     chart_date = input_block.get("birth_date") or ""
     chart_time = input_block.get("calculation_time") or input_block.get("birth_time") or ""
     place = input_block.get("birth_place") or ""
@@ -170,7 +176,7 @@ def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc:
     parts: list[str] = [
         f'<svg class="horoscope-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" aria-label="SVGホロスコープ図">',
         "<defs>",
-        '<style>.horoscope-svg text{font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols",Arial,"Noto Sans JP",sans-serif}.small{font-size:22px;letter-spacing:.08em}.tiny{font-size:16px;letter-spacing:.06em}.planet{font-size:34px;font-weight:400}.angle{font-size:18px;font-weight:700;letter-spacing:.04em}.sign{font-size:34px}.house-number{font-size:24px;font-weight:700}.asteroid-body{display:none}.show-asteroids .asteroid-body{display:inline}.hide-houses .house-line,.hide-houses .house-label,.hide-houses .angle-body{display:none}</style>',
+        '<style>.horoscope-svg text{font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols",Arial,"Noto Sans JP",sans-serif}.small{font-size:22px;letter-spacing:.08em}.tiny{font-size:16px;letter-spacing:.06em}.planet{font-size:34px;font-weight:400}.angle{font-size:18px;font-weight:700;letter-spacing:.04em}.sign{font-size:34px;paint-order:stroke fill;stroke:#fffaf2;stroke-width:10px;stroke-linejoin:round}.house-number{font-size:24px;font-weight:700}.asteroid-body{display:none}.show-asteroids .asteroid-body{display:inline}.hide-houses .house-line,.hide-houses .house-label,.hide-houses .angle-body{display:none}</style>',
         "</defs>",
     ]
     if not compact:
@@ -211,9 +217,20 @@ def build_horoscope_svg_from_yaml(yaml_text: str, *, compact: bool = False, doc:
             opacity = ".34"
         parts.append(_line(cx, cy, tick_inner, outer, lon, stroke="#d8c4a7", stroke_width=stroke_width, opacity=opacity))
 
+    # Center signs in the zodiac band. Their thick background-colored text
+    # stroke masks ticks and wheel lines without turning the labels into badges.
+    sign_r = (zodiac + outer) / 2
     for i, label in enumerate(SIGN_LABELS):
-        x, y = _polar(cx, cy, 344, i * 30 + 15)
-        parts.append(_text(x, y + 11, label, fill="#73593b", text_anchor="middle", class_="sign"))
+        x, y = _polar(cx, cy, sign_r, i * 30 + 15)
+        parts.append(_text(
+            x,
+            y,
+            label,
+            fill="#73593b",
+            text_anchor="middle",
+            dominant_baseline="central",
+            class_="sign",
+        ))
 
     house_items: list[tuple[int, float]] = []
     for key, house in houses.items():

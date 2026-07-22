@@ -2802,7 +2802,10 @@ def neko_demo_page(request: Request):
 
 @app.get("/demo/neko/horoscope.svg")
 def neko_demo_horoscope_svg():
-    svg = optimize_svg(build_horoscope_svg_from_yaml(_neko_demo_yaml(), compact=True))
+    # The demo is a storefront preview, so use the fully composed chart rather
+    # than the compact API thumbnail. This includes the finished background,
+    # title, metadata, degree ticks, border, and footer treatment.
+    svg = optimize_svg(build_horoscope_svg_from_yaml(_neko_demo_yaml(), compact=False, honorific=False))
     if not svg:
         raise HTTPException(status_code=404, detail="Sample chart is unavailable")
     response = Response(content=svg, media_type="image/svg+xml; charset=utf-8")

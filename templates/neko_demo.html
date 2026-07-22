@@ -12,7 +12,7 @@
     main{width:min(1120px,calc(100% - 32px));margin:44px auto 70px}.eyebrow{color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-size:.78rem}.hero h1{font-family:Georgia,serif;font-size:clamp(2.2rem,6vw,4.8rem);line-height:1.05;margin:8px 0 14px}.hero p{max-width:720px;color:var(--muted)}
     .facts{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 34px}.pill{border:1px solid rgba(214,173,40,.5);border-radius:999px;padding:7px 13px;background:rgba(214,173,40,.08)}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{display:block;text-decoration:none;background:rgba(16,27,59,.9);border:1px solid rgba(214,173,40,.24);border-radius:18px;padding:24px;transition:.2s}.card:hover{transform:translateY(-2px);border-color:var(--gold)}.card h2{margin:0 0 8px;font-size:1.35rem}.card p{margin:0;color:var(--muted)}.tag{display:inline-block;color:var(--gold);font-weight:700;margin-bottom:13px}
-    .chart{margin-top:26px;background:#f7f3e9;border-radius:18px;padding:18px;text-align:center}.chart img{width:min(720px,100%);height:auto}.reading{margin-top:26px;padding:28px;background:rgba(16,27,59,.9);border-radius:18px;border:1px solid rgba(214,173,40,.24)}.reading h2{margin-top:0}.reading-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.reading h3{color:#ead37c}.reading p{color:var(--muted)}
+    .chart{margin-top:26px;background:linear-gradient(145deg,#fffdf8,#eee4d2);border:1px solid rgba(214,173,40,.42);border-radius:24px;padding:clamp(12px,3vw,30px);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.28)}.chart-head{margin:0 auto 18px;color:#332817}.chart-head .tag{margin-bottom:4px}.chart-head h2{margin:0;font-family:Georgia,serif;font-size:clamp(1.5rem,4vw,2.3rem)}.chart-head p{margin:4px 0 0;color:#75664f}.chart-frame{width:min(760px,100%);margin:auto;overflow:hidden;border-radius:16px;background:#f7f3e9;box-shadow:0 8px 30px rgba(66,46,16,.12)}.chart img{display:block;width:100%;height:auto}.reading{margin-top:26px;padding:28px;background:rgba(16,27,59,.9);border-radius:18px;border:1px solid rgba(214,173,40,.24)}.reading h2{margin-top:0}.reading-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.reading h3{color:#ead37c}.reading p{color:var(--muted)}
     .locked{margin-top:24px;padding:18px;border:1px dashed rgba(170,178,200,.5);border-radius:14px;color:var(--muted)}.cta{display:inline-block;margin-top:18px;padding:12px 20px;border-radius:999px;background:var(--gold);color:#071025;text-decoration:none;font-weight:800}
     @media(max-width:720px){.grid,.reading-grid{grid-template-columns:1fr}.hero h1{font-size:2.7rem}}
   </style>
@@ -37,7 +37,14 @@
       <a class="card" href="/birth-chart-museum/demo?lang=en"><span class="tag">PREVIEW</span><h2>✅ Museum</h2><p>Walk through the experimental Birth Chart Museum preview.</p></a>
     </section>
 
-    <section class="chart" id="birth-chart"><img src="/demo/neko/horoscope.svg" alt="Chief Editor Neko sample birth chart"></section>
+    <section class="chart" id="birth-chart">
+      <header class="chart-head">
+        <span class="tag">SAMPLE BIRTH CHART</span>
+        <h2>Chief Editor Neko's Horoscope</h2>
+        <p>A complete natal wheel generated from the sample astrology data.</p>
+      </header>
+      <div class="chart-frame"><img src="/demo/neko/horoscope.svg?v=20260722-2" alt="Chief Editor Neko sample birth chart"></div>
+    </section>
 
     <section class="reading" id="ai-page">
       <span class="tag">SAMPLE AI PAGE</span><h2>A curious editor with a wide-angle view</h2>

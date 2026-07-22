@@ -28,6 +28,8 @@ def test_neko_demo_chart_is_view_only_svg():
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("image/svg+xml")
     assert "attachment" not in response.headers.get("content-disposition", "")
+    assert 'viewBox="0 0 1080 1280"' in response.text
+    assert "nanami astro" in response.text
 
 
 def test_neko_acg_returns_geojson_without_source_yaml():
