@@ -562,7 +562,7 @@ class Planner:
         pdf.drawCentredString(PAGE_WIDTH / 2, 751, "T H E   A S T R O L O G Y   L I B R A R Y")
         pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.72))
         pdf.setFont("Times-Roman", 8)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 730, "Celestial Almanac")
+        pdf.drawCentredString(PAGE_WIDTH / 2, 730, "Celestial Almanac  ·  Hyperlinked Edition")
 
         # Central celestial emblem.
         diamond(PAGE_WIDTH / 2, 560, 12)
@@ -591,6 +591,16 @@ class Planner:
         pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.82))
         pdf.setFont("Times-Roman", 13)
         pdf.drawCentredString(PAGE_WIDTH / 2, 345, self._cover_period_span())
+
+        # A quiet scope line so it reads as more than an astrology-only book.
+        scope = (
+            "トランジット  ·  月相  ·  デイリー記録  ·  AIノート"
+            if self.lang == "ja"
+            else "Transit Journal  ·  Moon Phases  ·  Daily Reflection  ·  AI Notes"
+        )
+        pdf.setFillColor(dim_gold)
+        pdf.setFont("Helvetica", 8)
+        pdf.drawCentredString(PAGE_WIDTH / 2, 320, scope)
 
         # Publisher seal and imprint.
         diamond(PAGE_WIDTH / 2, 103, 29)
