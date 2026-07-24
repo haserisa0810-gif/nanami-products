@@ -33,6 +33,14 @@ NOTE_TRANSIT_CAMPAIGNS: dict[str, NoteTransitCampaign] = {
         end_date=date(2026, 8, 7),
         enabled=True,
     ),
+    "2026-08": NoteTransitCampaign(
+        campaign_id="note-2026-08",
+        access_key_hash="1e68ed530efb09b336bcac276b477731d1c4c07ae289b4b6276e686461c6518d",
+        label="2026年8月 note特典",
+        start_date=date(2026, 8, 1),
+        end_date=date(2026, 9, 7),
+        enabled=True,
+    ),
 }
 
 

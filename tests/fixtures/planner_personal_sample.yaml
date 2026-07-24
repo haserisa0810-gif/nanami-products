@@ -1,0 +1,78 @@
+# Test fixture: nanami-products yaml-light with long-term transit addon.
+# The 31-day summary section is omitted (the planner adapter does not read it).
+version: nanami-products-yaml-light-v1
+meta:
+  product_type: personal_ai_astrology_yaml_light
+  data_role: addon
+  addon_type: western_long_term_transits
+  schema_version: '1.1'
+  yaml_variant: detail
+input:
+  title: Sample
+  birth_date: '1976-08-10'
+  birth_time: '20:41'
+  prefecture: 東京都
+  birth_place_kind: domestic
+  birth_place: 東京都
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
+  gender: unknown
+systems:
+  western:
+    natal:
+      bodies:
+        Sun: {sign: Leo, degree: 17.9572, absolute_longitude: 137.9572, house: 5, retrograde: false}
+        Moon: {sign: Aqu, degree: 23.9421, absolute_longitude: 323.9421, house: 11, retrograde: false}
+        Mercury: {sign: Vir, degree: 10.7232, absolute_longitude: 160.7232, house: 6, retrograde: false}
+        Venus: {sign: Vir, degree: 2.62, absolute_longitude: 152.62, house: 6, retrograde: false}
+        Mars: {sign: Vir, degree: 21.272, absolute_longitude: 171.272, house: 6, retrograde: false}
+        Jupiter: {sign: Tau, degree: 28.6592, absolute_longitude: 58.6592, house: 2, retrograde: false}
+        Saturn: {sign: Leo, degree: 8.0832, absolute_longitude: 128.0832, house: 5, retrograde: false}
+        Uranus: {sign: Sco, degree: 3.4291, absolute_longitude: 213.4291, house: 7, retrograde: false}
+        Neptune: {sign: Sag, degree: 11.2395, absolute_longitude: 251.2395, house: 9, retrograde: true}
+        Pluto: {sign: Lib, degree: 9.6682, absolute_longitude: 189.6682, house: 7, retrograde: false}
+        North Node: {sign: Sco, degree: 6.9178, absolute_longitude: 216.9178, house: 7, retrograde: true}
+        South Node: {sign: Tau, degree: 6.9178, absolute_longitude: 36.9178, house: 1, retrograde: true}
+        ASC: {sign: Ari, degree: 6.3569, absolute_longitude: 6.3569, house: 1, retrograde: false}
+        MC: {sign: Cap, degree: 3.6904, absolute_longitude: 273.6904, house: 10, retrograde: false}
+    transit_long_term:
+      period:
+        start_date: '2026-07-19'
+        end_date: '2027-07-18'
+        days: 365
+        timezone: Asia/Tokyo
+        sample_time: '12:00'
+        sample_interval_days: 7
+      items:
+      - {transiting_body: Jupiter, natal_body: Sun, aspect: conjunction, start_date: '2027-03-07', end_date: '2027-05-23', peak_date: '2027-05-09', orb_min: 0.06, orb_max: 1.38, importance: high, interpretation_hint: 拡大や可能性がSunのテーマに強く始動する時期, retrograde: {any: true, all: false}}
+      - {transiting_body: Jupiter, natal_body: Jupiter, aspect: square, start_date: '2027-07-18', end_date: '2027-07-18', peak_date: '2027-07-18', orb_min: 0.29, orb_max: 0.29, importance: high, interpretation_hint: 拡大や可能性がJupiterのテーマに調整課題として表れやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Jupiter, natal_body: Moon, aspect: opposition, start_date: '2027-01-17', end_date: '2027-02-07', peak_date: '2027-01-24', orb_min: 0.38, orb_max: 1.39, importance: high, interpretation_hint: 拡大や可能性がMoonのテーマに外部との関係から意識化される時期, retrograde: {any: true, all: true}}
+      - {transiting_body: Jupiter, natal_body: Sun, aspect: conjunction, start_date: '2026-09-20', end_date: '2026-09-27', peak_date: '2026-09-20', orb_min: 0.39, orb_max: 0.93, importance: high, interpretation_hint: 拡大や可能性がSunのテーマに強く始動する時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Jupiter, natal_body: Moon, aspect: opposition, start_date: '2026-10-25', end_date: '2026-11-08', peak_date: '2026-11-01', orb_min: 0.4, orb_max: 1.19, importance: high, interpretation_hint: 拡大や可能性がMoonのテーマに外部との関係から意識化される時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Jupiter, natal_body: Moon, aspect: opposition, start_date: '2027-06-20', end_date: '2027-06-27', peak_date: '2027-06-27', orb_min: 0.5, orb_max: 0.69, importance: high, interpretation_hint: 拡大や可能性がMoonのテーマに外部との関係から意識化される時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Jupiter, natal_body: Saturn, aspect: conjunction, start_date: '2026-08-02', end_date: '2026-08-09', peak_date: '2026-08-09', orb_min: 0.67, orb_max: 0.87, importance: high, interpretation_hint: 拡大や可能性がSaturnのテーマに強く始動する時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Jupiter, natal_body: Uranus, aspect: square, start_date: '2026-07-19', end_date: '2026-07-19', peak_date: '2026-07-19', orb_min: 0.68, orb_max: 0.68, importance: high, interpretation_hint: 拡大や可能性がUranusのテーマに調整課題として表れやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Saturn, natal_body: Saturn, aspect: trine, start_date: '2026-11-01', end_date: '2027-01-17', peak_date: '2026-11-29', orb_min: 0.02, orb_max: 1.2, importance: high, interpretation_hint: 責任や現実化がSaturnのテーマに自然に活かしやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: Saturn, natal_body: Pluto, aspect: opposition, start_date: '2026-12-27', end_date: '2027-02-07', peak_date: '2027-01-24', orb_min: 0.02, orb_max: 1.5, importance: high, interpretation_hint: 責任や現実化がPlutoのテーマに外部との関係から意識化される時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Saturn, natal_body: Pluto, aspect: opposition, start_date: '2026-10-11', end_date: '2026-11-22', peak_date: '2026-10-25', orb_min: 0.07, orb_max: 1.42, importance: high, interpretation_hint: 責任や現実化がPlutoのテーマに外部との関係から意識化される時期, retrograde: {any: true, all: true}}
+      - {transiting_body: Saturn, natal_body: Neptune, aspect: trine, start_date: '2026-09-20', end_date: '2026-10-25', peak_date: '2026-10-04', orb_min: 0.09, orb_max: 1.5, importance: high, interpretation_hint: 責任や現実化がNeptuneのテーマに自然に活かしやすい時期, retrograde: {any: true, all: true}}
+      - {transiting_body: Saturn, natal_body: Moon, aspect: sextile, start_date: '2027-05-23', end_date: '2027-06-13', peak_date: '2027-05-30', orb_min: 0.09, orb_max: 1.24, importance: high, interpretation_hint: 責任や現実化がMoonのテーマに機会として使いやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Saturn, natal_body: Sun, aspect: trine, start_date: '2027-04-04', end_date: '2027-04-18', peak_date: '2027-04-11', orb_min: 0.14, orb_max: 1.02, importance: high, interpretation_hint: 責任や現実化がSunのテーマに自然に活かしやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Saturn, natal_body: Neptune, aspect: trine, start_date: '2027-01-31', end_date: '2027-02-21', peak_date: '2027-02-14', orb_min: 0.25, orb_max: 1.04, importance: high, interpretation_hint: 責任や現実化がNeptuneのテーマに自然に活かしやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Uranus, natal_body: Venus, aspect: square, start_date: '2026-11-22', end_date: '2027-04-25', peak_date: '2027-03-28', orb_min: 0.03, orb_max: 1.32, importance: high, interpretation_hint: 変化や独立がVenusのテーマに調整課題として表れやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: Uranus, natal_body: Saturn, aspect: sextile, start_date: '2027-06-13', end_date: '2027-07-18', peak_date: '2027-07-11', orb_min: 0.14, orb_max: 1.34, importance: high, interpretation_hint: 変化や独立がSaturnのテーマに機会として使いやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Pluto, natal_body: Uranus, aspect: square, start_date: '2026-07-19', end_date: '2027-01-17', peak_date: '2026-09-06', orb_min: 0.01, orb_max: 1.42, importance: high, interpretation_hint: 深い変容がUranusのテーマに調整課題として表れやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: Pluto, natal_body: Saturn, aspect: opposition, start_date: '2027-03-21', end_date: '2027-06-27', peak_date: '2027-05-02', orb_min: 0.91, orb_max: 1.43, importance: high, interpretation_hint: 深い変容がSaturnのテーマに外部との関係から意識化される時期, retrograde: {any: true, all: false}}
+      - {transiting_body: Chiron, natal_body: Uranus, aspect: opposition, start_date: '2027-05-23', end_date: '2027-07-18', peak_date: '2027-06-13', orb_min: 0.1, orb_max: 1.15, importance: high, interpretation_hint: 癒しや弱点の扱いがUranusのテーマに外部との関係から意識化される時期, retrograde: {any: false, all: false}}
+      - {transiting_body: North Node, natal_body: Moon, aspect: conjunction, start_date: '2026-11-22', end_date: '2026-12-06', peak_date: '2026-11-29', orb_min: 0.08, orb_max: 0.92, importance: high, interpretation_hint: 今後伸ばす方向性がMoonのテーマに強く始動する時期, retrograde: {any: true, all: true}}
+      - {transiting_body: North Node, natal_body: Jupiter, aspect: square, start_date: '2026-08-02', end_date: '2026-10-25', peak_date: '2026-10-11', orb_min: 0.17, orb_max: 1.2, importance: high, interpretation_hint: 今後伸ばす方向性がJupiterのテーマに調整課題として表れやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: South Node, natal_body: Jupiter, aspect: square, start_date: '2026-08-02', end_date: '2026-10-25', peak_date: '2026-10-11', orb_min: 0.17, orb_max: 1.2, importance: high, interpretation_hint: 手放しや過去パターンがJupiterのテーマに調整課題として表れやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: South Node, natal_body: Sun, aspect: conjunction, start_date: '2027-04-11', end_date: '2027-04-25', peak_date: '2027-04-18', orb_min: 0.17, orb_max: 1.01, importance: high, interpretation_hint: 手放しや過去パターンがSunのテーマに強く始動する時期, retrograde: {any: true, all: true}}
+      - {transiting_body: Jupiter, natal_body: Neptune, aspect: trine, start_date: '2026-08-16', end_date: '2026-08-23', peak_date: '2026-08-23', orb_min: 0.57, orb_max: 0.95, importance: medium, interpretation_hint: 拡大や可能性がNeptuneのテーマに自然に活かしやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Jupiter, natal_body: Pluto, aspect: sextile, start_date: '2026-08-09', end_date: '2026-08-16', peak_date: '2026-08-16', orb_min: 0.62, orb_max: 0.91, importance: medium, interpretation_hint: 拡大や可能性がPlutoのテーマに機会として使いやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Uranus, natal_body: Pluto, aspect: trine, start_date: '2027-07-11', end_date: '2027-07-18', peak_date: '2027-07-18', orb_min: 1.12, orb_max: 1.44, importance: medium, interpretation_hint: 変化や独立がPlutoのテーマに自然に活かしやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: Neptune, natal_body: Saturn, aspect: trine, start_date: '2027-06-27', end_date: '2027-07-18', peak_date: '2027-07-11', orb_min: 1.42, orb_max: 1.47, importance: medium, interpretation_hint: 理想や直感がSaturnのテーマに自然に活かしやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: Chiron, natal_body: Venus, aspect: trine, start_date: '2027-05-09', end_date: '2027-06-20', peak_date: '2027-05-30', orb_min: 0.04, orb_max: 1.14, importance: medium, interpretation_hint: 癒しや弱点の扱いがVenusのテーマに自然に活かしやすい時期, retrograde: {any: false, all: false}}
+      - {transiting_body: North Node, natal_body: Sun, aspect: opposition, start_date: '2027-04-11', end_date: '2027-04-25', peak_date: '2027-04-18', orb_min: 0.17, orb_max: 1.01, importance: medium, interpretation_hint: 今後伸ばす方向性がSunのテーマに外部との関係から意識化される時期, retrograde: {any: true, all: true}}
+      - {transiting_body: North Node, natal_body: Neptune, aspect: sextile, start_date: '2027-06-20', end_date: '2027-07-18', peak_date: '2027-07-18', orb_min: 0.23, orb_max: 0.85, importance: medium, interpretation_hint: 今後伸ばす方向性がNeptuneのテーマに機会として使いやすい時期, retrograde: {any: true, all: false}}
+      - {transiting_body: South Node, natal_body: Moon, aspect: opposition, start_date: '2026-11-22', end_date: '2026-12-06', peak_date: '2026-11-29', orb_min: 0.08, orb_max: 0.92, importance: medium, interpretation_hint: 手放しや過去パターンがMoonのテーマに外部との関係から意識化される時期, retrograde: {any: true, all: true}}

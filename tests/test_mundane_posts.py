@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+import yaml
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -196,6 +197,34 @@ monthly_snapshot:
         self.assertIn("target_month: 7", yaml_text)
         self.assertIn("lunar_events:", yaml_text)
         self.assertIn("major_aspects:", yaml_text)
+
+    def test_august_2026_contains_eclipses_and_perseids_without_annual_fixture(self) -> None:
+        doc = yaml.safe_load(generate_mundane_yaml(
+            title="2026年8月",
+            slug="2026-08",
+            target_year=2026,
+            target_month=8,
+        ))
+
+        events = doc["astronomical_events"]
+        by_type = {event["type"]: event for event in events}
+        self.assertEqual(by_type["solar_eclipse"]["subtype"], "total")
+        self.assertEqual(by_type["solar_eclipse"]["position"]["sign"], "Leo")
+        self.assertEqual(by_type["lunar_eclipse"]["subtype"], "partial")
+        self.assertEqual(by_type["lunar_eclipse"]["position"]["sign"], "Pisces")
+        self.assertIn("meteor_shower", by_type)
+        self.assertEqual(doc["eclipse_year_summary"]["eclipse_count"], 4)
+        self.assertEqual(doc["eclipse_year_summary"]["eclipse_season_count"], 2)
+
+    def test_following_year_is_computed_automatically(self) -> None:
+        doc = yaml.safe_load(generate_mundane_yaml(
+            title="2027年8月",
+            slug="2027-08",
+            target_year=2027,
+            target_month=8,
+        ))
+        self.assertTrue(doc["astronomical_events"])
+        self.assertTrue(any(event["type"] == "meteor_shower" for event in doc["astronomical_events"]))
 
     def test_generate_endpoint_returns_yaml_content(self) -> None:
         result = routes.mundane_generate_yaml(

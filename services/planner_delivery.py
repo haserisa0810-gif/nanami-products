@@ -1,0 +1,94 @@
+"""Personal planner delivery — the reusable seam for the FULL bundle (B案) and a
+future standalone Planner product (A案).
+
+``build_planner_pdf`` takes the same birth inputs as ``build_product_yaml``,
+computes a chart with long-term transits, converts it to the planner's input
+YAML (natal + ``transit_long_term`` items), and renders the personal planner
+PDF. It has no dependency on the activation/redeem flow, so a standalone
+PE-PLAN- code can call it unchanged.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import shutil
+from typing import Any
+
+from services.yaml_exporter import build_product_yaml
+from services.long_term_transit_yaml import build_ai_long_term_transits_yaml
+from services.planner_export import render_personal_planner
+
+
+def build_planner_pdf_from_yaml(
+    *,
+    yaml_text: str,
+    lang: str = "ja",
+    months: int = 12,
+) -> bytes:
+    """Render planner bytes from stored natal + long-term-transit YAML."""
+    pdf_path = render_personal_planner(
+        yaml_text=yaml_text,
+        lang=lang,
+        months=months,
+    )
+    try:
+        return pdf_path.read_bytes()
+    finally:
+        shutil.rmtree(pdf_path.parent, ignore_errors=True)
+
+
+def build_planner_pdf(
+    *,
+    title: str | None,
+    birth_date: str,
+    birth_time: str | None,
+    prefecture: str,
+    birth_place_label: str | None,
+    birth_lat: float | None,
+    birth_lng: float | None,
+    tz_name: str,
+    lang: str = "ja",
+    months: int = 12,
+    birth_time_accuracy: str = "exact",
+    birth_time_range: dict[str, Any] | None = None,
+    birth_time_note: str | None = None,
+    transit_start_date: datetime | None = None,
+) -> bytes:
+    """Return personal planner PDF bytes for the given birth data."""
+    if lang not in {"ja", "en"}:
+        raise ValueError(f"lang must be ja or en, got {lang!r}")
+    start = transit_start_date or datetime.now(timezone.utc)
+    # A chart doc carrying long-term (weekly-sampled) transits. build_product_yaml
+    # stores the block under "transit"; the long-term addon convention remaps it
+    # to "transit_long_term" before serialisation.
+    _yaml, _prompt, doc = build_product_yaml(
+        title=title,
+        birth_date=birth_date,
+        birth_time=birth_time,
+        prefecture=prefecture,
+        birth_place_label=birth_place_label,
+        birth_lat=birth_lat,
+        birth_lng=birth_lng,
+        tz_name=tz_name,
+        gender="unknown",
+        include_asteroids=False,
+        include_shichusuimei=False,
+        include_transit=True,
+        transit_profile="long_term",
+        transit_days=max(31, months * 31),
+        transit_start_date=start,
+        birth_time_accuracy=birth_time_accuracy,
+        birth_time_range=birth_time_range,
+        birth_time_note=birth_time_note,
+    )
+    western = ((doc.get("systems") or {}).get("western") or {})
+    western["transit_long_term"] = western.get("transit")
+    western["transit"] = None
+    yaml_text = build_ai_long_term_transits_yaml(doc=doc)
+    if not yaml_text.strip():
+        raise RuntimeError("long-term transits missing; cannot build planner")
+    return build_planner_pdf_from_yaml(
+        yaml_text=yaml_text,
+        lang=lang,
+        months=months,
+    )

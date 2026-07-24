@@ -30,6 +30,7 @@ from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
 from services.personal_edition_delivery import build_personalized_zip
+from services.planner_delivery import build_planner_pdf, build_planner_pdf_from_yaml
 from services.personal_edition_code_pdf import build_personal_edition_code_pdf
 from services.common_access_package import ETSY_PACKAGE_FILENAME, build_common_access_package
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
@@ -4640,6 +4641,93 @@ def chart_shichusuimei_svg(token: str):
     return response
 
 
+def _build_personal_planner_pdf(chart: dict, *, lang: str) -> bytes | None:
+    """Personal planner PDF for a stored Personal Edition chart, or None.
+
+    Recomputed from the chart's stored birth inputs at download time (~a few
+    seconds). Any failure is swallowed so the buyer still receives the rest of
+    the bundle. Reused verbatim by a future standalone Planner product.
+    """
+    try:
+        detail_yaml = build_detail_astrology_yaml(chart["yaml_text"])
+        return build_planner_pdf_from_yaml(
+            yaml_text=detail_yaml,
+            lang=lang,
+            months=12,
+        )
+    except Exception:
+        logger.exception(
+            "stored_yaml_planner_generation_failed token=%s; trying birth-input fallback",
+            chart.get("token"),
+        )
+
+    try:
+        doc = yaml.safe_load(chart["yaml_text"]) or {}
+        source = (doc.get("input") or {}) if isinstance(doc, dict) else {}
+        birth_date = str(source.get("birth_date") or "").strip()
+        birth_lat = source.get("birth_lat")
+        birth_lng = source.get("birth_lng")
+        if not birth_date or birth_lat is None or birth_lng is None:
+            return None
+        return build_planner_pdf(
+            title=source.get("title") or chart.get("buyer_name"),
+            birth_date=birth_date,
+            birth_time=source.get("calculation_time") or source.get("birth_time"),
+            prefecture=str(source.get("prefecture") or ""),
+            birth_place_label=str(source.get("birth_place") or ""),
+            birth_lat=float(birth_lat),
+            birth_lng=float(birth_lng),
+            tz_name=str(source.get("timezone") or "Asia/Tokyo"),
+            lang=lang,
+            months=12,
+            birth_time_accuracy=str(source.get("birth_time_accuracy") or "exact"),
+            birth_time_range=source.get("birth_time_range"),
+            birth_time_note=source.get("birth_time_note"),
+        )
+    except Exception:
+        logger.exception("personal_planner_generation_failed token=%s", chart.get("token"))
+        return None
+
+
+@app.get("/chart/{token}/planner.pdf")
+def chart_planner_pdf(request: Request, token: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    options = chart.get("options") or {}
+    try:
+        loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+        chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+    except Exception:
+        chart_doc = {}
+    product_type = _chart_product_type(options)
+    has_supported_transit_period = (
+        _chart_has_western_natal(chart, doc=chart_doc)
+        and _chart_has_31day_transit(chart, doc=chart_doc)
+        and product_type in {
+            "western_full",
+            "western_31days_transit_addon",
+            "western_note_transit_addon",
+        }
+    )
+    if not has_supported_transit_period:
+        raise HTTPException(status_code=404, detail="Personal planner not available")
+    # An explicit ?lang wins so the buyer's chosen language (from the chart page)
+    # always applies; otherwise fall back to the stored purchase locale.
+    requested_lang = request.query_params.get("lang", "").strip().lower()
+    if requested_lang in {"ja", "en"}:
+        safe_lang = requested_lang
+    else:
+        locale = str(options.get("personal_edition_locale") or _resolve_lang(request))
+        safe_lang = locale if locale in {"ja", "en"} else "ja"
+    planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang)
+    if not planner_pdf:
+        raise HTTPException(status_code=503, detail="The planner could not be generated. Please try again later.")
+    filename = "Personal-Planner.pdf" if safe_lang == "en" else "Personal-Planner-JA.pdf"
+    response = Response(content=planner_pdf, media_type="application/pdf")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return response
+
+
 @app.get("/chart/{token}/personal-edition.zip")
 def chart_personal_edition_zip(request: Request, token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
@@ -4648,14 +4736,17 @@ def chart_personal_edition_zip(request: Request, token: str):
         raise HTTPException(status_code=404, detail="Personal Edition ZIP not found")
     include_acg = bool(options.get("acg_enabled"))
     lang = str(options.get("personal_edition_locale") or "ja")
+    safe_lang = lang if lang in {"ja", "en"} else "ja"
     chart_url = f"{_public_base_url(request)}/chart/{token}"
     if lang == "en":
         chart_url = f"{chart_url}?lang=en"
+    planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang)
     zip_bytes = build_personalized_zip(
         yaml_text=chart["yaml_text"],
-        lang=lang if lang in {"ja", "en"} else "ja",
+        lang=safe_lang,
         include_acg=include_acg,
         chart_url=chart_url,
+        planner_pdf=planner_pdf,
     )
     filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
                 if include_acg else "BirthChartMuseum-PersonalEdition-FULL.zip")
@@ -4842,6 +4933,16 @@ def chart_page(request: Request, token: str):
                 "is_personal_edition": is_personal_edition,
                 "personal_edition_acg": personal_edition_acg,
                 "personal_edition_zip_url": f"{base_url}/chart/{token}/personal-edition.zip",
+                "planner_pdf_url": (
+                    f"{base_url}/chart/{token}/planner.pdf?lang={lang}"
+                    if full_like_western
+                    and product_type in {
+                        "western_full",
+                        "western_31days_transit_addon",
+                        "western_note_transit_addon",
+                    }
+                    else None
+                ),
                 "auto_download_personal_edition": is_personal_edition and request.query_params.get("personal_download") == "1",
                 "personal_acg_url": f"/acg?load={quote(f'/chart/{token}.yaml', safe='')}",
                 "can_continue_with_transit": can_continue_with_transit,

@@ -140,7 +140,8 @@ def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str
 
 
 def build_personalized_zip(
-    *, yaml_text: str, lang: str, include_acg: bool = False, chart_url: str | None = None
+    *, yaml_text: str, lang: str, include_acg: bool = False, chart_url: str | None = None,
+    planner_pdf: bytes | None = None,
 ) -> bytes:
     source_path = ensure_template_zip(lang)
     output = io.BytesIO()
@@ -170,6 +171,9 @@ def build_personalized_zip(
                 data = html.encode("utf-8")
             target.writestr(relative_name, data)
         target.writestr("app/birth-chart.yaml", yaml_text.encode("utf-8"))
+        if planner_pdf:
+            planner_name = "Personal-Planner.pdf" if lang == "en" else "パーソナル・プランナー.pdf"
+            target.writestr(planner_name, planner_pdf)
         if include_acg:
             acg_data = personal_geojson(yaml_text)
             target.writestr(

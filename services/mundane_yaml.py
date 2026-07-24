@@ -7,6 +7,7 @@ from typing import Any
 import swisseph as swe
 import yaml
 
+from services.astronomical_events import eclipse_year_summary, events_for_month
 from services.western_calc import PLANETS, calc_aspects, configure_ephemeris, ephemeris_debug_info, sign_of
 
 MUNDANE_YAML_FORMAT = "mundane-monthly-yaml-v1"
@@ -184,6 +185,7 @@ def generate_mundane_yaml(*, title: str, slug: str, target_year: int, target_mon
 
     days_in_month = calendar.monthrange(year, month)[1]
     first_day_items = _planet_items_for_day(year, month, 1)
+    astronomical_events = events_for_month(year, month)
     doc = {
         "meta": {
             "schema_version": "1.0",
@@ -211,6 +213,8 @@ def generate_mundane_yaml(*, title: str, slug: str, target_year: int, target_mon
             "planets": _planet_map(first_day_items),
         },
         "lunar_events": _detect_lunar_events(year, month, days_in_month),
+        "astronomical_events": astronomical_events,
+        "eclipse_year_summary": eclipse_year_summary(year),
         "sign_ingresses": _sign_ingresses(year, month, days_in_month),
         "major_aspects": _daily_major_aspects(year, month, days_in_month),
         "ai_usage": {
