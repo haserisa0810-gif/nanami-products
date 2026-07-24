@@ -118,6 +118,22 @@ class PlannerDeliveryTest(unittest.TestCase):
         self.assertEqual(response.body, b"%PDF-en")
         build.assert_called_once_with(chart, lang="en")
 
+    def test_english_display_uses_utc(self) -> None:
+        import yaml as _yaml
+        from services.planner_delivery import _apply_display_timezone
+        src = (
+            "input:\n  timezone: Asia/Tokyo\n"
+            "systems:\n  western:\n    transit_long_term:\n"
+            "      period:\n        timezone: Asia/Tokyo\n"
+        )
+        en = _yaml.safe_load(_apply_display_timezone(src, "en"))
+        self.assertEqual(en["input"]["timezone"], "UTC")
+        self.assertEqual(
+            en["systems"]["western"]["transit_long_term"]["period"]["timezone"], "UTC"
+        )
+        # Japanese planners keep the local timezone (string returned unchanged).
+        self.assertEqual(_apply_display_timezone(src, "ja"), src)
+
     def test_build_planner_pdf_ja(self) -> None:
         pdf = build_planner_pdf(lang="ja", months=2, **BIRTH)
         self.assertTrue(pdf.startswith(b"%PDF"))

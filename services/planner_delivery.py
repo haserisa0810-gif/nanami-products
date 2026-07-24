@@ -14,9 +14,35 @@ from datetime import datetime, timezone
 import shutil
 from typing import Any
 
+import yaml
+
 from services.yaml_exporter import build_product_yaml
 from services.long_term_transit_yaml import build_ai_long_term_transits_yaml
 from services.planner_export import render_personal_planner
+
+
+def _apply_display_timezone(yaml_text: str, lang: str) -> str:
+    """English planners show the collective sky in UTC (the neutral
+    international standard); Japanese planners keep the buyer's local timezone.
+
+    Natal positions are stored as absolute longitudes, so only the planner's
+    display/period timezone changes here — birth-chart accuracy is unaffected.
+    """
+    if lang != "en":
+        return yaml_text
+    try:
+        doc = yaml.safe_load(yaml_text)
+    except Exception:
+        return yaml_text
+    if not isinstance(doc, dict):
+        return yaml_text
+    if not isinstance(doc.get("input"), dict):
+        doc["input"] = {}
+    doc["input"]["timezone"] = "UTC"
+    long_term = ((doc.get("systems") or {}).get("western") or {}).get("transit_long_term")
+    if isinstance(long_term, dict) and isinstance(long_term.get("period"), dict):
+        long_term["period"]["timezone"] = "UTC"
+    return yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
 
 
 def build_planner_pdf_from_yaml(
@@ -26,6 +52,7 @@ def build_planner_pdf_from_yaml(
     months: int = 12,
 ) -> bytes:
     """Render planner bytes from stored natal + long-term-transit YAML."""
+    yaml_text = _apply_display_timezone(yaml_text, lang)
     pdf_path = render_personal_planner(
         yaml_text=yaml_text,
         lang=lang,
