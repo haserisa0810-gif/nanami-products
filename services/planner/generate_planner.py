@@ -483,6 +483,15 @@ class Planner:
 
     # ----------------------------------------------------------------- pages
 
+    def _cover_period_span(self) -> str:
+        """The actual 12-month coverage, shown small in place of a fixed year."""
+        if self.lang == "ja":
+            return (
+                f"{self.start_date.year}年{self.start_date.month}月"
+                f"  〜  {self.end_date.year}年{self.end_date.month}月"
+            )
+        return f"{self.start_date:%b %Y}  –  {self.end_date:%b %Y}"
+
     def draw_cover(self, spec: PageSpec) -> None:
         pdf = self.pdf
         navy = HexColor("#0B1633")
@@ -553,7 +562,7 @@ class Planner:
         pdf.drawCentredString(PAGE_WIDTH / 2, 751, "T H E   A S T R O L O G Y   L I B R A R Y")
         pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.72))
         pdf.setFont("Times-Roman", 8)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 730, "Celestial Almanac  /  Volume XXVII")
+        pdf.drawCentredString(PAGE_WIDTH / 2, 730, "Celestial Almanac")
 
         # Central celestial emblem.
         diamond(PAGE_WIDTH / 2, 560, 12)
@@ -561,29 +570,27 @@ class Planner:
         for dx in (-34, -18, 18, 34):
             pdf.line(PAGE_WIDTH / 2, 560, PAGE_WIDTH / 2 + dx, 590)
 
-        cover_year = str(self.end_date.year if self.rolling else self.start_date.year)
+        # Timeless title — no fixed year, because every copy is a rolling 12 months.
         pdf.setFillColor(ivory)
-        pdf.setFont("Times-Roman", 86)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 472, cover_year)
-
-        pdf.setStrokeColor(dim_gold)
-        pdf.line(205, 438, 279, 438)
-        pdf.line(316, 438, 390, 438)
-        diamond(PAGE_WIDTH / 2, 438, 8)
-
-        pdf.setFillColor(ivory)
-        pdf.setFont("Times-Roman", 31)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 391, "A S T R O L O G Y")
+        pdf.setFont("Times-Roman", 46)
+        pdf.drawCentredString(PAGE_WIDTH / 2, 476, "A S T R O L O G Y")
         pdf.setFillColor(bright_gold)
-        pdf.setFont("Times-Roman", 24)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 355, "P L A N N E R")
+        pdf.setFont("Times-Roman", 33)
+        pdf.drawCentredString(PAGE_WIDTH / 2, 431, "P L A N N E R")
 
         pdf.setStrokeColor(dim_gold)
-        pdf.line(205, 312, 390, 312)
-        pdf.line(205, 286, 390, 286)
+        pdf.line(205, 402, 279, 402)
+        pdf.line(316, 402, 390, 402)
+        diamond(PAGE_WIDTH / 2, 402, 8)
+
         pdf.setFillColor(ivory)
-        pdf.setFont("Helvetica", 9)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 295, "P E R S O N A L   E D I T I O N")
+        pdf.setFont("Helvetica", 9.5)
+        pdf.drawCentredString(PAGE_WIDTH / 2, 374, "P E R S O N A L   E D I T I O N")
+
+        # The real coverage span, small, in place of a fixed year.
+        pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.82))
+        pdf.setFont("Times-Roman", 13)
+        pdf.drawCentredString(PAGE_WIDTH / 2, 345, self._cover_period_span())
 
         # Publisher seal and imprint.
         diamond(PAGE_WIDTH / 2, 103, 29)
@@ -597,7 +604,7 @@ class Planner:
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawCentredString(PAGE_WIDTH / 2, 49, "N A N A M I   A S T R O")
 
-        self._link("index", 205, 280, 185, 45)
+        self._link("index", 200, 335, 212, 160)
 
     def draw_guide(self, spec: PageSpec) -> None:
         lang = self.lang
