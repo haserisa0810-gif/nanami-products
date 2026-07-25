@@ -26,6 +26,8 @@ from .planner_i18n import S
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATA = MODULE_ROOT / "data" / "2027_transits.json"
+# Year-less cover artwork; the year and edition lines are drawn over it.
+COVER_IMAGE = MODULE_ROOT / "assets" / "planner_cover.jpg"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "output" / "pdf"
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
@@ -483,138 +485,54 @@ class Planner:
 
     # ----------------------------------------------------------------- pages
 
-    def _cover_period_span(self) -> str:
-        """The actual 12-month coverage, shown small in place of a fixed year."""
-        if self.lang == "ja":
-            return (
-                f"{self.start_date.year}年{self.start_date.month}月"
-                f"  〜  {self.end_date.year}年{self.end_date.month}月"
-            )
-        return f"{self.start_date:%b %Y}  –  {self.end_date:%b %Y}"
+    def _cover_year_range(self) -> str:
+        """Shared EN/JA year label, e.g. "2026-2027" (a single year when the
+        edition happens to sit inside one calendar year)."""
+        if self.start_date.year == self.end_date.year:
+            return str(self.start_date.year)
+        return f"{self.start_date.year}\u2013{self.end_date.year}"
+
+    def _cover_edition_label(self) -> str:
+        """English wording, to sit with the artwork's baked-in English."""
+        return {
+            "personal": "P E R S O N A L   E D I T I O N",
+            "full": "F U L L   E D I T I O N",
+            "prototype": "P R O T O T Y P E",
+        }.get(self.mode, "")
 
     def draw_cover(self, spec: PageSpec) -> None:
+        """Cover artwork plus the only two variable lines: year and edition.
+
+        The artwork carries the masthead, title and tagline, so a single
+        year-less image serves every period and both languages.
+        """
         pdf = self.pdf
-        navy = HexColor("#0B1633")
-        ivory = HexColor("#F5EEDC")
+        navy = HexColor("#00162E")
         gold = HexColor("#C8A456")
         bright_gold = HexColor("#E1C477")
-        dim_gold = Color(0.78, 0.64, 0.34, alpha=0.48)
 
         pdf.setFillColor(navy)
         pdf.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, fill=1, stroke=0)
+        if COVER_IMAGE.exists():
+            pdf.drawImage(str(COVER_IMAGE), 0, 0, width=PAGE_WIDTH, height=PAGE_HEIGHT)
+        else:
+            # Keep generation working even if the asset is missing from a build.
+            pdf.setFillColor(bright_gold)
+            pdf.setFont("Times-Roman", 34)
+            pdf.drawCentredString(PAGE_WIDTH / 2, 470, "ASTROLOGY PLANNER")
 
-        # Art Deco double frame.
-        outer = 25.5
-        inner = 36.8
-        pdf.setStrokeColor(gold)
-        pdf.setLineWidth(1.25)
-        pdf.rect(outer, outer, PAGE_WIDTH - 2 * outer, PAGE_HEIGHT - 2 * outer)
-        pdf.setStrokeColor(dim_gold)
-        pdf.setLineWidth(0.55)
-        pdf.rect(inner, inner, PAGE_WIDTH - 2 * inner, PAGE_HEIGHT - 2 * inner)
+        # Both lines sit in the clear band between the globe base and the rule.
+        edition = self._cover_edition_label()
+        if edition:
+            pdf.setFillColor(gold)
+            pdf.setFont("Helvetica", 6.4)
+            pdf.drawCentredString(PAGE_WIDTH / 2, 156, edition)
 
-        def diamond(x: float, y: float, size: float, *, filled: bool = False) -> None:
-            pdf.saveState()
-            pdf.translate(x, y)
-            pdf.rotate(45)
-            pdf.setStrokeColor(bright_gold)
-            pdf.setFillColor(gold if filled else navy)
-            pdf.setLineWidth(0.8)
-            pdf.rect(-size / 2, -size / 2, size, size, fill=1 if filled else 0, stroke=1)
-            pdf.restoreState()
-
-        # Geometric corner ornaments.
-        for x, y, sx, sy in [
-            (outer, PAGE_HEIGHT - outer, 1, -1),
-            (PAGE_WIDTH - outer, PAGE_HEIGHT - outer, -1, -1),
-            (outer, outer, 1, 1),
-            (PAGE_WIDTH - outer, outer, -1, 1),
-        ]:
-            pdf.setStrokeColor(gold)
-            pdf.setLineWidth(0.8)
-            pdf.line(x, y, x + sx * 42, y)
-            pdf.line(x, y, x, y + sy * 42)
-            diamond(x + sx * 9, y + sy * 9, 8)
-
-        diamond(PAGE_WIDTH / 2, PAGE_HEIGHT - outer, 13)
-        diamond(PAGE_WIDTH / 2, outer, 13)
-
-        # Quiet constellation drawings.
-        constellations = [
-            [(58, 600), (86, 632), (120, 616), (139, 664), (165, 648)],
-            [(430, 177), (456, 160), (477, 203), (510, 188), (536, 226)],
-        ]
-        pdf.setStrokeColor(dim_gold)
-        pdf.setLineWidth(0.55)
-        for points in constellations:
-            for first, second in zip(points, points[1:]):
-                pdf.line(*first, *second)
-            for x, y in points:
-                diamond(x, y, 3.5)
-
-        # Library masthead.
-        pdf.setStrokeColor(gold)
-        pdf.setLineWidth(0.65)
-        pdf.line(92, 755, 191, 755)
-        pdf.line(PAGE_WIDTH - 191, 755, PAGE_WIDTH - 92, 755)
         pdf.setFillColor(bright_gold)
-        pdf.setFont("Helvetica-Bold", 9)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 751, "T H E   A S T R O L O G Y   L I B R A R Y")
-        pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.72))
-        pdf.setFont("Times-Roman", 8)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 730, "Celestial Almanac  ·  Hyperlinked Edition")
+        pdf.setFont("Times-Roman", 21)
+        pdf.drawCentredString(PAGE_WIDTH / 2, 133, self._cover_year_range())
 
-        # Central celestial emblem.
-        diamond(PAGE_WIDTH / 2, 560, 12)
-        pdf.setStrokeColor(dim_gold)
-        for dx in (-34, -18, 18, 34):
-            pdf.line(PAGE_WIDTH / 2, 560, PAGE_WIDTH / 2 + dx, 590)
-
-        # Timeless title — no fixed year, because every copy is a rolling 12 months.
-        pdf.setFillColor(ivory)
-        pdf.setFont("Times-Roman", 46)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 476, "A S T R O L O G Y")
-        pdf.setFillColor(bright_gold)
-        pdf.setFont("Times-Roman", 33)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 431, "P L A N N E R")
-
-        pdf.setStrokeColor(dim_gold)
-        pdf.line(205, 402, 279, 402)
-        pdf.line(316, 402, 390, 402)
-        diamond(PAGE_WIDTH / 2, 402, 8)
-
-        pdf.setFillColor(ivory)
-        pdf.setFont("Helvetica", 9.5)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 374, "P E R S O N A L   E D I T I O N")
-
-        # The real coverage span, small, in place of a fixed year.
-        pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.82))
-        pdf.setFont("Times-Roman", 13)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 345, self._cover_period_span())
-
-        # A quiet scope line so it reads as more than an astrology-only book.
-        scope = (
-            "トランジット  ·  月相  ·  デイリー記録  ·  AIノート"
-            if self.lang == "ja"
-            else "Transit Journal  ·  Moon Phases  ·  Daily Reflection  ·  AI Notes"
-        )
-        pdf.setFillColor(dim_gold)
-        pdf.setFont("Helvetica", 8)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 320, scope)
-
-        # Publisher seal and imprint.
-        diamond(PAGE_WIDTH / 2, 103, 29)
-        diamond(PAGE_WIDTH / 2, 103, 18)
-        pdf.setFillColor(bright_gold)
-        pdf.circle(PAGE_WIDTH / 2, 103, 2.2, fill=1, stroke=0)
-        pdf.setFillColor(Color(0.96, 0.93, 0.86, alpha=0.72))
-        pdf.setFont("Times-Italic", 8)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 68, "Observe the Heavens  /  Record Your Story")
-        pdf.setFillColor(bright_gold)
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawCentredString(PAGE_WIDTH / 2, 49, "N A N A M I   A S T R O")
-
-        self._link("index", 200, 335, 212, 160)
+        self._link("index", 150, 110, 312, 95)
 
     def draw_guide(self, spec: PageSpec) -> None:
         lang = self.lang
