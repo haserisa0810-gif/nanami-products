@@ -64,6 +64,78 @@ class EtsyMailParseTest(unittest.TestCase):
         for title, expected in cases.items():
             self.assertEqual(sync._guess_product_type("", f"商品： {title}"), expected)
 
+    def test_unknown_etsy_product_is_not_guessed(self) -> None:
+        parsed = sync._parse_etsy_mail(
+            "初めての販売おめでとうございます！注文の詳細はこちらです。",
+            ETSY_MAIL_BODY.replace(
+                "[NP-WBT] AI-Readable Natal Data + Transits",
+                "テスト",
+            ),
+            "<etsy-unknown>",
+            None,
+            "Etsy <emails@mail.etsy.com>",
+        )
+        self.assertIsNotNone(parsed)
+        self.assertIsNone(parsed["product_type"])
+
+
+class EtsyStrictVerificationTest(unittest.TestCase):
+    def _check(self, order_row: dict, product_type: str = "western_basic"):
+        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
+            routes,
+            "_verify_strict_stores_order",
+            return_value=("ok", order_row),
+        ):
+            return routes._check_order_for_redeem(
+                order_id="4125350780",
+                provider="etsy",
+                product_type=product_type,
+            )
+
+    def test_unknown_product_is_rejected_without_consuming_order(self) -> None:
+        status, _row, error, code = self._check({
+            "stores_order_no": "4125350780",
+            "provider": "etsy",
+            "payment_status": "paid",
+            "product_type": None,
+        })
+        self.assertEqual(status, "product_unverified")
+        self.assertIn("商品", error)
+        self.assertEqual(code, 409)
+
+    def test_matching_product_is_accepted(self) -> None:
+        status, _row, error, code = self._check({
+            "stores_order_no": "4125350780",
+            "provider": "etsy",
+            "payment_status": "paid",
+            "product_type": "western_basic",
+        })
+        self.assertEqual(status, "ok")
+        self.assertIsNone(error)
+        self.assertEqual(code, 200)
+
+    def test_different_product_is_rejected(self) -> None:
+        status, _row, error, code = self._check({
+            "stores_order_no": "4125350780",
+            "provider": "etsy",
+            "payment_status": "paid",
+            "product_type": "western_full",
+        })
+        self.assertEqual(status, "product_mismatch")
+        self.assertIsNotNone(error)
+        self.assertEqual(code, 409)
+
+    def test_non_etsy_mail_row_is_rejected(self) -> None:
+        status, _row, error, code = self._check({
+            "stores_order_no": "4125350780",
+            "provider": "stores",
+            "payment_status": "paid",
+            "product_type": "western_basic",
+        })
+        self.assertEqual(status, "not_found")
+        self.assertIn("Etsy", error)
+        self.assertEqual(code, 400)
+
 
 class PayhipMailParseTest(unittest.TestCase):
     def test_sample_mail_uses_order_id_as_key(self) -> None:

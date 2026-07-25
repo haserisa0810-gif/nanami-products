@@ -1924,6 +1924,20 @@ def _check_order_for_redeem(
         return status, order_row, None, 200
 
     purchased_type = (order_row or {}).get("product_type")
+    if enforce_product_type and provider == "etsy" and not purchased_type:
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=True,
+            check_result="product_unverified",
+            reason="Etsy notification did not contain a recognized product code or title",
+        )
+        return (
+            "product_unverified",
+            order_row,
+            "Etsyの商品を確認できませんでした。購入商品の商品コードを販売者に確認してください。",
+            409,
+        )
     if enforce_product_type and purchased_type and purchased_type != product_type:
         return (
             "product_mismatch",
