@@ -64,7 +64,7 @@ class EtsyMailParseTest(unittest.TestCase):
         for title, expected in cases.items():
             self.assertEqual(sync._guess_product_type("", f"商品： {title}"), expected)
 
-    def test_unknown_etsy_product_is_not_guessed(self) -> None:
+    def test_exact_test_listing_is_treated_as_basic_for_live_e2e(self) -> None:
         parsed = sync._parse_etsy_mail(
             "初めての販売おめでとうございます！注文の詳細はこちらです。",
             ETSY_MAIL_BODY.replace(
@@ -72,6 +72,20 @@ class EtsyMailParseTest(unittest.TestCase):
                 "テスト",
             ),
             "<etsy-unknown>",
+            None,
+            "Etsy <emails@mail.etsy.com>",
+        )
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["product_type"], "western_basic")
+
+    def test_product_name_merely_containing_test_is_not_guessed(self) -> None:
+        parsed = sync._parse_etsy_mail(
+            "初めての販売おめでとうございます！注文の詳細はこちらです。",
+            ETSY_MAIL_BODY.replace(
+                "[NP-WBT] AI-Readable Natal Data + Transits",
+                "テスト用ではない商品",
+            ),
+            "<etsy-not-exact-test>",
             None,
             "Etsy <emails@mail.etsy.com>",
         )

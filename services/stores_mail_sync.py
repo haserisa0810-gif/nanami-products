@@ -255,6 +255,17 @@ def _guess_product_type(subject: str, body: str) -> str | None:
     return None
 
 
+def _etsy_product_type(subject: str, body: str) -> str | None:
+    product_type = _guess_product_type(subject, body)
+    if product_type:
+        return product_type
+    # Etsyの実注文を使うE2E試験専用。商品行が「テスト」完全一致の場合だけ
+    # 基本版として扱い、「テストを含む」一般商品には波及させない。
+    if re.search(r"^\s*(?:商品|Product)\s*[：:]\s*テスト\s*$", body, re.I | re.M):
+        return "western_basic"
+    return None
+
+
 def _parse_stores_mail(
     subject: str,
     body: str,
@@ -394,7 +405,7 @@ def _parse_etsy_mail(
     return {
         "stores_order_no": order_no,
         "provider": "etsy",
-        "product_type": _guess_product_type(subject, body),
+        "product_type": _etsy_product_type(subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
