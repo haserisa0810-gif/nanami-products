@@ -137,6 +137,58 @@ class EtsyStrictVerificationTest(unittest.TestCase):
         self.assertEqual(code, 400)
 
 
+class StrictMailSyncFailureTest(unittest.TestCase):
+    def test_imap_failure_is_not_reported_as_order_not_found(self) -> None:
+        with patch.object(
+            routes.stores_mail_sync,
+            "verify_order_no",
+            return_value=("not_found", None),
+        ), patch.object(
+            routes.stores_mail_sync,
+            "sync",
+            return_value={
+                "ok": False,
+                "fetched": 0,
+                "parsed": 0,
+                "inserted": 0,
+                "skipped": 0,
+                "errors": 0,
+                "message": "authentication failed",
+            },
+        ):
+            with self.assertRaisesRegex(RuntimeError, "購入履歴の同期に失敗"):
+                routes._verify_strict_stores_order("4125350780")
+
+    def test_successful_sync_rechecks_the_order(self) -> None:
+        order_row = {
+            "stores_order_no": "4125350780",
+            "provider": "etsy",
+            "product_type": "western_basic",
+            "payment_status": "paid",
+        }
+        with patch.object(
+            routes.stores_mail_sync,
+            "verify_order_no",
+            side_effect=[("not_found", None), ("ok", order_row)],
+        ) as verify, patch.object(
+            routes.stores_mail_sync,
+            "sync",
+            return_value={
+                "ok": True,
+                "fetched": 1,
+                "parsed": 1,
+                "inserted": 1,
+                "skipped": 0,
+                "errors": 0,
+                "message": "",
+            },
+        ):
+            status, row = routes._verify_strict_stores_order("4125350780")
+        self.assertEqual(status, "ok")
+        self.assertEqual(row, order_row)
+        self.assertEqual(verify.call_count, 2)
+
+
 class PayhipMailParseTest(unittest.TestCase):
     def test_sample_mail_uses_order_id_as_key(self) -> None:
         parsed = sync._parse_payhip_mail(

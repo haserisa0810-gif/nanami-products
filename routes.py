@@ -1732,7 +1732,15 @@ def _verify_strict_stores_order(order_id: str) -> tuple[str, dict | None]:
             submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
         except ValueError:
             submit_limit = 100
-        stores_mail_sync.sync(limit=submit_limit)
+        sync_result = stores_mail_sync.sync(limit=submit_limit)
+        if not sync_result.get("ok"):
+            logger.error(
+                "order_mail_sync_failed fetched=%s parsed=%s errors=%s",
+                sync_result.get("fetched"),
+                sync_result.get("parsed"),
+                sync_result.get("errors"),
+            )
+            raise RuntimeError("購入履歴の同期に失敗しました。管理者に連絡してください。")
         status, order_row = stores_mail_sync.verify_order_no(order_id)
     return status, order_row
 
