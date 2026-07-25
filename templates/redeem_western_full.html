@@ -32,7 +32,7 @@
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
       <form method="post" action="{{ redeem_url }}?lang={{ lang }}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
-        <input type="hidden" name="product_type" value="western_full">
+        <input type="hidden" name="product_type" value="{{ product_type }}">
         <input type="hidden" name="gender" value="unknown">
 
         <div class="form-section">
@@ -42,6 +42,7 @@
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>{{ t.provider_stores }}</option>
               <option value="payhip" {% if provider == 'payhip' %}selected{% endif %}>{{ t.provider_payhip }}</option>
+              <option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>{{ t.provider_etsy }}</option>
             </select>
           </label>
           <div id="standard-order-fields">

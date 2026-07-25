@@ -42,6 +42,7 @@
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>{{ t.provider_stores }}</option>
               <option value="payhip" {% if provider == 'payhip' %}selected{% endif %}>{{ t.provider_payhip }}</option>
+              <option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>{{ t.provider_etsy }}</option>
             </select>
           </label>
           <div id="standard-order-fields">

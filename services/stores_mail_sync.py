@@ -1,7 +1,7 @@
 """
 services/stores_mail_sync.py
 ----------------------------
-STORESの購入完了メールをIMAPで取得し、件名のオーダー番号を
+STORES・Payhip・Etsyの購入完了メールをIMAPで取得し、注文番号を
 nanami_products.stores_orders テーブルに登録する独立モジュール。
 
 nanami-astroの routes_public_orders.py の実装をベースに、
@@ -14,6 +14,8 @@ nanami-productsの用途に合わせてシンプル化したもの。
   STORES_MAIL_USERNAME     必須
   STORES_MAIL_PASSWORD     必須（Gmailはアプリパスワード）
   STORES_MAIL_FROM_FILTER  (default: hello@stores.jp)
+  PAYHIP_MAIL_FROM_FILTER  (default: contact@payhip.com)
+  ETSY_MAIL_FROM_FILTER    (default: emails@mail.etsy.com)
   STORES_MAIL_SYNC_TOKEN   Cloud Schedulerからの呼び出し認証トークン
 """
 
@@ -37,6 +39,7 @@ from psycopg2.extras import RealDictCursor
 SCHEMA = "nanami_products"
 STORES_FROM_DEFAULT = "hello@stores.jp"
 PAYHIP_FROM_DEFAULT = "contact@payhip.com"
+ETSY_FROM_DEFAULT = "emails@mail.etsy.com"
 
 # STORESの通知メールを識別するパターン
 _OWNER_NOTICE_PATTERN = re.compile(
@@ -60,6 +63,9 @@ _SUBJECT_ORDER_NO_RE = re.compile(
 # Payhip商品は [NP-AA]（小惑星addon）/ [NP-TA]（31日トランジットaddon）も使う
 # （routes.PAYHIP_PRODUCTS と対応させること）。
 _PRODUCT_CODE_PATTERNS = [
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?ACG\s*[\]］】]?", re.I), "acg_bundle"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?WBA\s*[\]］】]?", re.I), "western_asteroids"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?WBT\s*[\]］】]?", re.I), "western_transit"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WB\s*[\]］】]?", re.I), "western_basic"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WF\s*[\]］】]?", re.I), "western_full"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WA\s*[\]］】]?", re.I), "western_asteroids_addon"),
@@ -73,6 +79,9 @@ _PRODUCT_CODE_PATTERNS = [
 ]
 # 旧商品名や手動テスト用の補助判定。通常運用では商品名コードを使う。
 _PRODUCT_TYPE_PATTERNS = [
+    (re.compile(r"ACG\s*(?:bundle|バンドル)|アストロカートグラフィ.*(?:bundle|バンドル)|astrocartography.*(?:bundle|premium)", re.I), "acg_bundle"),
+    (re.compile(r"(?:基本|basic|core).*(?:小惑星|asteroids?)|(?:小惑星|asteroids?).*(?:基本|basic|core)", re.I), "western_asteroids"),
+    (re.compile(r"(?:基本|basic|core).*(?:トランジット|transit)|(?:トランジット|transit).*(?:基本|basic|core)", re.I), "western_transit"),
     (re.compile(r"FULL|フル|プレミアム|premium", re.I), "western_full"),
     (re.compile(r"小惑星.*追加|追加.*小惑星|asteroids? addon|asteroids?追加", re.I), "western_asteroids_addon"),
     (re.compile(r"(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット).*追加|追加.*(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット)|transit.*addon", re.I), "western_31days_transit_addon"),
@@ -98,6 +107,7 @@ def _get_conn():
 STORES_ORDERS_DDL = f"""
 CREATE TABLE IF NOT EXISTS {SCHEMA}.stores_orders (
     stores_order_no  TEXT        PRIMARY KEY,
+    provider         TEXT,
     product_type     TEXT,
     amount           INTEGER,
     payment_status   TEXT        DEFAULT 'paid',
@@ -120,6 +130,7 @@ def ensure_table() -> None:
                 cur.execute(f"CREATE SCHEMA {SCHEMA}")
             cur.execute(STORES_ORDERS_DDL)
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS product_type TEXT")
+            cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS provider TEXT")
         con.commit()
     except Exception:
         con.rollback()
@@ -203,6 +214,7 @@ def _extract_first(patterns: list[str], text_value: str) -> str | None:
 
 def _extract_amount(text_value: str) -> int | None:
     patterns = [
+        r"(?:Total|合計)\s*[：:]?\s*US\$\s*([0-9][0-9,]*)(?:\.[0-9]+)?",
         r"(?:Total|Amount)\s*[：:]?\s*(?:USD\s*)?[$＄]\s*([0-9][0-9,]*)(?:\.[0-9]+)?",
         r"(?:お支払い金額|合計金額|ご請求金額|金額|合計（税込）)\s*[：:]?\s*[¥￥]?\s*([0-9][0-9,]*)",
         r"[¥￥]\s*([0-9][0-9,]*)",
@@ -292,6 +304,7 @@ def _parse_stores_mail(
 
     return {
         "stores_order_no": order_no,
+        "provider": "stores",
         "product_type": _guess_product_type(subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
@@ -336,6 +349,51 @@ def _parse_payhip_mail(
 
     return {
         "stores_order_no": order_id,
+        "provider": "payhip",
+        "product_type": _guess_product_type(subject, body),
+        "amount": _extract_amount(body),
+        "mail_subject": subject,
+        "raw_message_id": message_id,
+        "mail_received_at": received_at,
+        "payment_status": payment_status,
+    }
+
+
+def _parse_etsy_mail(
+    subject: str,
+    body: str,
+    message_id: str | None,
+    received_at: datetime | None,
+    from_value: str,
+) -> dict[str, object] | None:
+    """Etsyのショップ向け注文通知メールを解析する。"""
+    combined = f"{from_value}\n{subject}\n{body}"
+    combined_lower = combined.lower()
+    if (
+        "etsy" not in combined_lower
+        and "mail.etsy.com" not in combined_lower
+        and "注文の詳細" not in combined
+        and "order details" not in combined_lower
+    ):
+        return None
+
+    order_no = _extract_first(
+        [
+            r"注文番号\s*[：:]\s*([0-9]{10})",
+            r"Order\s*(?:number|#)\s*[：:#]?\s*([0-9]{10})",
+        ],
+        combined,
+    )
+    if not order_no:
+        return None
+
+    payment_status = "paid"
+    if re.search(r"キャンセル|返金|cancelled|canceled|refunded", combined, re.I):
+        payment_status = "cancelled"
+
+    return {
+        "stores_order_no": order_no,
+        "provider": "etsy",
         "product_type": _guess_product_type(subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
@@ -356,10 +414,11 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
         cur.execute(
             f"""
             INSERT INTO {SCHEMA}.stores_orders
-                (stores_order_no, product_type, amount, payment_status,
+                (stores_order_no, provider, product_type, amount, payment_status,
                  mail_subject, raw_message_id, mail_received_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (stores_order_no) DO UPDATE SET
+                provider         = COALESCE(EXCLUDED.provider,         {SCHEMA}.stores_orders.provider),
                 product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.stores_orders.product_type),
                 amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.stores_orders.amount),
                 payment_status   = CASE
@@ -375,6 +434,7 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
             """,
             (
                 parsed["stores_order_no"],
+                parsed.get("provider"),
                 parsed.get("product_type"),
                 parsed.get("amount"),
                 parsed.get("payment_status", "paid"),
@@ -391,7 +451,7 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
 
 def sync(*, limit: int = 100) -> dict[str, Any]:
     """
-    IMAPでSTORESメールを取得し、stores_ordersに登録する。
+    IMAPでSTORES・Payhip・Etsyメールを取得し、stores_ordersに登録する。
 
     Returns:
         {ok, fetched, parsed, inserted, skipped, errors, message}
@@ -402,6 +462,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
     password = (os.getenv("STORES_MAIL_PASSWORD") or "").strip()
     from_filter = (os.getenv("STORES_MAIL_FROM_FILTER", STORES_FROM_DEFAULT) or "").strip()
     payhip_from_filter = (os.getenv("PAYHIP_MAIL_FROM_FILTER", PAYHIP_FROM_DEFAULT) or "").strip()
+    etsy_from_filter = (os.getenv("ETSY_MAIL_FROM_FILTER", ETSY_FROM_DEFAULT) or "").strip()
 
     counters = dict(fetched=0, parsed=0, inserted=0, skipped=0, errors=0)
 
@@ -417,7 +478,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
 
         status = "OK"
         search_ids: list[bytes] = []
-        for candidate in dict.fromkeys([from_filter, payhip_from_filter]):
+        for candidate in dict.fromkeys([from_filter, payhip_from_filter, etsy_from_filter]):
             if not candidate:
                 continue
             candidate_status, candidate_data = conn_imap.search(None, "FROM", f'"{candidate}"')
@@ -458,7 +519,9 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
             if (
                 from_filter.lower() not in combined_lower
                 and payhip_from_filter.lower() not in combined_lower
+                and etsy_from_filter.lower() not in combined_lower
                 and "payhip" not in combined_lower
+                and "etsy" not in combined_lower
                 and "you've sold an item" not in combined_lower
                 and "you have sold an item" not in combined_lower
                 and "order id:" not in combined_lower
@@ -472,7 +535,8 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
                 continue
 
             parsed = (
-                _parse_payhip_mail(subject, body, message_id, received_at, from_value)
+                _parse_etsy_mail(subject, body, message_id, received_at, from_value)
+                or _parse_payhip_mail(subject, body, message_id, received_at, from_value)
                 or _parse_stores_mail(subject, body, message_id, received_at, from_value)
             )
             if not parsed:

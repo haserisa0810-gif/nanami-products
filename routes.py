@@ -473,6 +473,30 @@ PRODUCT_CONFIG = {
         "include_shichusuimei": False,
         "include_transit": True,
     },
+    "western_asteroids": {
+        "label": "ホロスコープ基本版＋小惑星",
+        "description": "基本版の出生図に小惑星データを加えて生成します。トランジットは含みません。",
+        "features": ["基本版の出生図", "小惑星込み", "トランジットなし"],
+        "include_asteroids": True,
+        "include_shichusuimei": False,
+        "include_transit": False,
+    },
+    "western_transit": {
+        "label": "ホロスコープ基本版＋トランジット",
+        "description": "基本版の出生図にトランジットを加えて生成します。小惑星は含みません。",
+        "features": ["基本版の出生図", "トランジット込み", "プランナー対応"],
+        "include_asteroids": False,
+        "include_shichusuimei": False,
+        "include_transit": True,
+    },
+    "acg_bundle": {
+        "label": "ACGバンドル",
+        "description": "出生図・小惑星・トランジットとACG活用をまとめたプレミアム商品です。",
+        "features": ["小惑星込み", "トランジット込み", "プランナー・ACG対応"],
+        "include_asteroids": True,
+        "include_shichusuimei": False,
+        "include_transit": True,
+    },
     "western_asteroids_addon": {
         "label": "ホロスコープ：小惑星追加",
         "description": "基本版購入後に、小惑星データだけを追加するためのYAMLを生成します。",
@@ -518,6 +542,9 @@ PRODUCT_CONFIG = {
 PRODUCT_SLUGS = {
     "western_basic": "western-basic",
     "western_full": "western-full",
+    "western_asteroids": "western-asteroids",
+    "western_transit": "western-transit",
+    "acg_bundle": "acg-bundle",
     "western_asteroids_addon": "western-asteroids-addon",
     "shichu": "shichu",
     "transit_yaml": "transit-yaml",
@@ -535,6 +562,9 @@ I18N = {
         "product_labels": {
             "western_basic": "ホロスコープ基本版",
             "western_full": "ホロスコープFULL版",
+            "western_asteroids": "ホロスコープ基本版＋小惑星",
+            "western_transit": "ホロスコープ基本版＋トランジット",
+            "acg_bundle": "ACGバンドル",
             "western_asteroids_addon": "ホロスコープ：小惑星追加",
             "shichu": "四柱推命鑑定",
             "transit_yaml": "トランジットYAML版",
@@ -583,6 +613,7 @@ I18N = {
         "provider_stores": "STORES",
         "provider_gumroad": "Gumroad",
         "provider_payhip": "Payhip",
+        "provider_etsy": "Etsy",
         "stores_order": "注文番号",
         "payhip_email": "購入時のメールアドレス",
         "payhip_product": "購入した商品",
@@ -905,6 +936,9 @@ I18N = {
         "product_labels": {
             "western_basic": "Basic horoscope",
             "western_full": "Full horoscope",
+            "western_asteroids": "Basic horoscope + asteroids",
+            "western_transit": "Basic horoscope + transits",
+            "acg_bundle": "Astrocartography (ACG) bundle",
             "western_asteroids_addon": "Horoscope asteroid add-on",
             "shichu": "Four Pillars data",
             "transit_yaml": "Transit YAML",
@@ -954,6 +988,7 @@ I18N = {
         "provider_stores": "STORES",
         "provider_gumroad": "Gumroad",
         "provider_payhip": "Payhip",
+        "provider_etsy": "Etsy",
         "stores_order": "Order number",
         "payhip_email": "Email address used for purchase",
         "payhip_product": "Purchased product",
@@ -1458,7 +1493,10 @@ def _build_chart_artifacts(
             share_yaml_text = build_light_astrology_yaml(yaml_text, doc=doc)
         except Exception:
             share_yaml_text = yaml_text
-    if product_type in {"western_basic", "western_full"}:
+    if product_type in {
+        "western_basic", "western_full", "western_asteroids",
+        "western_transit", "acg_bundle",
+    }:
         try:
             horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=doc))
         except Exception:
@@ -1478,8 +1516,10 @@ def _build_chart_artifacts(
 def _buyer_template(prefix: str, product_type: str) -> str:
     if product_type not in PRODUCT_CONFIG:
         product_type = "western_basic"
-    if product_type == "western_asteroids_addon":
+    if product_type in {"western_asteroids_addon", "western_asteroids"}:
         return f"{prefix}_western_basic.html"
+    if product_type in {"western_transit", "acg_bundle"}:
+        return f"{prefix}_western_full.html"
     return f"{prefix}_{product_type}.html"
 
 
@@ -1488,7 +1528,7 @@ def _truthy(value: str | None) -> bool:
 
 
 ORDER_CODE_RE = re.compile(r"[A-Za-z0-9=_-]+")
-ORDER_PROVIDERS = {"stores", "gumroad", "payhip"}
+ORDER_PROVIDERS = {"stores", "gumroad", "payhip", "etsy"}
 # Gumroad relaxed（サーバー照合なし）を許す商品。Gumroadで販売しているのは西洋2種のみで、
 # provider欄の無いフォーム（四柱推命・トランジット等）が非数字コードで無検証発行になるのを防ぐ。
 GUMROAD_RELAXED_PRODUCT_TYPES = {"western_basic", "western_full"}
@@ -1498,6 +1538,7 @@ ORDER_CHECK_POLICIES = {
     # server-side email/order/product tag verification after the mail format is stable.
     "gumroad": {"strict": False},
     "payhip": {"strict": True},
+    "etsy": {"strict": True},
 }
 PAYHIP_PRODUCTS = {
     "NP-WB": {
@@ -1813,8 +1854,8 @@ def _check_order_for_redeem(
             check_result="skipped" if provider == "stores" else "error",
             reason="DATABASE_URL is not configured",
         )
-        if provider == "gumroad":
-            return "error", None, "Gumroad注文の確認に必要なDATABASE_URLが未設定です。", 503
+        if provider != "stores":
+            return "error", None, f"{_provider_label(provider)}注文の確認に必要なDATABASE_URLが未設定です。", 503
         return "ok", None, None, 200
 
     try:
@@ -1852,6 +1893,15 @@ def _check_order_for_redeem(
         return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
 
     row_provider = str((order_row or {}).get("provider") or "").strip().lower()
+    if provider == "etsy" and row_provider != "etsy":
+        _log_order_check(
+            provider=provider,
+            order_id=order_id,
+            strict_check=True,
+            check_result="provider_missing",
+            reason="Etsy orders must originate from an Etsy notification email",
+        )
+        return "not_found", order_row, f"注文番号（{order_id}）をEtsyの注文として確認できません。", 400
     if row_provider and row_provider != provider:
         _log_order_check(
             provider=provider,
@@ -1886,6 +1936,8 @@ def _check_order_for_redeem(
 
 
 def _provider_label(provider: str | None) -> str:
+    if provider == "etsy":
+        return "Etsy"
     if provider == "payhip":
         return "Payhip"
     if provider == "gumroad":
@@ -4288,6 +4340,8 @@ def redeem_post(
             "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
             **payhip_metadata,
         }
+        if product_type == "acg_bundle":
+            chart_options["acg_enabled"] = True
         artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
         expires_at = _chart_expires_at()
         try:
@@ -4350,7 +4404,7 @@ def redeem_post(
             return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。別の注文番号をご確認ください。", status=409)
 
         chart_redirect = f"/chart/{token}"
-        if order_provider_clean in {"stores", "payhip"}:
+        if order_provider_clean in {"stores", "payhip", "etsy"}:
             chart_redirect = f"{chart_redirect}?chart_download=1"
         return RedirectResponse(chart_redirect, status_code=303)
 
@@ -4435,6 +4489,8 @@ def redeem_post(
         "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
         **payhip_metadata,
     }
+    if product_type == "acg_bundle":
+        chart_options["acg_enabled"] = True
     artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
     expires_at = _chart_expires_at()
     try:
@@ -4502,7 +4558,7 @@ def redeem_post(
 
     chart_redirect = f"/chart/{token}"
     redirect_params = []
-    if order_provider_clean in {"stores", "payhip"}:
+    if order_provider_clean in {"stores", "payhip", "etsy"}:
         redirect_params.append("chart_download=1")
     if lang != "ja":
         redirect_params.append(f"lang={lang}")
@@ -4704,6 +4760,8 @@ def chart_planner_pdf(request: Request, token: str):
         and _chart_has_31day_transit(chart, doc=chart_doc)
         and product_type in {
             "western_full",
+            "western_transit",
+            "acg_bundle",
             "western_31days_transit_addon",
             "western_note_transit_addon",
         }
@@ -4789,7 +4847,8 @@ def chart_download_zip(request: Request, token: str):
         zf.writestr("ai_paste.txt", ai_paste_text)
         if full_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
-            zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
+            if has_western_asteroids:
+                zf.writestr("natal-asteroids.yaml", build_natal_asteroids_yaml(chart["yaml_text"]))
             zf.writestr("transit.yaml", build_transit_astrology_yaml(chart["yaml_text"]))
         elif asteroid_like_western:
             zf.writestr("natal.yaml", build_base_astrology_yaml(chart["yaml_text"]))
@@ -4806,7 +4865,7 @@ def chart_download_zip(request: Request, token: str):
         if chart.get("shichusuimei_svg"):
             zf.writestr("shichusuimei.svg", optimize_svg(chart["shichusuimei_svg"]) or "")
         zf.writestr("prompt.txt", prompt_text)
-        if order_provider in {"stores", "payhip"}:
+        if order_provider in {"stores", "payhip", "etsy"}:
             zf.writestr(
                 "CHART-PAGE-URL.txt",
                 "鑑定ページURL\n"
@@ -4848,6 +4907,7 @@ def chart_page(request: Request, token: str):
         options = chart.get("options") or {}
         product_type = _chart_product_type(options)
         is_personal_edition = bool(options.get("personal_edition"))
+        acg_enabled = bool(options.get("acg_enabled"))
         personal_edition_acg = is_personal_edition and bool(options.get("acg_enabled"))
         is_transit_yaml = product_type == "transit_yaml"
         chart_doc = None
@@ -4931,6 +4991,7 @@ def chart_page(request: Request, token: str):
                 "chart": chart,
                 "is_transit_yaml": is_transit_yaml,
                 "is_personal_edition": is_personal_edition,
+                "acg_enabled": acg_enabled,
                 "personal_edition_acg": personal_edition_acg,
                 "personal_edition_zip_url": f"{base_url}/chart/{token}/personal-edition.zip",
                 "planner_pdf_url": (
@@ -4938,6 +4999,8 @@ def chart_page(request: Request, token: str):
                     if full_like_western
                     and product_type in {
                         "western_full",
+                        "western_transit",
+                        "acg_bundle",
                         "western_31days_transit_addon",
                         "western_note_transit_addon",
                     }

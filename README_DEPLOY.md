@@ -70,8 +70,21 @@ STORES_MAIL_USERNAME=<STORES通知を受けるメールアドレス>
 STORES_MAIL_PASSWORD=<Gmailの場合はアプリパスワード>
 STORES_MAIL_SYNC_TOKEN=<任意の長いランダム文字列>
 STORES_MAIL_FROM_FILTER=hello@stores.jp
+ETSY_MAIL_FROM_FILTER=emails@mail.etsy.com
 STORES_MAIL_SYNC_ON_SUBMIT=1
 ```
+
+Etsyも同じメール同期を使います。各リスティングの商品名またはSKUに、次の判定コードを入れ、対応する入力URLをデジタルダウンロード内で案内します。
+
+```text
+[NP-WB]  基本版                  → /redeem/western-basic?lang=en
+[NP-WBA] 基本版＋小惑星          → /redeem/western-asteroids?lang=en
+[NP-WBT] 基本版＋トランジット    → /redeem/western-transit?lang=en
+[NP-WF]  FULL                    → /redeem/western-full?lang=en
+[NP-ACG] ACGバンドル             → /redeem/acg-bundle?lang=en
+```
+
+購入者は入力画面で購入元に「Etsy」を選び、Etsy購入メールの10桁の注文番号を入力します。注文メールが同期済みで、商品コードと入力URLが一致した場合だけ発行されます。ACGパーソナルエディションのコード発行・有効化フローとは独立しています。
 
 テスト用のオーダー番号は以下のように登録できます。
 

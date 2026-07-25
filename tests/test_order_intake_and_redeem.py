@@ -26,6 +26,44 @@ Product: AI-Readable Natal Data Core Pack [NP-WB]
 Total: $7.00
 """
 
+ETSY_MAIL_BODY = """\
+注文の詳細
+注文番号： 4125350780
+取引番号： 5152950642
+商品： [NP-WBT] AI-Readable Natal Data + Transits
+個数： 1
+商品価格： US$12.00
+合計: US$12.00
+"""
+
+
+class EtsyMailParseTest(unittest.TestCase):
+    def test_etsy_order_uses_order_number_and_product_code(self) -> None:
+        parsed = sync._parse_etsy_mail(
+            "初めての販売おめでとうございます！注文の詳細はこちらです。",
+            ETSY_MAIL_BODY,
+            "<etsy-1>",
+            None,
+            "Etsy <emails@mail.etsy.com>",
+        )
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["stores_order_no"], "4125350780")
+        self.assertEqual(parsed["provider"], "etsy")
+        self.assertEqual(parsed["product_type"], "western_transit")
+        self.assertEqual(parsed["payment_status"], "paid")
+        self.assertEqual(parsed["amount"], 12)
+
+    def test_etsy_product_composition_mapping(self) -> None:
+        cases = {
+            "[NP-WB] Basic": "western_basic",
+            "[NP-WBA] Basic + Asteroids": "western_asteroids",
+            "[NP-WBT] Basic + Transit": "western_transit",
+            "[NP-WF] FULL": "western_full",
+            "[NP-ACG] ACG Bundle": "acg_bundle",
+        }
+        for title, expected in cases.items():
+            self.assertEqual(sync._guess_product_type("", f"商品： {title}"), expected)
+
 
 class PayhipMailParseTest(unittest.TestCase):
     def test_sample_mail_uses_order_id_as_key(self) -> None:
@@ -121,6 +159,7 @@ class OrderProviderResolutionTest(unittest.TestCase):
     def test_explicit_provider_wins(self) -> None:
         self.assertEqual(routes._resolve_order_provider("LWR6I4Y4Wa", "payhip"), "payhip")
         self.assertEqual(routes._resolve_order_provider("9824333454", "stores"), "stores")
+        self.assertEqual(routes._resolve_order_provider("4125350780", "etsy"), "etsy")
 
     def test_non_numeric_without_provider_falls_back_to_gumroad(self) -> None:
         self.assertEqual(routes._resolve_order_provider("LWR6I4Y4Wa"), "gumroad")

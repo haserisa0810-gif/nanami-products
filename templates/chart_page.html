@@ -981,6 +981,11 @@
             </a>
             {% endif %}
             {% endif %}
+            {% if acg_enabled and not is_personal_edition %}
+            <a class="download-primary" id="acg-bundle-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
+              {% if lang == 'ja' %}あなたのACG地図を見る{% else %}View your ACG map{% endif %}
+            </a>
+            {% endif %}
             {% if planner_pdf_url %}
             <a class="download-primary" id="personal-planner-button" href="{{ planner_pdf_url }}" download>
               {% if lang == 'ja' %}あなたの1年トランジット手帳（PDF）を作成・保存{% else %}Create your 1-Year Transit Planner (PDF){% endif %}

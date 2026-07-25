@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS nanami_products.charts (
 
 CREATE TABLE IF NOT EXISTS nanami_products.stores_orders (
   stores_order_no TEXT PRIMARY KEY,
+  provider TEXT,
   product_type TEXT,
   amount INTEGER,
   payment_status TEXT DEFAULT 'paid',
@@ -111,6 +112,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_api_keys_order_code_unique
 
 ALTER TABLE nanami_products.stores_orders
   ADD COLUMN IF NOT EXISTS product_type TEXT;
+ALTER TABLE nanami_products.stores_orders
+  ADD COLUMN IF NOT EXISTS provider TEXT;
 
 -- 旧DDL互換: 管理者手動発行では order_code が NULL になるため許可する
 ALTER TABLE nanami_products.charts ALTER COLUMN order_code DROP NOT NULL;
