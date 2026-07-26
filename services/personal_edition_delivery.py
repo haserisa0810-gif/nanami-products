@@ -71,6 +71,77 @@ def _autoload_script(*, include_acg: bool, lang: str) -> str:
   </script>
 """ % acg_link
 
+
+def _standalone_acg_html(
+    *,
+    acg_html: str,
+    leaflet_css: str,
+    leaflet_js: str,
+    acg_data: dict,
+    chart_url: str | None,
+) -> str:
+    """Build a file://-safe ACG app with personal data and Leaflet embedded."""
+    data_json = json.dumps(acg_data, ensure_ascii=False, separators=(",", ":"))
+    fetch_code = (
+        "fetch('/acg-personal.geojson',{cache:'no-store'}).then(function(r){if(!r.ok)"
+        "throw Error('not found');return r.json()}).then(function(x){data=x;render();"
+        "document.getElementById('status').textContent='計算基準: '+((x.meta&&x.meta."
+        "datetime_utc)||'確認済み出生日時');}).catch(function(){document.getElementById"
+        "('status').textContent='個人線データを読み込めませんでした。';});"
+    )
+    embedded_code = (
+        f"data={data_json};render();"
+        "document.getElementById('status').textContent='計算基準: '+"
+        "((data.meta&&data.meta.datetime_utc)||'確認済み出生日時');"
+    )
+    result = acg_html.replace(
+        '<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">',
+        f"<style>\n{leaflet_css}\n</style>",
+        1,
+    ).replace(
+        '<script src="/static/vendor/leaflet/leaflet.js"></script>',
+        f"<script>\n{leaflet_js}\n</script>",
+        1,
+    ).replace(fetch_code, embedded_code, 1)
+    if chart_url:
+        result = result.replace('href="/"', f'href="{chart_url}"', 1)
+    else:
+        result = result.replace('href="/"', 'href="#" onclick="return false"', 1)
+    if fetch_code in result or "/acg-personal.geojson" in result:
+        raise RuntimeError("Standalone ACG data embedding failed")
+    return result
+
+
+def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
+    if lang == "en":
+        fallback = f"\nPrivate online backup page:\n{chart_url}\n" if chart_url else ""
+        return (
+            "NANAMI ASTRO - PERSONAL ACG APP\n\n"
+            "QUICK START\n"
+            "1. Extract the complete ZIP archive.\n"
+            "2. Double-click START-ACG.html.\n"
+            "3. Your browser opens your personal ACG map. No installation, command file, "
+            "PowerShell, or local server is required.\n\n"
+            "Your personal birth data and ACG lines are embedded in START-ACG.html. "
+            "Background map tiles require an internet connection.\n"
+            + fallback
+            + "\nKeep this package private. Personal use only; do not redistribute.\n"
+        )
+    fallback = f"\nオンライン予備ページ：\n{chart_url}\n" if chart_url else ""
+    return (
+        "NANAMI ASTRO - 個人用ACGアプリ\n\n"
+        "【起動方法】\n"
+        "1. ZIPを右クリックし、「すべて展開」します。\n"
+        "2. START-ACG.html をダブルクリックします。\n"
+        "3. ブラウザであなた専用のACG地図が開きます。インストール、バッチファイル、"
+        "PowerShell、ローカルサーバーは不要です。\n\n"
+        "出生データとACGラインはSTART-ACG.html内に保存されています。"
+        "背景地図の表示にはインターネット接続を使用します。\n"
+        + fallback
+        + "\n個人利用専用です。このパッケージを再配布・転売しないでください。\n"
+    )
+
+
 def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str:
     if lang == "en":
         acg = (
@@ -148,6 +219,9 @@ def build_personalized_zip(
     with zipfile.ZipFile(source_path, "r") as source, zipfile.ZipFile(
         output, "w", zipfile.ZIP_DEFLATED
     ) as target:
+        acg_html = None
+        leaflet_css = None
+        leaflet_js = None
         source_names = source.namelist()
         root_name = next((name.split("/", 1)[0] for name in source_names if "/" in name), None)
         if not root_name:
@@ -165,10 +239,21 @@ def build_personalized_zip(
                 relative_name = "START-MUSEUM-MAC.command"
             elif relative_name in {"README.txt", "YOUR_CHART.txt"}:
                 continue
+            if include_acg and relative_name in {
+                "START-ACG-WINDOWS.bat",
+                "START-ACG-MAC.command",
+            }:
+                continue
             if relative_name == "app/index.html":
                 html = data.decode("utf-8")
                 html = html.replace("</head>", _autoload_script(include_acg=include_acg, lang=lang) + "</head>", 1)
                 data = html.encode("utf-8")
+            elif relative_name == "app/acg/index.html":
+                acg_html = data.decode("utf-8")
+            elif relative_name == "app/static/vendor/leaflet/leaflet.css":
+                leaflet_css = data.decode("utf-8")
+            elif relative_name == "app/static/vendor/leaflet/leaflet.js":
+                leaflet_js = data.decode("utf-8")
             target.writestr(relative_name, data)
         target.writestr("app/birth-chart.yaml", yaml_text.encode("utf-8"))
         if planner_pdf:
@@ -180,14 +265,26 @@ def build_personalized_zip(
                 "app/acg-personal.geojson",
                 json.dumps(acg_data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
             )
-        guide = _buyer_readme(lang=lang, include_acg=include_acg, chart_url=chart_url)
+            if acg_html is None or leaflet_css is None or leaflet_js is None:
+                raise RuntimeError("Personal Edition ACG assets were not found")
+            target.writestr(
+                "START-ACG.html",
+                _standalone_acg_html(
+                    acg_html=acg_html,
+                    leaflet_css=leaflet_css,
+                    leaflet_js=leaflet_js,
+                    acg_data=acg_data,
+                    chart_url=chart_url,
+                ).encode("utf-8"),
+            )
+        guide = (
+            _acg_direct_start_readme(lang=lang, chart_url=chart_url)
+            if include_acg
+            else _buyer_readme(lang=lang, include_acg=False, chart_url=chart_url)
+        )
         guide_name = "README-FIRST.txt" if lang == "en" else "はじめに_README.txt"
         target.writestr(guide_name, guide.encode("utf-8-sig"))
         if chart_url:
             url_name = "PRIVATE-CHART-URL.txt" if lang == "en" else "専用鑑定ページ_URL.txt"
             target.writestr(url_name, (chart_url + "\n").encode("utf-8-sig"))
-            target.writestr(
-                "OPEN-ONLINE-CHART.url",
-                ("[InternetShortcut]\r\nURL=" + chart_url + "\r\n").encode("utf-8"),
-            )
     return output.getvalue()

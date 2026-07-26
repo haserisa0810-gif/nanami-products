@@ -187,12 +187,18 @@ def test_personalized_zip_contains_chart_and_autoload():
         assert "START-MUSEUM-MAC.command" in names
         assert "README-FIRST.txt" in names
         assert "PRIVATE-CHART-URL.txt" in names
+        assert "OPEN-ONLINE-CHART.url" not in names
         assert not any(name.startswith("BirthChartMuseum-PersonalEdition-") for name in names)
 
 
 def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
     yaml_text = Path("tests/fixtures/yaml_v1_base.yaml").read_text(encoding="utf-8")
-    data = build_personalized_zip(yaml_text=yaml_text, lang="ja", include_acg=True)
+    data = build_personalized_zip(
+        yaml_text=yaml_text,
+        lang="ja",
+        include_acg=True,
+        chart_url="https://chart.example/chart/private?lang=ja",
+    )
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
         geojson_name = next(name for name in names if name == "app/acg-personal.geojson")
@@ -203,10 +209,19 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert '"line_group":"Sun_MC"' in geojson
         assert "acg-personal.geojson" in archive.read(acg_page).decode("utf-8")
         assert "あなたのACG地図を開く" in archive.read(index_name).decode("utf-8")
-        assert "START-ACG-WINDOWS.bat" in names
-        assert "START-ACG-MAC.command" in names
-        assert '-OpenPath "/acg/"' in archive.read("START-ACG-WINDOWS.bat").decode("utf-8")
-        assert "--open-path /acg/" in archive.read("START-ACG-MAC.command").decode("utf-8")
+        assert "START-ACG.html" in names
+        assert "START-ACG-WINDOWS.bat" not in names
+        assert "START-ACG-MAC.command" not in names
+        assert "OPEN-ONLINE-CHART.url" not in names
+        standalone = archive.read("START-ACG.html").decode("utf-8")
+        assert "acg-personal.geojson" not in standalone
+        assert '"line_group":"Sun_MC"' in standalone
+        assert "leaflet" in standalone.lower()
+        assert "https://chart.example/chart/private?lang=ja" in standalone
+        readme_name = next(name for name in names if name.endswith("_README.txt"))
+        readme = archive.read(readme_name).decode("utf-8-sig")
+        assert "START-ACG.html" in readme
+        assert "PowerShell、ローカルサーバーは不要" in readme
 
 
 def test_successful_activation_creates_chart_page(monkeypatch):
