@@ -228,11 +228,11 @@
       if (window.prepareGeneratingSubmit) return;
 
       window.prepareGeneratingSubmit = function prepareGeneratingSubmit(form, options) {
-        if (!form) return;
-        if (form.dataset.submitGuardActive === '1') return;
+        if (!form) return false;
+        if (form.dataset.submitGuardActive === '1') return false;
         form.dataset.submitGuardActive = '1';
 
-        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"], #confirm-create'));
         submitButtons.forEach((button) => {
           button.disabled = true;
           if (button.tagName === 'BUTTON') {
@@ -255,6 +255,7 @@
           </div>
         `;
         document.body.appendChild(overlay);
+        return true;
       };
     }());
   </script>
@@ -485,11 +486,12 @@
     function submitConfirmedForm() {
       if (!form) return;
       normalizeBirthDateField();
-      window.prepareGeneratingSubmit(form, {
+      const canSubmit = window.prepareGeneratingSubmit(form, {
         buttonText: {{ t.submit_loading_button | tojson }},
         title: {{ t.submit_loading_title | tojson }},
         desc: {{ t.submit_loading_desc | tojson }},
       });
+      if (!canSubmit) return;
       form.submit();
     }
 

@@ -1120,8 +1120,6 @@ def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[s
 
             order = dict(row)
             payment_status = str(order.get("payment_status") or "").lower()
-            if payment_status == "cancelled":
-                return "cancelled", order
 
             purchased_type = order.get("product_type")
             if purchased_type and str(purchased_type) != addon_type:
@@ -1175,8 +1173,6 @@ def redeem_addon_order_and_save_transit_link(
 
             order = dict(row)
             payment_status = str(order.get("payment_status") or "").lower()
-            if payment_status == "cancelled":
-                return "cancelled", order
 
             purchased_type = order.get("product_type")
             if purchased_type and str(purchased_type) != addon_type:
@@ -1334,7 +1330,6 @@ def reset_redemption_by_order_code(order_code: str) -> dict[str, Any]:
                 SET payment_status = 'reset_once',
                     updated_at = NOW()
                 WHERE stores_order_no = %s
-                  AND COALESCE(payment_status, '') <> 'cancelled'
                 RETURNING stores_order_no AS order_code, payment_status, updated_at
                 """,
                 (order_code,),

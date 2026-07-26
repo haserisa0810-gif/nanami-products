@@ -78,6 +78,17 @@ class EtsyMailParseTest(unittest.TestCase):
         self.assertIsNotNone(parsed)
         self.assertEqual(parsed["product_type"], "western_basic")
 
+    def test_refund_and_cancellation_words_do_not_change_payment_status(self) -> None:
+        parsed = sync._parse_etsy_mail(
+            "Order cancelled and refunded",
+            ETSY_MAIL_BODY + "\nThis order was cancelled and refunded.",
+            None,
+            None,
+            "Etsy <emails@mail.etsy.com>",
+        )
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["payment_status"], "paid")
+
     def test_product_name_merely_containing_test_is_not_guessed(self) -> None:
         parsed = sync._parse_etsy_mail(
             "初めての販売おめでとうございます！注文の詳細はこちらです。",
@@ -203,6 +214,37 @@ class StrictMailSyncFailureTest(unittest.TestCase):
         self.assertEqual(verify.call_count, 2)
 
 
+class ExistingChartRedirectTest(unittest.TestCase):
+    def test_existing_redemption_redirects_with_download_and_language(self) -> None:
+        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
+            routes.pg_store,
+            "get_redemption_by_order_code",
+            return_value={"token": "existing-token"},
+        ):
+            response = routes._existing_chart_redirect("4125350780", lang="en")
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(
+            response.headers["location"],
+            "/chart/existing-token?chart_download=1&lang=en",
+        )
+
+    def test_missing_existing_chart_does_not_redirect(self) -> None:
+        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
+            routes.pg_store,
+            "get_redemption_by_order_code",
+            return_value=None,
+        ), patch.object(
+            routes.pg_store,
+            "list_charts_by_order_code",
+            return_value=[],
+        ):
+            response = routes._existing_chart_redirect("4125350780")
+
+        self.assertIsNone(response)
+
+
 class PayhipMailParseTest(unittest.TestCase):
     def test_sample_mail_uses_order_id_as_key(self) -> None:
         parsed = sync._parse_payhip_mail(
@@ -218,7 +260,7 @@ class PayhipMailParseTest(unittest.TestCase):
         self.assertEqual(parsed["payment_status"], "paid")
         self.assertEqual(parsed["amount"], 7)
 
-    def test_refunded_mail_is_cancelled(self) -> None:
+    def test_refunded_word_does_not_change_payment_status(self) -> None:
         parsed = sync._parse_payhip_mail(
             "Order Refunded",
             PAYHIP_MAIL_BODY + "\nThis order has been refunded.",
@@ -227,7 +269,7 @@ class PayhipMailParseTest(unittest.TestCase):
             "Payhip <contact@payhip.com>",
         )
         self.assertIsNotNone(parsed)
-        self.assertEqual(parsed["payment_status"], "cancelled")
+        self.assertEqual(parsed["payment_status"], "paid")
 
     def test_mail_without_order_id_is_skipped(self) -> None:
         parsed = sync._parse_payhip_mail(
@@ -258,6 +300,17 @@ class StoresMailParseTest(unittest.TestCase):
         self.assertIsNotNone(parsed)
         self.assertEqual(parsed["stores_order_no"], "9824333454")
         self.assertEqual(parsed["product_type"], "western_basic")
+        self.assertEqual(parsed["payment_status"], "paid")
+
+    def test_cancellation_word_does_not_change_payment_status(self) -> None:
+        parsed = sync._parse_stores_mail(
+            "【STORES】アイテムが購入されました（オーダー番号：9824333454）",
+            "商品: AI占いデータ [NP-WB]\n注文確定後はキャンセルできません。",
+            None,
+            None,
+            "STORES <hello@stores.jp>",
+        )
+        self.assertIsNotNone(parsed)
         self.assertEqual(parsed["payment_status"], "paid")
 
     def test_non_order_mail_is_skipped(self) -> None:

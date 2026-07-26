@@ -25,7 +25,7 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="{{ redeem_url }}" class="form" onsubmit="return confirmSubmit()">
+      <form method="post" action="{{ redeem_url }}" class="form" onsubmit="return confirmSubmit(event)">
         <input type="hidden" name="product_type" value="transit_yaml">
 
         <div class="form-section">
@@ -118,8 +118,17 @@
     </div>
   </main>
   <script>
-    function confirmSubmit() {
-      return confirm('この内容でトランジットYAMLを生成します。送信後は変更・再生成できません。よろしいですか？');
+    function confirmSubmit(event) {
+      const form = event?.currentTarget;
+      if (!form || form.dataset.submitGuardActive === '1') return false;
+      if (!confirm('この内容でトランジットYAMLを生成します。送信後は変更・再生成できません。よろしいですか？')) return false;
+      form.dataset.submitGuardActive = '1';
+      form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((button) => {
+        button.disabled = true;
+        if (button.tagName === 'BUTTON') button.textContent = '発行中…';
+        else button.value = '発行中…';
+      });
+      return true;
     }
   </script>
 </body>

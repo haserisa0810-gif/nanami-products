@@ -310,8 +310,6 @@ def _parse_stores_mail(
         return None
 
     payment_status = "paid" if _OWNER_NOTICE_PATTERN.search(combined) or _PAID_HINT_PATTERN.search(combined) else "ordered"
-    if "キャンセル" in combined:
-        payment_status = "cancelled"
 
     return {
         "stores_order_no": order_no,
@@ -354,10 +352,6 @@ def _parse_payhip_mail(
     if not order_id:
         return None
 
-    payment_status = "paid"
-    if "cancelled" in combined_lower or "refunded" in combined_lower:
-        payment_status = "cancelled"
-
     return {
         "stores_order_no": order_id,
         "provider": "payhip",
@@ -366,7 +360,7 @@ def _parse_payhip_mail(
         "mail_subject": subject,
         "raw_message_id": message_id,
         "mail_received_at": received_at,
-        "payment_status": payment_status,
+        "payment_status": "paid",
     }
 
 
@@ -398,10 +392,6 @@ def _parse_etsy_mail(
     if not order_no:
         return None
 
-    payment_status = "paid"
-    if re.search(r"キャンセル|返金|cancelled|canceled|refunded", combined, re.I):
-        payment_status = "cancelled"
-
     return {
         "stores_order_no": order_no,
         "provider": "etsy",
@@ -410,7 +400,7 @@ def _parse_etsy_mail(
         "mail_subject": subject,
         "raw_message_id": message_id,
         "mail_received_at": received_at,
-        "payment_status": payment_status,
+        "payment_status": "paid",
     }
 
 
@@ -433,7 +423,6 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
                 product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.stores_orders.product_type),
                 amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.stores_orders.amount),
                 payment_status   = CASE
-                    WHEN EXCLUDED.payment_status = 'cancelled' THEN 'cancelled'
                     WHEN EXCLUDED.payment_status = 'paid' THEN 'paid'
                     ELSE COALESCE({SCHEMA}.stores_orders.payment_status, EXCLUDED.payment_status)
                 END,
@@ -589,7 +578,6 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
         ("ok", row)          存在して未使用
         ("not_found", None)  存在しない
         ("already_used", row) 既にcharts/redemptionsに登録済み
-        ("cancelled", row)    キャンセル扱い
         ("reusable", row)     テスト・身内用の再利用可能番号
     """
     con = _get_conn()
@@ -604,8 +592,6 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
                 return "not_found", None
 
             payment_status = (row.get("payment_status") or "").lower()
-            if payment_status == "cancelled":
-                return "cancelled", dict(row)
             if payment_status == "reset_once":
                 return "ok", dict(row)
             if payment_status in {"reusable", "test", "permanent"}:

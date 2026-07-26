@@ -202,11 +202,11 @@
       if (window.prepareGeneratingSubmit) return;
 
       window.prepareGeneratingSubmit = function prepareGeneratingSubmit(form, options) {
-        if (!form) return;
-        if (form.dataset.submitGuardActive === '1') return;
+        if (!form) return false;
+        if (form.dataset.submitGuardActive === '1') return false;
         form.dataset.submitGuardActive = '1';
 
-        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"], #confirm-create'));
         submitButtons.forEach((button) => {
           button.disabled = true;
           if (button.tagName === 'BUTTON') {
@@ -229,6 +229,7 @@
           </div>
         `;
         document.body.appendChild(overlay);
+        return true;
       };
     }());
 
@@ -368,11 +369,12 @@
     function submitConfirmedForm() {
       if (!form) return;
       syncTimezoneFields();
-      window.prepareGeneratingSubmit(form, {
+      const canSubmit = window.prepareGeneratingSubmit(form, {
         buttonText: '生成中...',
         title: 'AI鑑定データを生成しています',
         desc: '完了までしばらくお待ちください。',
       });
+      if (!canSubmit) return;
       form.submit();
     }
 

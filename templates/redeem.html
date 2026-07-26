@@ -39,7 +39,7 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="{{ redeem_url }}" class="form" onsubmit="return confirmSubmit()">
+      <form method="post" action="{{ redeem_url }}" class="form" onsubmit="return confirmSubmit(event)">
         <input type="hidden" name="product_type" value="{{ product_type }}">
 
         <div class="form-section">
@@ -286,8 +286,17 @@
       hidden.value = customActive ? custom.value.trim() : select.value;
     }
 
-    function confirmSubmit() {
-      return confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？');
+    function confirmSubmit(event) {
+      const form = event?.currentTarget;
+      if (!form || form.dataset.submitGuardActive === '1') return false;
+      if (!confirm('この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？')) return false;
+      form.dataset.submitGuardActive = '1';
+      form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((button) => {
+        button.disabled = true;
+        if (button.tagName === 'BUTTON') button.textContent = '発行中…';
+        else button.value = '発行中…';
+      });
+      return true;
     }
     function syncBirthTimeFields() {
       const mode = document.getElementById('birth_time_accuracy');
