@@ -505,6 +505,28 @@ class OrderProviderResolutionTest(unittest.TestCase):
             self.assertIn('<select name="order_provider"', response.text)
             self.assertIn('<option value="coconala"', response.text)
 
+    def test_shichu_coconala_link_uses_username_instead_of_stores_order(self) -> None:
+        client = TestClient(routes.app)
+        response = client.get("/redeem/shichu?lang=ja&provider=coconala")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '<input type="hidden" name="order_provider" id="order-provider" value="coconala">',
+            response.text,
+        )
+        self.assertIn("ココナラのユーザー名", response.text)
+        self.assertIn('placeholder="例：nanami_user"', response.text)
+        self.assertNotIn('pattern="[0-9]{10}"', response.text)
+
+    def test_shichu_without_provider_keeps_stores_coconala_selector(self) -> None:
+        client = TestClient(routes.app)
+        response = client.get("/redeem/shichu?lang=ja")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<select name="order_provider" id="order-provider">', response.text)
+        self.assertIn('<option value="stores"', response.text)
+        self.assertIn('<option value="coconala"', response.text)
+
     def test_name_example_matches_selected_language(self) -> None:
         client = TestClient(routes.app)
         english = client.get("/redeem/acg-bundle?lang=en&provider=etsy")

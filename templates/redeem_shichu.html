@@ -26,19 +26,34 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="{{ redeem_url }}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
+      <form method="post" action="{{ redeem_url }}?lang={{ lang }}{% if provider_locked %}&provider={{ form.order_provider }}{% endif %}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
         <input type="hidden" name="product_type" value="shichu">
 
         <div class="form-section">
           <h2>注文情報</h2>
-          <label>STORESオーダー番号<span class="required">必須</span>
-            <input type="text" name="order_code" required
+          {% set provider = form.order_provider if form and form.order_provider else 'stores' %}
+          <label>購入元
+            {% if provider_locked %}
+            <input type="hidden" name="order_provider" id="order-provider" value="{{ provider }}">
+            <strong>{% if provider == 'coconala' %}ココナラ{% else %}STORES{% endif %}</strong>
+            {% else %}
+            <select name="order_provider" id="order-provider">
+              <option value="stores" {% if provider == 'stores' %}selected{% endif %}>STORES</option>
+              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>ココナラ</option>
+            </select>
+            {% endif %}
+          </label>
+          <label><span id="order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% else %}STORESオーダー番号{% endif %}</span><span class="required">必須</span>
+            <input type="text" name="order_code" id="order-code" required
                    value="{{ form.order_code if form else '' }}"
-                   placeholder="例：9824333454"
-                   inputmode="numeric"
-                   pattern="[0-9]{10}"
+                   placeholder="{% if provider == 'coconala' %}例：nanami_user{% else %}例：9824333454{% endif %}"
+                   data-stores-placeholder="例：9824333454"
+                   data-coconala-placeholder="例：nanami_user"
+                   {% if provider != 'coconala' %}inputmode="numeric"
+                   pattern="[0-9]{10}"{% endif %}
+                   maxlength="100"
                    autocomplete="off">
-            <small>STORES購入完了メールの件名にある10桁の番号です。</small>
+            <small id="order-code-hint">{% if provider == 'coconala' %}購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。{% else %}STORES購入完了メールの件名にある10桁の番号です。{% endif %}</small>
           </label>
           <label>お名前<span class="optional">任意</span>
             <input type="text" name="buyer_name"
@@ -177,7 +192,7 @@
           <h2 id="submit-confirm-title">最終確認</h2>
           <p class="confirm-lead">送信前に入力内容を確認してください。送信後は変更・再生成できません。</p>
           <dl class="confirm-list">
-            <div class="confirm-item"><dt>STORESオーダー番号</dt><dd id="confirm-order-code"></dd></div>
+            <div class="confirm-item"><dt id="confirm-order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% else %}STORESオーダー番号{% endif %}</dt><dd id="confirm-order-code"></dd></div>
             <div class="confirm-item"><dt>お名前</dt><dd id="confirm-name"></dd></div>
             <div class="confirm-item"><dt>生年月日</dt><dd id="confirm-birth-date"></dd></div>
             <div class="confirm-item"><dt>出生時刻</dt><dd id="confirm-birth-time"></dd></div>
@@ -389,10 +404,39 @@
       field.style.display = exact ? '' : 'none';
       if (!exact) input.value = '';
     }
+    function syncOrderProviderFields() {
+      const provider = document.getElementById('order-provider')?.value || 'stores';
+      const isCoconala = provider === 'coconala';
+      const orderCode = document.getElementById('order-code');
+      const orderCodeLabel = document.getElementById('order-code-label');
+      const orderCodeHint = document.getElementById('order-code-hint');
+      const confirmOrderCodeLabel = document.getElementById('confirm-order-code-label');
+      if (orderCode) {
+        orderCode.placeholder = isCoconala
+          ? orderCode.dataset.coconalaPlaceholder
+          : orderCode.dataset.storesPlaceholder;
+        if (isCoconala) {
+          orderCode.removeAttribute('pattern');
+          orderCode.removeAttribute('inputmode');
+        } else {
+          orderCode.pattern = '[0-9]{10}';
+          orderCode.inputMode = 'numeric';
+        }
+      }
+      if (orderCodeLabel) orderCodeLabel.textContent = isCoconala
+        ? 'ココナラのユーザー名'
+        : 'STORESオーダー番号';
+      if (orderCodeHint) orderCodeHint.textContent = isCoconala
+        ? '購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。'
+        : 'STORES購入完了メールの件名にある10桁の番号です。';
+      if (confirmOrderCodeLabel) confirmOrderCodeLabel.textContent = orderCodeLabel?.textContent || '';
+    }
     document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
     document.addEventListener('DOMContentLoaded', syncBirthTimeFields);
     document.addEventListener('DOMContentLoaded', syncFinalCheck);
+    document.addEventListener('DOMContentLoaded', syncOrderProviderFields);
     document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('order-provider')?.addEventListener('change', syncOrderProviderFields);
       document.getElementById('birth_place_kind')?.addEventListener('change', syncBirthPlaceFields);
       document.getElementById('birth_time_accuracy')?.addEventListener('change', syncBirthTimeFields);
       document.getElementById('birth_timezone_select')?.addEventListener('change', syncTimezoneFields);
