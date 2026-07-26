@@ -7,43 +7,54 @@ import zipfile
 ETSY_PACKAGE_FILENAME = "nanamiastro-ACG-Premium-Bundle-Access-Package.zip"
 
 
-def build_common_access_package(*, activation_url: str, lang: str = "en") -> bytes:
-    """Build a buyer-neutral package suitable for uploading once to Etsy."""
+def build_common_access_package(*, redeem_url: str, lang: str = "en") -> bytes:
+    """Build the buyer-neutral, automatic-redemption package for Etsy."""
     if lang not in {"en", "ja"}:
         raise ValueError("lang must be en or ja")
-    clean_url = activation_url.strip()
+    clean_url = redeem_url.strip()
     if not clean_url.startswith(("https://", "http://")):
-        raise ValueError("activation_url must be an absolute HTTP(S) URL")
+        raise ValueError("redeem_url must be an absolute HTTP(S) URL")
 
     english = (
-        "NANAMI ASTRO - ACCESS PACKAGE\n\n"
+        "NANAMI ASTRO - ACG PREMIUM BUNDLE\n"
+        "AUTOMATIC ACCESS PACKAGE\n\n"
         "Thank you for your purchase.\n\n"
-        "This Access Package does not contain your personal activation code.\n\n"
-        "Your personal activation code will be sent separately through Etsy Messages after your purchase.\n\n"
+        "No activation code is required. You do not need to wait for a separate Etsy Message.\n\n"
         "How to begin:\n\n"
-        "1. Check your Etsy Messages for your personal activation code.\n"
-        "2. Open the activation page using the link in this package.\n"
-        "3. Enter your activation code and birth details.\n"
-        "4. Generate your personalized astrology page and download package.\n\n"
-        "Astrocartography requires an accurate birth time.\n"
+        "1. Open the automatic access page using the link in this package.\n"
+        "2. Enter the Etsy order number shown on your purchase receipt.\n"
+        "3. Enter your birth date, exact birth time, and birthplace.\n"
+        "4. After purchase verification, your private chart page is created and your "
+        "permanent Personal Edition ZIP downloads automatically.\n"
+        "5. Save both the ZIP and the private chart page URL. You can download the ZIP "
+        "again from that page.\n\n"
+        "If your purchase cannot be verified immediately, wait five minutes and try again.\n"
+        "Manual support remains available through Etsy Messages if needed.\n\n"
+        "IMPORTANT: Astrocartography requires an accurate birth time.\n"
     )
     japanese = (
-        "NANAMI ASTRO - 共通アクセスパッケージ\n\n"
+        "NANAMI ASTRO - ACG PREMIUM BUNDLE\n"
+        "自動アクセスパッケージ\n\n"
         "ご購入ありがとうございます。\n\n"
-        "このパッケージには個別のアクティベーションコードは含まれていません。\n"
-        "ご注文確認後、Etsyメッセージで個別コードをお送りします。\n\n"
-        "Etsyメッセージを確認し、このパッケージ内のリンクからアクティベーションページを開いて、"
-        "コードと出生情報を入力してください。\n"
-        "アストロカートグラフィには正確な出生時刻が必要です。\n"
+        "アクセスコードは不要です。個別メッセージを待たずに利用できます。\n\n"
+        "ご利用方法:\n\n"
+        "1. このパッケージ内のリンクから自動受付ページを開きます。\n"
+        "2. Etsyの購入明細に記載された注文番号を入力します。\n"
+        "3. 生年月日、正確な出生時刻、出生地を入力します。\n"
+        "4. 購入確認後、専用鑑定ページが作成され、無期限のPersonal Edition ZIPが自動ダウンロードされます。\n"
+        "5. ZIPと専用鑑定ページURLの両方を保存してください。ページからZIPを再ダウンロードできます。\n\n"
+        "購入直後に確認できない場合は、5分ほど待ってから再度お試しください。\n"
+        "必要な場合はEtsyメッセージで手動サポートいたします。\n\n"
+        "重要: アストロカートグラフィには正確な出生時刻が必要です。\n"
     )
     readme = english if lang == "en" else japanese + "\n\n" + english
 
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("README-FIRST.txt", readme.encode("utf-8-sig"))
-        archive.writestr("ACTIVATION-URL.txt", (clean_url + "\n").encode("utf-8-sig"))
+        archive.writestr("AUTOMATIC-ACCESS-URL.txt", (clean_url + "\n").encode("utf-8-sig"))
         archive.writestr(
-            "OPEN-ACTIVATION-PAGE.url",
+            "OPEN-AUTOMATIC-ACCESS-PAGE.url",
             ("[InternetShortcut]\r\nURL=" + clean_url + "\r\n").encode("utf-8"),
         )
     return output.getvalue()

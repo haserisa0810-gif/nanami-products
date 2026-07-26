@@ -1,7 +1,7 @@
 """
 services/stores_mail_sync.py
 ----------------------------
-STORES・Payhip・Etsyの購入完了メールをIMAPで取得し、注文番号を
+STORES・Payhip・Etsy・ココナラの購入完了メールをIMAPで取得し、注文番号を
 nanami_products.stores_orders テーブルに登録する独立モジュール。
 
 nanami-astroの routes_public_orders.py の実装をベースに、
@@ -16,6 +16,7 @@ nanami-productsの用途に合わせてシンプル化したもの。
   STORES_MAIL_FROM_FILTER  (default: hello@stores.jp)
   PAYHIP_MAIL_FROM_FILTER  (default: contact@payhip.com)
   ETSY_MAIL_FROM_FILTER    (default: emails@mail.etsy.com)
+  COCONALA_MAIL_FROM_FILTER (default: no-reply@mail.coconala.com)
   STORES_MAIL_SYNC_TOKEN   Cloud Schedulerからの呼び出し認証トークン
 """
 
@@ -23,6 +24,7 @@ from __future__ import annotations
 
 import email
 import email.utils
+import hashlib
 import html
 import imaplib
 import os
@@ -40,6 +42,7 @@ SCHEMA = "nanami_products"
 STORES_FROM_DEFAULT = "hello@stores.jp"
 PAYHIP_FROM_DEFAULT = "contact@payhip.com"
 ETSY_FROM_DEFAULT = "emails@mail.etsy.com"
+COCONALA_FROM_DEFAULT = "no-reply@mail.coconala.com"
 
 # STORESの通知メールを識別するパターン
 _OWNER_NOTICE_PATTERN = re.compile(
@@ -113,6 +116,7 @@ CREATE TABLE IF NOT EXISTS {SCHEMA}.stores_orders (
     payment_status   TEXT        DEFAULT 'paid',
     mail_subject     TEXT,
     raw_message_id   TEXT,
+    buyer_reference  TEXT,
     mail_received_at TIMESTAMPTZ,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -131,6 +135,11 @@ def ensure_table() -> None:
             cur.execute(STORES_ORDERS_DDL)
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS product_type TEXT")
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS provider TEXT")
+            cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS buyer_reference TEXT")
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_stores_orders_provider_buyer "
+                f"ON {SCHEMA}.stores_orders (provider, buyer_reference)"
+            )
         con.commit()
     except Exception:
         con.rollback()
@@ -216,7 +225,7 @@ def _extract_amount(text_value: str) -> int | None:
     patterns = [
         r"(?:Total|合計)\s*[：:]?\s*US\$\s*([0-9][0-9,]*)(?:\.[0-9]+)?",
         r"(?:Total|Amount)\s*[：:]?\s*(?:USD\s*)?[$＄]\s*([0-9][0-9,]*)(?:\.[0-9]+)?",
-        r"(?:お支払い金額|合計金額|ご請求金額|金額|合計（税込）)\s*[：:]?\s*[¥￥]?\s*([0-9][0-9,]*)",
+        r"(?:お支払い金額|合計金額|ご請求金額|金額|価格|合計（税込）)\s*[：:]?\s*[¥￥]?\s*([0-9][0-9,]*)",
         r"[¥￥]\s*([0-9][0-9,]*)",
     ]
     for pat in patterns:
@@ -404,6 +413,53 @@ def _parse_etsy_mail(
     }
 
 
+def _parse_coconala_mail(
+    subject: str,
+    body: str,
+    message_id: str | None,
+    received_at: datetime | None,
+    from_value: str,
+) -> dict[str, object] | None:
+    """ココナラコンテンツマーケットの販売通知を解析する。"""
+    combined = f"{from_value}\n{subject}\n{body}"
+    if (
+        "mail.coconala.com" not in combined.lower()
+        or "出品コンテンツが購入されました" not in combined
+    ):
+        return None
+
+    buyer_reference = _extract_first(
+        [
+            r"購入者名\s*[：:]\s*([^\r\n]+)",
+            r"以下のコンテンツが\s*([^\r\n]+?)\s*さんに購入されました",
+        ],
+        body,
+    )
+    title = _extract_first([r"タイトル\s*[：:]\s*([^\r\n]+)"], body)
+    if not buyer_reference or not title:
+        return None
+
+    unique_source = message_id or "|".join(
+        [
+            buyer_reference,
+            title,
+            received_at.isoformat() if received_at else "",
+        ]
+    )
+    order_no = f"COCONALA-{hashlib.sha256(unique_source.encode('utf-8')).hexdigest()[:24]}"
+    return {
+        "stores_order_no": order_no,
+        "provider": "coconala",
+        "product_type": _guess_product_type(subject, title),
+        "amount": _extract_amount(body),
+        "buyer_reference": buyer_reference,
+        "mail_subject": subject,
+        "raw_message_id": message_id,
+        "mail_received_at": received_at,
+        "payment_status": "paid",
+    }
+
+
 # ── DB upsert ──────────────────────────────────────────────────────
 
 def _upsert_order(con, parsed: dict[str, Any]) -> bool:
@@ -416,18 +472,25 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
             f"""
             INSERT INTO {SCHEMA}.stores_orders
                 (stores_order_no, provider, product_type, amount, payment_status,
-                 mail_subject, raw_message_id, mail_received_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                 mail_subject, raw_message_id, buyer_reference, mail_received_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (stores_order_no) DO UPDATE SET
                 provider         = COALESCE(EXCLUDED.provider,         {SCHEMA}.stores_orders.provider),
                 product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.stores_orders.product_type),
                 amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.stores_orders.amount),
                 payment_status   = CASE
+                    -- 管理者が設定した再発行・再利用ステータスは、過去メールの
+                    -- 再取得で paid に戻さない。reset_once は発行成功時に
+                    -- pg_store.redeem_and_save() が paid へ戻す。
+                    WHEN {SCHEMA}.stores_orders.payment_status
+                         IN ('reset_once', 'reusable', 'test', 'permanent')
+                    THEN {SCHEMA}.stores_orders.payment_status
                     WHEN EXCLUDED.payment_status = 'paid' THEN 'paid'
                     ELSE COALESCE({SCHEMA}.stores_orders.payment_status, EXCLUDED.payment_status)
                 END,
                 mail_subject     = COALESCE(EXCLUDED.mail_subject,     {SCHEMA}.stores_orders.mail_subject),
                 raw_message_id   = COALESCE(EXCLUDED.raw_message_id,   {SCHEMA}.stores_orders.raw_message_id),
+                buyer_reference  = COALESCE(EXCLUDED.buyer_reference,  {SCHEMA}.stores_orders.buyer_reference),
                 mail_received_at = COALESCE(EXCLUDED.mail_received_at, {SCHEMA}.stores_orders.mail_received_at),
                 updated_at       = NOW()
             RETURNING (xmax = 0) AS is_new
@@ -440,6 +503,7 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
                 parsed.get("payment_status", "paid"),
                 parsed.get("mail_subject"),
                 parsed.get("raw_message_id"),
+                parsed.get("buyer_reference"),
                 parsed.get("mail_received_at"),
             ),
         )
@@ -451,7 +515,7 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
 
 def sync(*, limit: int = 100) -> dict[str, Any]:
     """
-    IMAPでSTORES・Payhip・Etsyメールを取得し、stores_ordersに登録する。
+    IMAPでSTORES・Payhip・Etsy・ココナラメールを取得し、stores_ordersに登録する。
 
     Returns:
         {ok, fetched, parsed, inserted, skipped, errors, message}
@@ -463,6 +527,9 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
     from_filter = (os.getenv("STORES_MAIL_FROM_FILTER", STORES_FROM_DEFAULT) or "").strip()
     payhip_from_filter = (os.getenv("PAYHIP_MAIL_FROM_FILTER", PAYHIP_FROM_DEFAULT) or "").strip()
     etsy_from_filter = (os.getenv("ETSY_MAIL_FROM_FILTER", ETSY_FROM_DEFAULT) or "").strip()
+    coconala_from_filter = (
+        os.getenv("COCONALA_MAIL_FROM_FILTER", COCONALA_FROM_DEFAULT) or ""
+    ).strip()
 
     counters = dict(fetched=0, parsed=0, inserted=0, skipped=0, errors=0)
 
@@ -478,7 +545,9 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
 
         status = "OK"
         search_ids: list[bytes] = []
-        for candidate in dict.fromkeys([from_filter, payhip_from_filter, etsy_from_filter]):
+        for candidate in dict.fromkeys(
+            [from_filter, payhip_from_filter, etsy_from_filter, coconala_from_filter]
+        ):
             if not candidate:
                 continue
             candidate_status, candidate_data = conn_imap.search(None, "FROM", f'"{candidate}"')
@@ -520,8 +589,10 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
                 from_filter.lower() not in combined_lower
                 and payhip_from_filter.lower() not in combined_lower
                 and etsy_from_filter.lower() not in combined_lower
+                and coconala_from_filter.lower() not in combined_lower
                 and "payhip" not in combined_lower
                 and "etsy" not in combined_lower
+                and "coconala" not in combined_lower
                 and "you've sold an item" not in combined_lower
                 and "you have sold an item" not in combined_lower
                 and "order id:" not in combined_lower
@@ -535,7 +606,8 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
                 continue
 
             parsed = (
-                _parse_etsy_mail(subject, body, message_id, received_at, from_value)
+                _parse_coconala_mail(subject, body, message_id, received_at, from_value)
+                or _parse_etsy_mail(subject, body, message_id, received_at, from_value)
                 or _parse_payhip_mail(subject, body, message_id, received_at, from_value)
                 or _parse_stores_mail(subject, body, message_id, received_at, from_value)
             )
@@ -607,5 +679,41 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
                 return "already_used", dict(row)
 
         return "ok", dict(row)
+    finally:
+        con.close()
+
+
+def verify_coconala_buyer(
+    buyer_reference: str,
+    *,
+    product_type: str,
+) -> tuple[str, dict | None]:
+    """ココナラの一意なユーザー名と商品種別から未使用購入を照合する。"""
+    con = _get_conn()
+    try:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT o.*,
+                       EXISTS (
+                           SELECT 1
+                           FROM {SCHEMA}.redemptions r
+                           WHERE r.order_code = o.stores_order_no
+                       ) AS already_used
+                FROM {SCHEMA}.stores_orders o
+                WHERE o.provider = 'coconala'
+                  AND LOWER(o.buyer_reference) = LOWER(%s)
+                  AND o.product_type = %s
+                ORDER BY o.mail_received_at DESC NULLS LAST, o.created_at DESC
+                """,
+                (buyer_reference.strip(), product_type),
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+        if not rows:
+            return "not_found", None
+        for row in rows:
+            if not row.get("already_used"):
+                return "ok", row
+        return "already_used", rows[0]
     finally:
         con.close()

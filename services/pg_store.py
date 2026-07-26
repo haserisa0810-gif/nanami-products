@@ -1097,6 +1097,24 @@ def get_redemption_by_order_code(order_code: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+def get_addon_chart_by_order_code(*, order_code: str, addon_type: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT token, order_code, options, expires_at, created_at
+                FROM {SCHEMA}.charts
+                WHERE order_code = %s
+                  AND options->>'product_type' = %s
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (order_code, addon_type),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else None
+
+
 def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[str, Any] | None]:
     """
     addon生成用に STORES注文番号 + addon種別 を一回だけ消し込む。
@@ -1141,6 +1159,73 @@ def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[s
             if cur.fetchone() is None:
                 return "already_used", order
 
+            return "ok", order
+
+
+def redeem_addon_order_and_save_chart(
+    *,
+    order_code: str,
+    addon_type: str,
+    token: str,
+    expires_at: datetime,
+    chart_payload: dict[str, Any],
+) -> tuple[str, dict[str, Any] | None]:
+    """
+    addon注文の消込と生成済みチャートの保存を同一トランザクションで行う。
+    """
+    with _conn() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT *
+                FROM {SCHEMA}.stores_orders
+                WHERE stores_order_no = %s
+                FOR UPDATE
+                """,
+                (order_code,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return "not_found", None
+
+            order = dict(row)
+            payment_status = str(order.get("payment_status") or "").lower()
+
+            purchased_type = order.get("product_type")
+            if purchased_type and str(purchased_type) != addon_type:
+                return "product_mismatch", order
+
+            if payment_status not in {"reusable", "test", "permanent"}:
+                cur.execute(
+                    f"""
+                    INSERT INTO {SCHEMA}.addon_redemptions
+                        (order_code, addon_type, used_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (order_code, addon_type) DO NOTHING
+                    RETURNING order_code, addon_type, used_at
+                    """,
+                    (order_code, addon_type),
+                )
+                if cur.fetchone() is None:
+                    return "already_used", order
+
+            _insert_chart(
+                cur,
+                token=token,
+                order_code=order_code,
+                buyer_name=chart_payload.get("buyer_name"),
+                birth_date=str(chart_payload["birth_date"]),
+                birth_time=chart_payload.get("birth_time"),
+                birth_place=chart_payload.get("birth_place"),
+                options=dict(chart_payload["options"]),
+                yaml_text=str(chart_payload["yaml_text"]),
+                prompt_text=str(chart_payload["prompt_text"]),
+                share_yaml_text=chart_payload.get("share_yaml_text"),
+                horoscope_svg=chart_payload.get("horoscope_svg"),
+                shichusuimei_svg=chart_payload.get("shichusuimei_svg"),
+                expires_at=expires_at,
+                on_conflict_do_nothing=False,
+            )
             return "ok", order
 
 

@@ -51,16 +51,18 @@ def test_etsy_common_access_package_contains_no_code_or_personal_data(monkeypatc
     assert response.status_code == 200
     assert "nanamiastro-ACG-Premium-Bundle-Access-Package.zip" in response.headers["content-disposition"]
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-        assert set(archive.namelist()) == {
-            "README-FIRST.txt", "ACTIVATION-URL.txt", "OPEN-ACTIVATION-PAGE.url"
-        }
         combined = b"\n".join(archive.read(name) for name in archive.namelist()).decode("utf-8-sig")
         assert "ACCESS-CODE.pdf" not in combined
         assert "PE-ACG-" not in combined
         assert "PE-FULL-" not in combined
-        assert "This Access Package does not contain your personal activation code." in combined
-        assert "Your personal activation code will be sent separately through Etsy Messages after your purchase." in combined
-        assert "https://chart.nanami-astro.com/personal-edition/activate?lang=en" in combined
+        assert set(archive.namelist()) == {
+            "README-FIRST.txt",
+            "AUTOMATIC-ACCESS-URL.txt",
+            "OPEN-AUTOMATIC-ACCESS-PAGE.url",
+        }
+        assert "No activation code is required." in combined
+        assert "permanent Personal Edition ZIP downloads automatically." in combined
+        assert "https://chart.nanami-astro.com/redeem/acg-bundle?lang=en&provider=etsy" in combined
 
 
 def test_admin_code_page_is_available_locally(monkeypatch):
@@ -70,7 +72,7 @@ def test_admin_code_page_is_available_locally(monkeypatch):
     assert response.status_code == 200
     assert "Personal Edition" in response.text
     assert "Issue access code" in response.text
-    assert "Generate Etsy Common Access Package" in response.text
+    assert "Generate Etsy ACG Automatic Access Package" in response.text
 
 
 def test_admin_issue_page_builds_etsy_message_and_prefilled_url(monkeypatch):

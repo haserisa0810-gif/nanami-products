@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import re
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+from fastapi.testclient import TestClient
 
 import services.pg_store as pg_store
 import services.stores_mail_sync as sync
@@ -35,6 +37,84 @@ ETSY_MAIL_BODY = """\
 商品価格： US$12.00
 合計: US$12.00
 """
+
+COCONALA_MAIL_BODY = """\
+おめでとうございます！
+あなたが出品した以下のコンテンツがsample_buyer さんに購入されました。
+販売日時：2026/07/26 18:56:24
+価格：500円
+購入者名：sample_buyer
+コンテンツ詳細：https://example.invalid/content
+タイトル：[NP-ACG] ACG Bundle
+"""
+
+
+class CoconalaMailParseTest(unittest.TestCase):
+    def test_purchase_uses_unique_username_and_message_id(self) -> None:
+        parsed = sync._parse_coconala_mail(
+            "出品コンテンツが購入されました",
+            COCONALA_MAIL_BODY,
+            "<coconala-message-1>",
+            None,
+            "ココナラ <no-reply@mail.coconala.com>",
+        )
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["provider"], "coconala")
+        self.assertEqual(parsed["buyer_reference"], "sample_buyer")
+        self.assertEqual(parsed["product_type"], "acg_bundle")
+        self.assertEqual(parsed["amount"], 500)
+        self.assertRegex(parsed["stores_order_no"], r"^COCONALA-[a-f0-9]{24}$")
+
+    def test_same_message_is_idempotent(self) -> None:
+        args = (
+            "出品コンテンツが購入されました",
+            COCONALA_MAIL_BODY,
+            "<coconala-message-1>",
+            None,
+            "ココナラ <no-reply@mail.coconala.com>",
+        )
+        first = sync._parse_coconala_mail(*args)
+        second = sync._parse_coconala_mail(*args)
+        self.assertEqual(first["stores_order_no"], second["stores_order_no"])
+
+    def test_same_buyer_different_products_create_distinct_purchases(self) -> None:
+        acg = sync._parse_coconala_mail(
+            "出品コンテンツが購入されました",
+            COCONALA_MAIL_BODY,
+            "<coconala-acg-purchase>",
+            None,
+            "ココナラ <no-reply@mail.coconala.com>",
+        )
+        basic = sync._parse_coconala_mail(
+            "出品コンテンツが購入されました",
+            COCONALA_MAIL_BODY.replace("[NP-ACG] ACG Bundle", "[NP-WB] Basic"),
+            "<coconala-basic-purchase>",
+            None,
+            "ココナラ <no-reply@mail.coconala.com>",
+        )
+        self.assertEqual(acg["buyer_reference"], basic["buyer_reference"])
+        self.assertEqual(acg["product_type"], "acg_bundle")
+        self.assertEqual(basic["product_type"], "western_basic")
+        self.assertNotEqual(acg["stores_order_no"], basic["stores_order_no"])
+
+    def test_same_buyer_repeated_product_still_creates_distinct_purchases(self) -> None:
+        first = sync._parse_coconala_mail(
+            "出品コンテンツが購入されました",
+            COCONALA_MAIL_BODY,
+            "<coconala-acg-purchase-1>",
+            None,
+            "ココナラ <no-reply@mail.coconala.com>",
+        )
+        second = sync._parse_coconala_mail(
+            "出品コンテンツが購入されました",
+            COCONALA_MAIL_BODY,
+            "<coconala-acg-purchase-2>",
+            None,
+            "ココナラ <no-reply@mail.coconala.com>",
+        )
+        self.assertEqual(first["buyer_reference"], second["buyer_reference"])
+        self.assertEqual(first["product_type"], second["product_type"])
+        self.assertNotEqual(first["stores_order_no"], second["stores_order_no"])
 
 
 class EtsyMailParseTest(unittest.TestCase):
@@ -215,6 +295,29 @@ class StrictMailSyncFailureTest(unittest.TestCase):
 
 
 class ExistingChartRedirectTest(unittest.TestCase):
+    def test_chart_redirect_url_preserves_language_and_download_flags(self) -> None:
+        self.assertEqual(
+            routes._chart_redirect_url("new-token", lang="ja", download=True),
+            "/chart/new-token?chart_download=1",
+        )
+        self.assertEqual(
+            routes._chart_redirect_url("new-token", lang="en", download=True),
+            "/chart/new-token?chart_download=1&lang=en",
+        )
+        self.assertEqual(
+            routes._chart_redirect_url("new-token", lang="en", download=False),
+            "/chart/new-token?lang=en",
+        )
+        self.assertEqual(
+            routes._chart_redirect_url(
+                "new-token",
+                lang="en",
+                download=True,
+                personal_download=True,
+            ),
+            "/chart/new-token?personal_download=1&lang=en",
+        )
+
     def test_existing_redemption_redirects_with_download_and_language(self) -> None:
         with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
             routes.pg_store,
@@ -243,6 +346,35 @@ class ExistingChartRedirectTest(unittest.TestCase):
             response = routes._existing_chart_redirect("4125350780")
 
         self.assertIsNone(response)
+
+
+class AcgDeliveryOptionsTest(unittest.TestCase):
+    def test_supported_acg_stores_are_permanent_personal_editions(self) -> None:
+        for provider, lang in {
+            "stores": "ja",
+            "coconala": "ja",
+            "payhip": "en",
+            "etsy": "en",
+        }.items():
+            options = routes._acg_personal_edition_options(
+                product_type="acg_bundle",
+                order_provider=provider,
+                lang=lang,
+            )
+            self.assertTrue(options["personal_edition"])
+            self.assertEqual(options["personal_edition_product_type"], "acg_bundle")
+            self.assertEqual(options["personal_edition_locale"], lang)
+            self.assertEqual(options["expires_policy"], routes.NO_EXPIRY_CHART_POLICY)
+
+    def test_non_acg_products_are_unchanged(self) -> None:
+        self.assertEqual(
+            routes._acg_personal_edition_options(
+                product_type="western_full",
+                order_provider="etsy",
+                lang="en",
+            ),
+            {},
+        )
 
 
 class PayhipMailParseTest(unittest.TestCase):
@@ -344,6 +476,35 @@ class ProductCodeConsistencyTest(unittest.TestCase):
 
 
 class OrderProviderResolutionTest(unittest.TestCase):
+    def test_provider_links_lock_purchase_source(self) -> None:
+        client = TestClient(routes.app)
+        for provider, lang in {
+            "stores": "ja",
+            "coconala": "ja",
+            "payhip": "en",
+            "etsy": "en",
+        }.items():
+            response = client.get(
+                f"/redeem/acg-bundle?lang={lang}&provider={provider}"
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertRegex(
+                response.text,
+                rf'<input type="hidden" name="order_provider" id="order-provider" value="{provider}">',
+            )
+            self.assertNotIn('<select name="order_provider"', response.text)
+
+    def test_missing_or_unknown_provider_keeps_selector(self) -> None:
+        client = TestClient(routes.app)
+        for url in (
+            "/redeem/acg-bundle?lang=ja",
+            "/redeem/acg-bundle?lang=ja&provider=unknown",
+        ):
+            response = client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('<select name="order_provider"', response.text)
+            self.assertIn('<option value="coconala"', response.text)
+
     def test_ten_digit_numeric_is_stores(self) -> None:
         self.assertEqual(routes._resolve_order_provider("9824333454"), "stores")
 
@@ -351,6 +512,69 @@ class OrderProviderResolutionTest(unittest.TestCase):
         self.assertEqual(routes._resolve_order_provider("LWR6I4Y4Wa", "payhip"), "payhip")
         self.assertEqual(routes._resolve_order_provider("9824333454", "stores"), "stores")
         self.assertEqual(routes._resolve_order_provider("4125350780", "etsy"), "etsy")
+        self.assertEqual(routes._resolve_order_provider("C12345", "coconala"), "coconala")
+
+
+class CoconalaBuyerResolutionTest(unittest.TestCase):
+    def test_database_lookup_is_scoped_by_username_and_product(self) -> None:
+        connection = MagicMock()
+        cursor = connection.cursor.return_value.__enter__.return_value
+        cursor.fetchall.return_value = [
+            {
+                "stores_order_no": "COCONALA-unused-acg",
+                "provider": "coconala",
+                "product_type": "acg_bundle",
+                "buyer_reference": "sample_buyer",
+                "already_used": False,
+            }
+        ]
+        with patch.object(sync, "_get_conn", return_value=connection):
+            status, row = sync.verify_coconala_buyer(
+                "sample_buyer",
+                product_type="acg_bundle",
+            )
+        self.assertEqual(status, "ok")
+        self.assertEqual(row["stores_order_no"], "COCONALA-unused-acg")
+        execute_args = cursor.execute.call_args.args
+        self.assertIn("o.product_type = %s", execute_args[0])
+        self.assertEqual(execute_args[1], ("sample_buyer", "acg_bundle"))
+
+    def test_repeated_product_uses_next_unredeemed_purchase(self) -> None:
+        connection = MagicMock()
+        cursor = connection.cursor.return_value.__enter__.return_value
+        cursor.fetchall.return_value = [
+            {"stores_order_no": "COCONALA-used", "already_used": True},
+            {"stores_order_no": "COCONALA-unused", "already_used": False},
+        ]
+        with patch.object(sync, "_get_conn", return_value=connection):
+            status, row = sync.verify_coconala_buyer(
+                "sample_buyer",
+                product_type="acg_bundle",
+            )
+        self.assertEqual(status, "ok")
+        self.assertEqual(row["stores_order_no"], "COCONALA-unused")
+
+    def test_resolves_username_to_internal_order_code(self) -> None:
+        row = {
+            "stores_order_no": "COCONALA-1234567890abcdef12345678",
+            "provider": "coconala",
+            "product_type": "acg_bundle",
+        }
+        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
+            routes.stores_mail_sync,
+            "verify_coconala_buyer",
+            return_value=("ok", row),
+        ):
+            order_code, resolved, error, status_code = (
+                routes._resolve_coconala_order_from_buyer(
+                    buyer_reference="sample_buyer",
+                    product_type="acg_bundle",
+                )
+            )
+        self.assertEqual(order_code, row["stores_order_no"])
+        self.assertEqual(resolved["_redemption_status"], "ok")
+        self.assertIsNone(error)
+        self.assertEqual(status_code, 200)
 
     def test_non_numeric_without_provider_falls_back_to_gumroad(self) -> None:
         self.assertEqual(routes._resolve_order_provider("LWR6I4Y4Wa"), "gumroad")
@@ -416,6 +640,38 @@ class PayhipMetadataFormTest(unittest.TestCase):
         )
         self.assertEqual(metadata, {})
         self.assertIsNotNone(error)
+
+    def test_already_used_order_reaches_common_redirect_check(self) -> None:
+        order_row = {
+            "stores_order_no": "LWR6l4Y4Wa",
+            "payment_status": "paid",
+            "product_type": "western_basic",
+        }
+        metadata = {
+            "purchaser_email": "buyer@example.com",
+            "selected_product_code": "NP-WB",
+            "optional_order_id": "LWR6l4Y4Wa",
+        }
+        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
+            routes.stores_mail_sync,
+            "verify_order_no",
+            return_value=("already_used", order_row),
+        ):
+            order_code, resolved_row, error, code = routes._resolve_payhip_order_from_metadata(metadata)
+
+        self.assertEqual(order_code, "LWR6l4Y4Wa")
+        self.assertEqual(resolved_row["_redemption_status"], "already_used")
+        self.assertIsNone(error)
+        self.assertEqual(code, 200)
+
+        status, _row, check_error, check_code = routes._check_payhip_order_row_for_redeem(
+            order_id=order_code,
+            order_row=resolved_row,
+            product_type="western_basic",
+        )
+        self.assertEqual(status, "already_used")
+        self.assertIsNotNone(check_error)
+        self.assertEqual(check_code, 409)
 
     def test_payhip_order_row_without_provider_is_accepted(self) -> None:
         status, row, error, code = routes._check_payhip_order_row_for_redeem(

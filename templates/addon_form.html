@@ -31,7 +31,8 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="{{ addon_form_action }}?lang={{ lang }}" class="form">
+      <form method="post" action="{{ addon_form_action }}?lang={{ lang }}{% if form.order_provider %}&provider={{ form.order_provider }}{% endif %}" class="form">
+        <input type="hidden" name="order_provider" value="{{ form.order_provider or 'stores' }}">
         <div class="form-section">
           <h2>{{ t.addon_generate_section_title }}</h2>
           <label>{{ t.addon_type_label }}
@@ -41,14 +42,15 @@
               {% endfor %}
             </select>
           </label>
-          <label>{{ t.order_code_label }}
+          <label>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_name }}{% else %}{{ t.order_code_label }}{% endif %}
             <input type="text" name="order_code" required
                    value="{{ form.order_code if form else '' }}"
-                   placeholder="{{ t.order_code_placeholder }}"
-                   inputmode="numeric"
-                   pattern="[0-9]{10}"
+                   placeholder="{% if form.order_provider == 'coconala' %}例：nanami_user{% else %}{{ t.order_code_placeholder }}{% endif %}"
+                   {% if form.order_provider != 'coconala' %}inputmode="numeric"
+                   pattern="[0-9]{10}"{% endif %}
+                   maxlength="100"
                    autocomplete="off">
-            <small>{{ t.order_code_hint }}</small>
+            <small>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% else %}{{ t.order_code_hint }}{% endif %}</small>
           </label>
         </div>
 

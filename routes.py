@@ -614,7 +614,10 @@ I18N = {
         "provider_gumroad": "Gumroad",
         "provider_payhip": "Payhip",
         "provider_etsy": "Etsy",
+        "provider_coconala": "ココナラ",
         "stores_order": "注文番号",
+        "coconala_buyer_name": "ココナラのユーザー名",
+        "coconala_buyer_hint": "購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。",
         "payhip_email": "購入時のメールアドレス",
         "payhip_product": "購入した商品",
         "payhip_order_id": "Order ID / Invoice Number",
@@ -989,7 +992,10 @@ I18N = {
         "provider_gumroad": "Gumroad",
         "provider_payhip": "Payhip",
         "provider_etsy": "Etsy",
+        "provider_coconala": "Coconala",
         "stores_order": "Order number",
+        "coconala_buyer_name": "Coconala username",
+        "coconala_buyer_hint": "Enter the exact username shown on the Coconala account used for purchase.",
         "payhip_email": "Email address used for purchase",
         "payhip_product": "Purchased product",
         "payhip_order_id": "Order ID / Invoice Number",
@@ -1528,7 +1534,7 @@ def _truthy(value: str | None) -> bool:
 
 
 ORDER_CODE_RE = re.compile(r"[A-Za-z0-9=_-]+")
-ORDER_PROVIDERS = {"stores", "gumroad", "payhip", "etsy"}
+ORDER_PROVIDERS = {"stores", "gumroad", "payhip", "etsy", "coconala"}
 # Gumroad relaxed（サーバー照合なし）を許す商品。Gumroadで販売しているのは西洋2種のみで、
 # provider欄の無いフォーム（四柱推命・トランジット等）が非数字コードで無検証発行になるのを防ぐ。
 GUMROAD_RELAXED_PRODUCT_TYPES = {"western_basic", "western_full"}
@@ -1539,6 +1545,7 @@ ORDER_CHECK_POLICIES = {
     "gumroad": {"strict": False},
     "payhip": {"strict": True},
     "etsy": {"strict": True},
+    "coconala": {"strict": True},
 }
 PAYHIP_PRODUCTS = {
     "NP-WB": {
@@ -1645,14 +1652,59 @@ def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, 
             exc,
         )
         return "", None, _public_error_message(exc, fallback="Payhip購入履歴の照合に失敗しました。時間をおいて再試行してください。"), 503
+    order_code = str((order_row or {}).get("stores_order_no") or "").strip()
     if status == "not_found":
         return "", order_row, "Payhip購入履歴を確認できません。Order IDを確認してください。", 400
-    if status == "already_used":
-        return "", order_row, "このPayhip購入履歴はすでに使用済みです。", 409
-    order_code = str((order_row or {}).get("stores_order_no") or "").strip()
     if not order_code:
         return "", order_row, "Payhip購入履歴の注文IDを確認できません。管理者に連絡してください。", 400
-    return order_code, order_row, None, 200
+    resolved_order_row = dict(order_row or {})
+    resolved_order_row["_redemption_status"] = status
+    return order_code, resolved_order_row, None, 200
+
+
+def _resolve_coconala_order_from_buyer(
+    *,
+    buyer_reference: str,
+    product_type: str,
+) -> tuple[str, dict | None, str | None, int]:
+    buyer_reference_clean = (buyer_reference or "").strip()
+    if not buyer_reference_clean:
+        return "", None, "ココナラのユーザー名を入力してください。", 400
+    if len(buyer_reference_clean) > 100:
+        return "", None, "ココナラのユーザー名が長すぎます。", 400
+    if not os.environ.get("DATABASE_URL"):
+        return "", None, "ココナラ購入履歴の照合に必要なDATABASE_URLが未設定です。", 503
+    try:
+        status, order_row = stores_mail_sync.verify_coconala_buyer(
+            buyer_reference_clean,
+            product_type=product_type,
+        )
+        if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+            _sync_stores_orders_for_lookup()
+            status, order_row = stores_mail_sync.verify_coconala_buyer(
+                buyer_reference_clean,
+                product_type=product_type,
+            )
+    except Exception as exc:
+        logger.exception(
+            "coconala_order_check_failed buyer_reference_present=%s product_type=%s error_type=%s error=%r",
+            bool(buyer_reference_clean),
+            product_type,
+            type(exc).__name__,
+            exc,
+        )
+        return "", None, _public_error_message(
+            exc,
+            fallback="ココナラ購入履歴の照合に失敗しました。時間をおいて再試行してください。",
+        ), 503
+    if status == "not_found" or not order_row:
+        return "", order_row, "購入を確認できません。ココナラのユーザー名を確認してください。", 400
+    order_code = str(order_row.get("stores_order_no") or "").strip()
+    if not order_code:
+        return "", order_row, "ココナラ購入履歴を確認できません。管理者に連絡してください。", 503
+    resolved_order_row = dict(order_row)
+    resolved_order_row["_redemption_status"] = status
+    return order_code, resolved_order_row, None, 200
 
 
 def _check_payhip_order_row_for_redeem(
@@ -1664,6 +1716,9 @@ def _check_payhip_order_row_for_redeem(
 ) -> tuple[str, dict | None, str | None, int]:
     if not order_row:
         return "not_found", None, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
+
+    if order_row.get("_redemption_status") == "already_used":
+        return "already_used", order_row, f"この注文番号（{order_id}）はすでに使用済みです。", 409
 
     payment_status = str((order_row or {}).get("payment_status") or "").lower()
 
@@ -1699,6 +1754,48 @@ def _log_order_check(
     )
 
 
+def _chart_redirect_url(
+    token: str,
+    *,
+    lang: str = "ja",
+    download: bool = False,
+    personal_download: bool = False,
+) -> str:
+    redirect_params = []
+    if personal_download:
+        redirect_params.append("personal_download=1")
+    elif download:
+        redirect_params.append("chart_download=1")
+    if lang != "ja":
+        redirect_params.append(f"lang={lang}")
+    url = f"/chart/{token}"
+    if redirect_params:
+        url = f"{url}?{'&'.join(redirect_params)}"
+    return url
+
+
+def _acg_personal_edition_options(
+    *,
+    product_type: str,
+    order_provider: str | None,
+    lang: str,
+) -> dict[str, object]:
+    """ACG orders use the same permanent delivery as Personal Edition codes."""
+    if product_type != "acg_bundle" or order_provider not in {
+        "stores",
+        "payhip",
+        "etsy",
+        "coconala",
+    }:
+        return {}
+    return {
+        "personal_edition": True,
+        "personal_edition_product_type": "acg_bundle",
+        "personal_edition_locale": lang if lang in {"ja", "en"} else "en",
+        "expires_policy": NO_EXPIRY_CHART_POLICY,
+    }
+
+
 def _existing_chart_redirect(order_code: str, *, lang: str = "ja") -> RedirectResponse | None:
     if not os.environ.get("DATABASE_URL"):
         return None
@@ -1710,10 +1807,10 @@ def _existing_chart_redirect(order_code: str, *, lang: str = "ja") -> RedirectRe
             token = charts[0].get("token") if charts else None
         if token:
             logger.info("redirect_existing_chart order_id=%s token_prefix=%s", order_code, str(token)[:8])
-            redirect_params = ["chart_download=1"]
-            if lang != "ja":
-                redirect_params.append(f"lang={lang}")
-            return RedirectResponse(f"/chart/{token}?{'&'.join(redirect_params)}", status_code=303)
+            return RedirectResponse(
+                _chart_redirect_url(str(token), lang=lang, download=True),
+                status_code=303,
+            )
     except Exception as exc:
         logger.exception(
             "existing_chart_lookup_failed order_id=%s error_type=%s error=%r",
@@ -1955,6 +2052,8 @@ def _check_order_for_redeem(
 
 
 def _provider_label(provider: str | None) -> str:
+    if provider == "coconala":
+        return "ココナラ"
     if provider == "etsy":
         return "Etsy"
     if provider == "payhip":
@@ -2514,9 +2613,9 @@ def admin_common_access_package(request: Request, lang: str = "en"):
         return auth_error
     if lang not in {"en", "ja"}:
         raise HTTPException(status_code=400, detail="lang must be en or ja")
-    activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
+    redeem_url = f"{_public_base_url(request)}/redeem/acg-bundle?lang={lang}&provider=etsy"
     response = Response(
-        content=build_common_access_package(activation_url=activation_url, lang=lang),
+        content=build_common_access_package(redeem_url=redeem_url, lang=lang),
         media_type="application/zip",
     )
     response.headers["Content-Disposition"] = f'attachment; filename="{ETSY_PACKAGE_FILENAME}"'
@@ -4161,6 +4260,13 @@ def redeem_get(request: Request, product_slug: str | None = None):
     if not product_slug and "type" in request.query_params and "order" not in request.query_params:
         return RedirectResponse(str(request.url.replace(path=_redeem_url(product_type)).include_query_params(lang=lang)), status_code=301)
     order_code = request.query_params.get("order", "").strip()
+    requested_provider = request.query_params.get("provider", "").strip().lower()
+    form: dict[str, str] = {}
+    if order_code:
+        form["order_code"] = order_code
+    if requested_provider in ORDER_PROVIDERS:
+        form["order_provider"] = requested_provider
+    provider_locked = requested_provider in ORDER_PROVIDERS
     return templates.TemplateResponse(
         _buyer_template("redeem", product_type),
         {
@@ -4169,7 +4275,8 @@ def redeem_get(request: Request, product_slug: str | None = None):
             "prefectures": PREFECTURE_OPTIONS,
             "timezone_options": _timezone_options(lang),
             "error": None,
-            "form": {"order_code": order_code} if order_code else None,
+            "form": form or None,
+            "provider_locked": provider_locked,
             "payhip_products": _payhip_product_options(),
             **_product_context(product_type, lang),
         },
@@ -4271,6 +4378,10 @@ def redeem_post(
                     "calendar_note": calendar_note,
                     "agree_final": bool(agree_final),
                 },
+                "provider_locked": (
+                    request.query_params.get("provider", "").strip().lower()
+                    in ORDER_PROVIDERS
+                ),
                 **_product_context(product_type, lang),
                 "payhip_products": _payhip_product_options(),
             },
@@ -4293,6 +4404,19 @@ def redeem_post(
         if payhip_order_error:
             return _form_err(payhip_order_error, status=payhip_order_error_status)
         order_provider_clean = "payhip"
+    elif requested_provider == "coconala":
+        (
+            order_code_clean,
+            _coconala_order_row,
+            coconala_order_error,
+            coconala_order_error_status,
+        ) = _resolve_coconala_order_from_buyer(
+            buyer_reference=order_code,
+            product_type=product_type,
+        )
+        if coconala_order_error:
+            return _form_err(coconala_order_error, status=coconala_order_error_status)
+        order_provider_clean = "coconala"
     else:
         order_code_clean = _normalize_stores_order_no(order_code)
         if not order_code_clean:
@@ -4422,9 +4546,11 @@ def redeem_post(
             )
             return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。別の注文番号をご確認ください。", status=409)
 
-        chart_redirect = f"/chart/{token}"
-        if order_provider_clean in {"stores", "payhip", "etsy"}:
-            chart_redirect = f"{chart_redirect}?chart_download=1"
+        chart_redirect = _chart_redirect_url(
+            token,
+            lang=lang,
+            download=order_provider_clean in {"stores", "payhip", "etsy"},
+        )
         return RedirectResponse(chart_redirect, status_code=303)
 
     try:
@@ -4439,6 +4565,12 @@ def redeem_post(
         )
     except Exception as e:
         return _form_err(str(e))
+    if product_type == "acg_bundle" and str(birth_time_info["accuracy"]) != "exact":
+        return _form_err(
+            "The ACG Bundle requires a confirmed exact birth time."
+            if lang == "en"
+            else "ACG付きBundleは、正確な出生時刻が確認できる方のみ発行できます。"
+        )
 
     try:
         birth_location = _build_birth_location(
@@ -4511,11 +4643,17 @@ def redeem_post(
         "order_provider": order_provider_clean,
         "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
         **payhip_metadata,
+        **_acg_personal_edition_options(
+            product_type=product_type,
+            order_provider=order_provider_clean,
+            lang=lang,
+        ),
     }
     if product_type == "acg_bundle":
         chart_options["acg_enabled"] = True
     artifacts = _build_chart_artifacts(yaml_text=yaml_text, doc=doc, product_type=product_type)
-    expires_at = _chart_expires_at()
+    is_acg_personal_edition = bool(chart_options.get("personal_edition"))
+    expires_at = None if is_acg_personal_edition else _chart_expires_at()
     try:
         if status == "reusable":
             pg_store.save_chart(
@@ -4579,14 +4717,12 @@ def redeem_post(
             status=409,
         )
 
-    chart_redirect = f"/chart/{token}"
-    redirect_params = []
-    if order_provider_clean in {"stores", "payhip", "etsy"}:
-        redirect_params.append("chart_download=1")
-    if lang != "ja":
-        redirect_params.append(f"lang={lang}")
-    if redirect_params:
-        chart_redirect = f"{chart_redirect}?{'&'.join(redirect_params)}"
+    chart_redirect = _chart_redirect_url(
+        token,
+        lang=lang,
+        download=order_provider_clean in {"stores", "payhip", "etsy"},
+        personal_download=is_acg_personal_edition,
+    )
     return RedirectResponse(chart_redirect, status_code=303)
 
 
@@ -5980,10 +6116,12 @@ def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
         else "western_asteroids_addon"
     )
     previous_chart_url = (request.query_params.get("previous_chart_url") or "").strip()
+    requested_provider = (request.query_params.get("provider") or "").strip().lower()
+    order_provider = requested_provider if requested_provider in ORDER_PROVIDERS else "stores"
     return {
         "addon_type": addon_type,
         "order_code": "",
-        "order_provider": "stores",
+        "order_provider": order_provider,
         "payhip_email": "",
         "payhip_product_code": "",
         "payhip_order_id": "",
@@ -6776,6 +6914,33 @@ def _transit_addon_expires_at() -> datetime:
     return _chart_expires_at()
 
 
+def _existing_addon_chart_result(order_code: str, addon_type: str) -> tuple[str, datetime | None] | None:
+    try:
+        chart = pg_store.get_addon_chart_by_order_code(
+            order_code=order_code,
+            addon_type=addon_type,
+        )
+    except Exception as exc:
+        logger.exception(
+            "existing_addon_chart_lookup_failed order_id=%s addon_type=%s error_type=%s error=%r",
+            order_code,
+            addon_type,
+            type(exc).__name__,
+            exc,
+        )
+        return None
+    token = str((chart or {}).get("token") or "").strip()
+    if not token:
+        return None
+    logger.info(
+        "redirect_existing_addon_chart order_id=%s addon_type=%s token_prefix=%s",
+        order_code,
+        addon_type,
+        token[:8],
+    )
+    return token, _chart_expiry(chart or {})
+
+
 def _redeem_and_save_transit_addon_or_raise(
     order_code: str,
     order_provider: str,
@@ -6874,6 +7039,9 @@ def _redeem_and_save_transit_addon_or_raise(
         if status == "not_found":
             raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
         if status == "already_used":
+            existing = _existing_addon_chart_result(order_code_clean, addon_type)
+            if existing:
+                return existing
             raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
         if status == "product_mismatch":
             purchased_type = (order_row or {}).get("product_type")
@@ -6884,6 +7052,9 @@ def _redeem_and_save_transit_addon_or_raise(
         raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
 
     if last_exc:
+        existing = _existing_addon_chart_result(order_code_clean, addon_type)
+        if existing:
+            return existing
         raise ValueError(_public_error_message(last_exc, fallback="トランジットデータの一時保存に失敗しました。時間をおいて再試行してください。")) from last_exc
     raise ValueError("トランジットデータの一時保存に失敗しました。時間をおいて再試行してください。")
 
@@ -6982,6 +7153,9 @@ def _redeem_and_save_chart_addon_or_raise(
         if status == "not_found":
             raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
         if status == "already_used":
+            existing = _existing_addon_chart_result(order_code_clean, addon_type)
+            if existing:
+                return existing
             raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
         if status == "product_mismatch":
             purchased_type = (order_row or {}).get("product_type")
@@ -6992,6 +7166,9 @@ def _redeem_and_save_chart_addon_or_raise(
         raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
 
     if last_exc:
+        existing = _existing_addon_chart_result(order_code_clean, addon_type)
+        if existing:
+            return existing
         raise ValueError(_public_error_message(last_exc, fallback="追加データの保存に失敗しました。時間をおいて再試行してください。")) from last_exc
     raise ValueError("追加データの保存に失敗しました。時間をおいて再試行してください。")
 
@@ -7134,6 +7311,24 @@ def addon_generate(
         if payhip_order_error:
             return _addon_form_response(request, form=form, error=payhip_order_error, status_code=payhip_order_error_status)
         order_provider_for_redeem = "payhip"
+    elif requested_provider == "coconala":
+        (
+            order_code_for_redeem,
+            _coconala_order_row,
+            coconala_order_error,
+            coconala_order_error_status,
+        ) = _resolve_coconala_order_from_buyer(
+            buyer_reference=order_code,
+            product_type=addon_type,
+        )
+        if coconala_order_error:
+            return _addon_form_response(
+                request,
+                form=form,
+                error=coconala_order_error,
+                status_code=coconala_order_error_status,
+            )
+        order_provider_for_redeem = "coconala"
     try:
         if addon_type == "western_asteroids_addon":
             if not base_yaml.strip() and not previous_chart_url.strip():

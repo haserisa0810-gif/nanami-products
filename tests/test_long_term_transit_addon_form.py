@@ -7,10 +7,33 @@ from unittest.mock import patch
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 
-from routes import _load_addon_base_doc_from_previous_chart_url, addon_generate
+from routes import (
+    _existing_addon_chart_result,
+    _load_addon_base_doc_from_previous_chart_url,
+    addon_generate,
+)
 
 
 class LongTermTransitAddonFormTest(unittest.TestCase):
+    @patch(
+        "routes.pg_store.get_addon_chart_by_order_code",
+        return_value={
+            "token": "existing-addon-token",
+            "expires_at": None,
+        },
+    )
+    def test_existing_addon_chart_is_reused(self, get_addon_chart) -> None:
+        result = _existing_addon_chart_result(
+            "1234567890",
+            "western_long_term_transits_addon",
+        )
+
+        self.assertEqual(result, ("existing-addon-token", None))
+        get_addon_chart.assert_called_once_with(
+            order_code="1234567890",
+            addon_type="western_long_term_transits_addon",
+        )
+
     @patch("routes._validate_addon_base_doc")
     @patch("routes._load_addon_base_yaml", return_value={"systems": {"western": {"natal": {}}}})
     @patch("routes.pg_store.get_chart", return_value={"yaml_text": "version: test", "options": {}})

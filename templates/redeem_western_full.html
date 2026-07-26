@@ -31,7 +31,7 @@
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-      <form method="post" action="{{ redeem_url }}?lang={{ lang }}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
+      <form method="post" action="{{ redeem_url }}?lang={{ lang }}{% if provider_locked %}&provider={{ form.order_provider }}{% endif %}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
         <input type="hidden" name="product_type" value="{{ product_type }}">
         <input type="hidden" name="gender" value="unknown">
 
@@ -39,21 +39,35 @@
           <h2>{{ t.order_info }}</h2>
           <label>{{ t.order_provider }}
             {% set provider = form.order_provider if form and form.order_provider else 'stores' %}
+            {% if provider_locked %}
+            <input type="hidden" name="order_provider" id="order-provider" value="{{ provider }}">
+            <strong id="order-provider-label">
+              {% if provider == 'payhip' %}{{ t.provider_payhip }}
+              {% elif provider == 'etsy' %}{{ t.provider_etsy }}
+              {% elif provider == 'coconala' %}{{ t.provider_coconala }}
+              {% else %}{{ t.provider_stores }}{% endif %}
+            </strong>
+            {% else %}
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>{{ t.provider_stores }}</option>
+              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>{{ t.provider_coconala }}</option>
               <option value="payhip" {% if provider == 'payhip' %}selected{% endif %}>{{ t.provider_payhip }}</option>
               <option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>{{ t.provider_etsy }}</option>
             </select>
+            {% endif %}
           </label>
           <div id="standard-order-fields">
-            <label>{{ t.stores_order }}<span class="required">{{ t.required }}</span>
+            <label><span id="order-code-label">{% if provider == 'coconala' %}{{ t.coconala_buyer_name }}{% else %}{{ t.stores_order }}{% endif %}</span><span class="required">{{ t.required }}</span>
               <input type="text" name="order_code" id="order-code"
                      value="{{ form.order_code if form else '' }}"
-                     placeholder="例：9824333454 / cU-yVsYa22tGvZCc4A5cWw=="
-                     pattern="[A-Za-z0-9=_-]+"
-                     title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"
+                     placeholder="{% if provider == 'coconala' %}例：nanami_user{% else %}例：9824333454 / cU-yVsYa22tGvZCc4A5cWw=={% endif %}"
+                     data-standard-placeholder="例：9824333454 / cU-yVsYa22tGvZCc4A5cWw=="
+                     data-coconala-placeholder="例：nanami_user"
+                     {% if provider != 'coconala' %}pattern="[A-Za-z0-9=_-]+"
+                     title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"{% endif %}
+                     maxlength="100"
                      autocomplete="off">
-              <small>{{ t.order_mail_hint }}</small>
+              <small id="order-code-hint">{% if provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% else %}{{ t.order_mail_hint }}{% endif %}</small>
             </label>
           </div>
           <div id="payhip-order-fields" hidden>
@@ -457,7 +471,9 @@
       const lat = document.querySelector('[name="birth_lat"]')?.value || '';
       const lng = document.querySelector('[name="birth_lng"]')?.value || '';
 
-      document.getElementById('confirm-order-provider').textContent = buildConfirmValue(providerSelect?.selectedOptions?.[0]?.textContent);
+      const providerLabel = document.getElementById('order-provider-label')?.textContent
+        || providerSelect?.selectedOptions?.[0]?.textContent;
+      document.getElementById('confirm-order-provider').textContent = buildConfirmValue(providerLabel);
       document.getElementById('confirm-order-code').textContent = buildConfirmValue(orderCode);
       document.getElementById('confirm-name').textContent = buildConfirmValue(buyerName);
       document.getElementById('confirm-birth-date').textContent = formatBirthDateForDisplay(birthDateInput?.value);
@@ -504,12 +520,31 @@
       const payhipProduct = document.getElementById('payhip-product-code');
       const payhipOrderId = document.getElementById('payhip-order-id');
       const isPayhip = provider === 'payhip';
+      const isCoconala = provider === 'coconala';
+      const orderCodeLabel = document.getElementById('order-code-label');
+      const orderCodeHint = document.getElementById('order-code-hint');
       if (standard) standard.hidden = isPayhip;
       if (payhip) payhip.hidden = !isPayhip;
       if (orderCode) {
         orderCode.required = !isPayhip;
         orderCode.disabled = isPayhip;
+        orderCode.placeholder = isCoconala
+          ? orderCode.dataset.coconalaPlaceholder
+          : orderCode.dataset.standardPlaceholder;
+        if (isCoconala) {
+          orderCode.removeAttribute('pattern');
+          orderCode.removeAttribute('title');
+        } else {
+          orderCode.pattern = '[A-Za-z0-9=_-]+';
+          orderCode.title = '英数字、ハイフン、アンダースコア、イコールのみ使用できます';
+        }
       }
+      if (orderCodeLabel) orderCodeLabel.textContent = isCoconala
+        ? {{ t.coconala_buyer_name | tojson }}
+        : {{ t.stores_order | tojson }};
+      if (orderCodeHint) orderCodeHint.textContent = isCoconala
+        ? {{ t.coconala_buyer_hint | tojson }}
+        : {{ t.order_mail_hint | tojson }};
       if (payhipEmail) {
         payhipEmail.required = false;
         payhipEmail.disabled = false;
