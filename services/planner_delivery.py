@@ -110,7 +110,12 @@ def build_planner_pdf(
     """Return personal planner PDF bytes for the given birth data."""
     if lang not in {"ja", "en"}:
         raise ValueError(f"lang must be ja or en, got {lang!r}")
-    start = transit_start_date or datetime.now(timezone.utc)
+    # The planner runs in whole calendar months, so the transit scan has to
+    # start at the first of the month too — otherwise the days before "today"
+    # fall outside the computed windows and read as having no transits.
+    start = (transit_start_date or datetime.now(timezone.utc)).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
+    )
     # A chart doc carrying long-term (weekly-sampled) transits. build_product_yaml
     # stores the block under "transit"; the long-term addon convention remaps it
     # to "transit_long_term" before serialisation.
