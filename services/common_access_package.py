@@ -52,9 +52,13 @@ def build_common_access_package(*, redeem_url: str, lang: str = "en") -> bytes:
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("README-FIRST.txt", readme.encode("utf-8-sig"))
-        archive.writestr("AUTOMATIC-ACCESS-URL.txt", (clean_url + "\n").encode("utf-8-sig"))
         archive.writestr(
-            "OPEN-AUTOMATIC-ACCESS-PAGE.url",
-            ("[InternetShortcut]\r\nURL=" + clean_url + "\r\n").encode("utf-8"),
+            "START-HERE-AUTOMATIC-ACCESS.txt",
+            (
+                "NANAMI ASTRO - ACG PREMIUM BUNDLE\n\n"
+                "Open this URL in your web browser:\n"
+                f"{clean_url}\n\n"
+                "If the URL is not clickable, copy and paste it into the address bar.\n"
+            ).encode("utf-8-sig"),
         )
     return output.getvalue()

@@ -57,10 +57,11 @@ def test_etsy_common_access_package_contains_no_code_or_personal_data(monkeypatc
         assert "PE-FULL-" not in combined
         assert set(archive.namelist()) == {
             "README-FIRST.txt",
-            "AUTOMATIC-ACCESS-URL.txt",
-            "OPEN-AUTOMATIC-ACCESS-PAGE.url",
+            "START-HERE-AUTOMATIC-ACCESS.txt",
         }
+        assert not any(name.lower().endswith(".url") for name in archive.namelist())
         assert "No activation code is required." in combined
+        assert "copy and paste it into the address bar" in combined
         assert "permanent Personal Edition ZIP downloads automatically." in combined
         assert "https://chart.nanami-astro.com/redeem/acg-bundle?lang=en&provider=etsy" in combined
 
