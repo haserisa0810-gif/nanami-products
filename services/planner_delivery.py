@@ -21,6 +21,25 @@ from services.long_term_transit_yaml import build_ai_long_term_transits_yaml
 from services.planner_export import render_personal_planner
 
 
+def _long_term_items(yaml_text: str) -> list:
+    """The transit_long_term items in a chart YAML (empty list when absent).
+
+    Stored charts without the addon carry ``transit_long_term: null``, so a
+    plain key lookup is not enough to tell "has data" from "has the key".
+    """
+    try:
+        doc = yaml.safe_load(yaml_text)
+    except Exception:
+        return []
+    if not isinstance(doc, dict):
+        return []
+    long_term = ((doc.get("systems") or {}).get("western") or {}).get("transit_long_term")
+    if not isinstance(long_term, dict):
+        return []
+    items = long_term.get("items")
+    return items if isinstance(items, list) else []
+
+
 def _apply_display_timezone(yaml_text: str, lang: str) -> str:
     """English planners show the collective sky in UTC (the neutral
     international standard); Japanese planners keep the buyer's local timezone.
@@ -51,7 +70,14 @@ def build_planner_pdf_from_yaml(
     lang: str = "ja",
     months: int = 12,
 ) -> bytes:
-    """Render planner bytes from stored natal + long-term-transit YAML."""
+    """Render planner bytes from stored natal + long-term-transit YAML.
+
+    Raises ValueError when the YAML carries no long-term transits: without them
+    the personal layer (transit seasons, monthly focus dates, the daily "your
+    active transits" box) would be silently empty, which is worse than failing.
+    """
+    if not _long_term_items(yaml_text):
+        raise ValueError("YAML has no long-term transit items; personal layer would be empty")
     yaml_text = _apply_display_timezone(yaml_text, lang)
     pdf_path = render_personal_planner(
         yaml_text=yaml_text,

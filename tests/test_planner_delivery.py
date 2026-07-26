@@ -118,6 +118,18 @@ class PlannerDeliveryTest(unittest.TestCase):
         self.assertEqual(response.body, b"%PDF-en")
         build.assert_called_once_with(chart, lang="en")
 
+    def test_yaml_without_long_term_transits_is_rejected(self) -> None:
+        # Stored charts without the addon carry `transit_long_term: null`.
+        # Rendering those would produce an empty personal layer (every daily
+        # page saying "no active transit"), so it must fail loudly instead.
+        src = (
+            "input:\n  timezone: Asia/Tokyo\n"
+            "systems:\n  western:\n    natal:\n      bodies: {}\n"
+            "    transit_long_term: null\n"
+        )
+        with self.assertRaises(ValueError):
+            build_planner_pdf_from_yaml(yaml_text=src, lang="ja", months=12)
+
     def test_english_display_uses_utc(self) -> None:
         import yaml as _yaml
         from services.planner_delivery import _apply_display_timezone

@@ -1649,8 +1649,6 @@ def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, 
         return "", order_row, "Payhip購入履歴を確認できません。Order IDを確認してください。", 400
     if status == "already_used":
         return "", order_row, "このPayhip購入履歴はすでに使用済みです。", 409
-    if status == "cancelled":
-        return "", order_row, "このPayhip購入履歴はキャンセル扱いのため使用できません。", 409
     order_code = str((order_row or {}).get("stores_order_no") or "").strip()
     if not order_code:
         return "", order_row, "Payhip購入履歴の注文IDを確認できません。管理者に連絡してください。", 400
@@ -1668,8 +1666,6 @@ def _check_payhip_order_row_for_redeem(
         return "not_found", None, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
 
     payment_status = str((order_row or {}).get("payment_status") or "").lower()
-    if payment_status == "cancelled":
-        return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
 
     purchased_type = order_row.get("product_type")
     if enforce_product_type and purchased_type and purchased_type != product_type:
@@ -1703,7 +1699,7 @@ def _log_order_check(
     )
 
 
-def _existing_chart_redirect(order_code: str) -> RedirectResponse | None:
+def _existing_chart_redirect(order_code: str, *, lang: str = "ja") -> RedirectResponse | None:
     if not os.environ.get("DATABASE_URL"):
         return None
     try:
@@ -1714,7 +1710,10 @@ def _existing_chart_redirect(order_code: str) -> RedirectResponse | None:
             token = charts[0].get("token") if charts else None
         if token:
             logger.info("redirect_existing_chart order_id=%s token_prefix=%s", order_code, str(token)[:8])
-            return RedirectResponse(f"/chart/{token}", status_code=303)
+            redirect_params = ["chart_download=1"]
+            if lang != "ja":
+                redirect_params.append(f"lang={lang}")
+            return RedirectResponse(f"/chart/{token}?{'&'.join(redirect_params)}", status_code=303)
     except Exception as exc:
         logger.exception(
             "existing_chart_lookup_failed order_id=%s error_type=%s error=%r",
@@ -1897,8 +1896,6 @@ def _check_order_for_redeem(
         return "not_found", order_row, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
     if status == "already_used":
         return "already_used", order_row, f"この注文番号（{order_id}）はすでに使用済みです。", 409
-    if status == "cancelled":
-        return "cancelled", order_row, f"この注文番号（{order_id}）はキャンセル扱いのため使用できません。", 409
 
     row_provider = str((order_row or {}).get("provider") or "").strip().lower()
     if provider == "etsy" and row_provider != "etsy":
@@ -2344,8 +2341,6 @@ def internal_reissue_api_key(request: Request, payload: dict[str, object] = Body
 
     if status == "not_found":
         return _api_error("ORDER_NOT_FOUND", "order_code was not found", 404)
-    if status == "cancelled":
-        return _api_error("ORDER_CANCELLED", "this order cannot be used", 409)
     if status == "already_used":
         return _api_error("ORDER_ALREADY_USED", "this order was used for chart issuance", 409)
 
@@ -2448,8 +2443,6 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
         return _api_error("ORDER_LOOKUP_FAILED", str(exc), 500)
     if status == "not_found":
         return _api_error("ORDER_NOT_FOUND", "order_code was not found", 404)
-    if status == "cancelled":
-        return _api_error("ORDER_CANCELLED", "cancelled order cannot be reset for redemption", 409)
 
     try:
         result = pg_store.reset_redemption_by_order_code(order_code_clean)
@@ -4351,6 +4344,10 @@ def redeem_post(
                 provider=order_provider_clean,
                 product_type=product_type,
             )
+        if status == "already_used":
+            existing = _existing_chart_redirect(order_code_clean, lang=lang)
+            if existing:
+                return existing
         if order_error:
             return _form_err(order_error, status=order_error_status)
 
@@ -4407,13 +4404,13 @@ def redeem_post(
                 type(e).__name__,
                 e,
             )
-            existing = _existing_chart_redirect(order_code_clean)
+            existing = _existing_chart_redirect(order_code_clean, lang=lang)
             if existing:
                 return existing
             return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
 
         if not ok:
-            existing = _existing_chart_redirect(order_code_clean)
+            existing = _existing_chart_redirect(order_code_clean, lang=lang)
             if existing:
                 return existing
             _log_order_check(
@@ -4472,6 +4469,10 @@ def redeem_post(
             provider=order_provider_clean,
             product_type=product_type,
         )
+    if status == "already_used":
+        existing = _existing_chart_redirect(order_code_clean, lang=lang)
+        if existing:
+            return existing
     if order_error:
         return _form_err(order_error, status=order_error_status)
 
@@ -4556,13 +4557,13 @@ def redeem_post(
             type(e).__name__,
             e,
         )
-        existing = _existing_chart_redirect(order_code_clean)
+        existing = _existing_chart_redirect(order_code_clean, lang=lang)
         if existing:
             return existing
         return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
 
     if not ok:
-        existing = _existing_chart_redirect(order_code_clean)
+        existing = _existing_chart_redirect(order_code_clean, lang=lang)
         if existing:
             return existing
         _log_order_check(
@@ -4726,13 +4727,18 @@ def _build_personal_planner_pdf(chart: dict, *, lang: str) -> bytes | None:
     seconds). Any failure is swallowed so the buyer still receives the rest of
     the bundle. Reused verbatim by a future standalone Planner product.
     """
+    # Only reuse the stored chart when it actually carries long-term transits;
+    # most charts store `transit_long_term: null`, which would render a planner
+    # with an empty personal layer instead of falling through to a fresh
+    # calculation from the birth inputs below.
     try:
         detail_yaml = build_detail_astrology_yaml(chart["yaml_text"])
-        return build_planner_pdf_from_yaml(
-            yaml_text=detail_yaml,
-            lang=lang,
-            months=12,
-        )
+        if has_long_term_transits(yaml_text=detail_yaml):
+            return build_planner_pdf_from_yaml(
+                yaml_text=detail_yaml,
+                lang=lang,
+                months=12,
+            )
     except Exception:
         logger.exception(
             "stored_yaml_planner_generation_failed token=%s; trying birth-input fallback",
@@ -6869,8 +6875,6 @@ def _redeem_and_save_transit_addon_or_raise(
             raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
         if status == "already_used":
             raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
-        if status == "cancelled":
-            raise ValueError(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。")
         if status == "product_mismatch":
             purchased_type = (order_row or {}).get("product_type")
             raise ValueError(
@@ -6979,8 +6983,6 @@ def _redeem_and_save_chart_addon_or_raise(
             raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
         if status == "already_used":
             raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
-        if status == "cancelled":
-            raise ValueError(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。")
         if status == "product_mismatch":
             purchased_type = (order_row or {}).get("product_type")
             raise ValueError(
@@ -7069,8 +7071,6 @@ def _redeem_addon_order_or_raise(
         raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
     if status == "already_used":
         raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
-    if status == "cancelled":
-        raise ValueError(f"この注文番号（{order_code_clean}）はキャンセル扱いのため使用できません。")
     if status == "product_mismatch":
         purchased_type = (order_row or {}).get("product_type")
         raise ValueError(
