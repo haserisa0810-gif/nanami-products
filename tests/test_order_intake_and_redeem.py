@@ -505,6 +505,15 @@ class OrderProviderResolutionTest(unittest.TestCase):
             self.assertIn('<select name="order_provider"', response.text)
             self.assertIn('<option value="coconala"', response.text)
 
+    def test_name_example_matches_selected_language(self) -> None:
+        client = TestClient(routes.app)
+        english = client.get("/redeem/acg-bundle?lang=en&provider=etsy")
+        japanese = client.get("/redeem/acg-bundle?lang=ja&provider=stores")
+
+        self.assertIn('placeholder="e.g. Hanako Yamada"', english.text)
+        self.assertNotIn("山田 花子", english.text)
+        self.assertIn('placeholder="例：山田 花子"', japanese.text)
+
     def test_ten_digit_numeric_is_stores(self) -> None:
         self.assertEqual(routes._resolve_order_provider("9824333454"), "stores")
 

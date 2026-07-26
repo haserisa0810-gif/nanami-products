@@ -86,7 +86,7 @@
           <label>{{ t.name }}<span class="optional">{{ t.optional }}</span>
             <input type="text" name="buyer_name"
                    value="{{ form.buyer_name if form else '' }}"
-                   placeholder="例：山田 花子">
+                   placeholder="{{ t.name_placeholder }}">
           </label>
         </div>
 
