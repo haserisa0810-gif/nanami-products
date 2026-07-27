@@ -940,7 +940,7 @@ class Planner:
         pdf.drawString(53, y - 43, moon_text)
         pdf.setFillColor(MUTED)
         pdf.setFont("Helvetica", 8)
-        phase = i18n.PHASE_LABELS_JA[record["moon_phase"]] if lang == "ja" else record["moon_phase"]
+        phase = i18n.phase_label(lang, record["moon_phase"])
         pdf.drawString(53, y - 62, S(lang, "phase_suffix", phase=phase))
 
         self._card(216, y, 342, 84, CREAM)
