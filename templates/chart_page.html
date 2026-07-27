@@ -1005,45 +1005,35 @@
                 const idleHint = hint.textContent.trim();
                 const text = {
                   building: {% if lang == 'ja' %}'作成中…そのままお待ちください'{% else %}'Building your planner…'{% endif %},
-                  buildingHint: {% if lang == 'ja' %}'20〜30秒ほどかかります。ボタンをもう一度押す必要はありません。'{% else %}'This takes 20-30 seconds. There is no need to press the button again.'{% endif %},
-                  done: {% if lang == 'ja' %}'ダウンロードしました。もう一度作成できます'{% else %}'Downloaded. You can build it again'{% endif %},
-                  failed: {% if lang == 'ja' %}'作成できませんでした。少し時間をおいて再度お試しください。'{% else %}'The planner could not be built. Please try again in a moment.'{% endif %},
-                  busy: {% if lang == 'ja' %}'すでに作成中です。完了までお待ちください。'{% else %}'A planner is already being built. Please wait for it to finish.'{% endif %}
+                  buildingHint: {% if lang == 'ja' %}'20〜30秒ほどかかります。ボタンをもう一度押す必要はありません。ダウンロードは自動で始まります。'{% else %}'This takes 20-30 seconds. There is no need to press the button again; the download starts on its own.'{% endif %}
                 };
                 let building = false;
-                button.addEventListener('click', async (event) => {
-                  event.preventDefault();
-                  if (building) return;
+                const release = () => {
+                  if (!building) return;
+                  building = false;
+                  button.removeAttribute('aria-busy');
+                  button.classList.remove('is-busy');
+                  button.textContent = idleLabel;
+                  hint.textContent = idleHint;
+                };
+                // The link stays a normal download: fetching the PDF and then
+                // clicking a generated <a> loses the user-gesture context, which
+                // Safari on iOS blocks. So let the browser download it natively
+                // and only guard against repeat clicks here.
+                button.addEventListener('click', (event) => {
+                  if (building) {
+                    event.preventDefault();
+                    return;
+                  }
                   building = true;
                   button.setAttribute('aria-busy', 'true');
                   button.classList.add('is-busy');
                   button.textContent = text.building;
                   hint.textContent = text.buildingHint;
-                  try {
-                    const response = await fetch(button.href, { headers: { 'Accept': 'application/pdf' } });
-                    if (response.status === 429) throw new Error(text.busy);
-                    if (!response.ok) throw new Error(text.failed);
-                    const blob = await response.blob();
-                    const objectUrl = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = objectUrl;
-                    link.download = (response.headers.get('Content-Disposition') || '').includes('filename=')
-                      ? response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '').trim()
-                      : 'personal-planner.pdf';
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
-                    hint.textContent = text.done;
-                  } catch (error) {
-                    hint.textContent = error.message || text.failed;
-                  } finally {
-                    building = false;
-                    button.removeAttribute('aria-busy');
-                    button.classList.remove('is-busy');
-                    button.textContent = idleLabel;
-                    setTimeout(() => { if (!building) hint.textContent = idleHint; }, 20000);
-                  }
+                  // A download never fires an event on this page, so lift the
+                  // guard once the build window has passed or the tab is used again.
+                  window.setTimeout(release, 45000);
+                  window.addEventListener('focus', release, { once: true });
                 });
               })();
             </script>
