@@ -261,6 +261,9 @@ PRODUCTS = [
                           "also want the asteroids (Chiron, Juno, Vesta, Pallas, Ceres).",
         "transit": True,
         "planner": True,
+        # Etsy ships the richer standalone guide from build_etsy_wbt_guide.py
+        # (product code, FULL comparison, terms, FAQ), so skip it here.
+        "skip_marketplaces": {"etsy"},
     },
     {
         "key": "western_full",
@@ -524,6 +527,8 @@ def build_marketplace(name: str) -> list[Path]:
     out_dir = OUTPUT_ROOT / name
     written: list[Path] = []
     for product in PRODUCTS:
+        if name in product.get("skip_marketplaces", ()):
+            continue
         path = out_dir / f"nanami_{product['key']}_{name}.pdf"
         build_pdf(market, product_pages(market, product), path,
                   f"{product['title_en']} - {name} buyer guide")
