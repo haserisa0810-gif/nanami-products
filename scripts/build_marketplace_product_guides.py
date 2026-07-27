@@ -235,6 +235,34 @@ PRODUCTS = [
                           "birth details. The AI can focus on interpretation rather than recalculating positions.",
     },
     {
+        "key": "western_transit",
+        "slug": "western-transit",
+        "title_ja": "ホロスコープ基本版＋トランジット",
+        "subtitle_ja": "出生図と31日分のトランジット、1年分のトランジット手帳を含みます。",
+        "title_en": "Western Astrology Basic + Transits",
+        "subtitle_en": "Core birth chart, 31 days of transits, and a one-year planner.",
+        "included_ja": [
+            "基本版の全データ（天体・ASC・MC・ハウス・アスペクト）",
+            "31日分のトランジット（日別の天体位置・アスペクト・ハウス）",
+            PLANNER_JA,
+            "小惑星は含みません",
+        ],
+        "included_en": [
+            "Everything in the Basic edition (planets, ASC, MC, houses, aspects)",
+            "31 days of transit data (daily positions, aspects, and houses)",
+            PLANNER_EN,
+            "Asteroids are not included",
+        ],
+        "description_ja": "基本版にトランジットを加えた構成です。トランジットが含まれるため、"
+                          "鑑定ページからトランジット手帳（PDF）を作成できます。"
+                          "小惑星（キロン・ジュノー等）もご希望の場合はFULL版をお選びください。",
+        "description_en": "The Basic edition plus transits. Because transits are included, you can build "
+                          "the Transit Planner (PDF) from your chart page. Choose the FULL edition if you "
+                          "also want the asteroids (Chiron, Juno, Vesta, Pallas, Ceres).",
+        "transit": True,
+        "planner": True,
+    },
+    {
         "key": "western_full",
         "slug": "western-full",
         "title_ja": "ホロスコープFULL版",
