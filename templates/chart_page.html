@@ -990,9 +990,63 @@
             <a class="download-primary" id="personal-planner-button" href="{{ planner_pdf_url }}" download>
               {% if lang == 'ja' %}あなたの1年トランジット手帳（PDF）を作成・保存{% else %}Create your 1-Year Transit Planner (PDF){% endif %}
             </a>
-            <p class="hint">
-              {% if lang == 'ja' %}出生図と長期トランジットに基づく1年間の個人手帳です。生成に数秒かかります。{% else %}A one-year personal planner based on your birth chart and long-term transits. Generation takes a few seconds.{% endif %}
+            <p class="hint" id="personal-planner-hint">
+              {% if lang == 'ja' %}出生図と長期トランジットに基づく1年間の個人手帳です。作成に20〜30秒ほどかかります。{% else %}A one-year personal planner based on your birth chart and long-term transits. It takes 20-30 seconds to build.{% endif %}
             </p>
+            <script>
+              // Building the planner takes ~13s of server CPU. Without feedback
+              // buyers assume the click failed and click again, and each extra
+              // click is another full 432-page build competing for the same CPU.
+              (() => {
+                const button = document.getElementById('personal-planner-button');
+                const hint = document.getElementById('personal-planner-hint');
+                if (!button || !hint) return;
+                const idleLabel = button.textContent.trim();
+                const idleHint = hint.textContent.trim();
+                const text = {
+                  building: {% if lang == 'ja' %}'作成中…そのままお待ちください'{% else %}'Building your planner…'{% endif %},
+                  buildingHint: {% if lang == 'ja' %}'20〜30秒ほどかかります。ボタンをもう一度押す必要はありません。'{% else %}'This takes 20-30 seconds. There is no need to press the button again.'{% endif %},
+                  done: {% if lang == 'ja' %}'ダウンロードしました。もう一度作成できます'{% else %}'Downloaded. You can build it again'{% endif %},
+                  failed: {% if lang == 'ja' %}'作成できませんでした。少し時間をおいて再度お試しください。'{% else %}'The planner could not be built. Please try again in a moment.'{% endif %},
+                  busy: {% if lang == 'ja' %}'すでに作成中です。完了までお待ちください。'{% else %}'A planner is already being built. Please wait for it to finish.'{% endif %}
+                };
+                let building = false;
+                button.addEventListener('click', async (event) => {
+                  event.preventDefault();
+                  if (building) return;
+                  building = true;
+                  button.setAttribute('aria-busy', 'true');
+                  button.classList.add('is-busy');
+                  button.textContent = text.building;
+                  hint.textContent = text.buildingHint;
+                  try {
+                    const response = await fetch(button.href, { headers: { 'Accept': 'application/pdf' } });
+                    if (response.status === 429) throw new Error(text.busy);
+                    if (!response.ok) throw new Error(text.failed);
+                    const blob = await response.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = objectUrl;
+                    link.download = (response.headers.get('Content-Disposition') || '').includes('filename=')
+                      ? response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '').trim()
+                      : 'personal-planner.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+                    hint.textContent = text.done;
+                  } catch (error) {
+                    hint.textContent = error.message || text.failed;
+                  } finally {
+                    building = false;
+                    button.removeAttribute('aria-busy');
+                    button.classList.remove('is-busy');
+                    button.textContent = idleLabel;
+                    setTimeout(() => { if (!building) hint.textContent = idleHint; }, 20000);
+                  }
+                });
+              })();
+            </script>
             {% endif %}
             <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>{{ t.save_zip }}</a>
             {% if auto_download_chart_zip %}

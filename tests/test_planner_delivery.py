@@ -8,6 +8,7 @@ env with pyswisseph + PyYAML + reportlab; no database needed.
 from __future__ import annotations
 
 import io
+import threading
 import unittest
 import zipfile
 from pathlib import Path
@@ -117,6 +118,47 @@ class PlannerDeliveryTest(unittest.TestCase):
             response = chart_planner_pdf(request, "en-token")
         self.assertEqual(response.body, b"%PDF-en")
         build.assert_called_once_with(chart, lang="en")
+
+    def test_concurrent_build_for_same_chart_is_rejected(self) -> None:
+        # A buyer clicking the button repeatedly must not queue several
+        # 432-page builds on the same CPU.
+        import routes
+
+        yaml_text = FIXTURE.read_text(encoding="utf-8").replace(
+            "transit_long_term:", "transit:", 1
+        ).replace("days: 365", "days: 38", 1)
+        chart = {
+            "token": "busy-token",
+            "options": {"product_type": "western_full"},
+            "yaml_text": yaml_text,
+        }
+        started = threading.Event()
+        release = threading.Event()
+
+        def slow_build(_chart, *, lang):
+            started.set()
+            release.wait(timeout=5)
+            return b"%PDF-slow"
+
+        with (
+            patch("routes._load_chart_or_404", return_value=chart),
+            patch("routes._build_personal_planner_pdf", side_effect=slow_build),
+        ):
+            worker = threading.Thread(
+                target=lambda: chart_planner_pdf(_planner_request("busy-token"), "busy-token")
+            )
+            worker.start()
+            try:
+                self.assertTrue(started.wait(timeout=5), "first build never started")
+                with self.assertRaises(HTTPException) as raised:
+                    chart_planner_pdf(_planner_request("busy-token"), "busy-token")
+                self.assertEqual(raised.exception.status_code, 429)
+            finally:
+                release.set()
+                worker.join(timeout=5)
+
+        # the slot is freed once the first build finishes
+        self.assertNotIn(("busy-token", "ja"), routes._planner_builds_in_flight)
 
     def test_yaml_without_long_term_transits_is_rejected(self) -> None:
         # Stored charts without the addon carry `transit_long_term: null`.

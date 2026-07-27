@@ -11,6 +11,7 @@ import os
 import re
 import secrets
 import subprocess
+import threading
 import time
 import zipfile
 from html import escape as html_escape
@@ -4858,6 +4859,13 @@ def chart_shichusuimei_svg(token: str):
     return response
 
 
+# Each planner build costs ~13s of CPU and renders 432 pages, so a buyer
+# hammering the download button could starve every other request sharing the
+# instance. One build per chart+language at a time; the rest get a 429.
+_planner_build_lock = threading.Lock()
+_planner_builds_in_flight: set[tuple[str, str]] = set()
+
+
 def _build_personal_planner_pdf(chart: dict, *, lang: str) -> bytes | None:
     """Personal planner PDF for a stored Personal Edition chart, or None.
 
@@ -4942,7 +4950,20 @@ def chart_planner_pdf(request: Request, token: str):
     else:
         locale = str(options.get("personal_edition_locale") or _resolve_lang(request))
         safe_lang = locale if locale in {"ja", "en"} else "ja"
-    planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang)
+    build_key = (token, safe_lang)
+    with _planner_build_lock:
+        if build_key in _planner_builds_in_flight:
+            raise HTTPException(
+                status_code=429,
+                detail="A planner is already being generated for this chart. Please wait for it to finish.",
+                headers={"Retry-After": "30"},
+            )
+        _planner_builds_in_flight.add(build_key)
+    try:
+        planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang)
+    finally:
+        with _planner_build_lock:
+            _planner_builds_in_flight.discard(build_key)
     if not planner_pdf:
         raise HTTPException(status_code=503, detail="The planner could not be generated. Please try again later.")
     filename = "Personal-Planner.pdf" if safe_lang == "en" else "Personal-Planner-JA.pdf"
