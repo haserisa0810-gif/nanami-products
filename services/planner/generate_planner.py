@@ -826,10 +826,12 @@ class Planner:
         self._section_label(S(lang, "what_to_observe"), 390, y - 178, SAGE)
         self._ruled_lines(390, y - 208, right_w - 32, 4, 21)
 
+        # The lower cards run down to just above the footer rule; the month
+        # dashboard used to leave an eighth of the page unused.
         lower_top = y - 315
-        self._card(38, lower_top, 254, 213, PALE_GOLD)
+        self._card(38, lower_top, 254, 288, PALE_GOLD)
         self._section_label(S(lang, "body_energy"), 54, lower_top - 24, GOLD)
-        prompts = list(S(lang, "baseline_items")) + [None]
+        prompts = list(S(lang, "baseline_items")) + [None] * 3
         cursor = lower_top - 52
         for prompt in prompts:
             if prompt is None:
@@ -843,14 +845,14 @@ class Planner:
             for dot in range(5):
                 pdf.setStrokeColor(GOLD)
                 pdf.circle(163 + dot * 21, cursor + 3, 4.3, fill=0, stroke=1)
-            cursor -= 30
-        self._card(310, lower_top, 248, 213, CREAM)
+            cursor -= 34
+        self._card(310, lower_top, 248, 288, CREAM)
         self._section_label(S(lang, "questions_month"), 326, lower_top - 24)
         cursor = lower_top - 51
         for question in S(lang, "month_questions"):
             cursor = draw_wrapped(pdf, question, 326, cursor, 216, "Helvetica-Bold", 8, 11, INK)
-            self._ruled_lines(326, cursor - 7, 216, 2, 17)
-            cursor -= 50
+            self._ruled_lines(326, cursor - 7, 216, 3, 17)
+            cursor -= 67
 
     def _events_on_date(self, iso: str) -> list[dict[str, Any]]:
         events = [event for event in self.events if event["date"] == iso]
