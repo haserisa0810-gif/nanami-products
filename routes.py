@@ -4234,6 +4234,18 @@ def personal_edition_activate_post(
         chart_redirect = f"{chart_redirect}&lang={lang}"
     return RedirectResponse(chart_redirect, status_code=303)
 
+def _redeem_link(request: Request, product_type: str, lang: str) -> str:
+    """The "continue" link on a start page, carrying the marketplace tag.
+
+    Guide PDFs are handed out per marketplace as /start/...?provider=stores,
+    so the provider has to survive the hop to the form; otherwise the buyer
+    lands on an untagged order field.
+    """
+    provider = request.query_params.get("provider", "").strip().lower()
+    suffix = f"&provider={quote(provider)}" if provider in ORDER_PROVIDERS else ""
+    return f"{_redeem_url(product_type)}?lang={lang}{suffix}"
+
+
 @app.get("/start")
 def start(request: Request):
     product_type = _product_type_from_request(request)
@@ -4242,7 +4254,8 @@ def start(request: Request):
         return RedirectResponse(str(request.url.replace(path=_start_url(product_type)).include_query_params(lang=lang)), status_code=301)
     return templates.TemplateResponse(
         _buyer_template("start", product_type),
-        {"request": request, **_i18n_context(request), **_product_context(product_type, lang)},
+        {"request": request, **_i18n_context(request), **_product_context(product_type, lang),
+         "redeem_link": _redeem_link(request, product_type, lang)},
     )
 
 
@@ -4252,7 +4265,8 @@ def start_by_slug(request: Request, product_slug: str):
     lang = _resolve_lang(request)
     return templates.TemplateResponse(
         _buyer_template("start", product_type),
-        {"request": request, **_i18n_context(request), **_product_context(product_type, lang)},
+        {"request": request, **_i18n_context(request), **_product_context(product_type, lang),
+         "redeem_link": _redeem_link(request, product_type, lang)},
     )
 
 
