@@ -463,11 +463,12 @@ PRODUCT_CONFIG = {
     },
     "western_full": {
         "label": "ホロスコープFULL版",
-        "description": "小惑星とトランジット（1ヶ月）をセットで含めます。購入者側での選択は不要です。",
+        "description": "小惑星とトランジット（1ヶ月）をセットで含めます。トランジットが含まれるため、1年分のトランジット手帳（PDF）も作成できます。購入者側での選択は不要です。",
         "features": [
             "西洋占星術の出生図データ",
             "小惑星込み",
             "トランジット（1ヶ月）込み",
+            "トランジット手帳（PDF・1年分）対応",
             "四柱推命なし",
         ],
         "include_asteroids": True,
@@ -1398,7 +1399,7 @@ def _localized_product(product_type: str, lang: str) -> dict:
     if lang == "en":
         english_descriptions = {
             "western_basic": "Creates core birth chart data for Western astrology. No asteroids, Four Pillars, or day-boundary options are shown.",
-            "western_full": "Includes asteroids and a 38-day transit set. No selection is required from the buyer.",
+            "western_full": "Includes asteroids and a 38-day transit set. The transits also unlock a one-year Transit Planner (PDF). No selection is required from the buyer.",
             "western_asteroids_addon": "Creates the asteroid add-on YAML to use with the basic version.",
             "shichu": "Creates Four Pillars data. The day-change boundary can be set to the standard 1:00 AM or 11:00 PM.",
             "transit_yaml": "Creates YAML for the planetary positions at a specific event, date, and place. Birth information is not used.",
