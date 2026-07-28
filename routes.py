@@ -2483,24 +2483,110 @@ def internal_reissue_api_key(request: Request, payload: dict[str, object] = Body
     )
 
 
+ADMIN_REDEMPTION_PROVIDERS = {"stores", "etsy", "coconala"}
+
+
+def _resolve_admin_redemption_target(
+    payload: dict[str, object],
+) -> tuple[dict[str, object] | None, JSONResponse | None]:
+    provider = str(payload.get("provider") or "stores").strip().lower()
+    if provider not in ADMIN_REDEMPTION_PROVIDERS:
+        return None, _api_error(
+            "INVALID_PROVIDER",
+            "provider must be stores, etsy, or coconala",
+            400,
+        )
+
+    order_reference = str(
+        payload.get("order_reference") or payload.get("order_code") or ""
+    ).strip()
+    if not order_reference:
+        return None, _api_error("INVALID_INPUT", "order_reference is required", 400)
+
+    sync_result = None
+    if provider == "coconala":
+        product_type = str(payload.get("product_type") or "").strip()
+        if product_type not in PRODUCT_CONFIG:
+            return None, _api_error(
+                "INVALID_PRODUCT_TYPE",
+                "product_type is required for coconala",
+                400,
+            )
+        try:
+            status, order_row = stores_mail_sync.verify_coconala_buyer(
+                order_reference,
+                product_type=product_type,
+            )
+            if status == "not_found":
+                sync_result = _sync_stores_orders_for_lookup()
+                status, order_row = stores_mail_sync.verify_coconala_buyer(
+                    order_reference,
+                    product_type=product_type,
+                )
+        except Exception as exc:
+            return None, _api_error("ORDER_LOOKUP_FAILED", str(exc), 500)
+        if status == "not_found" or not order_row:
+            return None, _api_error(
+                "ORDER_NOT_FOUND",
+                "coconala purchase was not found for this username and product",
+                404,
+            )
+        order_code = str(order_row.get("stores_order_no") or "").strip()
+        if not order_code:
+            return None, _api_error(
+                "ORDER_LOOKUP_FAILED",
+                "resolved coconala purchase has no internal order code",
+                500,
+            )
+    else:
+        order_code = _normalize_stores_order_no(order_reference)
+        if not _is_valid_order_code(order_code):
+            return None, _api_error(
+                "INVALID_INPUT",
+                "order_reference contains invalid characters",
+                400,
+            )
+        try:
+            status, order_row = stores_mail_sync.verify_order_no(order_code)
+            if status == "not_found":
+                sync_result = _sync_stores_orders_for_lookup()
+                status, order_row = stores_mail_sync.verify_order_no(order_code)
+        except Exception as exc:
+            return None, _api_error("ORDER_LOOKUP_FAILED", str(exc), 500)
+        if status == "not_found" or not order_row:
+            return None, _api_error("ORDER_NOT_FOUND", "order was not found", 404)
+
+        stored_provider = str(order_row.get("provider") or "stores").strip().lower()
+        if stored_provider != provider:
+            return None, _api_error(
+                "PROVIDER_MISMATCH",
+                f"order belongs to {stored_provider}, not {provider}",
+                409,
+            )
+
+    return {
+        "provider": provider,
+        "order_reference": order_reference,
+        "order_code": order_code,
+        "status": status,
+        "order_row": dict(order_row),
+        "sync_result": sync_result,
+    }, None
+
+
 @app.post("/internal/redemptions/lookup")
 def internal_lookup_redemption(request: Request, payload: dict[str, object] = Body(default={})):
     error = _admin_access_error(request)
     if error:
         return error
 
-    order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
-    if not order_code_clean:
-        return _api_error("INVALID_INPUT", "order_code is required", 400)
-    if not _is_valid_order_code(order_code_clean):
-        return _api_error("INVALID_INPUT", "order_code contains invalid characters", 400)
+    target, target_error = _resolve_admin_redemption_target(payload)
+    if target_error:
+        return target_error
+    assert target is not None
+    order_code_clean = target["order_code"]
 
     try:
-        sync_result = None
-        status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-        if status == "not_found":
-            sync_result = _sync_stores_orders_for_lookup()
-            status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
         redemption = pg_store.get_redemption_by_order_code(order_code_clean)
         reset_override = pg_store.get_redemption_reset_by_order_code(order_code_clean)
         charts = pg_store.list_charts_by_order_code(order_code_clean)
@@ -2510,14 +2596,16 @@ def internal_lookup_redemption(request: Request, payload: dict[str, object] = Bo
     return JSONResponse(
         jsonable_encoder({
             "ok": True,
+            "provider": target["provider"],
+            "order_reference": target["order_reference"],
             "order_code": order_code_clean,
-            "order_status": status,
-            "stores_order": order_row,
+            "order_status": target["status"],
+            "stores_order": target["order_row"],
             "redemption": redemption,
             "reset_override": reset_override,
             "charts": charts,
-            "sync_result": sync_result,
-            "can_redeem_after_reset": status in {"ok", "already_used"},
+            "sync_result": target["sync_result"],
+            "can_redeem_after_reset": target["status"] in {"ok", "already_used"},
         })
     )
 
@@ -2528,24 +2616,13 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
     if error:
         return error
 
-    order_code_clean = _normalize_stores_order_no(str(payload.get("order_code") or ""))
-    if not order_code_clean:
-        return _api_error("INVALID_INPUT", "order_code is required", 400)
-    if not _is_valid_order_code(order_code_clean):
-        return _api_error("INVALID_INPUT", "order_code contains invalid characters", 400)
-    if str(payload.get("confirm") or "").strip() != order_code_clean:
-        return _api_error("CONFIRMATION_REQUIRED", "confirm must match order_code", 400)
-
-    try:
-        sync_result = None
-        status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-        if status == "not_found":
-            sync_result = _sync_stores_orders_for_lookup()
-            status, order_row = stores_mail_sync.verify_order_no(order_code_clean)
-    except Exception as exc:
-        return _api_error("ORDER_LOOKUP_FAILED", str(exc), 500)
-    if status == "not_found":
-        return _api_error("ORDER_NOT_FOUND", "order_code was not found", 404)
+    target, target_error = _resolve_admin_redemption_target(payload)
+    if target_error:
+        return target_error
+    assert target is not None
+    order_code_clean = target["order_code"]
+    if str(payload.get("confirm") or "").strip() != target["order_reference"]:
+        return _api_error("CONFIRMATION_REQUIRED", "confirm must match order_reference", 400)
 
     try:
         result = pg_store.reset_redemption_by_order_code(order_code_clean)
@@ -2556,11 +2633,13 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
     return JSONResponse(
         jsonable_encoder({
             "ok": True,
+            "provider": target["provider"],
+            "order_reference": target["order_reference"],
             "order_code": order_code_clean,
-            "previous_order_status": status,
+            "previous_order_status": target["status"],
             "order_status": new_status,
-            "stores_order": order_row,
-            "sync_result": sync_result,
+            "stores_order": target["order_row"],
+            "sync_result": target["sync_result"],
             **result,
         })
     )

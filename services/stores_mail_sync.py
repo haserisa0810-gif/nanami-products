@@ -699,7 +699,9 @@ def verify_coconala_buyer(
                            SELECT 1
                            FROM {SCHEMA}.redemptions r
                            WHERE r.order_code = o.stores_order_no
-                       ) AS already_used
+                       )
+                       AND COALESCE(o.payment_status, '') <> 'reset_once'
+                       AS already_used
                 FROM {SCHEMA}.stores_orders o
                 WHERE o.provider = 'coconala'
                   AND LOWER(o.buyer_reference) = LOWER(%s)

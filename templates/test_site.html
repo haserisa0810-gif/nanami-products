@@ -39,7 +39,7 @@
           この端末に保存する
         </label>
         <p class="hint">検索・未登録に戻す・削除実行には管理トークンが必要です。</p>
-        <div class="api-test-status is-error" id="adminTokenStatus" hidden></div>
+        <div class="api-test-status is-error" id="adminTokenStatus" role="status" aria-live="polite" hidden></div>
       </div>
     </section>
 
@@ -130,17 +130,38 @@
       </div>
       <div class="api-key-issuer-grid">
         <label>
-          STORESオーダー番号
-          <input id="redemptionOrderCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="例: 1234567890">
+          販売元
+          <select id="redemptionProviderInput">
+            <option value="stores">STORES</option>
+            <option value="etsy">Etsy</option>
+            <option value="coconala">ココナラ</option>
+          </select>
+        </label>
+        <label>
+          <span id="redemptionOrderCodeLabel">STORESオーダー番号</span>
+          <input id="redemptionOrderCodeInput" type="text" autocomplete="one-time-code" placeholder="例: 1234567890">
+        </label>
+        <label id="redemptionProductTypeField" hidden>
+          商品
+          <select id="redemptionProductTypeInput">
+            <option value="western_basic">ホロスコープ基本版</option>
+            <option value="western_full">ホロスコープFULL版</option>
+            <option value="acg_bundle">ACGバンドル</option>
+            <option value="western_asteroids">ホロスコープ基本版＋小惑星</option>
+            <option value="western_transit">ホロスコープ基本版＋トランジット</option>
+            <option value="western_asteroids_addon">ホロスコープ：小惑星追加</option>
+            <option value="shichu">四柱推命版</option>
+            <option value="transit_yaml">トランジットYAML版</option>
+          </select>
         </label>
         <label>
           確認入力
-          <input id="redemptionConfirmInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="実行時は同じ注文番号を入力">
+          <input id="redemptionConfirmInput" type="text" autocomplete="one-time-code" placeholder="実行時は同じ値を入力">
         </label>
       </div>
       <div class="api-key-result">
         <div class="api-test-status" id="redemptionStatus">未検索</div>
-        <p class="hint">使用済み判定だけを解除します。既存のチャートURLは履歴として残り、同じ注文番号で新しい登録ができるようになります。</p>
+        <p class="hint">STORES・Etsyは注文番号、ココナラは購入時のユーザー名と商品で検索します。使用済み判定だけを解除し、既存のチャートURLは履歴として残します。</p>
         <pre id="redemptionRecordBody">{}</pre>
       </div>
     </section>
@@ -326,7 +347,11 @@
     const reissueStatus = document.getElementById("reissueStatus");
     const reissuedApiKeyOutput = document.getElementById("reissuedApiKeyOutput");
     const reissueRecordBody = document.getElementById("reissueRecordBody");
+    const redemptionProviderInput = document.getElementById("redemptionProviderInput");
+    const redemptionOrderCodeLabel = document.getElementById("redemptionOrderCodeLabel");
     const redemptionOrderCodeInput = document.getElementById("redemptionOrderCodeInput");
+    const redemptionProductTypeField = document.getElementById("redemptionProductTypeField");
+    const redemptionProductTypeInput = document.getElementById("redemptionProductTypeInput");
     const redemptionConfirmInput = document.getElementById("redemptionConfirmInput");
     const redemptionStatus = document.getElementById("redemptionStatus");
     const redemptionRecordBody = document.getElementById("redemptionRecordBody");
@@ -349,6 +374,12 @@
       adminTokenStatus.className = "api-test-status is-error";
     }
 
+    function showAdminTokenSuccess(message) {
+      adminTokenStatus.textContent = message;
+      adminTokenStatus.hidden = false;
+      adminTokenStatus.className = "api-test-status is-ok";
+    }
+
     function clearAdminTokenError() {
       adminTokenStatus.textContent = "";
       adminTokenStatus.hidden = true;
@@ -362,28 +393,42 @@
         if (remember && token) {
           adminTokenInput.value = token;
           adminTokenRememberInput.checked = true;
+          showAdminTokenSuccess("この端末に保存した管理トークンを読み込みました。");
         }
       } catch (error) {
-        // localStorage is optional on this admin-only page.
+        showAdminTokenError("このブラウザでは管理トークンを保存できません。");
       }
     }
 
-    function readStoredAdminToken() {
-      try {
-        return localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || "";
-      } catch (error) {
-        return "";
-      }
-    }
-
-    function persistAdminTokenIfEnabled() {
+    function persistAdminTokenIfEnabled(announce = false) {
       const token = adminTokenInput.value.trim();
-      if (!adminTokenRememberInput.checked || !token) return;
+      if (!adminTokenRememberInput.checked) return false;
+      if (!token) {
+        if (announce) {
+          showAdminTokenError("先に管理トークンを入力してから保存を選択してください。");
+        }
+        return false;
+      }
       try {
         localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
         localStorage.setItem(ADMIN_TOKEN_REMEMBER_KEY, "1");
+        if (announce) {
+          showAdminTokenSuccess("管理トークンをこの端末に保存しました。");
+        }
+        return true;
       } catch (error) {
-        // Ignore storage failures silently.
+        showAdminTokenError("このブラウザでは管理トークンを保存できません。");
+        return false;
+      }
+    }
+
+    function stopRememberingAdminToken() {
+      try {
+        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+        localStorage.removeItem(ADMIN_TOKEN_REMEMBER_KEY);
+        showAdminTokenSuccess("この端末への保存を解除しました。");
+      } catch (error) {
+        showAdminTokenError("保存した管理トークンを削除できませんでした。");
       }
     }
 
@@ -391,12 +436,12 @@
       try {
         localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
         localStorage.removeItem(ADMIN_TOKEN_REMEMBER_KEY);
+        showAdminTokenSuccess("保存した管理トークンを削除しました。");
       } catch (error) {
-        // Ignore storage failures silently.
+        showAdminTokenError("保存した管理トークンを削除できませんでした。");
       }
       adminTokenInput.value = "";
       adminTokenRememberInput.checked = false;
-      clearAdminTokenError();
     }
 
     function requireAdminToken() {
@@ -778,6 +823,7 @@
     async function lookupRedemption() {
       const adminToken = requireAdminToken();
       if (!adminToken) return;
+      const orderReference = redemptionOrderCodeInput.value.trim();
       redemptionStatus.textContent = "検索中";
       redemptionStatus.className = "api-test-status is-loading";
       redemptionRecordBody.textContent = "{}";
@@ -789,7 +835,9 @@
             "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
-            order_code: redemptionOrderCodeInput.value.trim()
+            provider: redemptionProviderInput.value,
+            order_reference: orderReference,
+            product_type: redemptionProductTypeInput.value
           })
         });
         const body = await parseResponseBody(response);
@@ -800,7 +848,7 @@
           return;
         }
         redemptionRecordBody.textContent = stringify(body);
-        redemptionStatus.textContent = `検索済み: order_status=${body.order_status} / redemption=${body.redemption ? "あり" : "なし"} / charts=${body.charts?.length || 0}`;
+        redemptionStatus.textContent = `検索済み: ${body.provider} / order_status=${body.order_status} / redemption=${body.redemption ? "あり" : "なし"} / charts=${body.charts?.length || 0}`;
         redemptionStatus.className = "api-test-status is-ok";
       } catch (error) {
         redemptionStatus.textContent = `通信エラー: ${error.message}`;
@@ -811,13 +859,13 @@
     async function resetRedemption() {
       const adminToken = requireAdminToken();
       if (!adminToken) return;
-      const orderCode = redemptionOrderCodeInput.value.trim();
-      if (!orderCode || redemptionConfirmInput.value.trim() !== orderCode) {
-        redemptionStatus.textContent = "確認入力に同じ注文番号を入れてください";
+      const orderReference = redemptionOrderCodeInput.value.trim();
+      if (!orderReference || redemptionConfirmInput.value.trim() !== orderReference) {
+        redemptionStatus.textContent = "確認入力に同じ注文番号またはユーザー名を入れてください";
         redemptionStatus.className = "api-test-status is-error";
         return;
       }
-      if (!confirm(`注文番号 ${orderCode} を未登録に戻します。既存チャートは削除されません。実行しますか？`)) {
+      if (!confirm(`${redemptionProviderInput.options[redemptionProviderInput.selectedIndex].text} の ${orderReference} を未登録に戻します。既存チャートは削除されません。実行しますか？`)) {
         return;
       }
       redemptionStatus.textContent = "解除中";
@@ -830,7 +878,9 @@
             "X-Admin-Token": adminToken
           },
           body: JSON.stringify({
-            order_code: orderCode,
+            provider: redemptionProviderInput.value,
+            order_reference: orderReference,
+            product_type: redemptionProductTypeInput.value,
             confirm: redemptionConfirmInput.value.trim()
           })
         });
@@ -850,6 +900,25 @@
         redemptionStatus.textContent = `通信エラー: ${error.message}`;
         redemptionStatus.className = "api-test-status is-error";
       }
+    }
+
+    function updateRedemptionProviderFields() {
+      const provider = redemptionProviderInput.value;
+      const isCoconala = provider === "coconala";
+      redemptionOrderCodeLabel.textContent = isCoconala
+        ? "ココナラのユーザー名"
+        : `${provider === "etsy" ? "Etsy" : "STORES"}オーダー番号`;
+      redemptionOrderCodeInput.placeholder = isCoconala
+        ? "例: nanami_user"
+        : provider === "etsy"
+          ? "例: 4125350780"
+          : "例: 1234567890";
+      redemptionProductTypeField.hidden = !isCoconala;
+      redemptionOrderCodeInput.value = "";
+      redemptionConfirmInput.value = "";
+      redemptionStatus.textContent = "未検索";
+      redemptionStatus.className = "api-test-status";
+      redemptionRecordBody.textContent = "{}";
     }
 
     async function lookupExpiredCharts() {
@@ -935,6 +1004,7 @@
     document.getElementById("reissueApiKeyButton").addEventListener("click", reissueApiKey);
     document.getElementById("lookupRedemptionButton").addEventListener("click", lookupRedemption);
     document.getElementById("resetRedemptionButton").addEventListener("click", resetRedemption);
+    redemptionProviderInput.addEventListener("change", updateRedemptionProviderFields);
     document.getElementById("lookupExpiredChartsButton").addEventListener("click", lookupExpiredCharts);
     document.getElementById("cleanupExpiredChartsButton").addEventListener("click", cleanupExpiredCharts);
     document.getElementById("useIssuedApiKeyButton").addEventListener("click", () => {
@@ -954,16 +1024,11 @@
     adminTokenRememberInput.addEventListener("change", () => {
       clearAdminTokenError();
       if (adminTokenRememberInput.checked) {
-        if (!adminTokenInput.value.trim()) {
-          adminTokenInput.value = readStoredAdminToken();
+        if (!persistAdminTokenIfEnabled(true)) {
+          adminTokenRememberInput.checked = false;
         }
-        persistAdminTokenIfEnabled();
       } else {
-        try {
-          localStorage.removeItem(ADMIN_TOKEN_REMEMBER_KEY);
-        } catch (error) {
-          // Ignore storage failures silently.
-        }
+        stopRememberingAdminToken();
       }
     });
     clearAdminTokenButton.addEventListener("click", clearSavedAdminToken);
