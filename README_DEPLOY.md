@@ -17,15 +17,14 @@ Ephemeris Professional License のいずれかを選択する必要がありま�
 https://github.com/haserisa0810-gif/nanami-products
 ```
 
-## 初回デプロイ
+## デプロイ
 
-```bash
-cd ~/dev/nanami-products
+直接 `gcloud run deploy` は実行しません。未コミット変更と未 push のコミットを検査し、
+候補版を 0% 配信で作成してから、別の明示承認で本番へ切り替えます。詳しい手順は
+`docs/PRODUCTION_SAFETY.md` を参照してください。
 
-gcloud run deploy nanami-products \
-  --source . \
-  --region asia-northeast1 \
-  --allow-unauthenticated
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy_candidate.ps1
 ```
 
 ## 動作確認

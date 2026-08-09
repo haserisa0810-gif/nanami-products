@@ -41,9 +41,9 @@ Key endpoints — 管理者フロー:
 
 ## Deploy
 
-```bash
-gcloud run deploy nanami-products --source . --region asia-northeast1 --allow-unauthenticated
-```
+本番操作は `AGENTS.md` の「Production safety and deploy」に従う。直接 `gcloud run deploy`
+を実行せず、clean・commit・push 済みの状態から候補版を 0% 配信で作成し、スモーク
+テストと別の明示承認を経てから本番トラフィックを切り替える。
 
 ## Architecture
 

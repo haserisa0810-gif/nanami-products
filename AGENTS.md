@@ -39,10 +39,24 @@ Key endpoints — 管理者フロー:
 - `GET /admin/yaml/result/{token}` — 管理者結果ページ（購入者 URL 発行）
 - `GET /healthz` — ヘルスチェック
 
-## Deploy
+## Production safety and deploy
 
-```bash
-gcloud run deploy nanami-products --source . --region asia-northeast1 --allow-unauthenticated
+本番環境はデフォルトで読み取り専用として扱う。
+
+- Codex は、ユーザーがそのターンで明示的に依頼した場合を除き、本番へのデプロイ、トラフィック変更、本番データの書き込み・DDL・削除を行わない。
+- `gcloud run deploy` を直接実行しない。候補版の作成には `scripts/deploy_candidate.ps1` を使う。
+- 未コミット変更（追跡外ファイルを含む）が1件でもあればデプロイを停止する。
+- 現在のコミットに upstream がない、または upstream に push 済みでない場合も停止する。
+- 候補版は `--no-traffic` でデプロイし、本番トラフィックを変更しない。
+- 候補 URL のスモークテスト後、ユーザーがそのターンで本番切り替えを明示した場合だけ `scripts/promote_candidate.ps1` を実行する。候補作成と本番切り替えを同じ暗黙の操作にまとめない。
+- 本番 DB の直接操作、マイグレーション、削除、データ修正は、デプロイとは別の明示承認を必要とする。
+
+```powershell
+# 1. clean・commit・push 済みの状態から、0% 配信の候補版を作る
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy_candidate.ps1
+
+# 2. 候補 URL の確認後、別途明示承認を受けて本番へ切り替える
+powershell -ExecutionPolicy Bypass -File .\scripts\promote_candidate.ps1 -Revision nanami-products-00000-abc -Confirm "PROMOTE:nanami-products-00000-abc"
 ```
 
 ## Architecture
