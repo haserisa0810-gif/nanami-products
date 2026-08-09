@@ -73,6 +73,47 @@ ETSY_MAIL_FROM_FILTER=emails@mail.etsy.com
 STORES_MAIL_SYNC_ON_SUBMIT=1
 ```
 
+### Zoho Mail API（OAuth 2.0）
+
+本番ではIMAPパスワードの代わりに、Zoho Mail APIの読み取り専用OAuthを使用できる。
+Zoho API ConsoleのSelf Clientで `ZohoMail.messages.READ,ZohoMail.accounts.READ` の
+認可コードを発行し、Japanデータセンターのトークンエンドポイントでrefresh tokenへ交換する。
+
+```text
+STORES_MAIL_BACKEND=zoho_api
+STORES_MAIL_USERNAME=support@nanami-astro.com
+ZOHO_ACCOUNTS_BASE_URL=https://accounts.zoho.jp
+ZOHO_MAIL_API_BASE_URL=https://mail.zoho.jp/api
+ZOHO_MAIL_CLIENT_ID=<Secret Managerで管理>
+ZOHO_MAIL_CLIENT_SECRET=<Secret Managerで管理>
+ZOHO_MAIL_REFRESH_TOKEN=<Secret Managerで管理>
+ZOHO_MAIL_ACCOUNT_ID=<取得後に固定。未設定時はaccounts.READで自動判定>
+```
+
+OAuthクライアントの秘密値とrefresh tokenはリポジトリや `deploy.env.yaml` に保存せず、
+Secret ManagerからCloud Runへ渡す。同期処理は検索・Original Message取得のGETだけを使用し、
+既読、移動、削除などのメール状態を変更しない。移行期間中は
+`STORES_MAIL_BACKEND=imap` に戻せば従来方式へ切り戻せる。
+
+### Gmail API（OAuth 2.0、推奨）
+
+Gmailを受信先のまま維持し、IMAPアプリパスワードを廃止する場合に使用する。
+OAuth scopeは `https://www.googleapis.com/auth/gmail.readonly` のみとし、
+OAuth同意画面はrefresh tokenの7日失効を避けるため `In production` にする。
+
+```text
+STORES_MAIL_BACKEND=gmail_api
+GMAIL_API_EXPECTED_EMAIL=nanami.hoshitsuki@gmail.com
+GMAIL_API_CLIENT_ID=<Secret Managerで管理>
+GMAIL_API_CLIENT_SECRET=<Secret Managerで管理>
+GMAIL_API_REFRESH_TOKEN=<Secret Managerで管理>
+GMAIL_API_TOKEN_URL=https://oauth2.googleapis.com/token
+GMAIL_API_BASE_URL=https://gmail.googleapis.com/gmail/v1
+```
+
+同期処理はGmail APIの `users.messages.list` と `users.messages.get(format=raw)`、
+および認証アカウント照合用の `users.getProfile` のGETだけを使用する。
+
 Etsyも同じメール同期を使います。各リスティングの商品名またはSKUに、次の判定コードを入れ、対応する入力URLをデジタルダウンロード内で案内します。
 
 ```text
