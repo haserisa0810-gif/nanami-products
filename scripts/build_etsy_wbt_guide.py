@@ -71,7 +71,7 @@ def section_line(c: canvas.Canvas, title: str, y: float) -> float:
 
 
 def body_lines(c: canvas.Canvas, lines: list[str], y: float, *, x: float | None = None,
-               size: float = 8.8, leading: float = 14) -> float:
+               size: float = 10.5, leading: float = 16) -> float:
     x = MARGIN_X if x is None else x
     c.setFillColor(BODY)
     c.setFont("Helvetica", size)
@@ -82,13 +82,13 @@ def body_lines(c: canvas.Canvas, lines: list[str], y: float, *, x: float | None 
 
 
 def bullet_lines(c: canvas.Canvas, lines: list[str], y: float) -> float:
-    c.setFont("Helvetica", 8.8)
+    c.setFont("Helvetica", 10.5)
     for line in lines:
         c.setFillColor(GOLD)
         c.circle(MARGIN_X + 3, y + 2, 3, stroke=0, fill=1)
         c.setFillColor(INK)
         c.drawString(MARGIN_X + 12, y, line)
-        y -= 16
+        y -= 18
     return y
 
 
@@ -100,19 +100,19 @@ def numbered_step(c: canvas.Canvas, number: int, text: str, y: float) -> float:
     num = str(number)
     c.drawString(MARGIN_X + 6 - stringWidth(num, "Helvetica-Bold", 8) / 2, y, num)
     c.setFillColor(INK)
-    c.setFont("Helvetica", 9.2)
+    c.setFont("Helvetica", 10.5)
     c.drawString(MARGIN_X + 23, y, text)
-    return y - 19
+    return y - 22
 
 
 def faq(c: canvas.Canvas, question: str, answers: list[str], y: float) -> float:
     c.setFillColor(GOLD)
     c.roundRect(MARGIN_X, y - 4, CONTENT_W, 20, 5, stroke=0, fill=1)
     c.setFillColor(HexColor("#FFFFFF"))
-    c.setFont("Helvetica-Bold", 8.8)
+    c.setFont("Helvetica-Bold", 10.5)
     c.drawString(MARGIN_X + 9, y + 3, f"Q.  {question}")
     y -= 22
-    return body_lines(c, answers, y, x=MARGIN_X + 11, size=8.3, leading=13) - 7
+    return body_lines(c, answers, y, x=MARGIN_X + 11, size=10, leading=15) - 7
 
 
 def draw_qr(c: canvas.Canvas, value: str, x: float, y: float, size: float) -> None:
@@ -181,12 +181,12 @@ def build() -> None:
         "This [NP-WBT] version includes core natal data, transits, and the 1-year planner.",
         "It does not include asteroid data.",
         "Choose [NP-WF] Full if you also want Chiron, Juno, Vesta, Pallas, Ceres, Lilith, and Vertex.",
-    ], y, size=8.5, leading=14)
+    ], y, size=10.5, leading=16)
     y -= 4
     c.setFillColor(BODY)
     style = ParagraphStyle(
-        "note", fontName="Helvetica", fontSize=7.5, leading=10,
-        textColor=BODY, maxLeading=10,
+        "note", fontName="Helvetica", fontSize=9.5, leading=13,
+        textColor=BODY, maxLeading=13,
     )
     note = Paragraph(
         "* After purchase, please allow up to 5 minutes for the system to confirm your order.",
@@ -232,13 +232,24 @@ def build() -> None:
             "Redistribution, republication, resale, and commercial use are not permitted.",
         ]),
     ]
-    for title, lines in sections:
+    for title, lines in sections[:4]:
         y = section_line(c, title, y)
-        y = body_lines(c, lines, y, x=MARGIN_X + 11, size=8.2, leading=13)
+        y = body_lines(c, lines, y, x=MARGIN_X + 11, size=10.5, leading=16)
         y -= 9
     c.showPage()
 
     # Page 3
+    page_header(c)
+    y = PAGE_H - 43 * mm
+    y = heading(c, "Additional Terms", y)
+    y -= 10
+    for title, lines in sections[4:]:
+        y = section_line(c, title, y)
+        y = body_lines(c, lines, y, x=MARGIN_X + 11, size=10.5, leading=16)
+        y -= 9
+    c.showPage()
+
+    # Page 4
     page_header(c)
     y = PAGE_H - 43 * mm
     y = heading(c, "Frequently Asked Questions", y)
