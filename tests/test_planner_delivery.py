@@ -17,7 +17,7 @@ from unittest.mock import patch
 from fastapi import HTTPException
 from starlette.requests import Request
 
-from routes import chart_planner_pdf
+from routes import app, chart_planner_pdf
 from services.planner_delivery import build_planner_pdf
 from services.planner_delivery import build_planner_pdf_from_yaml
 from services.personal_edition_delivery import build_personalized_zip
@@ -49,6 +49,14 @@ def _planner_request(token: str) -> Request:
 
 
 class PlannerDeliveryTest(unittest.TestCase):
+    def test_daily_ai_route_is_registered(self) -> None:
+        matching = [
+            route for route in app.routes
+            if getattr(route, "path", None) == "/chart/{token}/planner-ai"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertIn("GET", matching[0].methods)
+
     def test_build_planner_from_stored_yaml(self) -> None:
         pdf = build_planner_pdf_from_yaml(
             yaml_text=FIXTURE.read_text(encoding="utf-8"),
@@ -94,7 +102,11 @@ class PlannerDeliveryTest(unittest.TestCase):
 
         self.assertEqual(response.media_type, "application/pdf")
         self.assertEqual(response.body, b"%PDF-test")
-        build.assert_called_once_with(chart, lang="ja")
+        build.assert_called_once_with(
+            chart,
+            lang="ja",
+            chart_url="https://chart.nanami-astro.com/chart/short-transit-token/planner-ai",
+        )
 
     def test_query_lang_en_overrides_stored_locale(self) -> None:
         yaml_text = FIXTURE.read_text(encoding="utf-8").replace(
@@ -117,7 +129,11 @@ class PlannerDeliveryTest(unittest.TestCase):
         ):
             response = chart_planner_pdf(request, "en-token")
         self.assertEqual(response.body, b"%PDF-en")
-        build.assert_called_once_with(chart, lang="en")
+        build.assert_called_once_with(
+            chart,
+            lang="en",
+            chart_url="https://chart.nanami-astro.com/chart/en-token/planner-ai?lang=en",
+        )
 
     def test_concurrent_build_for_same_chart_is_rejected(self) -> None:
         # A buyer clicking the button repeatedly must not queue several
@@ -135,7 +151,7 @@ class PlannerDeliveryTest(unittest.TestCase):
         started = threading.Event()
         release = threading.Event()
 
-        def slow_build(_chart, *, lang):
+        def slow_build(_chart, *, lang, chart_url=None):
             started.set()
             release.wait(timeout=5)
             return b"%PDF-slow"

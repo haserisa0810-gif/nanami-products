@@ -69,6 +69,7 @@ def build_planner_pdf_from_yaml(
     yaml_text: str,
     lang: str = "ja",
     months: int = 12,
+    chart_url: str | None = None,
 ) -> bytes:
     """Render planner bytes from stored natal + long-term-transit YAML.
 
@@ -83,6 +84,7 @@ def build_planner_pdf_from_yaml(
         yaml_text=yaml_text,
         lang=lang,
         months=months,
+        chart_url=chart_url,
     )
     try:
         return pdf_path.read_bytes()
@@ -106,6 +108,7 @@ def build_planner_pdf(
     birth_time_range: dict[str, Any] | None = None,
     birth_time_note: str | None = None,
     transit_start_date: datetime | None = None,
+    chart_url: str | None = None,
 ) -> bytes:
     """Return personal planner PDF bytes for the given birth data."""
     if lang not in {"ja", "en"}:
@@ -149,4 +152,5 @@ def build_planner_pdf(
         yaml_text=yaml_text,
         lang=lang,
         months=months,
+        chart_url=chart_url,
     )

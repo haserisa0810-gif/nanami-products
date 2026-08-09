@@ -41,11 +41,19 @@ class PlannerExportTest(unittest.TestCase):
 
         out = Path(tempfile.mkdtemp()) / "ja.pdf"
         pdf = render_personal_planner(
-            yaml_text=self.yaml_text, lang="ja", months=1, out_path=out
+            yaml_text=self.yaml_text,
+            lang="ja",
+            months=1,
+            out_path=out,
+            chart_url="https://chart.example/chart/ja-token/planner-ai",
         )
         data = pdf.read_bytes()
         self.assertTrue(data.startswith(b"%PDF"), "output is not a PDF")
         self.assertGreater(len(data), 20_000, "PDF unexpectedly small")
+        self.assertIn(
+            b"https://chart.example/chart/ja-token/planner-ai?date=2026-07-01",
+            data,
+        )
         # cover + guide + index + year + aspects + retro + 2 phases + personal
         # intro + natal + seasons + (month dashboard/calendar/focus + ~30 daily
         # + reflection) + ai + notes — comfortably more than 30 pages.
@@ -56,11 +64,19 @@ class PlannerExportTest(unittest.TestCase):
 
         out = Path(tempfile.mkdtemp()) / "en.pdf"
         pdf = render_personal_planner(
-            yaml_text=self.yaml_text, lang="en", months=1, out_path=out
+            yaml_text=self.yaml_text,
+            lang="en",
+            months=1,
+            out_path=out,
+            chart_url="https://chart.example/chart/en-token/planner-ai?lang=en",
         )
         data = pdf.read_bytes()
         self.assertTrue(data.startswith(b"%PDF"))
         self.assertGreater(_pdf_page_count(data), 30)
+        self.assertIn(
+            b"https://chart.example/chart/en-token/planner-ai?lang=en&date=2026-07-01",
+            data,
+        )
 
     def test_rejects_unknown_lang(self) -> None:
         with self.assertRaises(ValueError):

@@ -32,6 +32,7 @@ from markupsafe import Markup
 from services import pg_store, stores_mail_sync
 from services.personal_edition_delivery import build_personalized_zip
 from services.planner_delivery import build_planner_pdf, build_planner_pdf_from_yaml
+from services.planner_ai import build_daily_ai_prompt
 from services.personal_edition_code_pdf import build_personal_edition_code_pdf
 from services.common_access_package import ETSY_PACKAGE_FILENAME, build_common_access_package
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
@@ -4960,7 +4961,8 @@ _planner_build_lock = threading.Lock()
 _planner_builds_in_flight: set[tuple[str, str]] = set()
 
 
-def _build_personal_planner_pdf(chart: dict, *, lang: str) -> bytes | None:
+def _build_personal_planner_pdf(
+    chart: dict, *, lang: str, chart_url: str | None = None) -> bytes | None:
     """Personal planner PDF for a stored Personal Edition chart, or None.
 
     Recomputed from the chart's stored birth inputs at download time (~a few
@@ -4978,6 +4980,7 @@ def _build_personal_planner_pdf(chart: dict, *, lang: str) -> bytes | None:
                 yaml_text=detail_yaml,
                 lang=lang,
                 months=12,
+                chart_url=chart_url,
             )
     except Exception:
         logger.exception(
@@ -5007,6 +5010,7 @@ def _build_personal_planner_pdf(chart: dict, *, lang: str) -> bytes | None:
             birth_time_accuracy=str(source.get("birth_time_accuracy") or "exact"),
             birth_time_range=source.get("birth_time_range"),
             birth_time_note=source.get("birth_time_note"),
+            chart_url=chart_url,
         )
     except Exception:
         logger.exception("personal_planner_generation_failed token=%s", chart.get("token"))
@@ -5054,7 +5058,10 @@ def chart_planner_pdf(request: Request, token: str):
             )
         _planner_builds_in_flight.add(build_key)
     try:
-        planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang)
+        ai_page_url = f"{_public_base_url(request)}/chart/{token}/planner-ai"
+        if safe_lang == "en":
+            ai_page_url = f"{ai_page_url}?lang=en"
+        planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang, chart_url=ai_page_url)
     finally:
         with _planner_build_lock:
             _planner_builds_in_flight.discard(build_key)
@@ -5079,7 +5086,10 @@ def chart_personal_edition_zip(request: Request, token: str):
     chart_url = f"{_public_base_url(request)}/chart/{token}"
     if lang == "en":
         chart_url = f"{chart_url}?lang=en"
-    planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang)
+    ai_page_url = f"{_public_base_url(request)}/chart/{token}/planner-ai"
+    if safe_lang == "en":
+        ai_page_url = f"{ai_page_url}?lang=en"
+    planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang, chart_url=ai_page_url)
     zip_bytes = build_personalized_zip(
         yaml_text=chart["yaml_text"],
         lang=safe_lang,
@@ -5093,6 +5103,53 @@ def chart_personal_edition_zip(request: Request, token: str):
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     _apply_public_chart_headers(response, chart, max_age=0)
     return response
+
+
+@app.get("/chart/{token}/planner-ai", response_class=HTMLResponse)
+def chart_planner_ai(request: Request, token: str, date: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    options = chart.get("options") or {}
+    try:
+        loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+        chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+    except Exception:
+        chart_doc = {}
+    product_type = _chart_product_type(options)
+    allowed = (
+        _chart_has_western_natal(chart, doc=chart_doc)
+        and _chart_has_31day_transit(chart, doc=chart_doc)
+        and product_type in {
+            "western_full", "western_transit", "acg_bundle",
+            "western_31days_transit_addon", "western_note_transit_addon",
+        }
+    )
+    if not allowed:
+        raise HTTPException(status_code=404, detail="Daily AI prompt not available")
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD") from exc
+    today = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+    if target_date < today - timedelta(days=366 * 5) or target_date > today + timedelta(days=366 * 5):
+        raise HTTPException(status_code=400, detail="date is outside the supported range")
+    lang = _resolve_lang(request)
+    try:
+        prompt_text = build_daily_ai_prompt(
+            chart_yaml=chart["yaml_text"], target_date=target_date, lang=lang)
+    except Exception as exc:
+        logger.exception("planner_daily_ai_prompt_failed token=%s date=%s", token, date)
+        raise HTTPException(
+            status_code=503, detail="The daily prompt could not be generated.") from exc
+    return templates.TemplateResponse(
+        "planner_ai_day.html",
+        {
+            "request": request,
+            "lang": lang,
+            "target_date": date,
+            "prompt_text": prompt_text,
+        },
+    )
+
 
 @app.get("/chart/{token}/download.zip")
 def chart_download_zip(request: Request, token: str):

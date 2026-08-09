@@ -18,6 +18,9 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+from reportlab.graphics import renderPDF
+from reportlab.graphics.barcode import qr
+from reportlab.graphics.shapes import Drawing
 
 from . import planner_i18n as i18n
 from .planner_i18n import S
@@ -243,11 +246,13 @@ def fit_text(text: str, font: str, preferred: float, max_width: float, minimum: 
 
 
 class Planner:
-    def __init__(self, data: dict[str, Any], output: Path, mode: str, lang: str) -> None:
+    def __init__(self, data: dict[str, Any], output: Path, mode: str, lang: str,
+                 chart_url: str | None = None) -> None:
         self.data = data
         self.output = output
         self.mode = mode
         self.lang = lang
+        self.chart_url = chart_url
         meta = data["metadata"]
         self.tz = i18n.tz_label(meta.get("tz", "UTC"))
         self.period_label = meta.get("period_label", "2027")
@@ -376,6 +381,20 @@ class Planner:
     def _link(self, destination: str, x: float, y: float, width: float, height: float) -> None:
         if destination in self.destinations:
             self.pdf.linkRect("", destination, (x, y, x + width, y + height), relative=0, thickness=0)
+
+    def _daily_ai_url(self, iso_date: str) -> str | None:
+        if not self.chart_url:
+            return None
+        separator = "&" if "?" in self.chart_url else "?"
+        return f"{self.chart_url}{separator}date={iso_date}"
+
+    def _draw_qr(self, value: str, x: float, y: float, size: float) -> None:
+        widget = qr.QrCodeWidget(value)
+        x1, y1, x2, y2 = widget.getBounds()
+        width, height = x2 - x1, y2 - y1
+        drawing = Drawing(size, size, transform=[size / width, 0, 0, size / height, 0, 0])
+        drawing.add(widget)
+        renderPDF.draw(drawing, self.pdf, x, y)
 
     def _edition_label(self) -> str:
         key = {"prototype": "edition_prototype", "full": "edition_full", "personal": "edition_personal"}[self.mode]
@@ -1034,13 +1053,29 @@ class Planner:
                 pdf.setFont("Helvetica-Oblique", 7.2)
                 hint = S(lang, "reflection_hint")
                 pdf.drawString(53 + stringWidth(heading, "Helvetica-Bold", 7.5) + 14, y - 20, hint)
-            elif section_index == 2:
-                pdf.setFillColor(LAVENDER)
-                pdf.setFont("Helvetica-Bold", 6.8)
-                pdf.drawRightString(543, y - 20, S(lang, "ai_guide_link"))
-                self._link("ai_prompt", 460, y - 29, 90, 16)
             self._ruled_lines(53, y - 43, 490, line_count, 18)
             y -= height + 8
+
+        ai_url = self._daily_ai_url(spec.payload)
+        button_x, button_y = 218, 38
+        pdf.setFillColor(PALE_GOLD)
+        pdf.roundRect(button_x, button_y, 126, 22, 5, fill=1, stroke=0)
+        pdf.setFillColor(NAVY)
+        pdf.setFont("Helvetica-Bold", 6.8)
+        label = (
+            "READ THIS DAY WITH AI" if lang == "en"
+            else "AI\u3067\u3053\u306e\u65e5\u3092\u8aad\u307f\u89e3\u304f"
+        )
+        pdf.drawCentredString(button_x + 63, button_y + 8, label)
+        if ai_url:
+            pdf.linkURL(
+                ai_url, (button_x, button_y, button_x + 126, button_y + 22),
+                relative=0, thickness=0,
+            )
+            self._draw_qr(ai_url, 350, 35, 27)
+            pdf.linkURL(ai_url, (348, 33, 379, 64), relative=0, thickness=0)
+        else:
+            self._link("ai_prompt", button_x, button_y, 126, 22)
 
         prev_day = current - timedelta(days=1)
         next_day = current + timedelta(days=1)

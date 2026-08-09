@@ -31,6 +31,7 @@ def render_personal_planner(
     lang: str = "ja",
     months: int = 12,
     out_path: Path | None = None,
+    chart_url: str | None = None,
     timeout: int = 900,
 ) -> Path:
     """Render a personal planner PDF from a nanami-products YAML string.
@@ -63,6 +64,8 @@ def render_personal_planner(
         "--out",
         str(out_path),
     ]
+    if chart_url:
+        cmd.extend(["--chart-url", chart_url])
     try:
         result = subprocess.run(
             cmd,
