@@ -42,7 +42,9 @@ $serviceState = (& $gcloud @describeArgs | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0) {
     throw "Candidate deployed, but its URL could not be read. Inspect Cloud Run before continuing."
 }
-$candidate = @($serviceState.status.traffic | Where-Object { $_.tag -eq $candidateTag }) | Select-Object -First 1
+$candidate = @($serviceState.status.traffic | Where-Object {
+    $_.PSObject.Properties["tag"] -and $_.tag -eq $candidateTag
+}) | Select-Object -First 1
 if (-not $candidate -or [string]::IsNullOrWhiteSpace($candidate.revisionName)) {
     throw "Candidate deployed, but tag '$candidateTag' was not found. Do not promote until inspected."
 }

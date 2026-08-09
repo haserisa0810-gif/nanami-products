@@ -31,7 +31,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $candidate = @($serviceState.status.traffic | Where-Object {
-    $_.tag -eq $candidateTag -and $_.revisionName -eq $Revision
+    $_.PSObject.Properties["tag"] -and
+    $_.PSObject.Properties["revisionName"] -and
+    $_.tag -eq $candidateTag -and
+    $_.revisionName -eq $Revision
 }) | Select-Object -First 1
 if (-not $candidate) {
     throw "Promotion stopped: revision '$Revision' is not the candidate '$candidateTag' for current pushed commit $($gitState.Commit)."
