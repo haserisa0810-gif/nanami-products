@@ -631,6 +631,7 @@ I18N = {
         "not_entered": "未入力",
         "order_help": "注文番号を入力してください。",
         "order_mail_hint": "STORESから届く購入完了メールに記載されている注文番号を入力してください。例：#12345678 など",
+        "etsy_order_hint": "Etsyの購入履歴または注文確認メールに表示される注文番号を入力してください。",
         "name": "お名前",
         "name_placeholder": "例：山田 花子",
         "birth_info": "出生情報",
@@ -1010,6 +1011,7 @@ I18N = {
         "not_entered": "Not entered",
         "order_help": "Enter your order number.",
         "order_mail_hint": "Enter the order number shown in the purchase completion email from STORES. Example: #12345678.",
+        "etsy_order_hint": "Enter the order number shown on your Etsy purchase receipt or confirmation email.",
         "name": "Name",
         "name_placeholder": "e.g. Hanako Yamada",
         "birth_info": "Birth information",
@@ -1386,9 +1388,15 @@ def _resolve_lang(request: Request) -> str:
 
 def _lang_urls(request: Request) -> dict[str, str]:
     url = request.url.remove_query_params("chart_download")
+
+    def relative_url(lang: str) -> str:
+        localized = url.include_query_params(lang=lang)
+        query = f"?{localized.query}" if localized.query else ""
+        return f"{localized.path}{query}"
+
     return {
-        "ja": str(url.include_query_params(lang="ja")),
-        "en": str(url.include_query_params(lang="en")),
+        "ja": relative_url("ja"),
+        "en": relative_url("en"),
     }
 
 

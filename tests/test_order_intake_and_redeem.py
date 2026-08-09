@@ -536,6 +536,29 @@ class OrderProviderResolutionTest(unittest.TestCase):
         self.assertNotIn("山田 花子", english.text)
         self.assertIn('placeholder="例：山田 花子"', japanese.text)
 
+    def test_etsy_order_hint_and_language_links_match_provider(self) -> None:
+        client = TestClient(routes.app)
+        response = client.get("/redeem/acg-bundle?lang=en&provider=etsy")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "Enter the order number shown on your Etsy purchase receipt or confirmation email.",
+            response.text,
+        )
+        self.assertNotIn(
+            '<small id="order-code-hint">Enter the order number shown in the purchase completion email from STORES.',
+            response.text,
+        )
+        self.assertIn(
+            'href="/redeem/acg-bundle?provider=etsy&amp;lang=ja"',
+            response.text,
+        )
+        self.assertIn(
+            'href="/redeem/acg-bundle?provider=etsy&amp;lang=en"',
+            response.text,
+        )
+        self.assertNotIn('href="http://', response.text)
+
     def test_ten_digit_numeric_is_stores(self) -> None:
         self.assertEqual(routes._resolve_order_provider("9824333454"), "stores")
 

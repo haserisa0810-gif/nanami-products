@@ -67,7 +67,7 @@
                      title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"{% endif %}
                      maxlength="100"
                      autocomplete="off">
-              <small id="order-code-hint">{% if provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% else %}{{ t.order_mail_hint }}{% endif %}</small>
+              <small id="order-code-hint">{% if provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% elif provider == 'etsy' %}{{ t.etsy_order_hint }}{% else %}{{ t.order_mail_hint }}{% endif %}</small>
             </label>
           </div>
           <div id="payhip-order-fields" hidden>
@@ -521,6 +521,7 @@
       const payhipOrderId = document.getElementById('payhip-order-id');
       const isPayhip = provider === 'payhip';
       const isCoconala = provider === 'coconala';
+      const isEtsy = provider === 'etsy';
       const orderCodeLabel = document.getElementById('order-code-label');
       const orderCodeHint = document.getElementById('order-code-hint');
       if (standard) standard.hidden = isPayhip;
@@ -544,7 +545,7 @@
         : {{ t.stores_order | tojson }};
       if (orderCodeHint) orderCodeHint.textContent = isCoconala
         ? {{ t.coconala_buyer_hint | tojson }}
-        : {{ t.order_mail_hint | tojson }};
+        : (isEtsy ? {{ t.etsy_order_hint | tojson }} : {{ t.order_mail_hint | tojson }});
       if (payhipEmail) {
         payhipEmail.required = false;
         payhipEmail.disabled = false;
