@@ -116,10 +116,11 @@ systems:
         self.assertNotIn("samples:", ai_paste)
 
     def test_stores_and_payhip_zips_include_chart_page_url(self) -> None:
+        valid_yaml = yaml.safe_dump(_full_doc(), allow_unicode=True, sort_keys=False)
         for provider in ("stores", "payhip"):
             chart = {
                 "options": {"product_type": "western_basic", "order_provider": provider},
-                "yaml_text": "version: test\n",
+                "yaml_text": valid_yaml,
                 "prompt_text": "AI prompt",
                 "share_yaml_text": None,
                 "horoscope_svg": None,
