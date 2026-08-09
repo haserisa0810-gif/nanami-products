@@ -12,3 +12,6 @@ personal-edition/dist/
 .claude/settings.local.json
 tmp/
 work/
+
+# Generated PDFs, images, videos, bundles, and personalized artifacts
+output/

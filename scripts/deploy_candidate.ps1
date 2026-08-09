@@ -15,7 +15,7 @@ if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
 }
 
 Write-Host "Running the full test suite for commit $($gitState.Commit)..."
-& $python -m pytest -q
+& $python -m pytest tests -q
 if ($LASTEXITCODE -ne 0) {
     throw "Deployment stopped: tests failed."
 }
