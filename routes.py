@@ -5531,12 +5531,12 @@ def _parse_post_chart_bulk_line(line: str, line_number: int) -> dict[str, str]:
         datetime.strptime(birth_date, "%Y-%m-%d")
     except ValueError as exc:
         raise ValueError("生年月日はYYYY-MM-DDで入力してください。") from exc
-    if not birth_time:
-        birth_time = "12:00"
-    try:
-        datetime.strptime(birth_time, "%H:%M")
-    except ValueError as exc:
-        raise ValueError("出生時間はHH:MMで入力してください。") from exc
+    birth_time_accuracy = "exact" if birth_time else "unknown"
+    if birth_time:
+        try:
+            datetime.strptime(birth_time, "%H:%M")
+        except ValueError as exc:
+            raise ValueError("出生時間はHH:MMで入力してください。") from exc
     if not birth_place:
         raise ValueError("出生地を入力してください。")
     return {
@@ -5544,6 +5544,7 @@ def _parse_post_chart_bulk_line(line: str, line_number: int) -> dict[str, str]:
         "name": name,
         "birth_date": birth_date,
         "birth_time": birth_time,
+        "birth_time_accuracy": birth_time_accuracy,
         "birth_place": birth_place,
     }
 
@@ -5567,13 +5568,14 @@ def _post_chart_bulk_line_preview(line: str) -> dict[str, str]:
 def _build_post_chart_bulk_csv(rows: list[dict]) -> str:
     output = io.StringIO()
     writer = csv.writer(output, lineterminator="\n")
-    writer.writerow(["line", "name", "birth_date", "birth_time", "birth_place", "url", "status", "error"])
+    writer.writerow(["line", "name", "birth_date", "birth_time", "birth_time_accuracy", "birth_place", "url", "status", "error"])
     for row in rows:
         writer.writerow([
             row.get("line", ""),
             row.get("name", ""),
             row.get("birth_date", ""),
             row.get("birth_time", ""),
+            row.get("birth_time_accuracy", ""),
             row.get("birth_place", ""),
             row.get("url", ""),
             row.get("status", ""),
@@ -5587,7 +5589,8 @@ def _issue_post_sample_chart_url(*, request: Request, item: dict[str, str]) -> s
     yaml_text, prompt_text, doc = build_product_yaml(
         title=item["name"],
         birth_date=item["birth_date"],
-        birth_time=item["birth_time"],
+        birth_time=item["birth_time"] or None,
+        birth_time_accuracy=item["birth_time_accuracy"],
         prefecture=str(place["prefecture"]),
         birth_place_label=str(place["birth_place_label"]),
         birth_lat=place["birth_lat"],
@@ -5612,7 +5615,7 @@ def _issue_post_sample_chart_url(*, request: Request, item: dict[str, str]) -> s
         order_code=None,
         buyer_name=item["name"],
         birth_date=item["birth_date"],
-        birth_time=item["birth_time"],
+        birth_time=item["birth_time"] or None,
         birth_place=item["birth_place"],
         options=chart_options,
         yaml_text=yaml_text,
@@ -5652,6 +5655,7 @@ def post_chart_bulk_generate(
             "name": "",
             "birth_date": "",
             "birth_time": "",
+            "birth_time_accuracy": "",
             "birth_place": "",
             "url": "",
             "status": "error",

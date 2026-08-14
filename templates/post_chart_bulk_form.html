@@ -21,7 +21,7 @@
         <form method="post" action="/admin/post-chart/bulk-new" class="form">
           <label>入力データ
             <textarea name="bulk_input" rows="12" placeholder="名前,生年月日,出生時間,出生地">{{ bulk_input }}</textarea>
-            <small>形式: 名前,生年月日,出生時間,出生地 / 出生時間が空欄の場合は12:00で生成します。空行は無視します。</small>
+            <small>形式: 名前,生年月日,出生時間,出生地 / 出生時間が空欄の場合は「時刻不明」として正午基準で仮計算し、ASC・MC・ハウスを断定用データから除外します。空行は無視します。</small>
           </label>
           <button type="submit">投稿用URLを一括発行</button>
         </form>
@@ -43,6 +43,7 @@
                 <th>名前</th>
                 <th>生年月日</th>
                 <th>出生時間</th>
+                <th>時刻精度</th>
                 <th>出生地</th>
                 <th>発行URL</th>
                 <th>ステータス</th>
@@ -56,6 +57,7 @@
                 <td>{{ row.name }}</td>
                 <td>{{ row.birth_date }}</td>
                 <td>{{ row.birth_time }}</td>
+                <td>{{ row.birth_time_accuracy }}</td>
                 <td>{{ row.birth_place }}</td>
                 <td>{% if row.url %}<a href="{{ row.url }}" target="_blank" rel="noopener">{{ row.url }}</a>{% endif %}</td>
                 <td>{{ row.status }}</td>

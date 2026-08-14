@@ -125,7 +125,8 @@ def test_post_chart_bulk_generate_issues_multiple_no_expiry_transit_urls(monkeyp
     assert rows[0]["url"] == "https://chart.nanami-astro.com/chart/tok-one"
     assert rows[1]["error"] == "生年月日はYYYY-MM-DDで入力してください。"
     assert rows[2]["error"] == "カンマ区切りで 名前,生年月日,出生時間,出生地 を入力してください。"
-    assert rows[3]["birth_time"] == "12:00"
+    assert rows[3]["birth_time"] == ""
+    assert rows[3]["birth_time_accuracy"] == "unknown"
     assert rows[3]["url"] == "https://chart.nanami-astro.com/chart/tok-two"
     assert len(build_calls) == 2
     assert all(call["include_transit"] is True for call in build_calls)
@@ -136,10 +137,12 @@ def test_post_chart_bulk_generate_issues_multiple_no_expiry_transit_urls(monkeyp
     assert all(item["options"]["transit"] is True for item in saved)
     assert all(item["options"]["transit_today"] is True for item in saved)
     assert all(item["options"]["transit_31days_summary"] is True for item in saved)
-    assert saved[1]["birth_time"] == "12:00"
-    assert "line,name,birth_date,birth_time,birth_place,url,status,error" in response.context["csv_output"]
-    assert "3,日付不正,1982/06/08,,広島県 広島市,,error,生年月日はYYYY-MM-DDで入力してください。" in response.context["csv_output"]
-    assert "4,,,,,,error,\"カンマ区切りで 名前,生年月日,出生時間,出生地 を入力してください。\"" in response.context["csv_output"]
+    assert saved[1]["birth_time"] is None
+    assert build_calls[1]["birth_time"] is None
+    assert build_calls[1]["birth_time_accuracy"] == "unknown"
+    assert "line,name,birth_date,birth_time,birth_time_accuracy,birth_place,url,status,error" in response.context["csv_output"]
+    assert "3,日付不正,1982/06/08,,,広島県 広島市,,error,生年月日はYYYY-MM-DDで入力してください。" in response.context["csv_output"]
+    assert "4,,,,,,,error,\"カンマ区切りで 名前,生年月日,出生時間,出生地 を入力してください。\"" in response.context["csv_output"]
 
 
 def test_admin_yaml_generate_accepts_basic_auth(monkeypatch) -> None:
