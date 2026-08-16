@@ -10,6 +10,8 @@ personal-edition/dist/
 
 # Local Codex/Claude work products and test scratch data
 .claude/settings.local.json
+.codex-remote-attachments/
+.video_tools/
 tmp/
 work/
 
