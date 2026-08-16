@@ -977,8 +977,11 @@
             {% endif %}
             {% if personal_edition_acg %}
             <a class="download-primary" id="personal-acg-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
-              {% if lang == 'ja' %}あなたのACG地図を見る{% else %}View your ACG map{% endif %}
+              {% if lang == 'ja' %}あなたのACGアプリを開く{% else %}Open your Personal ACG app{% endif %}
             </a>
+            <p class="hint" id="personal-acg-app-hint">
+              {% if lang == 'ja' %}iPad・iPhoneでは、開いた画面の「ホーム画面に追加」からアプリとして保存できます。{% else %}On iPad or iPhone, open it and choose Add to Home Screen to save it as an app.{% endif %}
+            </p>
             {% endif %}
             {% endif %}
             {% if acg_enabled and not is_personal_edition %}

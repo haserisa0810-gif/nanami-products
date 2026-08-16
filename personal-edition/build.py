@@ -311,6 +311,7 @@ def build_variant(variant: str, lang: str) -> None:
         build_dream_sky(), encoding="utf-8", newline="\n"
     )
     shutil.copy2(PE_DIR / "acg" / "index.html", APP / "acg" / "index.html")
+    shutil.copy2(PE_DIR / "acg" / "cities.min.json", APP / "acg" / "cities.min.json")
     # Dream Sky videos: overview sky + 12 house portal films
     ds_src = STATIC / "dream-sky"
     ds_dst = APP / "dream-sky"

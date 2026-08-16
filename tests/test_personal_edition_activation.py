@@ -218,10 +218,62 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert '"line_group":"Sun_MC"' in standalone
         assert "leaflet" in standalone.lower()
         assert "https://chart.example/chart/private?lang=ja" in standalone
+        assert 'id="city-search"' in standalone
+        assert "MAX_PLACES=3" in standalone
+        assert "nearestLines" in standalone
+        assert "Natural Earth" in archive.read("app/acg/cities.min.json").decode("utf-8")
+        assert "cities.min.json" not in standalone
+        assert "nominatim.openstreetmap.org" not in standalone
+        assert "window.print()" in standalone
+        assert "/api/geocode" not in standalone
         readme_name = next(name for name in names if name.endswith("_README.txt"))
         readme = archive.read(readme_name).decode("utf-8-sig")
         assert "START-ACG.html" in readme
+        assert "最大3地点" in readme
+        assert "PDF保存" in readme
         assert "PowerShell、ローカルサーバーは不要" in readme
+
+
+def test_personal_acg_mobile_app_is_installable_and_self_contained(monkeypatch):
+    yaml_text = Path("tests/fixtures/yaml_v1_base.yaml").read_text(encoding="utf-8")
+    chart = {
+        "yaml_text": yaml_text,
+        "options": {"personal_edition": True, "acg_enabled": True},
+    }
+    monkeypatch.setattr(routes, "_load_chart_or_404", lambda token, include_svgs=False: chart)
+
+    page = client.get("/chart/private-token/acg-app/?lang=ja")
+    assert page.status_code == 200
+    assert "no-store" in page.headers["cache-control"]
+    assert 'rel="manifest" href="/chart/private-token/acg-app/manifest.webmanifest?lang=ja"' in page.text
+    assert 'id="pwa-install"' in page.text
+    assert "ホーム画面に追加" in page.text
+    assert "serviceWorker.register" in page.text
+    assert '"line_group":"Sun_MC"' in page.text
+    assert "MAX_PLACES=3" in page.text
+    assert "cities.min.json" not in page.text
+    assert "nanami-personal-acg-places-v1" not in page.text
+
+    manifest = client.get("/chart/private-token/acg-app/manifest.webmanifest?lang=ja")
+    assert manifest.status_code == 200
+    assert manifest.headers["content-type"].startswith("application/manifest+json")
+    assert manifest.json()["display"] == "standalone"
+    assert manifest.json()["scope"] == "/chart/private-token/acg-app/"
+    assert manifest.json()["start_url"].startswith("/chart/private-token/acg-app/")
+
+    worker = client.get("/chart/private-token/acg-app/sw.js?lang=ja")
+    assert worker.status_code == 200
+    assert worker.headers["content-type"].startswith("application/javascript")
+    assert "caches.open(CACHE_NAME)" in worker.text
+    assert "APP_URL" in worker.text
+    assert "tile.openstreetmap.org" not in worker.text
+
+
+def test_personal_acg_mobile_app_rejects_non_personal_chart(monkeypatch):
+    chart = {"yaml_text": "version: test\n", "options": {"acg_enabled": True}}
+    monkeypatch.setattr(routes, "_load_chart_or_404", lambda token, include_svgs=False: chart)
+    response = client.get("/chart/not-personal/acg-app/")
+    assert response.status_code == 404
 
 
 def test_successful_activation_creates_chart_page(monkeypatch):
@@ -298,6 +350,11 @@ def test_chart_personal_edition_zip_and_acg_autoload(monkeypatch):
     assert response.status_code == 200
     assert response.content == b"PK-personal"
     assert "ACG-Bundle.zip" in response.headers["content-disposition"]
+
+    chart_page = client.get("/chart/test-token?lang=ja")
+    assert chart_page.status_code == 200
+    assert 'href="/chart/test-token/acg-app/?lang=ja"' in chart_page.text
+    assert "あなたのACGアプリを開く" in chart_page.text
 
     acg_page = client.get("/acg?load=/chart/test-token.yaml")
     assert acg_page.status_code == 200
