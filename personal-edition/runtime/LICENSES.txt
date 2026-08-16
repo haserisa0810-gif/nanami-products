@@ -40,7 +40,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 -----------------------------------------------------------
-4. Cinzel (font, variable weights 400-500)
+4. Natural Earth Populated Places 5.1.2
+   https://www.naturalearthdata.com/
+   Public domain map data. The bundled city-search catalogue is a compact,
+   derived subset containing place names and coordinates.
+
+-----------------------------------------------------------
+5. Cinzel (font, variable weights 400-500)
    Designed by Natanael Gama
    https://fonts.google.com/specimen/Cinzel
    License: SIL Open Font License, Version 1.1

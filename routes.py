@@ -30,7 +30,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
-from services.personal_edition_delivery import build_personalized_zip
+from services.personal_edition_delivery import build_personal_acg_html, build_personalized_zip
 from services.planner_delivery import (
     build_planner_pdf,
     build_planner_pdf_from_yaml,
@@ -3022,6 +3022,177 @@ def healthz():
 # ─── ACG（アストロカートグラフィ） ─────────────────────────────
 
 
+def _personal_acg_app_chart(token: str) -> dict:
+    chart = _load_chart_or_404(token, include_svgs=False)
+    options = chart.get("options") or {}
+    if not (options.get("personal_edition") and options.get("acg_enabled")):
+        raise HTTPException(status_code=404, detail="Personal ACG app is unavailable")
+    return chart
+
+
+def _personal_acg_pwa_html(*, html: str, token: str, lang: str) -> str:
+    token_path = quote(token, safe="")
+    identity = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
+    app_path = f"/chart/{token_path}/acg-app/"
+    manifest_url = f"{app_path}manifest.webmanifest?lang={lang}"
+    sw_url = f"{app_path}sw.js?lang={lang}&v={ASSET_VERSION}"
+    install_label = "ホーム画面に追加" if lang == "ja" else "Install app"
+    installed_label = "アプリとして起動中" if lang == "ja" else "Running as an app"
+    ios_help = (
+        "Safariの共有ボタンを押し、「ホーム画面に追加」を選んでください。"
+        if lang == "ja"
+        else "Tap Safari's Share button, then choose Add to Home Screen."
+    )
+    browser_help = (
+        "ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。"
+        if lang == "ja"
+        else "Open your browser menu and choose Add to Home Screen or Install app."
+    )
+    head = f"""
+  <link rel="manifest" href="{manifest_url}">
+  <meta name="theme-color" content="#0a1128">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="My ACG">
+  <link rel="apple-touch-icon" href="/static/nanami-products-logo.png">
+  <style>
+    .pwa-install{{margin-left:auto;padding:7px 11px;border-radius:999px;background:var(--gold);color:var(--base);font-size:.74rem;font-weight:700}}
+    .pwa-install[hidden]{{display:none}}
+    @media(display-mode:standalone){{.pwa-install{{background:transparent;color:var(--dim);border-color:var(--gold-soft);pointer-events:none}}}}
+    @media print{{.pwa-install{{display:none!important}}}}
+  </style>
+"""
+    control = f'<button class="pwa-install" id="pwa-install" type="button">{install_label}</button>'
+    script = f"""
+<script>
+(function(){{
+  'use strict';
+  var installButton=document.getElementById('pwa-install');
+  var deferredPrompt=null;
+  var standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(standalone){{installButton.textContent={json.dumps(installed_label, ensure_ascii=False)};}}
+  window.addEventListener('beforeinstallprompt',function(event){{
+    event.preventDefault();deferredPrompt=event;installButton.hidden=false;
+  }});
+  installButton.addEventListener('click',function(){{
+    if(standalone)return;
+    if(deferredPrompt){{deferredPrompt.prompt();deferredPrompt.userChoice.finally(function(){{deferredPrompt=null;}});return;}}
+    var ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    window.alert(ios?{json.dumps(ios_help, ensure_ascii=False)}:{json.dumps(browser_help, ensure_ascii=False)});
+  }});
+  if('serviceWorker' in navigator){{
+    window.addEventListener('load',function(){{navigator.serviceWorker.register({json.dumps(sw_url)},{{scope:{json.dumps(app_path)}}}).catch(function(){{}});}});
+  }}
+}})();
+</script>
+"""
+    html = html.replace(
+        "'nanami-personal-acg-places-v1'",
+        json.dumps(f"nanami-personal-acg-places-{identity}"),
+        1,
+    )
+    html = html.replace("</head>", head + "</head>", 1)
+    html = html.replace("</header>", control + "</header>", 1)
+    return html.replace("</body>", script + "</body>", 1)
+
+
+@app.get("/chart/{token}/acg-app/", response_class=HTMLResponse)
+def personal_acg_app(request: Request, token: str):
+    """Installable, self-contained ACG companion for Personal Edition buyers."""
+    chart = _personal_acg_app_chart(token)
+    lang = _resolve_lang(request)
+    token_path = quote(token, safe="")
+    chart_url = f"{_public_base_url(request)}/chart/{token_path}?lang={lang}"
+    html = build_personal_acg_html(yaml_text=chart["yaml_text"], chart_url=chart_url)
+    html = _personal_acg_pwa_html(html=html, token=token, lang=lang)
+    response = HTMLResponse(html)
+    response.headers["Cache-Control"] = "private, no-store, max-age=0"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+@app.get("/chart/{token}/acg-app/manifest.webmanifest")
+def personal_acg_manifest(request: Request, token: str):
+    _personal_acg_app_chart(token)
+    lang = _resolve_lang(request)
+    token_path = quote(token, safe="")
+    app_path = f"/chart/{token_path}/acg-app/"
+    identity = hashlib.sha256(token.encode("utf-8")).hexdigest()[:20]
+    manifest = {
+        "id": f"/personal-acg-{identity}",
+        "name": "My Personal Astrocartography" if lang == "en" else "わたしのアストロカートグラフィ",
+        "short_name": "My ACG",
+        "description": (
+            "Compare up to three places with your personal astrocartography lines."
+            if lang == "en"
+            else "あなたの天空線で最大3都市を比較できるパーソナルACGアプリです。"
+        ),
+        "start_url": f"{app_path}?lang={lang}&source=homescreen",
+        "scope": app_path,
+        "display": "standalone",
+        "background_color": "#0a1128",
+        "theme_color": "#0a1128",
+        "orientation": "any",
+        "icons": [
+            {
+                "src": "/static/nanami-products-logo.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any",
+            }
+        ],
+    }
+    response = Response(
+        json.dumps(manifest, ensure_ascii=False, separators=(",", ":")),
+        media_type="application/manifest+json",
+    )
+    response.headers["Cache-Control"] = "private, no-store, max-age=0"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+@app.get("/chart/{token}/acg-app/sw.js", response_class=PlainTextResponse)
+def personal_acg_service_worker(request: Request, token: str):
+    _personal_acg_app_chart(token)
+    lang = _resolve_lang(request)
+    token_path = quote(token, safe="")
+    app_path = f"/chart/{token_path}/acg-app/"
+    app_url = f"{app_path}?lang={lang}&source=homescreen"
+    identity = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
+    cache_name = f"nanami-personal-acg-{identity}-{ASSET_VERSION}"
+    script = f"""
+'use strict';
+const CACHE_NAME={json.dumps(cache_name)};
+const CACHE_PREFIX={json.dumps(f'nanami-personal-acg-{identity}-')};
+const APP_URL={json.dumps(app_url)};
+const APP_PATH={json.dumps(app_path)};
+self.addEventListener('install',event=>{{
+  event.waitUntil(fetch(APP_URL,{{cache:'reload',credentials:'same-origin'}}).then(response=>{{
+    if(!response.ok)throw new Error('app preload failed');
+    return caches.open(CACHE_NAME).then(cache=>cache.put(APP_URL,response));
+  }}).then(()=>self.skipWaiting()));
+}});
+self.addEventListener('activate',event=>{{
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+}});
+self.addEventListener('fetch',event=>{{
+  if(event.request.method!=='GET')return;
+  const url=new URL(event.request.url);
+  if(event.request.mode==='navigate'&&url.pathname.startsWith(APP_PATH)){{
+    event.respondWith(fetch(event.request).then(response=>{{
+      if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put(APP_URL,response.clone()));
+      return response;
+    }}).catch(()=>caches.match(APP_URL)));
+    return;
+  }}
+}});
+""".strip()
+    response = PlainTextResponse(script, media_type="application/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
 @app.get("/acg", response_class=HTMLResponse)
 def acg_map_page(request: Request):
     """ACG 天空線マップ（マンデン＋YAML貼り付けパーソナル）。?lang=en で英語表示。"""
@@ -5429,7 +5600,11 @@ def chart_page(request: Request, token: str):
                     else None
                 ),
                 "auto_download_personal_edition": is_personal_edition and request.query_params.get("personal_download") == "1",
-                "personal_acg_url": f"/acg?load={quote(f'/chart/{token}.yaml', safe='')}",
+                "personal_acg_url": (
+                    f"/chart/{quote(token, safe='')}/acg-app/?lang={lang}"
+                    if personal_edition_acg
+                    else f"/acg?load={quote(f'/chart/{token}.yaml', safe='')}"
+                ),
                 "can_continue_with_transit": can_continue_with_transit,
                 "has_31day_transit": has_31day_transit,
                 "has_western_asteroids": has_western_asteroids,
