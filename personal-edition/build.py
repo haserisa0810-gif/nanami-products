@@ -327,6 +327,11 @@ def build_variant(variant: str, lang: str) -> None:
 
     copy_static()
     shutil.copytree(STATIC / "vendor" / "leaflet", APP / "static" / "vendor" / "leaflet")
+    (APP / "static" / "geo").mkdir(parents=True, exist_ok=True)
+    shutil.copy2(
+        STATIC / "geo" / "ne_110m_admin_0_countries.geojson",
+        APP / "static" / "geo" / "ne_110m_admin_0_countries.geojson",
+    )
     copy_vendor()
     copy_runtime()
     zip_path = make_zip(variant)

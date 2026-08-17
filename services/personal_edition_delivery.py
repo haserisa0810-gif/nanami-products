@@ -80,11 +80,13 @@ def _standalone_acg_html(
     leaflet_js: str,
     acg_data: dict,
     city_data: dict,
+    world_data: dict,
     chart_url: str | None,
 ) -> str:
     """Build a file://-safe ACG app with personal data and Leaflet embedded."""
     data_json = json.dumps(acg_data, ensure_ascii=False, separators=(",", ":"))
     cities_json = json.dumps(city_data.get("cities", []), ensure_ascii=False, separators=(",", ":"))
+    world_json = json.dumps(world_data, ensure_ascii=False, separators=(",", ":"))
     embedded_code = (
         f"data={data_json};render();renderPlaces();"
         "document.getElementById('status').textContent='計算基準: '+"
@@ -113,6 +115,13 @@ def _standalone_acg_html(
         count=1,
         flags=re.DOTALL,
     )
+    result, world_embedded_count = re.subn(
+        r"/\* PERSONAL_WORLD_DATA_START \*/.*?/\* PERSONAL_WORLD_DATA_END \*/",
+        f"worldData={world_json};renderWorld();",
+        result,
+        count=1,
+        flags=re.DOTALL,
+    )
     if chart_url:
         result = result.replace('href="/"', f'href="{chart_url}"', 1)
     else:
@@ -120,8 +129,10 @@ def _standalone_acg_html(
     if (
         embedded_count != 1
         or city_embedded_count != 1
+        or world_embedded_count != 1
         or "/acg-personal.geojson" in result
         or "cities.min.json" in result
+        or "ne_110m_admin_0_countries.geojson" in result
     ):
         raise RuntimeError("Standalone ACG data embedding failed")
     return result
@@ -138,6 +149,7 @@ def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None) -> 
         leaflet_js=(leaflet_dir / "leaflet.js").read_text(encoding="utf-8"),
         acg_data=personal_geojson(yaml_text),
         city_data=city_data,
+        world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
         chart_url=chart_url,
     )
 
@@ -314,6 +326,7 @@ def build_personalized_zip(
                     leaflet_js=leaflet_js,
                     acg_data=acg_data,
                     city_data=city_data,
+                    world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
                     chart_url=chart_url,
                 ).encode("utf-8"),
             )

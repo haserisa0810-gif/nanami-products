@@ -223,10 +223,20 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "nearestLines" in standalone
         assert "Natural Earth" in archive.read("app/acg/cities.min.json").decode("utf-8")
         assert "cities.min.json" not in standalone
+        assert "ne_110m_admin_0_countries.geojson" not in standalone
+        assert '"name":"日本"' in standalone
         assert "nominatim.openstreetmap.org" not in standalone
         assert "window.print()" in standalone
         assert ".print-grid{display:block!important;width:100%!important}" in standalone
         assert "page-break-inside:avoid" in standalone
+        assert 'id="print-map-heading"' in standalone
+        assert "地図＋3都市レポートを印刷・PDF保存" in standalone
+        assert "map.fitBounds(markerLayer.getBounds()" in standalone
+        assert "L.circleMarker" in standalone
+        assert "map.createPane('landPane')" in standalone
+        assert ".leaflet-land-pane{opacity:1!important}" in standalone
+        assert "tileLayer.isLoading()" in standalone
+        assert "window.addEventListener('beforeprint',preparePrint)" in standalone
         assert "/api/geocode" not in standalone
         readme_name = next(name for name in names if name.endswith("_README.txt"))
         readme = archive.read(readme_name).decode("utf-8-sig")
