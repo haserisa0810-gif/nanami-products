@@ -232,7 +232,8 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert 'id="print-map-heading"' in standalone
         assert "地図＋3都市レポートを印刷・PDF保存" in standalone
         assert "map.fitBounds(markerLayer.getBounds()" in standalone
-        assert "L.circleMarker" in standalone
+        assert "L.divIcon" in standalone
+        assert "place-pin-shape" in standalone
         assert "map.createPane('landPane')" in standalone
         assert ".leaflet-land-pane{opacity:1!important}" in standalone
         assert "tileLayer.isLoading()" in standalone
