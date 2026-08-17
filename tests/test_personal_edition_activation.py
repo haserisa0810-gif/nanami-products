@@ -225,6 +225,8 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "cities.min.json" not in standalone
         assert "nominatim.openstreetmap.org" not in standalone
         assert "window.print()" in standalone
+        assert ".print-grid{display:block!important;width:100%!important}" in standalone
+        assert "page-break-inside:avoid" in standalone
         assert "/api/geocode" not in standalone
         readme_name = next(name for name in names if name.endswith("_README.txt"))
         readme = archive.read(readme_name).decode("utf-8-sig")
