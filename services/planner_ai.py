@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from services.yaml_exporter import build_product_yaml
+from services.yaml_exporter import build_transit_for_profile
 
 
 def build_daily_ai_prompt(*, chart_yaml: str, target_date: date, lang: str = "ja") -> str:
@@ -17,29 +17,26 @@ def build_daily_ai_prompt(*, chart_yaml: str, target_date: date, lang: str = "ja
     # date-specific prompt on that same calendar day instead of silently
     # recalculating it in the buyer's local timezone.
     tz_name = "UTC" if lang == "en" else str(source.get("timezone") or "Asia/Tokyo")
-    start = datetime.combine(target_date, datetime.min.time(), tzinfo=ZoneInfo(tz_name))
-    _yaml_text, _prompt, doc = build_product_yaml(
-        title=source.get("title"),
-        birth_date=str(source.get("birth_date") or ""),
-        birth_time=source.get("calculation_time") or source.get("birth_time"),
-        prefecture=str(source.get("prefecture") or ""),
-        birth_place_label=source.get("birth_place"),
-        birth_lat=source.get("birth_lat"),
-        birth_lng=source.get("birth_lng"),
-        tz_name=tz_name,
-        gender="unknown",
-        include_asteroids=False,
-        include_shichusuimei=False,
-        include_transit=True,
-        transit_start_date=start,
-        transit_days=1,
-        birth_time_accuracy=str(source.get("birth_time_accuracy") or "exact"),
-        birth_time_range=source.get("birth_time_range"),
-        birth_time_note=source.get("birth_time_note"),
-    )
-    western = ((doc.get("systems") or {}).get("western") or {})
+    western = ((source_doc.get("systems") or {}).get("western") or {})
     natal = western.get("natal") or {}
-    transit = western.get("transit") or {}
+    natal_bodies = natal.get("bodies") or {}
+    natal_houses = natal.get("houses") or {}
+    lat = source.get("birth_lat")
+    lng = source.get("birth_lng")
+    if not natal_bodies or lat is None or lng is None:
+        raise ValueError("chart YAML is missing stored natal data or birth coordinates")
+    start = datetime.combine(target_date, datetime.min.time(), tzinfo=ZoneInfo(tz_name))
+    transit = build_transit_for_profile(
+        profile="standard",
+        start_date=start,
+        days=1,
+        lat=float(lat),
+        lng=float(lng),
+        pref_name=str(source.get("prefecture") or source.get("birth_place") or ""),
+        tz_name=tz_name,
+        natal_bodies=natal_bodies,
+        natal_houses=natal_houses,
+    )
     daily = transit.get("daily") or []
     day_data = daily[0] if daily else {}
     ai_data = {

@@ -1155,7 +1155,10 @@ class Planner:
         if self.mode == "personal":
             self._section_label(S(lang, "your_data_head"), 54, y - 25, ROSE)
             draw_wrapped(pdf, S(lang, "your_data_body"), 54, y - 52, 485, "Helvetica", 9.2, 13.5, INK)
-            self._section_label(S(lang, "tz_line", tz=f"{self.personal['profile'].get('birth_timezone', 'UTC')} ({self.tz})"), 54, y - 150, LAVENDER)
+            # Birth timezone is already shown beside the birth timestamp above.
+            # This line describes the planner calendar only; combining both
+            # labels made an unchanged local birth time look as if it were UTC.
+            self._section_label(S(lang, "tz_line", tz=self.tz), 54, y - 150, LAVENDER)
         else:
             self._section_label(S(lang, "safeguards_head"), 54, y - 25, ROSE)
             cursor = y - 52

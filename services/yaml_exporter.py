@@ -402,7 +402,7 @@ def _build_long_term_transit_block(
         "samples": samples,
     }
 
-def _build_transit_for_profile(
+def build_transit_for_profile(
     *,
     profile: str,
     start_date: datetime,
@@ -598,7 +598,7 @@ def build_product_yaml(
         western_system = {
             "natal": natal,
             "asteroids": asteroids if include_asteroids else None,
-            "transit": _build_transit_for_profile(
+            "transit": build_transit_for_profile(
                 profile=transit_profile,
                 start_date=transit_start_date or generated_at,
                 days=transit_days,

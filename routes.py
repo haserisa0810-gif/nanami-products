@@ -31,7 +31,11 @@ from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
 from services.personal_edition_delivery import build_personalized_zip
-from services.planner_delivery import build_planner_pdf, build_planner_pdf_from_yaml
+from services.planner_delivery import (
+    build_planner_pdf,
+    build_planner_pdf_from_yaml,
+    build_planner_yaml_from_natal_yaml,
+)
 from services.planner_ai import build_daily_ai_prompt
 from services.personal_edition_code_pdf import build_personal_edition_code_pdf
 from services.common_access_package import ETSY_PACKAGE_FILENAME, build_common_access_package
@@ -3033,6 +3037,11 @@ def acg_map_page(request: Request):
 
 
 NEKO_DEMO_YAML_PATH = Path(__file__).resolve().parent / "data" / "demo" / "chief_editor_neko.yaml"
+NEKO_DEMO_PLANNER_START = datetime(2026, 8, 1, tzinfo=timezone.utc)
+NEKO_DEMO_PLANNER_END = date(2027, 7, 31)
+NEKO_DEMO_AI_URL = "https://chart.nanami-astro.com/demo/neko/planner-ai"
+_neko_demo_planner_cache: dict[str, bytes] = {}
+_neko_demo_planner_lock = threading.Lock()
 
 
 def _neko_demo_yaml() -> str:
@@ -3056,6 +3065,73 @@ def neko_demo_page(request: Request):
         },
     )
     response.headers["Cache-Control"] = "public, max-age=300"
+    return response
+
+
+def _neko_demo_planner_pdf(lang: str) -> bytes:
+    cached = _neko_demo_planner_cache.get(lang)
+    if cached is not None:
+        return cached
+    with _neko_demo_planner_lock:
+        cached = _neko_demo_planner_cache.get(lang)
+        if cached is not None:
+            return cached
+        planner_yaml = build_planner_yaml_from_natal_yaml(
+            chart_yaml=_neko_demo_yaml(),
+            lang=lang,
+            months=12,
+            transit_start_date=NEKO_DEMO_PLANNER_START,
+        )
+        cached = build_planner_pdf_from_yaml(
+            yaml_text=planner_yaml,
+            lang=lang,
+            months=12,
+            chart_url=NEKO_DEMO_AI_URL + ("?lang=en" if lang == "en" else "?lang=ja"),
+        )
+        _neko_demo_planner_cache[lang] = cached
+        return cached
+
+
+@app.get("/demo/neko/planner.pdf")
+def neko_demo_planner_pdf(request: Request):
+    lang = _resolve_lang(request)
+    try:
+        pdf_bytes = _neko_demo_planner_pdf(lang)
+    except Exception as exc:
+        logger.exception("neko_demo_planner_generation_failed lang=%s", lang)
+        raise HTTPException(status_code=503, detail="Demo planner is unavailable") from exc
+    filename = f"Chief-Editor-Neko-Planner-{lang.upper()}.pdf"
+    response = Response(content=pdf_bytes, media_type="application/pdf")
+    response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+
+@app.get("/demo/neko/planner-ai", response_class=HTMLResponse)
+def neko_demo_planner_ai(request: Request, date: str):
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD") from exc
+    if target_date < NEKO_DEMO_PLANNER_START.date() or target_date > NEKO_DEMO_PLANNER_END:
+        raise HTTPException(status_code=400, detail="date is outside the demo planner range")
+    lang = _resolve_lang(request)
+    try:
+        prompt_text = build_daily_ai_prompt(
+            chart_yaml=_neko_demo_yaml(), target_date=target_date, lang=lang)
+    except Exception as exc:
+        logger.exception("neko_demo_daily_ai_prompt_failed lang=%s date=%s", lang, date)
+        raise HTTPException(status_code=503, detail="The demo prompt could not be generated.") from exc
+    response = templates.TemplateResponse(
+        "planner_ai_day.html",
+        {
+            "request": request,
+            "lang": lang,
+            "target_date": date,
+            "prompt_text": prompt_text,
+        },
+    )
+    response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
 

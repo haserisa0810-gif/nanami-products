@@ -33,7 +33,10 @@ def build(yaml_path: Path, lang: str, out_path: Path, *, months: int = 12,
         # Fall back to the current month when the addon lacks a period.
         today = date.today()
         start_month = f"{today.year:04d}-{today.month:02d}"
-    tz_name = source.get("input", {}).get("timezone") or period_meta.get("timezone") or "UTC"
+    # The transit period owns the planner calendar.  The input timezone is the
+    # subject's birth-profile timezone and must not be relabelled merely to
+    # display an international (UTC) planner edition.
+    tz_name = period_meta.get("timezone") or source.get("input", {}).get("timezone") or "UTC"
 
     year, month = int(start_month[:4]), int(start_month[5:7])
     ce.PERIOD = ce.Period(year, month, months, tz_name)

@@ -10,13 +10,14 @@ PE-PLAN- code can call it unchanged.
 
 from __future__ import annotations
 
+import copy
 from datetime import datetime, timezone
 import shutil
 from typing import Any
 
 import yaml
 
-from services.yaml_exporter import build_product_yaml
+from services.yaml_exporter import build_product_yaml, build_transit_for_profile
 from services.long_term_transit_yaml import build_ai_long_term_transits_yaml
 from services.planner_export import render_personal_planner
 
@@ -55,13 +56,59 @@ def _apply_display_timezone(yaml_text: str, lang: str) -> str:
         return yaml_text
     if not isinstance(doc, dict):
         return yaml_text
-    if not isinstance(doc.get("input"), dict):
-        doc["input"] = {}
-    doc["input"]["timezone"] = "UTC"
     long_term = ((doc.get("systems") or {}).get("western") or {}).get("transit_long_term")
     if isinstance(long_term, dict) and isinstance(long_term.get("period"), dict):
         long_term["period"]["timezone"] = "UTC"
     return yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
+
+
+def build_planner_yaml_from_natal_yaml(
+    *,
+    chart_yaml: str,
+    lang: str,
+    months: int = 12,
+    transit_start_date: datetime,
+) -> str:
+    """Add a planner transit layer to a stored natal chart without recalculating it.
+
+    This is used by fixed demos whose natal positions are the source of truth.
+    The birth profile retains its original timezone, while the English planner
+    may use UTC for its calendar and transit samples.
+    """
+    if lang not in {"ja", "en"}:
+        raise ValueError(f"lang must be ja or en, got {lang!r}")
+    loaded = yaml.safe_load(chart_yaml) or {}
+    if not isinstance(loaded, dict):
+        raise ValueError("chart YAML must contain a mapping")
+    doc = copy.deepcopy(loaded)
+    source = doc.get("input") or {}
+    western = ((doc.get("systems") or {}).get("western") or {})
+    natal = western.get("natal") or {}
+    natal_bodies = natal.get("bodies") or {}
+    natal_houses = natal.get("houses") or {}
+    if not natal_bodies:
+        raise ValueError("chart YAML has no stored natal bodies")
+    lat = source.get("birth_lat")
+    lng = source.get("birth_lng")
+    if lat is None or lng is None:
+        raise ValueError("chart YAML has no birth coordinates")
+    display_tz = "UTC" if lang == "en" else str(source.get("timezone") or "Asia/Tokyo")
+    western["transit_long_term"] = build_transit_for_profile(
+        profile="long_term",
+        start_date=transit_start_date,
+        days=max(31, months * 31),
+        lat=float(lat),
+        lng=float(lng),
+        pref_name=str(source.get("prefecture") or source.get("birth_place") or ""),
+        tz_name=display_tz,
+        natal_bodies=natal_bodies,
+        natal_houses=natal_houses,
+    )
+    western["transit"] = None
+    yaml_text = build_ai_long_term_transits_yaml(doc=doc)
+    if not yaml_text.strip():
+        raise RuntimeError("long-term transits missing; cannot build planner")
+    return yaml_text
 
 
 def build_planner_pdf_from_yaml(

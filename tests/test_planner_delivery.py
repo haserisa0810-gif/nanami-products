@@ -11,6 +11,7 @@ import io
 import threading
 import unittest
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -20,6 +21,7 @@ from starlette.requests import Request
 from routes import app, chart_planner_pdf
 from services.planner_delivery import build_planner_pdf
 from services.planner_delivery import build_planner_pdf_from_yaml
+from services.planner_delivery import build_planner_yaml_from_natal_yaml
 from services.personal_edition_delivery import build_personalized_zip
 
 
@@ -197,12 +199,34 @@ class PlannerDeliveryTest(unittest.TestCase):
             "      period:\n        timezone: Asia/Tokyo\n"
         )
         en = _yaml.safe_load(_apply_display_timezone(src, "en"))
-        self.assertEqual(en["input"]["timezone"], "UTC")
+        self.assertEqual(en["input"]["timezone"], "Asia/Tokyo")
         self.assertEqual(
             en["systems"]["western"]["transit_long_term"]["period"]["timezone"], "UTC"
         )
         # Japanese planners keep the local timezone (string returned unchanged).
         self.assertEqual(_apply_display_timezone(src, "ja"), src)
+
+    def test_demo_planner_keeps_birth_profile_and_stored_natal(self) -> None:
+        import yaml as _yaml
+
+        source_path = Path(__file__).resolve().parents[1] / "data" / "demo" / "chief_editor_neko.yaml"
+        source = _yaml.safe_load(source_path.read_text(encoding="utf-8"))
+        original_sun = source["systems"]["western"]["natal"]["bodies"]["Sun"]
+        planner = _yaml.safe_load(build_planner_yaml_from_natal_yaml(
+            chart_yaml=source_path.read_text(encoding="utf-8"),
+            lang="en",
+            months=12,
+            transit_start_date=datetime(2026, 8, 1, tzinfo=timezone.utc),
+        ))
+        self.assertEqual(planner["input"]["birth_time"], "22:22")
+        self.assertEqual(planner["input"]["timezone"], "Asia/Tokyo")
+        self.assertEqual(
+            planner["systems"]["western"]["natal"]["bodies"]["Sun"], original_sun
+        )
+        self.assertEqual(
+            planner["systems"]["western"]["transit_long_term"]["period"]["timezone"],
+            "UTC",
+        )
 
     def test_build_planner_pdf_ja(self) -> None:
         pdf = build_planner_pdf(lang="ja", months=2, **BIRTH)
