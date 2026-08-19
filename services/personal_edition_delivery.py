@@ -269,6 +269,7 @@ def build_personalized_zip(
     ) as target:
         acg_html = None
         city_data = None
+        city_json_data = None
         leaflet_css = None
         leaflet_js = None
         source_names = source.namelist()
@@ -300,7 +301,8 @@ def build_personalized_zip(
             elif relative_name == "app/acg/index.html":
                 acg_html = data.decode("utf-8")
             elif relative_name == "app/acg/cities.min.json":
-                city_data = json.loads(data.decode("utf-8"))
+                city_json_data = data.decode("utf-8")
+                city_data = json.loads(city_json_data)
             elif relative_name == "app/static/vendor/leaflet/leaflet.css":
                 leaflet_css = data.decode("utf-8")
             elif relative_name == "app/static/vendor/leaflet/leaflet.js":
@@ -311,17 +313,40 @@ def build_personalized_zip(
             planner_name = "Personal-Planner.pdf" if lang == "en" else "パーソナル・プランナー.pdf"
             target.writestr(planner_name, planner_pdf)
         if include_acg:
+            if city_data is None and city_json_data is None:
+                fallback_city_path = PE_DIR / "acg" / "cities.min.json"
+                if not fallback_city_path.is_file():
+                    raise RuntimeError("Personal Edition ACG city data asset was not found")
+                city_json_data = fallback_city_path.read_text(encoding="utf-8")
+                city_data = json.loads(city_json_data)
             acg_data = personal_geojson(yaml_text)
+            standalone_acg_html = acg_html
+            if (
+                standalone_acg_html is None
+                or "/* PERSONAL_ACG_DATA_START */" not in standalone_acg_html
+                or "/* PERSONAL_CITY_DATA_START */" not in standalone_acg_html
+                or "/* PERSONAL_WORLD_DATA_START */" not in standalone_acg_html
+            ):
+                standalone_acg_html = (PE_DIR / "acg" / "index.html").read_text(
+                    encoding="utf-8"
+                )
             target.writestr(
                 "app/acg-personal.geojson",
                 json.dumps(acg_data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
             )
-            if acg_html is None or city_data is None or leaflet_css is None or leaflet_js is None:
+            if (
+                standalone_acg_html is None
+                or city_data is None
+                or leaflet_css is None
+                or leaflet_js is None
+                or not city_json_data
+            ):
                 raise RuntimeError("Personal Edition ACG assets were not found")
+            target.writestr("app/acg/cities.min.json", city_json_data.encode("utf-8"))
             target.writestr(
                 "START-ACG.html",
                 _standalone_acg_html(
-                    acg_html=acg_html,
+                    acg_html=standalone_acg_html,
                     leaflet_css=leaflet_css,
                     leaflet_js=leaflet_js,
                     acg_data=acg_data,
