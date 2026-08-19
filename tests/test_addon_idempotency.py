@@ -129,6 +129,45 @@ class AddonIdempotencyTest(unittest.TestCase):
         self.assertEqual(status, "already_used")
         insert_chart.assert_not_called()
 
+    def test_addon_purchase_treats_full_or_basic_as_transit_addon_compatible(self) -> None:
+        with patch.object(pg_store, "_conn", return_value=_connection_context(_RecordingConnection(
+            [
+                {
+                    "stores_order_no": "1234567890",
+                    "payment_status": "paid",
+                    "product_type": "western_full",
+                },
+                {"order_code": "1234567890"},
+            ]
+        ))), patch.object(pg_store, "_insert_chart") as insert_chart:
+            status, _order = pg_store.redeem_addon_order_and_save_chart(
+                order_code="1234567890",
+                addon_type="western_31days_transit_addon",
+                token="compatible-token",
+                expires_at=None,
+                chart_payload=_chart_payload(),
+            )
+
+        self.assertEqual(status, "ok")
+        insert_chart.assert_called_once()
+
+    def test_addon_purchase_blocks_transit_yaml_for_transit_addon(self) -> None:
+        with patch.object(pg_store, "_conn", return_value=_connection_context(_RecordingConnection(
+            [
+                {
+                    "stores_order_no": "1234567890",
+                    "payment_status": "paid",
+                    "product_type": "transit_yaml",
+                }
+            ]
+        ))):
+            status, _order = pg_store.redeem_addon_order(
+                order_code="1234567890",
+                addon_type="western_31days_transit_addon",
+            )
+
+        self.assertEqual(status, "product_mismatch")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2057,7 +2057,12 @@ def _check_order_for_redeem(
             "Etsyの商品を確認できませんでした。購入商品の商品コードを販売者に確認してください。",
             409,
         )
-    if enforce_product_type and purchased_type and purchased_type != product_type:
+    if (
+        enforce_product_type
+        and purchased_type
+        and purchased_type != product_type
+        and not (provider == "stores" and status == "reusable")
+    ):
         return (
             "product_mismatch",
             order_row,

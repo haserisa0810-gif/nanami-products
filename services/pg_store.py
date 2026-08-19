@@ -1115,6 +1115,42 @@ def get_addon_chart_by_order_code(*, order_code: str, addon_type: str) -> dict[s
     return dict(row) if row else None
 
 
+def _is_compatible_addon_purchase(purchased_type: str | None, addon_type: str) -> bool:
+    """
+    追加部品の消込では、購入元の商品タイプと1対1一致だけでなく互換を許容する。
+
+    既存の運用上「この注文で追加YAML生成が可能か」を反映し、明らかに不正な
+    例（例: トランジットYAML版→トランジット追加）を拒否するための判定。
+    """
+    if not purchased_type:
+        return True
+
+    purchased = str(purchased_type)
+    if purchased == addon_type:
+        return True
+
+    compatibility = {
+        "western_asteroids_addon": {
+            "western_basic",
+            "western_full",
+            "western_asteroids",
+            "western_transit",
+        },
+        "western_31days_transit_addon": {
+            "western_full",
+            "western_transit",
+            "acg_bundle",
+        },
+        "western_long_term_transits_addon": {
+            "western_full",
+            "western_transit",
+            "acg_bundle",
+        },
+        "shichu_fortune_cycles_addon": {"shichu"},
+    }
+    return purchased in compatibility.get(addon_type, set())
+
+
 def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[str, Any] | None]:
     """
     addon生成用に STORES注文番号 + addon種別 を一回だけ消し込む。
@@ -1140,7 +1176,7 @@ def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[s
             payment_status = str(order.get("payment_status") or "").lower()
 
             purchased_type = order.get("product_type")
-            if purchased_type and str(purchased_type) != addon_type:
+            if not _is_compatible_addon_purchase(purchased_type, addon_type):
                 return "product_mismatch", order
 
             if payment_status in {"reusable", "test", "permanent"}:
@@ -1192,7 +1228,7 @@ def redeem_addon_order_and_save_chart(
             payment_status = str(order.get("payment_status") or "").lower()
 
             purchased_type = order.get("product_type")
-            if purchased_type and str(purchased_type) != addon_type:
+            if not _is_compatible_addon_purchase(purchased_type, addon_type):
                 return "product_mismatch", order
 
             if payment_status not in {"reusable", "test", "permanent"}:
@@ -1260,7 +1296,7 @@ def redeem_addon_order_and_save_transit_link(
             payment_status = str(order.get("payment_status") or "").lower()
 
             purchased_type = order.get("product_type")
-            if purchased_type and str(purchased_type) != addon_type:
+            if not _is_compatible_addon_purchase(purchased_type, addon_type):
                 return "product_mismatch", order
 
             if payment_status not in {"reusable", "test", "permanent"}:
