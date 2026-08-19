@@ -6,36 +6,190 @@
   <title>Personal ACG Map</title>
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
   <style>
-    :root{--base:#0a1128;--panel:#101a3c;--gold:#c9a227;--text:#eceae2;--dim:#aeb4c7}
+    :root{--base:#0a1128;--panel:#101a3c;--panel-2:#16224a;--gold:#c9a227;--gold-soft:rgba(201,162,39,.28);--text:#eceae2;--dim:#aeb4c7;--danger:#e68f96}
     *{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--base);color:var(--text);font-family:"Noto Sans JP","Yu Gothic",sans-serif;display:grid;grid-template-rows:auto 1fr}
-    header{padding:10px 14px;border-bottom:1px solid rgba(201,162,39,.3);display:flex;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:1rem;color:var(--gold);margin:0}.note{font-size:.74rem;color:var(--dim);margin:0}.back{margin-left:auto;color:var(--gold);text-decoration:none;font-size:.78rem}
-    main{display:grid;grid-template-columns:280px 1fr;min-height:0}.side{padding:12px;background:var(--panel);overflow:auto}.side h2{font-size:.82rem;color:var(--gold);margin:0 0 8px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}button{padding:9px;border:1px solid rgba(201,162,39,.55);border-radius:7px;background:transparent;color:var(--gold);cursor:pointer}button.active{background:var(--gold);color:var(--base);font-weight:700}.status{font-size:.76rem;color:var(--dim);line-height:1.6}.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:.78rem}.checks label{display:flex;gap:6px;align-items:center}.badge{position:absolute;z-index:600;top:10px;left:50%;transform:translateX(-50%);background:rgba(16,26,60,.94);border:1px solid rgba(201,162,39,.4);border-radius:999px;padding:6px 12px;font-size:.72rem}.map-wrap{position:relative;min-width:0}#map{width:100%;height:100%}
-    @media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:auto 1fr}.side{max-height:33vh}.map-wrap{min-height:55vh}.back{margin-left:0}}
+    header{padding:10px 14px;border-bottom:1px solid var(--gold-soft);display:flex;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:1rem;color:var(--gold);margin:0}.note{font-size:.74rem;color:var(--dim);margin:0;line-height:1.55}.back{margin-left:auto;color:var(--gold);text-decoration:none;font-size:.78rem}
+    main{display:grid;grid-template-columns:340px 1fr;min-height:0}.side{padding:12px;background:var(--panel);overflow:auto}.section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid rgba(201,162,39,.16)}.section:last-child{border-bottom:0}.side h2{font-size:.84rem;color:var(--gold);margin:0 0 8px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}button{padding:9px;border:1px solid rgba(201,162,39,.55);border-radius:7px;background:transparent;color:var(--gold);cursor:pointer}button:hover{background:rgba(201,162,39,.1)}button.active,.primary{background:var(--gold);color:var(--base);font-weight:700}.primary:disabled{opacity:.42;cursor:not-allowed}.status{font-size:.76rem;color:var(--dim);line-height:1.6}.status.error{color:var(--danger)}.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:.78rem}.checks label{display:flex;gap:6px;align-items:center}.badge{position:absolute;z-index:600;top:10px;left:50%;transform:translateX(-50%);background:rgba(16,26,60,.94);border:1px solid rgba(201,162,39,.4);border-radius:999px;padding:6px 12px;font-size:.72rem}.map-wrap{position:relative;min-width:0}#map{width:100%;height:100%}
+    .search-row{display:grid;grid-template-columns:1fr auto;gap:6px}.search-row input{min-width:0;padding:9px 10px;border:1px solid rgba(201,162,39,.38);border-radius:7px;background:var(--base);color:var(--text);font:inherit}.search-row input::placeholder{color:#7f879f}.search-results{display:grid;gap:5px;margin-top:7px}.search-results button{text-align:left;padding:7px 9px;color:var(--text);font-size:.74rem}.places-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.places-count{font-size:.72rem;color:var(--dim)}.places{display:grid;gap:8px;margin-top:8px}.place-card{padding:10px;border:1px solid var(--gold-soft);border-radius:9px;background:var(--panel-2)}.place-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.place-name{font-weight:700;color:var(--text);font-size:.84rem;line-height:1.4}.remove{padding:2px 6px;border:0;color:var(--dim);font-size:1rem}.coords{font-size:.68rem;color:var(--dim);margin:3px 0 7px}.nearby{list-style:none;padding:0;margin:0;display:grid;gap:7px}.nearby li{font-size:.72rem;line-height:1.45}.line-top{display:flex;justify-content:space-between;gap:8px;color:var(--gold)}.line-meaning{color:var(--dim);margin-top:2px}.empty{font-size:.73rem;color:var(--dim);line-height:1.5}.place-pin{background:transparent;border:0}.place-pin-shape{position:relative;display:block;width:22px;height:22px;border:2px solid #0a1128;border-radius:50% 50% 50% 0;background:#c9a227;box-shadow:0 2px 5px rgba(0,0,0,.4);transform:rotate(-45deg)}.place-pin-shape::after{content:"";position:absolute;width:6px;height:6px;left:6px;top:6px;border-radius:50%;background:#fff}.print-action{width:100%;margin-top:9px}.print-report,.print-map-heading,.print-place-label{display:none}.map-wrap.print-preparing{position:fixed;left:-10000px;top:0;width:182mm!important;height:auto!important;min-height:0!important}.map-wrap.print-preparing #map{width:182mm!important;height:125mm!important}
+    @media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:auto 1fr}.side{max-height:52vh}.map-wrap{min-height:48vh}.back{margin-left:0}}
+    @media print{
+      @page{size:A4;margin:14mm}html,body{width:100%!important;min-width:0!important;height:auto!important;background:#fff;color:#17203b;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{display:block!important;font-family:"Noto Sans JP","Yu Gothic",sans-serif}header{display:none!important}main{display:block!important;width:100%!important;height:auto!important;min-height:0!important}.side{display:none!important}.map-wrap,.map-wrap.print-preparing{display:block!important;position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:auto!important;min-height:0!important;break-after:page;page-break-after:always}.print-map-heading{display:block!important;margin:0 0 5mm}.print-map-heading h1,.print-report h1{font-size:22pt;color:#67520f;margin:0 0 3mm}.print-map-meta,.print-meta{font-size:9pt;color:#687087;margin:0}.map-wrap #map,.map-wrap.print-preparing #map{display:block!important;width:100%!important;height:125mm!important;border:1px solid #d7c88f;border-radius:3mm}.map-wrap .badge,.leaflet-control-zoom{display:none!important}.leaflet-land-pane{opacity:1!important}.print-place-label{display:block!important}.print-report{display:block!important;width:auto!important;max-width:none!important;margin:0!important;padding-top:1mm!important}.print-meta{margin-bottom:6mm}.print-grid{display:block!important;width:100%!important}.print-card{display:block;width:auto!important;margin:0 0 5mm;border:1px solid #d7c88f;border-radius:3mm;padding:4mm;break-inside:avoid;page-break-inside:avoid}.print-card h2{font-size:13pt;margin:0 0 1mm;color:#17203b}.print-card .coords{color:#687087;margin-bottom:3mm}.print-card ol{margin:0;padding-left:5mm}.print-card li{margin-bottom:3mm;font-size:9.5pt;line-height:1.4}.print-card strong{color:#67520f}.print-note{margin-top:5mm;padding-top:4mm;border-top:1px solid #ddd;font-size:8.5pt;color:#687087;line-height:1.5;break-inside:avoid;page-break-inside:avoid}
+    }
   </style>
 </head>
 <body>
 <header><h1>ACG · あなたの天空線</h1><p class="note">出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。</p><a class="back" href="/">ミュージアムへ戻る</a></header>
 <main>
   <aside class="side">
-    <h2>表示テーマ</h2>
-    <div class="buttons"><button class="active" data-preset="basic">基本</button><button data-preset="work">仕事</button><button data-preset="relation">人の縁</button><button data-preset="all">すべて</button></div>
-    <h2>アングル</h2><div class="checks" id="angles"></div>
+    <section class="section">
+      <h2>表示テーマ</h2>
+      <div class="buttons"><button class="active" data-preset="basic">基本</button><button data-preset="work">仕事</button><button data-preset="relation">人の縁</button><button data-preset="all">すべて</button></div>
+    </section>
+    <section class="section">
+      <h2>アングル</h2><div class="checks" id="angles"></div>
+    </section>
+    <section class="section">
+      <div class="places-head"><h2>3都市比較</h2><span class="places-count" id="places-count">0 / 3</span></div>
+      <div class="search-row"><input type="search" id="city-search" placeholder="例：London / Paris / New York" autocomplete="off"><button type="button" id="search-button">検索</button></div>
+      <p class="note">検索結果を選ぶか、地図をクリックして最大3地点を登録できます。都市検索はローカル内蔵データを使用します。</p>
+      <p class="status" id="search-status" aria-live="polite"></p>
+      <div class="search-results" id="search-results"></div>
+      <div class="places" id="places"></div>
+      <button class="primary print-action" id="print-button" type="button" disabled>地図＋3都市レポートを印刷・PDF保存</button>
+    </section>
     <p class="status" id="status">個人線データを読み込んでいます…</p>
   </aside>
-  <div class="map-wrap"><div id="map"></div><div class="badge">個人の天空線</div></div>
+  <div class="map-wrap"><div class="print-map-heading" id="print-map-heading" aria-hidden="true"><h1>My Map · Personal Astrocartography</h1><p class="print-map-meta" id="print-map-meta"></p></div><div id="map"></div><div class="badge">個人の天空線</div></div>
 </main>
+<section class="print-report" id="print-report" aria-hidden="true">
+  <h1>My Places · Personal Astrocartography</h1>
+  <p class="print-meta" id="print-meta"></p>
+  <div class="print-grid" id="print-grid"></div>
+  <p class="print-note">このレポートは、登録地点から近い出生時のACGラインを距離順に整理したものです。土地との相性を断定するものではなく、移住・旅行・活動拠点を考えるための占星術的な参考情報としてお使いください。</p>
+</section>
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script>
 (function(){
+  'use strict';
+  var MAX_PLACES=3,NEARBY_LIMIT=3,NEARBY_MAX_KM=500,STORAGE_KEY='nanami-personal-acg-places-v1';
   var colors={Sun:'#f2c04b',Moon:'#c9d4e8',Mercury:'#7fd0c8',Venus:'#f0a3c0',Mars:'#ef6f61',Jupiter:'#e8a13c',Saturn:'#b0a080',Uranus:'#63c7d5',Neptune:'#6f8edb',Pluto:'#9b78c6'};
-  var presets={basic:{p:['Sun','Moon','Venus','Jupiter','Saturn'],a:['MC','IC','ASC']},work:{p:['Sun','Mercury','Mars','Jupiter','Saturn','Venus'],a:['MC','ASC','IC']},relation:{p:['Venus','Moon','Jupiter','Mercury','Sun'],a:['ASC','DSC','IC']},all:{p:Object.keys(colors),a:['MC','IC','ASC','DSC']}};
-  var selected=presets.basic,data=null,layer=L.layerGroup(),map=L.map('map',{worldCopyJump:true}).setView([25,15],2);layer.addTo(map);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+  var presets={
+    basic:{label:'基本',p:['Sun','Moon','Venus','Jupiter','Saturn'],a:['MC','IC','ASC']},
+    work:{label:'仕事',p:['Sun','Mercury','Mars','Jupiter','Saturn','Venus'],a:['MC','ASC','IC']},
+    relation:{label:'人の縁',p:['Venus','Moon','Jupiter','Mercury','Sun'],a:['ASC','DSC','IC']},
+    all:{label:'すべて',p:Object.keys(colors),a:['MC','IC','ASC','DSC']}
+  };
+  var selectedKey='basic',selected={p:presets.basic.p.slice(),a:presets.basic.a.slice()},data=null,cityCatalog=null,worldData=null,worldLayer=null,places=[],markers=[];
+  var layer=L.layerGroup(),markerLayer=L.layerGroup(),map=L.map('map',{worldCopyJump:true}).setView([25,15],2);layer.addTo(map);markerLayer.addTo(map);
+  map.createPane('landPane');map.getPane('landPane').style.zIndex=250;map.getPane('landPane').style.pointerEvents='none';map.getPane('landPane').style.opacity=0;
+  var tileLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors · Natural Earth'}).addTo(map);
+
+  function renderWorld(){
+    if(!worldData)return;if(worldLayer)map.removeLayer(worldLayer);
+    worldLayer=L.geoJSON(worldData,{pane:'landPane',interactive:false,style:{color:'#9aa7ad',weight:.7,opacity:.8,fillColor:'#f3efe4',fillOpacity:.32}}).addTo(map);
+  }
+
   function style(a){return a==='IC'?{dashArray:'8 5'}:a==='ASC'?{dashArray:'1 5'}:a==='DSC'?{dashArray:'2 6'}:{}}
-  function render(){if(!data)return;layer.clearLayers();data.features.forEach(function(f){var p=f.properties||{};if(selected.p.indexOf(p.planet)<0||selected.a.indexOf(p.angle)<0)return;var s=style(p.angle);s.color=colors[p.planet]||'#ddd';s.weight=3;s.opacity=.85;L.geoJSON(f,{style:s,onEachFeature:function(_f,l){l.bindPopup('<strong>'+p.label+'</strong><br>'+String(p.meaning||''));}}).addTo(layer);});}
-  ['MC','IC','ASC','DSC'].forEach(function(a){var label=document.createElement('label'),cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.a.indexOf(a)>=0;cb.dataset.angle=a;cb.onchange=function(){var x=cb.dataset.angle,i=selected.a.indexOf(x);if(cb.checked&&i<0)selected.a.push(x);if(!cb.checked&&i>=0)selected.a.splice(i,1);render();};label.append(cb,document.createTextNode(a));document.getElementById('angles').appendChild(label);});
-  document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=function(){document.querySelectorAll('[data-preset]').forEach(function(x){x.classList.remove('active')});b.classList.add('active');selected={p:presets[b.dataset.preset].p.slice(),a:presets[b.dataset.preset].a.slice()};document.querySelectorAll('[data-angle]').forEach(function(c){c.checked=selected.a.indexOf(c.dataset.angle)>=0});render();};});
-  fetch('/acg-personal.geojson',{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('not found');return r.json()}).then(function(x){data=x;render();document.getElementById('status').textContent='計算基準: '+((x.meta&&x.meta.datetime_utc)||'確認済み出生日時');}).catch(function(){document.getElementById('status').textContent='個人線データを読み込めませんでした。';});
+  function featureVisible(f){var p=f.properties||{};return selected.p.indexOf(p.planet)>=0&&selected.a.indexOf(p.angle)>=0}
+  function render(){
+    if(!data)return;layer.clearLayers();
+    data.features.forEach(function(f){
+      var p=f.properties||{};if(!featureVisible(f))return;var s=style(p.angle);s.color=colors[p.planet]||'#ddd';s.weight=3;s.opacity=.85;
+      L.geoJSON(f,{style:s,onEachFeature:function(_f,l){l.bindPopup('<strong>'+String(p.label||'')+'</strong><br>'+String(p.meaning||''));}}).addTo(layer);
+    });
+  }
+  function normalizeLonDelta(value){return((value+540)%360)-180}
+  function projectedPoint(lon,lat,originLon,originLat){
+    return{x:normalizeLonDelta(lon-originLon)*111.32*Math.cos(originLat*Math.PI/180),y:(lat-originLat)*110.574};
+  }
+  function segmentDistanceKm(originLon,originLat,a,b){
+    var p1=projectedPoint(Number(a[0]),Number(a[1]),originLon,originLat),p2=projectedPoint(Number(b[0]),Number(b[1]),originLon,originLat);
+    var dx=p2.x-p1.x,dy=p2.y-p1.y,den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,-(p1.x*dx+p1.y*dy)/den)):0;
+    var x=p1.x+t*dx,y=p1.y+t*dy;return Math.sqrt(x*x+y*y);
+  }
+  function featureDistanceKm(feature,lat,lon){
+    var coords=((feature||{}).geometry||{}).coordinates||[],best=Infinity;
+    for(var i=1;i<coords.length;i++)best=Math.min(best,segmentDistanceKm(lon,lat,coords[i-1],coords[i]));
+    return best;
+  }
+  function nearestLines(place){
+    if(!data)return[];var groups={};
+    data.features.forEach(function(f){
+      if(!featureVisible(f))return;var p=f.properties||{},key=p.line_group||(p.planet+'_'+p.angle);(groups[key]=groups[key]||[]).push(f);
+    });
+    var found=[];Object.keys(groups).forEach(function(key){
+      var distance=Infinity;groups[key].forEach(function(f){distance=Math.min(distance,featureDistanceKm(f,place.lat,place.lon));});
+      if(distance<=NEARBY_MAX_KM){var p=groups[key][0].properties||{};found.push({key:key,label:p.label||(p.planet+' '+p.angle),meaning:p.meaning||'',distance:Math.round(distance)});}
+    });
+    found.sort(function(a,b){return a.distance-b.distance;});return found.slice(0,NEARBY_LIMIT);
+  }
+  function savePlaces(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(places));}catch(_e){}}
+  function loadPlaces(){
+    try{var saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');if(Array.isArray(saved))places=saved.filter(validPlace).slice(0,MAX_PLACES);}catch(_e){places=[];}
+  }
+  function validPlace(p){return p&&typeof p.name==='string'&&isFinite(Number(p.lat))&&isFinite(Number(p.lon))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lon))<=180}
+  function setSearchStatus(message,isError){var el=document.getElementById('search-status');el.textContent=message||'';el.className=isError?'status error':'status'}
+  function clearSearchResults(){document.getElementById('search-results').textContent=''}
+  function addPlace(place){
+    if(!data){setSearchStatus('個人線データの読み込み後に追加してください。',true);return;}
+    if(places.length>=MAX_PLACES){setSearchStatus('比較できる地点は3件までです。',true);return;}
+    place={name:String(place.name||'選択した地点'),lat:Math.round(Number(place.lat)*1000000)/1000000,lon:Math.round(Number(place.lon)*1000000)/1000000};
+    if(places.some(function(p){return Math.abs(p.lat-place.lat)<.0001&&Math.abs(p.lon-place.lon)<.0001;})){setSearchStatus('この地点はすでに追加されています。',true);return;}
+    places.push(place);savePlaces();clearSearchResults();setSearchStatus('比較地点に追加しました。');renderPlaces();map.setView([place.lat,place.lon],Math.max(map.getZoom(),5));
+  }
+  function removePlace(index){places.splice(index,1);savePlaces();renderPlaces();}
+  function appendNearbyList(container,lines,ordered){
+    var list=document.createElement(ordered?'ol':'ul');if(!ordered)list.className='nearby';
+    if(!lines.length){var empty=document.createElement('p');empty.className='empty';empty.textContent='選択中のテーマでは500km以内に対象ラインがありません。';container.appendChild(empty);return;}
+    lines.forEach(function(line){
+      var li=document.createElement('li'),top=document.createElement('div'),name=document.createElement(ordered?'strong':'span'),distance=document.createElement('span'),meaning=document.createElement('div');
+      if(!ordered){top.className='line-top';name.className='line-name';}
+      name.textContent=line.label;distance.textContent='約'+line.distance+'km';meaning.className=ordered?'':'line-meaning';meaning.textContent=line.meaning;
+      if(ordered){li.appendChild(name);li.appendChild(document.createTextNode(' · '+distance.textContent));li.appendChild(meaning);}else{top.appendChild(name);top.appendChild(distance);li.appendChild(top);li.appendChild(meaning);}
+      list.appendChild(li);
+    });container.appendChild(list);
+  }
+  function renderPlaces(){
+    var host=document.getElementById('places'),printGrid=document.getElementById('print-grid');host.textContent='';printGrid.textContent='';markerLayer.clearLayers();markers=[];
+    document.getElementById('places-count').textContent=places.length+' / '+MAX_PLACES;document.getElementById('print-button').disabled=places.length===0;
+    places.forEach(function(place,index){
+      var lines=nearestLines(place),card=document.createElement('article'),head=document.createElement('div'),name=document.createElement('div'),remove=document.createElement('button'),coords=document.createElement('p');
+      card.className='place-card';head.className='place-title';name.className='place-name';name.textContent=(index+1)+'. '+place.name;remove.className='remove';remove.type='button';remove.setAttribute('aria-label',place.name+'を削除');remove.textContent='×';remove.onclick=function(){removePlace(index);};
+      coords.className='coords';coords.textContent='緯度 '+place.lat.toFixed(3)+' / 経度 '+place.lon.toFixed(3);head.appendChild(name);head.appendChild(remove);card.appendChild(head);card.appendChild(coords);appendNearbyList(card,lines,false);host.appendChild(card);
+      var pin=L.divIcon({className:'place-pin',html:'<span class="place-pin-shape"></span>',iconSize:[26,32],iconAnchor:[13,30],tooltipAnchor:[0,-28]});
+      var marker=L.marker([place.lat,place.lon],{icon:pin}).addTo(markerLayer).bindTooltip((index+1)+'. '+place.name,{permanent:true,direction:'top',offset:[0,-4],className:'print-place-label'});markers.push(marker);
+      var printCard=document.createElement('article'),printName=document.createElement('h2'),printCoords=document.createElement('p');printCard.className='print-card';printName.textContent=(index+1)+'. '+place.name;printCoords.className='coords';printCoords.textContent='Lat '+place.lat.toFixed(3)+' / Lon '+place.lon.toFixed(3);printCard.appendChild(printName);printCard.appendChild(printCoords);appendNearbyList(printCard,lines,true);printGrid.appendChild(printCard);
+    });
+    var printSummary='テーマ: '+presets[selectedKey].label+' ｜ 作成日: '+new Date().toLocaleDateString('ja-JP');
+    document.getElementById('print-meta').textContent=printSummary;
+    document.getElementById('print-map-meta').textContent=printSummary+' ｜ 表示地点: '+places.map(function(place){return place.name;}).join(' / ');
+  }
+  function showSearchResults(items){
+    var host=document.getElementById('search-results');host.textContent='';
+    items.forEach(function(item){
+      var button=document.createElement('button'),parts=[item[0]];if(item[3])parts.push(item[3]);if(item[2]&&item[2]!==item[3])parts.push(item[2]);
+      button.type='button';button.textContent=parts.join(', ');button.onclick=function(){addPlace({name:parts.join(', '),lat:Number(item[4]),lon:Number(item[5])});};host.appendChild(button);
+    });
+  }
+  function normalizeSearch(value){
+    var text=String(value||'').toLowerCase();try{text=text.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');}catch(_e){}return text.replace(/\s+/g,' ').trim();
+  }
+  function searchCity(){
+    var input=document.getElementById('city-search'),q=normalizeSearch(input.value);
+    if(!q){setSearchStatus('検索する都市名を入力してください。',true);return;}if(places.length>=MAX_PLACES){setSearchStatus('比較できる地点は3件までです。',true);return;}
+    clearSearchResults();if(!Array.isArray(cityCatalog)){setSearchStatus('都市データを読み込んでいます。少し待ってから再度お試しください。',true);return;}
+    var starts=[],contains=[];cityCatalog.forEach(function(item){var hay=normalizeSearch(item[1]);if(hay.indexOf(q)===0)starts.push(item);else if(hay.indexOf(q)>=0)contains.push(item);});
+    var items=starts.concat(contains).slice(0,8);if(!items.length){setSearchStatus('内蔵データに見つかりませんでした。地図をクリックして地点を追加できます。',true);return;}
+    setSearchStatus('検索結果を選択してください。');showSearchResults(items);
+  }
+
+  ['MC','IC','ASC','DSC'].forEach(function(a){var label=document.createElement('label'),cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.a.indexOf(a)>=0;cb.dataset.angle=a;cb.onchange=function(){var x=cb.dataset.angle,i=selected.a.indexOf(x);if(cb.checked&&i<0)selected.a.push(x);if(!cb.checked&&i>=0)selected.a.splice(i,1);render();renderPlaces();};label.append(cb,document.createTextNode(a));document.getElementById('angles').appendChild(label);});
+  document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=function(){document.querySelectorAll('[data-preset]').forEach(function(x){x.classList.remove('active')});b.classList.add('active');selectedKey=b.dataset.preset;selected={p:presets[selectedKey].p.slice(),a:presets[selectedKey].a.slice()};document.querySelectorAll('[data-angle]').forEach(function(c){c.checked=selected.a.indexOf(c.dataset.angle)>=0});render();renderPlaces();};});
+  document.getElementById('search-button').onclick=searchCity;document.getElementById('city-search').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();searchCity();}};
+  var printView=null,printWrap=document.querySelector('.map-wrap');
+  function preparePrint(){
+    if(printView)return;printView={center:map.getCenter(),zoom:map.getZoom()};renderPlaces();printWrap.classList.add('print-preparing');
+    if(markers.length===1)map.setView(markers[0].getLatLng(),Math.min(6,Math.max(4,map.getZoom())),{animate:false});
+    else if(markers.length>1){var lons=places.map(function(place){return place.lon;});if(Math.max.apply(null,lons)-Math.min.apply(null,lons)>120)map.setView([20,0],1,{animate:false});else map.fitBounds(markerLayer.getBounds(),{padding:[35,35],maxZoom:5,animate:false});}
+    map.invalidateSize({pan:false});
+  }
+  function finishPrint(){
+    if(!printView)return;printWrap.classList.remove('print-preparing');
+    map.setView(printView.center,printView.zoom,{animate:false});printView=null;map.invalidateSize({pan:false});
+  }
+  window.addEventListener('beforeprint',preparePrint);window.addEventListener('afterprint',finishPrint);
+  document.getElementById('print-button').onclick=function(){
+    preparePrint();requestAnimationFrame(function(){requestAnimationFrame(function(){
+      map.invalidateSize({pan:false});var opened=false,timer=null;
+      function openDialog(){if(opened)return;opened=true;if(timer)clearTimeout(timer);tileLayer.off('load',openDialog);window.print();}
+      if(tileLayer.isLoading()){tileLayer.once('load',openDialog);timer=setTimeout(openDialog,2500);}else{timer=setTimeout(openDialog,350);}
+    });});
+  };
+  map.on('click',function(e){addPlace({name:'選択地点 '+(places.length+1),lat:e.latlng.lat,lon:e.latlng.lng});});
+  loadPlaces();
+  /* PERSONAL_CITY_DATA_START */fetch('cities.min.json',{cache:'force-cache'}).then(function(r){if(!r.ok)throw Error('not found');return r.json();}).then(function(x){cityCatalog=Array.isArray(x.cities)?x.cities:[];}).catch(function(){cityCatalog=[];setSearchStatus('都市データを読み込めませんでした。地図クリックは利用できます。',true);});/* PERSONAL_CITY_DATA_END */
+  /* PERSONAL_WORLD_DATA_START */fetch('/static/geo/ne_110m_admin_0_countries.geojson',{cache:'force-cache'}).then(function(r){if(!r.ok)throw Error('not found');return r.json();}).then(function(x){worldData=x;renderWorld();}).catch(function(){});/* PERSONAL_WORLD_DATA_END */
+  /* PERSONAL_ACG_DATA_START */fetch('/acg-personal.geojson',{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('not found');return r.json()}).then(function(x){data=x;render();renderPlaces();document.getElementById('status').textContent='計算基準: '+((x.meta&&x.meta.datetime_utc)||'確認済み出生日時');}).catch(function(){document.getElementById('status').textContent='個人線データを読み込めませんでした。';});/* PERSONAL_ACG_DATA_END */
 })();
 </script>
 </body></html>

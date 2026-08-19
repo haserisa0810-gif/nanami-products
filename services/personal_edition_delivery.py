@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import subprocess
 import sys
 import threading
@@ -78,19 +79,16 @@ def _standalone_acg_html(
     leaflet_css: str,
     leaflet_js: str,
     acg_data: dict,
+    city_data: dict,
+    world_data: dict,
     chart_url: str | None,
 ) -> str:
     """Build a file://-safe ACG app with personal data and Leaflet embedded."""
     data_json = json.dumps(acg_data, ensure_ascii=False, separators=(",", ":"))
-    fetch_code = (
-        "fetch('/acg-personal.geojson',{cache:'no-store'}).then(function(r){if(!r.ok)"
-        "throw Error('not found');return r.json()}).then(function(x){data=x;render();"
-        "document.getElementById('status').textContent='計算基準: '+((x.meta&&x.meta."
-        "datetime_utc)||'確認済み出生日時');}).catch(function(){document.getElementById"
-        "('status').textContent='個人線データを読み込めませんでした。';});"
-    )
+    cities_json = json.dumps(city_data.get("cities", []), ensure_ascii=False, separators=(",", ":"))
+    world_json = json.dumps(world_data, ensure_ascii=False, separators=(",", ":"))
     embedded_code = (
-        f"data={data_json};render();"
+        f"data={data_json};render();renderPlaces();"
         "document.getElementById('status').textContent='計算基準: '+"
         "((data.meta&&data.meta.datetime_utc)||'確認済み出生日時');"
     )
@@ -102,14 +100,58 @@ def _standalone_acg_html(
         '<script src="/static/vendor/leaflet/leaflet.js"></script>',
         f"<script>\n{leaflet_js}\n</script>",
         1,
-    ).replace(fetch_code, embedded_code, 1)
+    )
+    result, embedded_count = re.subn(
+        r"/\* PERSONAL_ACG_DATA_START \*/.*?/\* PERSONAL_ACG_DATA_END \*/",
+        embedded_code,
+        result,
+        count=1,
+        flags=re.DOTALL,
+    )
+    result, city_embedded_count = re.subn(
+        r"/\* PERSONAL_CITY_DATA_START \*/.*?/\* PERSONAL_CITY_DATA_END \*/",
+        f"cityCatalog={cities_json};",
+        result,
+        count=1,
+        flags=re.DOTALL,
+    )
+    result, world_embedded_count = re.subn(
+        r"/\* PERSONAL_WORLD_DATA_START \*/.*?/\* PERSONAL_WORLD_DATA_END \*/",
+        f"worldData={world_json};renderWorld();",
+        result,
+        count=1,
+        flags=re.DOTALL,
+    )
     if chart_url:
         result = result.replace('href="/"', f'href="{chart_url}"', 1)
     else:
         result = result.replace('href="/"', 'href="#" onclick="return false"', 1)
-    if fetch_code in result or "/acg-personal.geojson" in result:
+    if (
+        embedded_count != 1
+        or city_embedded_count != 1
+        or world_embedded_count != 1
+        or "/acg-personal.geojson" in result
+        or "cities.min.json" in result
+        or "ne_110m_admin_0_countries.geojson" in result
+    ):
         raise RuntimeError("Standalone ACG data embedding failed")
     return result
+
+
+def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None) -> str:
+    """Build the self-contained Personal ACG app used by web and ZIP delivery."""
+    acg_html = (PE_DIR / "acg" / "index.html").read_text(encoding="utf-8")
+    city_data = json.loads((PE_DIR / "acg" / "cities.min.json").read_text(encoding="utf-8"))
+    leaflet_dir = ROOT / "static" / "vendor" / "leaflet"
+    return _standalone_acg_html(
+        acg_html=acg_html,
+        leaflet_css=(leaflet_dir / "leaflet.css").read_text(encoding="utf-8"),
+        leaflet_js=(leaflet_dir / "leaflet.js").read_text(encoding="utf-8"),
+        acg_data=personal_geojson(yaml_text),
+        city_data=city_data,
+        world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
+        chart_url=chart_url,
+    )
 
 
 def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
@@ -122,8 +164,11 @@ def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
             "2. Double-click START-ACG.html.\n"
             "3. Your browser opens your personal ACG map. No installation, command file, "
             "PowerShell, or local server is required.\n\n"
+            "Search for or click up to three places to compare their nearest personal ACG "
+            "lines. Use the Print button to print the comparison or save it as a PDF.\n"
             "Your personal birth data and ACG lines are embedded in START-ACG.html. "
-            "Background map tiles require an internet connection.\n"
+            "Place-name search, personal ACG calculation, and comparison all run inside "
+            "the file. Only background map tiles require an internet connection.\n"
             + fallback
             + "\nKeep this package private. Personal use only; do not redistribute.\n"
         )
@@ -135,8 +180,11 @@ def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
         "2. START-ACG.html をダブルクリックします。\n"
         "3. ブラウザであなた専用のACG地図が開きます。インストール、バッチファイル、"
         "PowerShell、ローカルサーバーは不要です。\n\n"
+        "都市名検索または地図クリックで最大3地点を登録し、近いACGラインを比較できます。"
+        "印刷ボタンから、比較結果の印刷またはPDF保存ができます。\n"
         "出生データとACGラインはSTART-ACG.html内に保存されています。"
-        "背景地図の表示にはインターネット接続を使用します。\n"
+        "都市名検索・個人ACGの計算結果・比較処理はファイル内で動作します。"
+        "インターネット接続を使用するのは背景地図だけです。\n"
         + fallback
         + "\n個人利用専用です。このパッケージを再配布・転売しないでください。\n"
     )
@@ -220,6 +268,7 @@ def build_personalized_zip(
         output, "w", zipfile.ZIP_DEFLATED
     ) as target:
         acg_html = None
+        city_data = None
         leaflet_css = None
         leaflet_js = None
         source_names = source.namelist()
@@ -250,6 +299,8 @@ def build_personalized_zip(
                 data = html.encode("utf-8")
             elif relative_name == "app/acg/index.html":
                 acg_html = data.decode("utf-8")
+            elif relative_name == "app/acg/cities.min.json":
+                city_data = json.loads(data.decode("utf-8"))
             elif relative_name == "app/static/vendor/leaflet/leaflet.css":
                 leaflet_css = data.decode("utf-8")
             elif relative_name == "app/static/vendor/leaflet/leaflet.js":
@@ -265,7 +316,7 @@ def build_personalized_zip(
                 "app/acg-personal.geojson",
                 json.dumps(acg_data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
             )
-            if acg_html is None or leaflet_css is None or leaflet_js is None:
+            if acg_html is None or city_data is None or leaflet_css is None or leaflet_js is None:
                 raise RuntimeError("Personal Edition ACG assets were not found")
             target.writestr(
                 "START-ACG.html",
@@ -274,6 +325,8 @@ def build_personalized_zip(
                     leaflet_css=leaflet_css,
                     leaflet_js=leaflet_js,
                     acg_data=acg_data,
+                    city_data=city_data,
+                    world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
                     chart_url=chart_url,
                 ).encode("utf-8"),
             )

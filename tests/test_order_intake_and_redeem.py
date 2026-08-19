@@ -38,6 +38,21 @@ ETSY_MAIL_BODY = """\
 合計: US$12.00
 """
 
+ETSY_REAL_FULL_MAIL_BODY = """\
+注文の詳細
+注文番号：4149215031
+支払い方法
+Etsy ペイメントで 2026年 08月 19日 に入金済
+Personalized Birth Chart Bundle | Natal Chart, Transits, Asteroids & 1-Year Astrology Planner
+ショップ：nanamiastro
+取引番号：5183861688
+個数：1
+VAT 課税前の商品価格：US$19.00
+商品合計: US$19.00
+VAT（付加価値税）：US$3.80
+合計：US$22.80
+"""
+
 COCONALA_MAIL_BODY = """\
 おめでとうございます！
 あなたが出品した以下のコンテンツがsample_buyer さんに購入されました。
@@ -143,6 +158,94 @@ class EtsyMailParseTest(unittest.TestCase):
         }
         for title, expected in cases.items():
             self.assertEqual(sync._guess_product_type("", f"商品： {title}"), expected)
+
+    def test_current_published_etsy_titles_map_to_expected_products(self) -> None:
+        cases = {
+            (
+                "NP-WF | Personalized Birth Chart Bundle | Natal Chart, "
+                "Transits, Asteroids & 1-Year Astrology Planner"
+            ): "western_full",
+            (
+                "NP-WBT | Personalized Astrology Planner PDF | "
+                "1-Year Transit Calendar & Daily Horoscope"
+            ): "western_transit",
+            (
+                "NP-ACG | Custom Interactive Astrocartography Map | "
+                "Personalized Relocation Astrology | Best Places to Live, Work & Travel"
+            ): "acg_bundle",
+        }
+        for title, expected in cases.items():
+            with self.subTest(title=title):
+                self.assertEqual(
+                    sync._guess_product_type("", f"商品： {title}"),
+                    expected,
+                )
+
+    def test_real_etsy_full_listing_without_product_code_is_full(self) -> None:
+        parsed = sync._parse_etsy_mail(
+            "Etsy でのご注文内容の確認：carinenguyen より US$22.80（4149215031）",
+            ETSY_REAL_FULL_MAIL_BODY,
+            "<etsy-real-full>",
+            None,
+            "Etsy お取引について <transaction@etsy.com>",
+        )
+
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["stores_order_no"], "4149215031")
+        self.assertEqual(parsed["provider"], "etsy")
+        self.assertEqual(parsed["product_type"], "western_full")
+        self.assertEqual(parsed["payment_status"], "paid")
+        self.assertEqual(parsed["amount"], 19)
+
+    def test_bare_transits_word_is_not_event_yaml(self) -> None:
+        self.assertIsNone(
+            sync._guess_product_type("", "Personalized Astrology Transits")
+        )
+
+    def test_etsy_sender_filters_cover_current_and_legacy_addresses(self) -> None:
+        self.assertEqual(
+            sync._etsy_sender_filters(),
+            ["transaction@etsy.com", "emails@mail.etsy.com"],
+        )
+
+    def test_gmail_sync_searches_current_and_legacy_etsy_senders(self) -> None:
+        connection = MagicMock()
+        with (
+            patch.dict("os.environ", {"STORES_MAIL_BACKEND": "gmail_api"}),
+            patch(
+                "services.gmail_mail_api.fetch_order_messages",
+                return_value=[],
+            ) as fetch,
+            patch.object(sync, "_get_conn", return_value=connection),
+            patch.object(sync, "_require_stores_orders_table"),
+        ):
+            result = sync.sync(limit=25)
+
+        self.assertTrue(result["ok"])
+        searched_senders = fetch.call_args.kwargs["senders"]
+        self.assertIn("transaction@etsy.com", searched_senders)
+        self.assertIn("emails@mail.etsy.com", searched_senders)
+        self.assertEqual(fetch.call_args.kwargs["limit"], 25)
+        connection.commit.assert_called_once_with()
+
+    def test_unlabeled_monthly_transit_is_addon_not_event_yaml(self) -> None:
+        cases = [
+            "月替わりトランジット（指定月・38日分）",
+            "38日トランジット追加",
+            "トランジット追加",
+        ]
+        for title in cases:
+            with self.subTest(title=title):
+                self.assertEqual(
+                    sync._guess_product_type("", f"商品： {title}"),
+                    "western_31days_transit_addon",
+                )
+
+    def test_explicit_transit_yaml_code_stays_event_yaml(self) -> None:
+        self.assertEqual(
+            sync._guess_product_type("", "商品： トランジット [NP-TY]"),
+            "transit_yaml",
+        )
 
     def test_exact_test_listing_is_treated_as_basic_for_live_e2e(self) -> None:
         parsed = sync._parse_etsy_mail(

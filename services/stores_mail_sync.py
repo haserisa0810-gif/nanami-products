@@ -15,7 +15,7 @@ nanami-productsの用途に合わせてシンプル化したもの。
   STORES_MAIL_PASSWORD     必須（Gmailはアプリパスワード）
   STORES_MAIL_FROM_FILTER  (default: hello@stores.jp)
   PAYHIP_MAIL_FROM_FILTER  (default: contact@payhip.com)
-  ETSY_MAIL_FROM_FILTER    (default: emails@mail.etsy.com)
+  ETSY_MAIL_FROM_FILTER    (default: transaction@etsy.com; legacy sender also searched)
   COCONALA_MAIL_FROM_FILTER (default: no-reply@mail.coconala.com)
   STORES_MAIL_SYNC_TOKEN   Cloud Schedulerからの呼び出し認証トークン
 """
@@ -41,7 +41,8 @@ from psycopg2.extras import RealDictCursor
 SCHEMA = "nanami_products"
 STORES_FROM_DEFAULT = "hello@stores.jp"
 PAYHIP_FROM_DEFAULT = "contact@payhip.com"
-ETSY_FROM_DEFAULT = "emails@mail.etsy.com"
+ETSY_FROM_DEFAULT = "transaction@etsy.com"
+ETSY_FROM_LEGACY = "emails@mail.etsy.com"
 COCONALA_FROM_DEFAULT = "no-reply@mail.coconala.com"
 
 # STORESの通知メールを識別するパターン
@@ -85,12 +86,33 @@ _PRODUCT_TYPE_PATTERNS = [
     (re.compile(r"ACG\s*(?:bundle|バンドル)|アストロカートグラフィ.*(?:bundle|バンドル)|astrocartography.*(?:bundle|premium)", re.I), "acg_bundle"),
     (re.compile(r"(?:基本|basic|core).*(?:小惑星|asteroids?)|(?:小惑星|asteroids?).*(?:基本|basic|core)", re.I), "western_asteroids"),
     (re.compile(r"(?:基本|basic|core).*(?:トランジット|transit)|(?:トランジット|transit).*(?:基本|basic|core)", re.I), "western_transit"),
+    (re.compile(
+        r"(?=[\s\S]*(?:birth\s+chart|natal\s+chart|出生図|ホロスコープ))"
+        r"(?=[\s\S]*(?:transits?|トランジット))"
+        r"(?=[\s\S]*(?:asteroids?|小惑星))",
+        re.I,
+    ), "western_full"),
     (re.compile(r"FULL|フル|プレミアム|premium", re.I), "western_full"),
     (re.compile(r"小惑星.*追加|追加.*小惑星|asteroids? addon|asteroids?追加", re.I), "western_asteroids_addon"),
+    # STORESの商品コードが通知本文に含まれない場合でも、38日／月替わりの
+    # トランジット追加商品を、イベント単発の transit_yaml と取り違えない。
+    (re.compile(
+        r"(?:38\s*日|３８\s*日|月替わり|指定月|38[- ]?day).*(?:トランジット|transit)"
+        r"|(?:トランジット|transit).*(?:38\s*日|３８\s*日|月替わり|指定月|38[- ]?day)"
+        r"|(?:トランジット|transit).*(?:追加|add[- ]?on)"
+        r"|(?:追加|add[- ]?on).*(?:トランジット|transit)",
+        re.I,
+    ), "western_31days_transit_addon"),
     (re.compile(r"(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット).*追加|追加.*(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット)|transit.*addon", re.I), "western_31days_transit_addon"),
     (re.compile(r"(大運|流年).*追加|追加.*(大運|流年)|fortune cycles? addon", re.I), "shichu_fortune_cycles_addon"),
     (re.compile(r"四柱|しちゅう|シチュウ"), "shichu"),
-    (re.compile(r"トランジット|transit|イベント|歴史", re.I), "transit_yaml"),
+    # 単に Transits を含む出生図商品をイベント用 transit_yaml にしない。
+    # コードなし旧商品は、イベント／歴史／YAML版だと明示された場合だけ受け付ける。
+    (re.compile(
+        r"(?:トランジット|transit).*(?:YAML|イベント|歴史|特定日時)"
+        r"|(?:イベント|歴史|特定日時).*(?:トランジット|transit)",
+        re.I,
+    ), "transit_yaml"),
     (re.compile(r"API|クレジット|credits?", re.I), "api_key"),
     (re.compile(r"ライト|基本|ホロスコープ|western|basic", re.I), "western_basic"),
 ]
@@ -245,6 +267,12 @@ def _normalize_payhip_order_id(value: str | None) -> str | None:
     value = re.sub(r"(Order\s*ID|Invoice\s*Number|注文ID)\s*[：:]?\s*", "", value, flags=re.I)
     value = re.sub(r"[^A-Za-z0-9=_-]", "", value)
     return value or None
+
+
+def _etsy_sender_filters(configured: str | None = None) -> list[str]:
+    """現在・旧Etsy通知アドレスを両方検索対象にする。"""
+    values = [configured or "", ETSY_FROM_DEFAULT, ETSY_FROM_LEGACY]
+    return list(dict.fromkeys(value.strip() for value in values if value.strip()))
 
 
 def _guess_product_type(subject: str, body: str) -> str | None:
@@ -568,7 +596,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
     backend = (os.getenv("STORES_MAIL_BACKEND") or "imap").strip().lower()
     from_filter = (os.getenv("STORES_MAIL_FROM_FILTER", STORES_FROM_DEFAULT) or "").strip()
     payhip_from_filter = (os.getenv("PAYHIP_MAIL_FROM_FILTER", PAYHIP_FROM_DEFAULT) or "").strip()
-    etsy_from_filter = (os.getenv("ETSY_MAIL_FROM_FILTER", ETSY_FROM_DEFAULT) or "").strip()
+    etsy_from_filters = _etsy_sender_filters(os.getenv("ETSY_MAIL_FROM_FILTER"))
     coconala_from_filter = (
         os.getenv("COCONALA_MAIL_FROM_FILTER", COCONALA_FROM_DEFAULT) or ""
     ).strip()
@@ -577,7 +605,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
 
     con_db = None
     try:
-        senders = [from_filter, payhip_from_filter, etsy_from_filter, coconala_from_filter]
+        senders = [from_filter, payhip_from_filter, *etsy_from_filters, coconala_from_filter]
         if backend == "gmail_api":
             from services.gmail_mail_api import fetch_order_messages
 
@@ -609,7 +637,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
             if (
                 from_filter.lower() not in combined_lower
                 and payhip_from_filter.lower() not in combined_lower
-                and etsy_from_filter.lower() not in combined_lower
+                and not any(sender.lower() in combined_lower for sender in etsy_from_filters)
                 and coconala_from_filter.lower() not in combined_lower
                 and "payhip" not in combined_lower
                 and "etsy" not in combined_lower
