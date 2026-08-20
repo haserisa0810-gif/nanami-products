@@ -35,7 +35,7 @@
           <label>購入元
             {% if provider_locked %}
             <input type="hidden" name="order_provider" id="order-provider" value="{{ provider }}">
-            <strong>{% if provider == 'coconala' %}ココナラ{% else %}STORES{% endif %}</strong>
+            <strong>{% if provider == 'coconala' %}ココナラ{% elif provider == 'etsy' %}Etsy{% else %}STORES{% endif %}</strong>
             {% else %}
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>STORES</option>
@@ -43,7 +43,7 @@
             </select>
             {% endif %}
           </label>
-          <label><span id="order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% else %}STORESオーダー番号{% endif %}</span><span class="required">必須</span>
+          <label><span id="order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% elif provider == 'etsy' %}Etsyの注文番号{% else %}STORESオーダー番号{% endif %}</span><span class="required">必須</span>
             <input type="text" name="order_code" id="order-code" required
                    value="{{ form.order_code if form else '' }}"
                    placeholder="{% if provider == 'coconala' %}例：nanami_user{% else %}例：9824333454{% endif %}"
@@ -52,8 +52,9 @@
                    {% if provider != 'coconala' %}inputmode="numeric"
                    pattern="[0-9]{10}"{% endif %}
                    maxlength="100"
-                   autocomplete="off">
-            <small id="order-code-hint">{% if provider == 'coconala' %}購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。{% else %}STORES購入完了メールの件名にある10桁の番号です。{% endif %}</small>
+                   autocomplete="off"
+                   data-trim-order-code>
+            <small id="order-code-hint">{% if provider == 'coconala' %}購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。{% elif provider == 'etsy' %}Etsyの購入履歴または注文確認メールに表示される注文番号を入力してください。{% else %}STORES購入完了メールの件名にある10桁の番号です。{% endif %}</small>
           </label>
           <label>お名前<span class="optional">任意</span>
             <input type="text" name="buyer_name"
@@ -192,7 +193,7 @@
           <h2 id="submit-confirm-title">最終確認</h2>
           <p class="confirm-lead">送信前に入力内容を確認してください。送信後は変更・再生成できません。</p>
           <dl class="confirm-list">
-            <div class="confirm-item"><dt id="confirm-order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% else %}STORESオーダー番号{% endif %}</dt><dd id="confirm-order-code"></dd></div>
+            <div class="confirm-item"><dt id="confirm-order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% elif provider == 'etsy' %}Etsyの注文番号{% else %}STORESオーダー番号{% endif %}</dt><dd id="confirm-order-code"></dd></div>
             <div class="confirm-item"><dt>お名前</dt><dd id="confirm-name"></dd></div>
             <div class="confirm-item"><dt>生年月日</dt><dd id="confirm-birth-date"></dd></div>
             <div class="confirm-item"><dt>出生時刻</dt><dd id="confirm-birth-time"></dd></div>
@@ -423,12 +424,17 @@
           orderCode.inputMode = 'numeric';
         }
       }
+      // サーバー側の出し分け（購入元別ラベル）を上書きしてしまわないよう、
+      // ここでも同じ購入元の分岐を持たせる。
+      const isEtsy = provider === 'etsy';
       if (orderCodeLabel) orderCodeLabel.textContent = isCoconala
         ? 'ココナラのユーザー名'
-        : 'STORESオーダー番号';
+        : (isEtsy ? 'Etsyの注文番号' : 'STORESオーダー番号');
       if (orderCodeHint) orderCodeHint.textContent = isCoconala
         ? '購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。'
-        : 'STORES購入完了メールの件名にある10桁の番号です。';
+        : (isEtsy
+            ? 'Etsyの購入履歴または注文確認メールに表示される注文番号を入力してください。'
+            : 'STORES購入完了メールの件名にある10桁の番号です。');
       if (confirmOrderCodeLabel) confirmOrderCodeLabel.textContent = orderCodeLabel?.textContent || '';
     }
     document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);
@@ -451,6 +457,7 @@
       });
     });
   </script>
+  <script src="{{ asset_url('order_code_input.js') }}"></script>
   <script src="{{ asset_url('vendor/leaflet/leaflet.js') }}"></script>
   <script src="{{ asset_url('redeem_overseas_map.js') }}"></script>
 </body>

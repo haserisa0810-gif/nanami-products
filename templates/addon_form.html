@@ -23,7 +23,9 @@
       <section class="notice-box">
         <h2>{{ t.addon_usage_title }}</h2>
         <ul class="plain-list">
-          {% for item in t.addon_usage_items %}
+          {# 1行目は注文番号の案内なので購入元で出し分ける。2行目以降は共通。 #}
+          <li>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% elif form.order_provider == 'etsy' %}{{ t.etsy_order_hint }}{% elif form.order_provider == 'payhip' %}{{ t.payhip_order_hint }}{% else %}{{ t.addon_usage_items[0] }}{% endif %}</li>
+          {% for item in t.addon_usage_items[1:] %}
             <li>{{ item }}</li>
           {% endfor %}
         </ul>
@@ -42,16 +44,35 @@
               {% endfor %}
             </select>
           </label>
-          <label>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_name }}{% else %}{{ t.order_code_label }}{% endif %}
+          {% if form.order_provider == 'payhip' %}
+          {# Payhipは注文番号ではなくOrder IDで照合する（addon_generate の payhip 分岐）。 #}
+          <input type="hidden" name="payhip_email" value="{{ form.payhip_email if form else '' }}">
+          <input type="hidden" name="payhip_product_code" value="{{ form.payhip_product_code if form else '' }}">
+          <label>{{ t.payhip_order_id }}
+            <input type="text" name="payhip_order_id" required
+                   value="{{ form.payhip_order_id if form else '' }}"
+                   placeholder="LWR6l4Y4Wa"
+                   pattern="[A-Za-z0-9=_\-]+"
+                   title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"
+                   maxlength="100"
+                   autocomplete="off"
+                   data-trim-order-code>
+            <small>{{ t.payhip_order_hint }}</small>
+          </label>
+          {% else %}
+          {# ラベル・ヒントは購入元にそろえる。購入者ガイドPDFの案内文と一致させること。 #}
+          <label>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_name }}{% elif form.order_provider == 'etsy' %}{{ t.etsy_order_label }}{% else %}{{ t.order_code_label }}{% endif %}
             <input type="text" name="order_code" required
                    value="{{ form.order_code if form else '' }}"
                    placeholder="{% if form.order_provider == 'coconala' %}例：nanami_user{% else %}{{ t.order_code_placeholder }}{% endif %}"
                    {% if form.order_provider != 'coconala' %}inputmode="numeric"
                    pattern="[0-9]{10}"{% endif %}
                    maxlength="100"
-                   autocomplete="off">
-            <small>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% else %}{{ t.order_code_hint }}{% endif %}</small>
+                   autocomplete="off"
+                   data-trim-order-code>
+            <small>{% if form.order_provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% elif form.order_provider == 'etsy' %}{{ t.etsy_order_hint }}{% else %}{{ t.order_code_hint }}{% endif %}</small>
           </label>
+          {% endif %}
         </div>
 
         <div class="form-section" id="base-data-section">
@@ -116,6 +137,7 @@
       {% endif %}
     </div>
   </main>
+  <script src="{{ asset_url('order_code_input.js') }}"></script>
   <script>
     const resultYaml = document.getElementById('result-yaml');
     const transitResultUrl = document.getElementById('transit-result-url');

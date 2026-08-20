@@ -161,6 +161,21 @@ ON CONFLICT (stores_order_no) DO UPDATE SET
   updated_at = NOW();
 ```
 
+上記SQLを毎回打つ代わりに、以下でも同じ試験番号を投入できます（`DATABASE_URL` が必要です）:
+
+```bash
+python scripts/upsert_reusable_stores_orders.py
+```
+
+追加部品（addon）のテストには、登録済みの `payment_status='permanent'` 番号を使います。
+addon の消込は `addon_redemptions` で行うため、通常商品用の reusable 番号とは別枠です。
+
+| 番号 | product_type | 用途 |
+|---|---|---|
+| `9700000031` | `western_31days_transit_addon` | 38日トランジット追加 |
+| `9700000032` | `western_long_term_transits_addon` | 長期トランジット（1年）追加 |
+| `9700000007` | （未設定） | product_type 未設定のため全addon共通 |
+
 初回だけDBを初期化します。
 
 ```bash

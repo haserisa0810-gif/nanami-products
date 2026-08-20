@@ -76,6 +76,7 @@ _PRODUCT_CODE_PATTERNS = [
     (re.compile(r"[\[［【]?\s*NP[-_ ]?AA\s*[\]］】]?", re.I), "western_asteroids_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?WT\s*[\]］】]?", re.I), "western_31days_transit_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?TA\s*[\]］】]?", re.I), "western_31days_transit_addon"),
+    (re.compile(r"[\[［【]?\s*NP[-_ ]?WL\s*[\]］】]?", re.I), "western_long_term_transits_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?SF\s*[\]］】]?", re.I), "shichu_fortune_cycles_addon"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?SC\s*[\]］】]?", re.I), "shichu"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?TY\s*[\]］】]?", re.I), "transit_yaml"),

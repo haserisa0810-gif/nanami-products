@@ -63,10 +63,11 @@
                      placeholder="{% if provider == 'coconala' %}例：nanami_user{% else %}例：9824333454 / cU-yVsYa22tGvZCc4A5cWw=={% endif %}"
                      data-standard-placeholder="例：9824333454 / cU-yVsYa22tGvZCc4A5cWw=="
                      data-coconala-placeholder="例：nanami_user"
-                     {% if provider != 'coconala' %}pattern="[A-Za-z0-9=_-]+"
+                     {% if provider != 'coconala' %}pattern="[A-Za-z0-9=_\-]+"
                      title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"{% endif %}
                      maxlength="100"
-                     autocomplete="off">
+                     autocomplete="off"
+                     data-trim-order-code>
               <small id="order-code-hint">{% if provider == 'coconala' %}{{ t.coconala_buyer_hint }}{% elif provider == 'etsy' %}{{ t.etsy_order_hint }}{% else %}{{ t.order_mail_hint }}{% endif %}</small>
             </label>
           </div>
@@ -77,9 +78,10 @@
               <input type="text" name="payhip_order_id" id="payhip-order-id"
                      value="{{ form.payhip_order_id if form else '' }}"
                      placeholder="LWR6l4Y4Wa"
-                     pattern="[A-Za-z0-9=_-]+"
+                     pattern="[A-Za-z0-9=_\-]+"
                      title="英数字、ハイフン、アンダースコア、イコールのみ使用できます"
-                     autocomplete="off">
+                     autocomplete="off"
+                     data-trim-order-code>
               <small>{{ t.payhip_order_hint }}</small>
             </label>
           </div>
@@ -536,7 +538,7 @@
           orderCode.removeAttribute('pattern');
           orderCode.removeAttribute('title');
         } else {
-          orderCode.pattern = '[A-Za-z0-9=_-]+';
+          orderCode.pattern = '[A-Za-z0-9=_\\-]+';
           orderCode.title = '英数字、ハイフン、アンダースコア、イコールのみ使用できます';
         }
       }
@@ -589,6 +591,7 @@
       validateBirthDateField();
     });
   </script>
+  <script src="{{ asset_url('order_code_input.js') }}"></script>
   <script src="{{ asset_url('vendor/leaflet/leaflet.js') }}"></script>
   <script src="{{ asset_url('redeem_overseas_map.js') }}"></script>
 </body>

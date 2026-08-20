@@ -40,7 +40,7 @@
             <input type="text" name="title" required value="{{ form.title }}" placeholder="例：ホロスコープで読む、2026年7月の社会の流れ">
           </label>
           <label>slug
-            <input type="text" name="slug" required value="{{ form.slug }}" placeholder="例：2026-07" pattern="[a-z0-9][a-z0-9-]{0,80}">
+            <input type="text" name="slug" required value="{{ form.slug }}" placeholder="例：2026-07" pattern="[a-z0-9][a-z0-9\-]{0,80}">
             <small>公開URLは /mundane/slug になります。slugはユニークです。</small>
           </label>
           <div class="mundane-grid">

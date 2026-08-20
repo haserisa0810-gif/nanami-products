@@ -87,6 +87,7 @@ from services.yaml_exporter import (
     build_31days_transit_addon_yaml,
     build_asteroid_addon_yaml,
     build_product_yaml,
+    build_prompt_for_doc,
     build_shichu_fortune_cycles_addon_yaml,
     validate_yaml_option_section_consistency,
 )
@@ -893,7 +894,7 @@ I18N = {
         "svg_load_failed": "図を読み込めませんでした。時間をおいて再度お試しください。",
         "png_failed_svg_copied": "PNG保存に失敗したため、SVGをコピーしました",
         "addon_title": "追加部品YAML生成",
-        "addon_lead": "STORESで購入した追加部品を、AIに渡せるYAMLとして生成するフォームです。",
+        "addon_lead": "購入した追加部品を、AIに渡せるYAMLとして生成するフォームです。",
         "addon_usage_title": "使い方",
         "addon_usage_items": [
             "STORESの購入確認メールに記載された注文番号を入力してください。",
@@ -906,6 +907,7 @@ I18N = {
         "addon_generate_section_title": "生成する追加部品",
         "addon_type_label": "addon種別",
         "order_code_label": "STORESオーダー番号",
+        "etsy_order_label": "Etsyの注文番号",
         "order_code_placeholder": "例：9824333454",
         "order_code_hint": "購入確認メールの件名にある注文番号です。追加部品ごとに1回だけ使用できます。",
         "base_data_title": "基本データ入力",
@@ -1286,6 +1288,7 @@ I18N = {
         "addon_generate_section_title": "Add-on to generate",
         "addon_type_label": "Add-on type",
         "order_code_label": "STORES order number",
+        "etsy_order_label": "Etsy order number",
         "order_code_placeholder": "Example: 9824333454",
         "order_code_hint": "This is the order number shown in the purchase confirmation email. Each add-on can be used only once.",
         "base_data_title": "Base data input",
@@ -1771,6 +1774,46 @@ def _log_order_check(
     )
 
 
+def _warn_unverified_product_type(
+    *,
+    provider: str | None,
+    order_id: str,
+    issued_as: str,
+    context: str,
+) -> None:
+    """
+    商品種別を判定できない注文を、発行は止めずに警告として残す。
+
+    product_type が NULL の注文は商品種別チェックを素通りする
+    （_check_order_for_redeem / _is_compatible_addon_purchase とも
+    未設定なら通す）。安い注文番号で高い商品を発行できてしまうため、
+    運用で気づけるように warning で記録する。
+    主因は商品コードの判定漏れなので、対処先も一緒に出す。
+    """
+    logger.warning(
+        "order_product_unverified provider=%s order_id=%s issued_as=%s context=%s "
+        "hint=%s に商品コードを追加してください",
+        provider or "unknown",
+        order_id,
+        issued_as,
+        context,
+        "services/stores_mail_sync.py の _PRODUCT_CODE_PATTERNS",
+    )
+    _log_order_check(
+        provider=provider,
+        order_id=order_id,
+        strict_check=True,
+        check_result="product_unverified_allowed",
+        reason=f"order has no product_type; issued {issued_as} without a product check",
+    )
+
+
+def _order_row_skips_product_check(order_row: dict | None) -> bool:
+    """テスト・身内用番号（reusable/test/permanent）は警告対象から外す。"""
+    status = str((order_row or {}).get("payment_status") or "").lower()
+    return status in {"reusable", "test", "permanent"}
+
+
 def _chart_redirect_url(
     token: str,
     *,
@@ -2056,6 +2099,14 @@ def _check_order_for_redeem(
             order_row,
             "Etsyの商品を確認できませんでした。購入商品の商品コードを販売者に確認してください。",
             409,
+        )
+    # Etsy以外は未分類でも発行を止めない。ただし商品チェックが効いていないので警告を残す。
+    if enforce_product_type and not purchased_type and status != "reusable":
+        _warn_unverified_product_type(
+            provider=provider,
+            order_id=order_id,
+            issued_as=product_type,
+            context="redeem",
         )
     if (
         enforce_product_type
@@ -5173,13 +5224,9 @@ def chart_horoscope_svg(token: str):
         except Exception:
             chart_doc = None
         if _chart_has_western_natal(chart, doc=chart_doc):
+            # 未保存チャートのSVGは都度生成する（DBへの書き戻しはしない）。
             try:
                 svg = optimize_svg(build_horoscope_svg_from_yaml(chart["yaml_text"], doc=chart_doc))
-                if svg:
-                    try:
-                        pg_store.update_chart_svgs(token=token, horoscope_svg=svg)
-                    except Exception:
-                        pass
             except Exception:
                 svg = None
     if not svg:
@@ -5195,15 +5242,11 @@ def chart_shichusuimei_svg(token: str):
     chart = _load_chart_or_404(token)
     svg = optimize_svg(chart.get("shichusuimei_svg"))
     if not svg:
+        # 未保存チャートのSVGは都度生成する（DBへの書き戻しはしない）。
         try:
             loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
             chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
             svg = optimize_svg(build_shichusuimei_svg_from_yaml(chart["yaml_text"], doc=chart_doc))
-            if svg:
-                try:
-                    pg_store.update_chart_svgs(token=token, shichusuimei_svg=svg)
-                except Exception:
-                    pass
         except Exception:
             svg = None
     if not svg:
@@ -6776,13 +6819,13 @@ def _build_transit_addon_from_base(
     addon_yaml_text = yaml.safe_dump(addon_doc, allow_unicode=True, sort_keys=False, width=120)
 
     has_asteroids = _doc_has_western_asteroids(doc)
-    _generated_yaml_text, chart_prompt_text, _generated_doc = build_product_yaml(
-        **args,
+    # プロンプトは天体計算の結果を使わないので、addon側で計算済みの
+    # 出生時刻精度・interpretation_flags から組み立てる。
+    # （以前はこの文字列のためだけに build_product_yaml() をもう一度走らせていた）
+    chart_prompt_text = build_prompt_for_doc(
+        addon_doc,
         include_asteroids=has_asteroids,
-        include_shichusuimei=False,
         include_transit=True,
-        transit_start_date=transit_start_date,
-        transit_days=transit_days,
     )
     if transit_days != 31:
         chart_prompt_text = chart_prompt_text.replace("31日", f"{transit_days}日")
@@ -7386,7 +7429,6 @@ def _redeem_and_save_transit_addon_or_raise(
     yaml_text: str,
     *,
     chart_payload: dict[str, object] | None = None,
-    payhip_metadata: dict[str, str] | None = None,
 ) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
         raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
@@ -7421,7 +7463,17 @@ def _redeem_and_save_transit_addon_or_raise(
         token = secrets.token_urlsafe(24)
         expires_at = _transit_addon_expires_at()
         try:
-            if policy["strict"]:
+            # addonは常にstrict照合。非strictなのはgumroadだけで、それは上で弾いている。
+            status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
+                order_code=order_code_clean,
+                addon_type=addon_type,
+                token=token,
+                yaml_text=yaml_text,
+                expires_at=expires_at,
+                chart_payload=chart_payload,
+            )
+            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+                _sync_stores_orders_for_lookup()
                 status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
                     order_code=order_code_clean,
                     addon_type=addon_type,
@@ -7429,27 +7481,6 @@ def _redeem_and_save_transit_addon_or_raise(
                     yaml_text=yaml_text,
                     expires_at=expires_at,
                     chart_payload=chart_payload,
-                )
-                if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-                    _sync_stores_orders_for_lookup()
-                    status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
-                        order_code=order_code_clean,
-                        addon_type=addon_type,
-                        token=token,
-                        yaml_text=yaml_text,
-                        expires_at=expires_at,
-                        chart_payload=chart_payload,
-                    )
-            else:
-                status, order_row = pg_store.redeem_addon_order_and_save_transit_link_relaxed(
-                    order_code=order_code_clean,
-                    addon_type=addon_type,
-                    token=token,
-                    yaml_text=yaml_text,
-                    expires_at=expires_at,
-                    chart_payload=chart_payload,
-                    provider=order_provider_clean or "gumroad",
-                    metadata=payhip_metadata if order_provider_clean == "payhip" else None,
                 )
         except Exception as exc:
             last_exc = exc
@@ -7473,6 +7504,13 @@ def _redeem_and_save_transit_addon_or_raise(
         )
 
         if status == "ok":
+            if not (order_row or {}).get("product_type") and not _order_row_skips_product_check(order_row):
+                _warn_unverified_product_type(
+                    provider=order_provider_clean,
+                    order_id=order_code_clean,
+                    issued_as=addon_type,
+                    context="addon",
+                )
             return token, expires_at
         if status == "not_found":
             raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
@@ -7503,7 +7541,6 @@ def _redeem_and_save_chart_addon_or_raise(
     addon_type: str,
     *,
     chart_payload: dict[str, object],
-    payhip_metadata: dict[str, str] | None = None,
 ) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
         raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
@@ -7538,32 +7575,22 @@ def _redeem_and_save_chart_addon_or_raise(
         token = secrets.token_urlsafe(24)
         expires_at = _chart_expires_at()
         try:
-            if policy["strict"]:
+            # addonは常にstrict照合。非strictなのはgumroadだけで、それは上で弾いている。
+            status, order_row = pg_store.redeem_addon_order_and_save_chart(
+                order_code=order_code_clean,
+                addon_type=addon_type,
+                token=token,
+                expires_at=expires_at,
+                chart_payload=chart_payload,
+            )
+            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+                _sync_stores_orders_for_lookup()
                 status, order_row = pg_store.redeem_addon_order_and_save_chart(
                     order_code=order_code_clean,
                     addon_type=addon_type,
                     token=token,
                     expires_at=expires_at,
                     chart_payload=chart_payload,
-                )
-                if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-                    _sync_stores_orders_for_lookup()
-                    status, order_row = pg_store.redeem_addon_order_and_save_chart(
-                        order_code=order_code_clean,
-                        addon_type=addon_type,
-                        token=token,
-                        expires_at=expires_at,
-                        chart_payload=chart_payload,
-                    )
-            else:
-                status, order_row = pg_store.redeem_addon_order_and_save_chart_relaxed(
-                    order_code=order_code_clean,
-                    addon_type=addon_type,
-                    token=token,
-                    expires_at=expires_at,
-                    chart_payload=chart_payload,
-                    provider=order_provider_clean or "gumroad",
-                    metadata=payhip_metadata if order_provider_clean == "payhip" else None,
                 )
         except Exception as exc:
             last_exc = exc
@@ -7587,6 +7614,13 @@ def _redeem_and_save_chart_addon_or_raise(
         )
 
         if status == "ok":
+            if not (order_row or {}).get("product_type") and not _order_row_skips_product_check(order_row):
+                _warn_unverified_product_type(
+                    provider=order_provider_clean,
+                    order_id=order_code_clean,
+                    issued_as=addon_type,
+                    context="addon",
+                )
             return token, expires_at
         if status == "not_found":
             raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
@@ -7615,8 +7649,6 @@ def _redeem_addon_order_or_raise(
     order_code: str,
     order_provider: str,
     addon_type: str,
-    *,
-    payhip_metadata: dict[str, str] | None = None,
 ) -> str:
     order_code_clean = _normalize_stores_order_no(order_code)
     if not order_code_clean:
@@ -7647,21 +7679,11 @@ def _redeem_addon_order_or_raise(
         raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
 
     try:
-        if policy["strict"]:
+        # addonは常にstrict照合。非strictなのはgumroadだけで、それは上で弾いている。
+        status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+        if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+            _sync_stores_orders_for_lookup()
             status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
-            if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
-                _sync_stores_orders_for_lookup()
-                status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
-        else:
-            if order_provider_clean == "payhip":
-                status, order_row = pg_store.redeem_addon_order_relaxed_with_metadata(
-                    order_code=order_code_clean,
-                    addon_type=addon_type,
-                    provider="payhip",
-                    metadata=payhip_metadata,
-                )
-            else:
-                status, order_row = pg_store.redeem_addon_order_relaxed(order_code=order_code_clean, addon_type=addon_type)
     except Exception as exc:
         logger.exception(
             "addon_order_check_failed order_id=%s addon_type=%s error_type=%s error=%r",
@@ -7681,6 +7703,13 @@ def _redeem_addon_order_or_raise(
     )
 
     if status == "ok":
+        if not (order_row or {}).get("product_type") and not _order_row_skips_product_check(order_row):
+            _warn_unverified_product_type(
+                provider=order_provider_clean,
+                order_id=order_code_clean,
+                issued_as=addon_type,
+                context="addon",
+            )
         return order_code_clean
     if status == "not_found":
         raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
@@ -7806,7 +7835,6 @@ def addon_generate(
                 order_provider_for_redeem,
                 addon_type,
                 chart_payload=chart_payload,
-                payhip_metadata=payhip_metadata or None,
             )
             return RedirectResponse(f"/chart/{token}", status_code=303)
         if addon_type == "western_31days_transit_addon":
@@ -7852,7 +7880,6 @@ def addon_generate(
                 addon_type,
                 result_yaml,
                 chart_payload=chart_payload,
-                payhip_metadata=payhip_metadata or None,
             )
             return RedirectResponse(f"/chart/{token}", status_code=303)
         if addon_type == "western_long_term_transits_addon":
@@ -7898,7 +7925,6 @@ def addon_generate(
                 addon_type,
                 result_yaml,
                 chart_payload=chart_payload,
-                payhip_metadata=payhip_metadata or None,
             )
             return RedirectResponse(f"/chart/{token}", status_code=303)
         if not base_yaml.strip():
@@ -7909,7 +7935,6 @@ def addon_generate(
             order_code_for_redeem,
             order_provider_for_redeem,
             addon_type,
-            payhip_metadata=payhip_metadata or None,
         )
     except Exception as exc:
         return _addon_form_response(request, form=form, error=str(exc), status_code=400)

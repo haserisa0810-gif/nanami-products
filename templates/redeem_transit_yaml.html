@@ -36,7 +36,8 @@
                    placeholder="例：9824333454"
                    inputmode="numeric"
                    pattern="[0-9]{10}"
-                   autocomplete="off">
+                   autocomplete="off"
+                   data-trim-order-code>
             <small>STORES購入完了メールの件名にある10桁の番号です。</small>
           </label>
           <label>メールアドレス<span class="optional">任意</span>
@@ -117,6 +118,7 @@
       </form>
     </div>
   </main>
+  <script src="{{ asset_url('order_code_input.js') }}"></script>
   <script>
     function confirmSubmit(event) {
       const form = event?.currentTarget;

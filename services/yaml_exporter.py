@@ -99,6 +99,31 @@ def _birth_time_struct(
         data["range"] = range_info
     return data
 
+def build_prompt_for_doc(
+    doc: dict[str, Any],
+    *,
+    include_asteroids: bool = False,
+    include_shichusuimei: bool = False,
+    include_transit: bool = False,
+) -> str:
+    """
+    計算済みドキュメントから鑑定プロンプトだけを組み立てる。
+
+    build_prompt() は天体位置を一切参照せず、出生時刻の精度と含まれるセクションの
+    有無だけで決まる。プロンプト文字列が欲しいだけの場面で build_product_yaml() を
+    丸ごと再実行すると、使わない天体計算をもう一度走らせることになる。
+    """
+    input_block = doc.get("input") or {}
+    accuracy = str(input_block.get("birth_time_accuracy") or "exact")
+    return build_prompt(
+        include_shichusuimei=include_shichusuimei,
+        include_asteroids=include_asteroids,
+        include_transit=include_transit,
+        birth_time_accuracy=accuracy,
+        interpretation_flags=doc.get("interpretation_flags") or {},
+    )
+
+
 def _interpretation_flags(accuracy: str) -> dict[str, Any]:
     if accuracy in TIME_SENSITIVE_ACCURACIES:
         return {
