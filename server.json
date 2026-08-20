@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.haserisa0810-gif/nanami-products",
+  "description": "Pre-computed astrology YAML via Swiss Ephemeris. Calculation is code, interpretation is AI.",
+  "repository": {
+    "url": "https://github.com/haserisa0810-gif/nanami-products",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "sse",
+      "url": "https://chart.nanami-astro.com/mcp"
+    }
+  ]
+}
