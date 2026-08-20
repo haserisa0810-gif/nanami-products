@@ -3070,6 +3070,13 @@ def internal_cleanup_expired_charts(request: Request, payload: dict[str, object]
     )
 
 
+# Google Front End は `/healthz` を予約パスとして横取りし、コンテナへ転送しない。
+# Cloud Run の外部URL（run.app・独自ドメインとも）では、アプリに届く前に
+# Google の 404 HTML が返るため、外部からの死活監視には使えない。
+# 遮断されるのは完全一致の /healthz だけなので、外部監視用に /health を用意する。
+# （/healthz 自体はコンテナに直接届く経路のために残す。なお Cloud Run の
+#  起動プローブは tcpSocket:8080 を使っており、このパスには依存していない）
+@app.get("/health")
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "service": "nanami-products"}

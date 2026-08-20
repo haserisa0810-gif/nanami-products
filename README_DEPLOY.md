@@ -30,11 +30,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy_candidate.ps1
 ## 動作確認
 
 ```text
-/healthz
+/health
 /admin/yaml/new
 /api-sandbox
 /manual/api
 ```
+
+`/healthz` は Google Front End が横取りするため、Cloud Run の外部URLでは 404 になります。外部からの死活監視には `/health` を使ってください。
 
 `/api-sandbox` は購入前の接続確認用です。`/api/demo/*` に実際にPOSTしますが、APIキー不要・クレジット消費なし・固定レスポンスです。
 

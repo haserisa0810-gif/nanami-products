@@ -37,7 +37,9 @@ Key endpoints — 管理者フロー:
 - `GET /admin/yaml/new` — 管理者用生成フォーム
 - `POST /admin/yaml/generate` — YAML 生成・保存
 - `GET /admin/yaml/result/{token}` — 管理者結果ページ（購入者 URL 発行）
-- `GET /healthz` — ヘルスチェック
+- `GET /health` — ヘルスチェック（外部からの死活監視はこちら）
+- `GET /healthz` — 同内容。ただし Google Front End が `/healthz` を横取りするため、
+  Cloud Run の外部URLでは 404 になる。コンテナ直アクセス用。
 
 ## Deploy
 
