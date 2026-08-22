@@ -364,12 +364,26 @@ def test_chart_personal_edition_zip_and_acg_autoload(monkeypatch):
             "acg_enabled": True,
         },
     }
+    zip_calls = []
     monkeypatch.setattr(routes, "_load_chart_or_404", lambda token, include_svgs=False: chart)
-    monkeypatch.setattr(routes, "build_personalized_zip", lambda **kwargs: b"PK-personal")
+    monkeypatch.setattr(
+        routes,
+        "_build_personal_planner_pdf",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("ZIP download must not build the planner")
+        ),
+    )
+    monkeypatch.setattr(
+        routes,
+        "build_personalized_zip",
+        lambda **kwargs: zip_calls.append(kwargs) or b"PK-personal",
+    )
     response = client.get("/chart/test-token/personal-edition.zip")
     assert response.status_code == 200
     assert response.content == b"PK-personal"
     assert "ACG-Bundle.zip" in response.headers["content-disposition"]
+    assert len(zip_calls) == 1
+    assert "planner_pdf" not in zip_calls[0]
 
     chart_page = client.get("/chart/test-token?lang=ja")
     assert chart_page.status_code == 200

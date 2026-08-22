@@ -5273,11 +5273,11 @@ _planner_builds_in_flight: set[tuple[str, str]] = set()
 
 def _build_personal_planner_pdf(
     chart: dict, *, lang: str, chart_url: str | None = None) -> bytes | None:
-    """Personal planner PDF for a stored Personal Edition chart, or None.
+    """Standalone personal planner PDF for a stored chart, or None.
 
     Recomputed from the chart's stored birth inputs at download time (~a few
-    seconds). Any failure is swallowed so the buyer still receives the rest of
-    the bundle. Reused verbatim by a future standalone Planner product.
+    seconds). This is intentionally separate from Personal Edition ZIP creation
+    so saving the ZIP never waits for the large planner PDF to render.
     """
     # Only reuse the stored chart when it actually carries long-term transits;
     # most charts store `transit_long_term: null`, which would render a planner
@@ -5396,16 +5396,11 @@ def chart_personal_edition_zip(request: Request, token: str):
     chart_url = f"{_public_base_url(request)}/chart/{token}"
     if lang == "en":
         chart_url = f"{chart_url}?lang=en"
-    ai_page_url = f"{_public_base_url(request)}/chart/{token}/planner-ai"
-    if safe_lang == "en":
-        ai_page_url = f"{ai_page_url}?lang=en"
-    planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang, chart_url=ai_page_url)
     zip_bytes = build_personalized_zip(
         yaml_text=chart["yaml_text"],
         lang=safe_lang,
         include_acg=include_acg,
         chart_url=chart_url,
-        planner_pdf=planner_pdf,
     )
     filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
                 if include_acg else "BirthChartMuseum-PersonalEdition-FULL.zip")

@@ -1,16 +1,14 @@
 """End-to-end test for the B案 planner delivery seam.
 
 Exercises birth inputs -> chart with long-term transits -> planner input YAML ->
-personal planner PDF, plus inclusion in the Personal Edition ZIP. Runs in any
-env with pyswisseph + PyYAML + reportlab; no database needed.
+personal planner PDF. Runs in any environment with pyswisseph + PyYAML +
+reportlab; no database needed.
 """
 
 from __future__ import annotations
 
-import io
 import threading
 import unittest
-import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -22,7 +20,6 @@ from routes import app, chart_planner_pdf
 from services.planner_delivery import build_planner_pdf
 from services.planner_delivery import build_planner_pdf_from_yaml
 from services.planner_delivery import build_planner_yaml_from_natal_yaml
-from services.personal_edition_delivery import build_personalized_zip
 
 
 BIRTH = dict(
@@ -236,15 +233,6 @@ class PlannerDeliveryTest(unittest.TestCase):
     def test_build_planner_pdf_en(self) -> None:
         pdf = build_planner_pdf(lang="en", months=2, **BIRTH)
         self.assertTrue(pdf.startswith(b"%PDF"))
-
-    def test_zip_includes_planner(self) -> None:
-        pdf = build_planner_pdf(lang="ja", months=1, **BIRTH)
-        zip_bytes = build_personalized_zip(
-            yaml_text="version: test\ninput: {}\n", lang="ja", planner_pdf=pdf,
-        )
-        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-            names = zf.namelist()
-        self.assertIn("パーソナル・プランナー.pdf", names)
 
     def test_rejects_bad_lang(self) -> None:
         with self.assertRaises(ValueError):
