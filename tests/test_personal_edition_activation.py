@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 import routes
-from services.personal_edition_delivery import build_personalized_zip
+from services.personal_edition_delivery import build_free_museum_zip, build_personalized_zip
 
 
 client = TestClient(routes.app)
@@ -201,18 +201,14 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
     )
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
-        geojson_name = next(name for name in names if name == "app/acg-personal.geojson")
-        acg_page = next(name for name in names if name == "app/acg/index.html")
-        index_name = next(name for name in names if name == "app/index.html")
-        geojson = archive.read(geojson_name).decode("utf-8")
-        assert '"acg_eligible":true' in geojson
-        assert '"line_group":"Sun_MC"' in geojson
-        assert "acg-personal.geojson" in archive.read(acg_page).decode("utf-8")
-        assert "あなたのACG地図を開く" in archive.read(index_name).decode("utf-8")
-        assert "START-ACG.html" in names
-        assert "START-ACG-WINDOWS.bat" not in names
-        assert "START-ACG-MAC.command" not in names
-        assert "OPEN-ONLINE-CHART.url" not in names
+        assert set(names) == {
+            "START-ACG.html",
+            "LICENSES.txt",
+            "00-はじめに_README.txt",
+            "専用鑑定ページ_URL.txt",
+        }
+        assert not any(name.startswith("app/") for name in names)
+        assert not any("MUSEUM" in name for name in names)
         standalone = archive.read("START-ACG.html").decode("utf-8")
         assert "acg-personal.geojson" not in standalone
         assert '"line_group":"Sun_MC"' in standalone
@@ -220,6 +216,15 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "https://chart.example/chart/private?lang=ja" in standalone
         assert "iPad・iPhone：オンラインACG地図を開く" in standalone
         assert "https://chart.example/chart/private/acg-app/?lang=ja" in standalone
+        readme = archive.read("00-はじめに_README.txt").decode("utf-8")
+        assert "Windows / Mac：ダウンロードしたZIPを使う" in readme
+        assert "iPad / iPhone：SafariのオンラインACGアプリがおすすめ" in readme
+        assert "App Storeからインストールするものはありません" in readme
+        assert "データを保存" in readme
+        assert "あなたのACGアプリを開く" in readme
+        assert "ホーム画面に追加" in readme
+        assert "選んだ場所の星のメッセージをAIに聞く" in readme
+        assert "https://chart.example/chart/private/acg-app/?lang=ja" in readme
         assert 'id="city-search"' in standalone
         assert "占術データへ戻る" in standalone
         assert "ミュージアムへ戻る" not in standalone
@@ -230,7 +235,8 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "出生地ではなく、旅行・移住・仕事・活動拠点などの候補地" in standalone
         assert "MAX_PLACES=3" in standalone
         assert "nearestLines" in standalone
-        assert "Natural Earth" in archive.read("app/acg/cities.min.json").decode("utf-8")
+        assert "Natural Earth" in archive.read("LICENSES.txt").decode("utf-8-sig")
+        assert "Leaflet 1.9.4" in archive.read("LICENSES.txt").decode("utf-8-sig")
         assert "cities.min.json" not in standalone
         assert "ne_110m_admin_0_countries.geojson" not in standalone
         assert '"name":"日本"' in standalone
@@ -254,6 +260,37 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "最大3地点" in readme
         assert "PDF保存" in readme
         assert "PowerShell、ローカルサーバーは不要" in readme
+
+
+def test_free_museum_zip_is_separate_from_acg_personal_edition():
+    data = build_free_museum_zip("ja")
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        names = archive.namelist()
+        assert "BirthChartMuseum-Free/00-はじめに_README.txt" in names
+        assert "BirthChartMuseum-Free/START-MUSEUM-WINDOWS.bat" in names
+        assert "BirthChartMuseum-Free/START-MUSEUM-MAC.command" in names
+        assert "BirthChartMuseum-Free/app/house-tour/index.html" in names
+        assert "BirthChartMuseum-Free/app/house-tour-architecture/index.html" in names
+        assert "BirthChartMuseum-Free/app/dream-sky/index.html" in names
+        assert not any("START-ACG" in name for name in names)
+        assert not any("/app/acg/" in name for name in names)
+        assert not any(name.endswith("birth-chart.yaml") for name in names)
+        readme = archive.read("BirthChartMuseum-Free/00-はじめに_README.txt").decode("utf-8-sig")
+        entrance = archive.read("BirthChartMuseum-Free/app/index.html").decode("utf-8")
+        assert "象徴ミュージアム、建築ミュージアム、Dream Sky" in readme
+        assert "個人用ACGと個人プランナーは含まれません" in readme
+        assert "appフォルダー内のHTMLは直接開かないでください" in readme
+        assert "window.location.protocol === 'file:'" in entrance
+        assert "START-MUSEUM-WINDOWS.bat" in entrance
+        assert "START-MUSEUM-MAC.command" in entrance
+
+
+def test_free_museum_zip_download_endpoint(monkeypatch):
+    monkeypatch.setattr(routes, "build_free_museum_zip", lambda lang: b"PK-free-museum")
+    response = client.get("/downloads/birth-chart-museum-free.zip?lang=ja")
+    assert response.status_code == 200
+    assert response.content == b"PK-free-museum"
+    assert "BirthChartMuseum-DreamSky-Free-JA.zip" in response.headers["content-disposition"]
 
 
 def test_personal_acg_mobile_app_is_installable_and_self_contained(monkeypatch):
@@ -330,7 +367,8 @@ def test_successful_activation_creates_chart_page(monkeypatch):
     }, follow_redirects=False)
     assert response.status_code == 303
     assert response.headers["location"].startswith("/chart/")
-    assert "personal_download=1" in response.headers["location"]
+    assert "chart_download=1" in response.headers["location"]
+    assert "personal_download=1" not in response.headers["location"]
     assert events[0] == "zip"
     assert events[1][0] == "chart"
     assert events[1][1]["options"]["personal_edition"] is True
@@ -396,6 +434,10 @@ def test_chart_personal_edition_zip_and_acg_autoload(monkeypatch):
     assert chart_page.status_code == 200
     assert 'href="/chart/test-token/acg-app/?lang=ja"' in chart_page.text
     assert "あなたのACGアプリを開く" in chart_page.text
+    assert "Personal Editionだけを保存" in chart_page.text
+    assert "すべてまとめてZIP保存" in chart_page.text
+    assert "無料ミュージアム＋Dream Skyを別で保存" in chart_page.text
+    assert "/downloads/birth-chart-museum-free.zip?lang=ja" in chart_page.text
 
     acg_page = client.get("/acg?load=/chart/test-token.yaml")
     assert acg_page.status_code == 200

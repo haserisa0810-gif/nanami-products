@@ -945,7 +945,11 @@
       <details class="detail-box" id="save-data-box">
         <summary>{{ t.save_data }}</summary>
         <div class="detail-body">
-          <p class="detail-intro">{{ t.save_data_hint }}</p>
+          <p class="detail-intro">
+            {% if is_personal_edition %}
+              {% if lang == 'ja' %}全部入りZIP、またはPersonal Editionだけを選んで保存できます。{% else %}Save the complete ZIP, or download only Personal Edition.{% endif %}
+            {% else %}{{ t.save_data_hint }}{% endif %}
+          </p>
           <div class="page-url-panel">
             <h2>{% if is_transit_yaml %}{{ t.event_url }}{% else %}{% if lang == 'ja' %}保存用URL{% else %}Saved URL{% endif %}{% endif %}</h2>
             <div class="copyline">
@@ -967,14 +971,8 @@
             {% endif %}
             {% if is_personal_edition %}
             <a class="download-primary" id="personal-edition-download-button" href="{{ personal_edition_zip_url }}" download>
-              {% if lang == 'ja' %}Personal Edition ZIPを保存{% else %}Download Personal Edition ZIP{% endif %}
+              {% if lang == 'ja' %}Personal Editionだけを保存{% else %}Download only Personal Edition{% endif %}
             </a>
-            {% if auto_download_personal_edition %}
-            <iframe src="{{ personal_edition_zip_url }}" title="Personal Edition ZIP download" hidden></iframe>
-            <p class="hint" id="personal-edition-download-notice">
-              {% if lang == 'ja' %}鑑定ページを発行しました。Personal Edition ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。{% else %}Your chart page is ready. Your Personal Edition ZIP download is starting. If it does not start, use the button above.{% endif %}
-            </p>
-            {% endif %}
             {% if personal_edition_acg %}
             <a class="download-primary" id="personal-acg-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
               {% if lang == 'ja' %}あなたのACGアプリを開く{% else %}Open your Personal ACG app{% endif %}
@@ -983,6 +981,12 @@
               {% if lang == 'ja' %}iPad・iPhoneでは、開いた画面の「ホーム画面に追加」からアプリとして保存できます。{% else %}On iPad or iPhone, open it and choose Add to Home Screen to save it as an app.{% endif %}
             </p>
             {% endif %}
+            <a class="download-primary" id="free-museum-download-button" href="/downloads/birth-chart-museum-free.zip?lang={{ lang }}" download>
+              {% if lang == 'ja' %}無料ミュージアム＋Dream Skyを別で保存{% else %}Download the free Museum + Dream Sky separately{% endif %}
+            </a>
+            <p class="hint" id="free-museum-download-hint">
+              {% if lang == 'ja' %}ACGとは別の無料体験版です。必要な方だけダウンロードしてください。{% else %}This is a separate free experience from ACG. Download it only if you want it.{% endif %}
+            </p>
             {% endif %}
             {% if acg_enabled and not is_personal_edition %}
             <a class="download-primary" id="acg-bundle-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
@@ -1041,17 +1045,44 @@
               })();
             </script>
             {% endif %}
-            <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>{{ t.save_zip }}</a>
+            <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>
+              {% if is_personal_edition %}{% if lang == 'ja' %}すべてまとめてZIP保存{% else %}Download complete ZIP{% endif %}{% else %}{{ t.save_zip }}{% endif %}
+            </a>
             {% if auto_download_chart_zip %}
-            <iframe src="{{ download_zip_url }}" title="Chart data ZIP download" hidden></iframe>
+            <iframe id="chart-auto-download-frame" data-src="{{ download_zip_url }}" title="Chart data ZIP download" hidden></iframe>
             <p class="hint" id="chart-zip-download-notice">
-              {% if lang == 'ja' %}鑑定ページを発行しました。保存用ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。{% else %}Your chart page is ready. Your data ZIP download is starting. If it does not start, use the button above.{% endif %}
+              {% if is_personal_edition %}
+                {% if lang == 'ja' %}鑑定ページを発行しました。Personal Editionを含む全部入りZIPのダウンロードを開始します。開始しない場合は「すべてまとめてZIP保存」を押してください。{% else %}Your chart page is ready. The complete ZIP, including Personal Edition, is starting. If it does not start, use “Download complete ZIP”.{% endif %}
+              {% else %}
+                {% if lang == 'ja' %}鑑定ページを発行しました。保存用ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。{% else %}Your chart page is ready. Your data ZIP download is starting. If it does not start, use the button above.{% endif %}
+              {% endif %}
             </p>
             <script>
               (() => {
                 const issuedUrl = new URL(window.location.href);
                 issuedUrl.searchParams.delete('chart_download');
+                issuedUrl.searchParams.delete('personal_download');
                 window.history.replaceState(window.history.state, '', issuedUrl.toString());
+
+                const frame = document.getElementById('chart-auto-download-frame');
+                const notice = document.getElementById('chart-zip-download-notice');
+                const downloadKey = 'nanami-initial-download:{{ token }}';
+                let shouldStart = true;
+                try {
+                  if (window.localStorage.getItem(downloadKey) === '1') {
+                    shouldStart = false;
+                  } else {
+                    window.localStorage.setItem(downloadKey, '1');
+                  }
+                } catch (error) {
+                  // Storage can be unavailable in private browsing. The cleaned
+                  // URL still prevents a normal page refresh from downloading again.
+                }
+                if (shouldStart && frame) {
+                  frame.src = frame.dataset.src;
+                } else if (notice) {
+                  notice.textContent = {% if lang == 'ja' %}'初回の自動ダウンロードは実行済みです。もう一度必要な場合は保存ボタンを押してください。'{% else %}'The initial automatic download has already run. Use the save button if you need another copy.'{% endif %};
+                }
               })();
             </script>
             {% endif %}

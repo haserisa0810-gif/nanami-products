@@ -201,12 +201,14 @@ class ChartYamlCopyTest(unittest.TestCase):
             "scheme": "https",
             "server": ("chart.nanami-astro.com", 443),
             "path": "/chart/test",
-            "query_string": b"chart_download=1&lang=ja",
+            "query_string": b"chart_download=1&personal_download=1&lang=ja",
             "headers": [],
         })
         urls = _chart_i18n_context(request, "western_basic")["lang_urls"]
         self.assertNotIn("chart_download", urls["ja"])
         self.assertNotIn("chart_download", urls["en"])
+        self.assertNotIn("personal_download", urls["ja"])
+        self.assertNotIn("personal_download", urls["en"])
 
     def test_zip_download_uses_regular_link(self) -> None:
         self.assertIn('<a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>', self.template)
@@ -216,8 +218,12 @@ class ChartYamlCopyTest(unittest.TestCase):
 
     def test_issued_chart_can_auto_download_zip(self) -> None:
         self.assertIn("{% if auto_download_chart_zip %}", self.template)
-        self.assertIn('<iframe src="{{ download_zip_url }}" title="Chart data ZIP download" hidden></iframe>', self.template)
+        self.assertIn('id="chart-auto-download-frame" data-src="{{ download_zip_url }}"', self.template)
         self.assertIn("issuedUrl.searchParams.delete('chart_download');", self.template)
+        self.assertIn("issuedUrl.searchParams.delete('personal_download');", self.template)
+        self.assertIn("nanami-initial-download:{{ token }}", self.template)
+        self.assertIn("window.localStorage.getItem(downloadKey)", self.template)
+        self.assertIn("frame.src = frame.dataset.src", self.template)
         self.assertIn("window.history.replaceState", self.template)
 
     def test_can_share_files_is_not_used_for_text_share_support(self) -> None:

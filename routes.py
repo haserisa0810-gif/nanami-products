@@ -30,7 +30,11 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
-from services.personal_edition_delivery import build_personal_acg_html, build_personalized_zip
+from services.personal_edition_delivery import (
+    build_free_museum_zip,
+    build_personal_acg_html,
+    build_personalized_zip,
+)
 from services.planner_delivery import (
     build_planner_pdf,
     build_planner_pdf_from_yaml,
@@ -1394,7 +1398,9 @@ def _resolve_lang(request: Request) -> str:
 
 
 def _lang_urls(request: Request) -> dict[str, str]:
-    url = request.url.remove_query_params("chart_download")
+    url = request.url.remove_query_params("chart_download").remove_query_params(
+        "personal_download"
+    )
 
     def relative_url(lang: str) -> str:
         localized = url.include_query_params(lang=lang)
@@ -1868,7 +1874,7 @@ def _existing_chart_redirect(order_code: str, *, lang: str = "ja") -> RedirectRe
         if token:
             logger.info("redirect_existing_chart order_id=%s token_prefix=%s", order_code, str(token)[:8])
             return RedirectResponse(
-                _chart_redirect_url(str(token), lang=lang, download=True),
+                _chart_redirect_url(str(token), lang=lang),
                 status_code=303,
             )
     except Exception as exc:
@@ -4627,9 +4633,7 @@ def personal_edition_activate_post(
         logger.exception("personal_edition_zip_generation_failed error_type=%s", type(exc).__name__)
         return fail("ZIPの作成に失敗しました。時間をおいて再試行してください。",
                     "The ZIP could not be created. Please try again later.", 503)
-    chart_redirect = f"/chart/{chart_token}?personal_download=1"
-    if lang != "ja":
-        chart_redirect = f"{chart_redirect}&lang={lang}"
+    chart_redirect = _chart_redirect_url(chart_token, lang=lang, download=True)
     return RedirectResponse(chart_redirect, status_code=303)
 
 def _redeem_link(request: Request, product_type: str, lang: str) -> str:
@@ -5136,8 +5140,10 @@ def redeem_post(
     chart_redirect = _chart_redirect_url(
         token,
         lang=lang,
-        download=order_provider_clean in {"stores", "payhip", "etsy"},
-        personal_download=is_acg_personal_edition,
+        download=(
+            order_provider_clean in {"stores", "payhip", "etsy"}
+            or is_acg_personal_edition
+        ),
     )
     return RedirectResponse(chart_redirect, status_code=303)
 
@@ -5384,9 +5390,9 @@ def chart_planner_pdf(request: Request, token: str):
     return response
 
 
-@app.get("/chart/{token}/personal-edition.zip")
-def chart_personal_edition_zip(request: Request, token: str):
-    chart = _load_chart_or_404(token, include_svgs=False)
+def _personal_edition_zip_payload(
+    request: Request, token: str, chart: dict
+) -> tuple[bytes, str]:
     options = chart.get("options") or {}
     if not options.get("personal_edition"):
         raise HTTPException(status_code=404, detail="Personal Edition ZIP not found")
@@ -5404,6 +5410,28 @@ def chart_personal_edition_zip(request: Request, token: str):
     )
     filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
                 if include_acg else "BirthChartMuseum-PersonalEdition-FULL.zip")
+    return zip_bytes, filename
+
+
+@app.get("/downloads/birth-chart-museum-free.zip")
+def free_birth_chart_museum_zip(request: Request):
+    lang = _resolve_lang(request)
+    zip_bytes = build_free_museum_zip(lang)
+    filename = (
+        "BirthChartMuseum-DreamSky-Free-EN.zip"
+        if lang == "en"
+        else "BirthChartMuseum-DreamSky-Free-JA.zip"
+    )
+    response = Response(content=zip_bytes, media_type="application/zip")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@app.get("/chart/{token}/personal-edition.zip")
+def chart_personal_edition_zip(request: Request, token: str):
+    chart = _load_chart_or_404(token, include_svgs=False)
+    zip_bytes, filename = _personal_edition_zip_payload(request, token, chart)
     response = Response(content=zip_bytes, media_type="application/zip")
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     _apply_public_chart_headers(response, chart, max_age=0)
@@ -5483,6 +5511,11 @@ def chart_download_zip(request: Request, token: str):
         detail_yaml = share_yaml_text
     ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text, doc=chart_doc)
     prompt_text = _chart_prompt_text(chart, doc=chart_doc)
+    personal_edition_payload = None
+    if options.get("personal_edition"):
+        personal_edition_payload = _personal_edition_zip_payload(
+            request, token, chart
+        )
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("full.yaml", full_yaml_text)
@@ -5508,6 +5541,19 @@ def chart_download_zip(request: Request, token: str):
         if chart.get("shichusuimei_svg"):
             zf.writestr("shichusuimei.svg", optimize_svg(chart["shichusuimei_svg"]) or "")
         zf.writestr("prompt.txt", prompt_text)
+        if personal_edition_payload:
+            personal_zip_bytes, _personal_zip_filename = personal_edition_payload
+            with zipfile.ZipFile(io.BytesIO(personal_zip_bytes), "r") as personal_zip:
+                for item in personal_zip.infolist():
+                    if item.is_dir():
+                        continue
+                    item_path = Path(item.filename)
+                    if item_path.is_absolute() or ".." in item_path.parts:
+                        raise RuntimeError("Unsafe Personal Edition ZIP entry")
+                    zf.writestr(
+                        f"Personal-Edition/{item.filename}",
+                        personal_zip.read(item.filename),
+                    )
         if order_provider in {"stores", "payhip", "etsy"}:
             zf.writestr(
                 "CHART-PAGE-URL.txt",
@@ -5649,7 +5695,6 @@ def chart_page(request: Request, token: str):
                     }
                     else None
                 ),
-                "auto_download_personal_edition": is_personal_edition and request.query_params.get("personal_download") == "1",
                 "personal_acg_url": (
                     f"/chart/{quote(token, safe='')}/acg-app/?lang={lang}"
                     if personal_edition_acg
@@ -5682,7 +5727,13 @@ def chart_page(request: Request, token: str):
                 "horoscope_svg_url": f"{base_url}/chart/{token}/horoscope.svg",
                 "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
                 "download_zip_url": f"{base_url}/chart/{token}/download.zip",
-                "auto_download_chart_zip": request.query_params.get("chart_download") == "1",
+                "auto_download_chart_zip": (
+                    request.query_params.get("chart_download") == "1"
+                    or (
+                        is_personal_edition
+                        and request.query_params.get("personal_download") == "1"
+                    )
+                ),
                 "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
                 "usage_guide_url": "https://guide.nanami-astro.com/",
                 "birth_time_reissue_url": os.getenv("LINE_ADD_FRIEND_URL", "").strip(),
@@ -8193,7 +8244,7 @@ def _chart_zip_readme(chart: dict) -> str:
     expiry_line = (
         "共有URLに有効期限はありません。"
         if no_expiry
-        else f"共有URLの有効期限は発行から90日間です。このデータページは {expires_label} に開けなくなります。"
+        else f"共有URLの有効期限は発行から90日間です。{expires_label} を過ぎると、このデータページは開けなくなります。"
     )
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
@@ -8238,8 +8289,26 @@ def _chart_zip_readme(chart: dict) -> str:
         files.append("horoscope.svg: ホロスコープ図のSVGです。図として確認したいときに使います。")
     if chart.get("shichusuimei_svg"):
         files.append("shichusuimei.svg: 四柱推命の命式図SVGです。図として確認したいときに使います。")
+    if options.get("personal_edition"):
+        start_hint = (
+            "Personal-Edition/START-ACG.html"
+            if options.get("acg_enabled")
+            else (
+                "Personal-Edition/README-FIRST.txt"
+                if options.get("personal_edition_locale") == "en"
+                else "Personal-Edition/はじめに_README.txt"
+            )
+        )
+        files.append(
+            f"Personal-Edition/: あなた専用のPersonal Editionです。{start_hint} から始めてください。"
+        )
 
     file_lines = "\n".join(f"- {line}" for line in files)
+    visual_hint = (
+        "\n- 図で確認したいときは SVG ファイルを開いてください。"
+        if chart.get("horoscope_svg") or chart.get("shichusuimei_svg")
+        else ""
+    )
     return f"""nanami-products 鑑定データ保存用ZIP
 
 このZIPは鑑定データを手元に保存するためのファイルです。
@@ -8251,7 +8320,7 @@ def _chart_zip_readme(chart: dict) -> str:
 使い分けの目安:
 - AIに貼るだけなら ai_paste.txt か detail.yaml を使ってください。
 - もっと厳密に確認したいときは full.yaml を見てください。
-- 図で確認したいときは SVG ファイルを開いてください。
+{visual_hint}
 
 注意:
 - YAML内の天体位置・ハウス・アスペクトなどは計算済みデータです。

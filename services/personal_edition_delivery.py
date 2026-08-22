@@ -75,6 +75,49 @@ def _autoload_script(*, include_acg: bool, lang: str) -> str:
 """ % acg_link
 
 
+def _personal_acg_online_url(chart_url: str | None) -> str | None:
+    if not chart_url:
+        return None
+    parts = urlsplit(chart_url)
+    chart_path = parts.path.rstrip("/")
+    online_path = f"{chart_path}/acg-app/"
+    lang_query = [(key, value) for key, value in parse_qsl(parts.query) if key == "lang"]
+    return urlunsplit(
+        (parts.scheme, parts.netloc, online_path, urlencode(lang_query), "")
+    )
+
+
+def _acg_licenses() -> str:
+    return """NANAMI ASTRO Personal ACG - Third-party licenses
+==================================================
+
+Leaflet 1.9.4
+https://leafletjs.com/
+Copyright (c) 2010-2023, Vladimir Agafonkin
+License: BSD 2-Clause
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.
+
+Natural Earth
+https://www.naturalearthdata.com/
+Public domain map and place-name data.
+
+OpenStreetMap
+https://www.openstreetmap.org/copyright
+Background map tiles are provided by OpenStreetMap contributors and are not
+bundled in this package.
+"""
+
+
 def _standalone_acg_html(
     *,
     acg_html: str,
@@ -128,17 +171,7 @@ def _standalone_acg_html(
     if chart_url:
         result = result.replace('href="/"', f'href="{chart_url}"', 1)
         if show_ipad_online_link:
-            parts = urlsplit(chart_url)
-            chart_path = parts.path.rstrip("/")
-            online_path = f"{chart_path}/acg-app/"
-            lang_query = [
-                (key, value)
-                for key, value in parse_qsl(parts.query)
-                if key == "lang"
-            ]
-            online_url = urlunsplit(
-                (parts.scheme, parts.netloc, online_path, urlencode(lang_query), "")
-            )
+            online_url = _personal_acg_online_url(chart_url)
             ipad_link = (
                 '<style>.ipad-online-acg{display:block;padding:9px 12px;background:#c9a227;'
                 'color:#0a1128;text-decoration:none;font-size:.78rem;font-weight:700;'
@@ -179,38 +212,87 @@ def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None) -> 
 
 
 def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
+    online_url = _personal_acg_online_url(chart_url)
     if lang == "en":
-        fallback = f"\nPrivate online backup page:\n{chart_url}\n" if chart_url else ""
+        online = (
+            "\nYour personal online ACG app:\n"
+            f"{online_url}\n"
+            if online_url else ""
+        )
+        chart = f"\nYour private chart page:\n{chart_url}\n" if chart_url else ""
         return (
-            "NANAMI ASTRO - PERSONAL ACG APP\n\n"
-            "QUICK START\n"
+            "NANAMI ASTRO - PERSONAL ACG APP\n"
+            "PLEASE READ THIS FILE FIRST\n\n"
+            "WINDOWS / MAC (use the downloaded ZIP)\n"
             "1. Extract the complete ZIP archive.\n"
-            "2. Double-click START-ACG.html.\n"
-            "3. Your browser opens your personal ACG map. No installation, command file, "
-            "PowerShell, or local server is required.\n\n"
-            "Search for or click up to three places to compare their nearest personal ACG "
-            "lines. Use the Print button to print the comparison or save it as a PDF.\n"
+            "   Do not open START-ACG.html while it is still inside the ZIP.\n"
+            "2. Open the extracted folder and double-click START-ACG.html.\n"
+            "3. Your default browser opens your personal ACG map.\n"
+            "No installation, App Store download, command file, PowerShell, or local server "
+            "is required.\n\n"
+            "IPAD / IPHONE (recommended: use the online ACG app in Safari)\n"
+            "START-ACG.html may not display the map when opened from the Files app preview.\n"
+            "1. Open your private chart page below in Safari.\n"
+            "2. Expand 'Save your data'.\n"
+            "3. Tap 'Open your Personal ACG app'.\n"
+            "4. In the ACG app, tap 'Add to Home Screen' for guidance. Then tap Safari's "
+            "Share button and select 'Add to Home Screen'.\n"
+            "5. Next time, start it from the My ACG icon on your Home Screen.\n"
+            "This is a web app, so there is nothing to install from the App Store. An internet "
+            "connection is required.\n"
+            + online
+            + chart
+            + "\nHOW TO USE THE MAP\n"
+            "1. Select Basic, Work, Relationships, or All.\n"
+            "2. Search for a city or click the map to add up to three places.\n"
+            "3. Compare the nearest ACG lines shown for each place.\n"
+            "4. Use 'Ask AI about the selected places' to copy a consultation prompt.\n"
+            "5. Use Print to print the map and comparison or save them as a PDF.\n\n"
+            "IF THE MAP DOES NOT APPEAR\n"
+            "- iPad/iPhone: do not use the Files preview; open the online ACG app in Safari.\n"
+            "- Windows/Mac: make sure the ZIP was fully extracted before opening the HTML.\n"
+            "- Check your internet connection. Only the background map tiles are downloaded.\n\n"
             "Your personal birth data and ACG lines are embedded in START-ACG.html. "
             "Place-name search, personal ACG calculation, and comparison all run inside "
             "the file. Only background map tiles require an internet connection.\n"
-            + fallback
-            + "\nKeep this package private. Personal use only; do not redistribute.\n"
+            "Keep the ZIP and private URLs confidential. Personal use only; do not redistribute.\n"
         )
-    fallback = f"\nオンライン予備ページ：\n{chart_url}\n" if chart_url else ""
+    online = f"\nあなた専用のオンラインACGアプリ：\n{online_url}\n" if online_url else ""
+    chart = f"\n専用鑑定ページ：\n{chart_url}\n" if chart_url else ""
     return (
-        "NANAMI ASTRO - 個人用ACGアプリ\n\n"
-        "【起動方法】\n"
-        "1. ZIPを右クリックし、「すべて展開」します。\n"
-        "2. START-ACG.html をダブルクリックします。\n"
-        "3. ブラウザであなた専用のACG地図が開きます。インストール、バッチファイル、"
-        "PowerShell、ローカルサーバーは不要です。\n\n"
-        "都市名検索または地図クリックで最大3地点を登録し、近いACGラインを比較できます。"
-        "印刷ボタンから、比較結果の印刷またはPDF保存ができます。\n"
+        "NANAMI ASTRO - 個人用ACGアプリ\n"
+        "このファイルを最初にお読みください\n\n"
+        "【Windows / Mac：ダウンロードしたZIPを使う】\n"
+        "1. ZIPを右クリックし、「すべて展開」します。ZIPの中から直接開かないでください。\n"
+        "2. 展開したフォルダー内の START-ACG.html をダブルクリックします。\n"
+        "3. いつも使うブラウザで、あなた専用のACG地図が開きます。\n"
+        "インストール、App Storeからのダウンロード、バッチファイル、PowerShell、"
+        "ローカルサーバーは不要です。\n\n"
+        "【iPad / iPhone：SafariのオンラインACGアプリがおすすめ】\n"
+        "「ファイル」アプリのプレビューで START-ACG.html を開くと、地図が表示されないことがあります。\n"
+        "1. 下記の専用鑑定ページをSafariで開きます。\n"
+        "2. ページ内の「データを保存」を開きます。\n"
+        "3. 「あなたのACGアプリを開く」を押します。\n"
+        "4. ACG画面の「ホーム画面に追加」で案内を確認し、Safariの共有ボタンから"
+        "「ホーム画面に追加」を選びます。\n"
+        "5. 次回から、ホーム画面の「My ACG」アイコンで起動できます。\n"
+        "Webアプリのため、App Storeからインストールするものはありません。利用時はインターネット接続が必要です。\n"
+        + online
+        + chart
+        + "\n【地図の使い方】\n"
+        "1. 「基本」「仕事」「人の縁」「すべて」から表示テーマを選びます。\n"
+        "2. 都市名検索または地図クリックで、最大3地点を登録します。\n"
+        "3. 各地点に近いACGラインとメッセージを比較します。\n"
+        "4. 「選んだ場所の星のメッセージをAIに聞く」で、AI相談用の文章をコピーできます。\n"
+        "5. 印刷ボタンから、地図と比較結果を印刷またはPDF保存できます。\n\n"
+        "【地図が表示されないとき】\n"
+        "・iPad / iPhone：「ファイル」アプリではなく、SafariでオンラインACGアプリを開いてください。\n"
+        "・Windows / Mac：ZIPをすべて展開してから START-ACG.html を開いてください。\n"
+        "・インターネット接続を確認してください。背景地図の表示には通信が必要です。\n\n"
         "出生データとACGラインはSTART-ACG.html内に保存されています。"
         "都市名検索・個人ACGの計算結果・比較処理はファイル内で動作します。"
         "インターネット接続を使用するのは背景地図だけです。\n"
-        + fallback
-        + "\n個人利用専用です。このパッケージを再配布・転売しないでください。\n"
+        "ZIPと専用URLは他人に共有しないでください。個人利用専用です。再配布・転売は禁止です。\n"
     )
 
 
@@ -282,6 +364,128 @@ def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str
     )
 
 
+def _free_museum_readme(lang: str) -> str:
+    if lang == "en":
+        return (
+            "BIRTH CHART MUSEUM + DREAM SKY - FREE EDITION\n\n"
+            "IMPORTANT: Do not open HTML files inside the app folder directly.\n"
+            "1. Extract the complete ZIP archive.\n"
+            "2. Windows: double-click START-MUSEUM-WINDOWS.bat.\n"
+            "   Mac: Control-click START-MUSEUM-MAC.command, then choose Open.\n"
+            "3. Keep the server window open while using the Museum.\n"
+            "4. Paste your astrology YAML at the entrance, or use the sample chart.\n\n"
+            "This separate free package includes the Symbolic Museum, Architecture Museum, "
+            "and Dream Sky. Personal ACG and the Personal Planner are not included.\n"
+        )
+    return (
+        "出生図ミュージアム＋Dream Sky 無料版\n"
+        "このファイルを最初にお読みください\n\n"
+        "【重要】appフォルダー内のHTMLは直接開かないでください。\n"
+        "1. ZIPを右クリックして「すべて展開」します。\n"
+        "2. Windows：START-MUSEUM-WINDOWS.bat をダブルクリックします。\n"
+        "   Mac：START-MUSEUM-MAC.command をControl＋クリックし、「開く」を選びます。\n"
+        "3. 利用中は、起動時に表示されるサーバー画面を閉じないでください。\n"
+        "4. 入口で占術データYAMLを貼り付けるか、サンプル出生図を選びます。\n\n"
+        "この無料ZIPには、象徴ミュージアム、建築ミュージアム、Dream Skyが入っています。\n"
+        "個人用ACGと個人プランナーは含まれません。\n"
+    )
+
+
+def _free_museum_direct_file_guard(lang: str) -> str:
+    if lang == "en":
+        title = "Please start the Museum from the START file"
+        lead = "This page was opened directly from the app folder, so its design and features cannot load."
+        steps = (
+            "<li>Close this page and extract the complete ZIP archive.</li>"
+            "<li>Windows: double-click <strong>START-MUSEUM-WINDOWS.bat</strong>.</li>"
+            "<li>Mac: Control-click <strong>START-MUSEUM-MAC.command</strong>, then choose Open.</li>"
+        )
+        note = "Do not open HTML files inside the app folder directly."
+    else:
+        title = "STARTファイルからミュージアムを起動してください"
+        lead = "appフォルダー内のHTMLを直接開いたため、デザインや機能を読み込めていません。"
+        steps = (
+            "<li>この画面を閉じ、ZIPを右クリックして「すべて展開」します。</li>"
+            "<li>Windows：<strong>START-MUSEUM-WINDOWS.bat</strong> をダブルクリックします。</li>"
+            "<li>Mac：<strong>START-MUSEUM-MAC.command</strong> をControl＋クリックし、「開く」を選びます。</li>"
+        )
+        note = "appフォルダー内のHTMLは直接開かないでください。"
+    panel = (
+        '<main class="museum-file-warning">'
+        '<p class="museum-file-warning__eyebrow">BIRTH CHART MUSEUM + DREAM SKY</p>'
+        f"<h1>{title}</h1><p>{lead}</p><ol>{steps}</ol>"
+        f'<p class="museum-file-warning__note">{note}</p></main>'
+    )
+    return f"""
+  <style id="museum-direct-file-style">
+    html:has(.museum-file-warning), body:has(.museum-file-warning) {{ min-height: 100%; }}
+    body:has(.museum-file-warning) {{ margin: 0 !important; padding: 28px !important; box-sizing: border-box;
+      display: grid !important; place-items: center !important; background: #081127 !important;
+      color: #f6f0df !important; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif !important; }}
+    .museum-file-warning {{ width: min(680px, 100%); box-sizing: border-box; padding: clamp(28px, 6vw, 56px);
+      border: 1px solid #c9a227; border-radius: 20px; background: #101b38; box-shadow: 0 18px 60px #0008; }}
+    .museum-file-warning__eyebrow {{ color: #e2bd39 !important; font-size: 13px !important;
+      font-weight: 800 !important; letter-spacing: .12em; }}
+    .museum-file-warning h1 {{ margin: 12px 0 18px !important; color: #fff !important;
+      font-size: clamp(26px, 5vw, 40px) !important; line-height: 1.35 !important; }}
+    .museum-file-warning p, .museum-file-warning li {{ font-size: 17px !important; line-height: 1.8 !important; }}
+    .museum-file-warning ol {{ margin: 24px 0; padding-left: 1.5em; }}
+    .museum-file-warning li + li {{ margin-top: 10px; }}
+    .museum-file-warning strong {{ color: #ffdc5b !important; overflow-wrap: anywhere; }}
+    .museum-file-warning__note {{ margin: 24px 0 0 !important; padding: 14px 16px;
+      border-radius: 10px; background: #e2bd3918; color: #ffdf70 !important; font-weight: 700 !important; }}
+  </style>
+  <script>
+  if (window.location.protocol === 'file:') {{
+    document.addEventListener('DOMContentLoaded', function () {{
+      document.title = {json.dumps(title, ensure_ascii=False)};
+      document.body.innerHTML = {json.dumps(panel, ensure_ascii=False)};
+    }});
+  }}
+  </script>
+"""
+
+
+def build_free_museum_zip(lang: str = "ja") -> bytes:
+    safe_lang = lang if lang in {"ja", "en"} else "ja"
+    source_path = ensure_template_zip(safe_lang)
+    output = io.BytesIO()
+    free_root = "BirthChartMuseum-Free"
+    excluded_prefixes = (
+        "app/acg/",
+        "app/static/vendor/leaflet/",
+        "app/static/geo/",
+    )
+    with zipfile.ZipFile(source_path, "r") as source, zipfile.ZipFile(
+        output, "w", zipfile.ZIP_DEFLATED
+    ) as target:
+        for item in source.infolist():
+            if "/" not in item.filename or item.is_dir():
+                continue
+            relative_name = item.filename.split("/", 1)[1]
+            if (
+                not relative_name
+                or relative_name.startswith(excluded_prefixes)
+                or relative_name.startswith("START-ACG-")
+                or relative_name in {"README.txt", "YOUR_CHART.txt"}
+            ):
+                continue
+            data = source.read(item.filename)
+            if relative_name == "app/index.html":
+                page = data.decode("utf-8")
+                page = page.replace(
+                    "</head>", _free_museum_direct_file_guard(safe_lang) + "</head>", 1
+                )
+                data = page.encode("utf-8")
+            target.writestr(f"{free_root}/{relative_name}", data)
+        readme_name = "README-FIRST.txt" if safe_lang == "en" else "00-はじめに_README.txt"
+        target.writestr(
+            f"{free_root}/{readme_name}",
+            _free_museum_readme(safe_lang).encode("utf-8-sig"),
+        )
+    return output.getvalue()
+
+
 def build_personalized_zip(
     *, yaml_text: str, lang: str, include_acg: bool = False, chart_url: str | None = None,
 ) -> bytes:
@@ -306,22 +510,7 @@ def build_personalized_zip(
             if not relative_name or item.is_dir():
                 continue
             data = source.read(item.filename)
-            if relative_name == "start.bat":
-                relative_name = "START-MUSEUM-WINDOWS.bat"
-            elif relative_name == "start.command":
-                relative_name = "START-MUSEUM-MAC.command"
-            elif relative_name in {"README.txt", "YOUR_CHART.txt"}:
-                continue
-            if include_acg and relative_name in {
-                "START-ACG-WINDOWS.bat",
-                "START-ACG-MAC.command",
-            }:
-                continue
-            if relative_name == "app/index.html":
-                html = data.decode("utf-8")
-                html = html.replace("</head>", _autoload_script(include_acg=include_acg, lang=lang) + "</head>", 1)
-                data = html.encode("utf-8")
-            elif relative_name == "app/acg/index.html":
+            if relative_name == "app/acg/index.html":
                 acg_html = data.decode("utf-8")
             elif relative_name == "app/acg/cities.min.json":
                 city_json_data = data.decode("utf-8")
@@ -330,8 +519,21 @@ def build_personalized_zip(
                 leaflet_css = data.decode("utf-8")
             elif relative_name == "app/static/vendor/leaflet/leaflet.js":
                 leaflet_js = data.decode("utf-8")
+            if include_acg:
+                continue
+            if relative_name == "start.bat":
+                relative_name = "START-MUSEUM-WINDOWS.bat"
+            elif relative_name == "start.command":
+                relative_name = "START-MUSEUM-MAC.command"
+            elif relative_name in {"README.txt", "YOUR_CHART.txt"}:
+                continue
+            if relative_name == "app/index.html":
+                html = data.decode("utf-8")
+                html = html.replace("</head>", _autoload_script(include_acg=include_acg, lang=lang) + "</head>", 1)
+                data = html.encode("utf-8")
             target.writestr(relative_name, data)
-        target.writestr("app/birth-chart.yaml", yaml_text.encode("utf-8"))
+        if not include_acg:
+            target.writestr("app/birth-chart.yaml", yaml_text.encode("utf-8"))
         if include_acg:
             if city_data is None and city_json_data is None:
                 fallback_city_path = PE_DIR / "acg" / "cities.min.json"
@@ -350,10 +552,6 @@ def build_personalized_zip(
                 standalone_acg_html = (PE_DIR / "acg" / "index.html").read_text(
                     encoding="utf-8"
                 )
-            target.writestr(
-                "app/acg-personal.geojson",
-                json.dumps(acg_data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
-            )
             if (
                 standalone_acg_html is None
                 or city_data is None
@@ -362,7 +560,6 @@ def build_personalized_zip(
                 or not city_json_data
             ):
                 raise RuntimeError("Personal Edition ACG assets were not found")
-            target.writestr("app/acg/cities.min.json", city_json_data.encode("utf-8"))
             target.writestr(
                 "START-ACG.html",
                 _standalone_acg_html(
@@ -376,12 +573,17 @@ def build_personalized_zip(
                     show_ipad_online_link=True,
                 ).encode("utf-8"),
             )
+            target.writestr("LICENSES.txt", _acg_licenses().encode("utf-8-sig"))
         guide = (
             _acg_direct_start_readme(lang=lang, chart_url=chart_url)
             if include_acg
             else _buyer_readme(lang=lang, include_acg=False, chart_url=chart_url)
         )
-        guide_name = "README-FIRST.txt" if lang == "en" else "はじめに_README.txt"
+        guide_name = (
+            "README-FIRST.txt"
+            if lang == "en"
+            else ("00-はじめに_README.txt" if include_acg else "はじめに_README.txt")
+        )
         target.writestr(guide_name, guide.encode("utf-8-sig"))
         if chart_url:
             url_name = "PRIVATE-CHART-URL.txt" if lang == "en" else "専用鑑定ページ_URL.txt"

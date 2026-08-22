@@ -26,6 +26,48 @@ def _download_request(token: str) -> Request:
 
 
 class ChartDownloadZipTest(unittest.TestCase):
+    def test_personal_edition_chart_zip_includes_personal_edition_download(self) -> None:
+        full_yaml = yaml.safe_dump(_full_doc(), allow_unicode=True, sort_keys=False)
+        chart = {
+            "token": "personal-token",
+            "options": {
+                "western_natal": True,
+                "transit": True,
+                "product_type": "acg_bundle",
+                "personal_edition": True,
+                "personal_edition_locale": "ja",
+                "acg_enabled": True,
+            },
+            "yaml_text": full_yaml,
+            "prompt_text": "AI prompt",
+            "share_yaml_text": None,
+            "horoscope_svg": None,
+            "shichusuimei_svg": None,
+        }
+
+        personal_buffer = io.BytesIO()
+        with zipfile.ZipFile(personal_buffer, "w") as personal_zip:
+            personal_zip.writestr("START-ACG.html", "personal ACG")
+            personal_zip.writestr("はじめに_README.txt", "guide")
+
+        with patch("routes._load_chart_or_404", return_value=chart), patch(
+            "routes.build_personalized_zip", return_value=personal_buffer.getvalue()
+        ) as build_personal:
+            response = chart_download_zip(
+                _download_request("personal-token"), "personal-token"
+            )
+
+        with zipfile.ZipFile(io.BytesIO(response.body)) as archive:
+            self.assertIn("Personal-Edition/START-ACG.html", archive.namelist())
+            self.assertEqual(
+                archive.read("Personal-Edition/START-ACG.html"), b"personal ACG"
+            )
+            self.assertIn(
+                "Personal-Edition/START-ACG.html",
+                archive.read("README.txt").decode("utf-8"),
+            )
+        build_personal.assert_called_once()
+
     def test_zip_regenerates_ai_files_from_full_yaml_when_stored_share_yaml_is_stale(self) -> None:
         full_doc = _full_doc()
         full_doc["meta"] = {

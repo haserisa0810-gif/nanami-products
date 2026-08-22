@@ -570,7 +570,7 @@ class ExistingChartRedirectTest(unittest.TestCase):
             "/chart/new-token?personal_download=1&lang=en",
         )
 
-    def test_existing_redemption_redirects_with_download_and_language(self) -> None:
+    def test_existing_redemption_redirects_without_repeating_download(self) -> None:
         with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
             routes.pg_store,
             "get_redemption_by_order_code",
@@ -582,7 +582,7 @@ class ExistingChartRedirectTest(unittest.TestCase):
         self.assertEqual(response.status_code, 303)
         self.assertEqual(
             response.headers["location"],
-            "/chart/existing-token?chart_download=1&lang=en",
+            "/chart/existing-token?lang=en",
         )
 
     def test_missing_existing_chart_does_not_redirect(self) -> None:
