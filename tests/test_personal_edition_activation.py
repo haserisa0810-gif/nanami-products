@@ -219,6 +219,13 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "leaflet" in standalone.lower()
         assert "https://chart.example/chart/private?lang=ja" in standalone
         assert 'id="city-search"' in standalone
+        assert "占術データへ戻る" in standalone
+        assert "ミュージアムへ戻る" not in standalone
+        assert 'id="copy-prompt-button"' in standalone
+        assert "選んだ場所の星のメッセージをAIに聞く" in standalone
+        assert "buildConsultationPrompt" in standalone
+        assert "navigator.clipboard.writeText(prompt)" in standalone
+        assert "出生地ではなく、旅行・移住・仕事・活動拠点などの候補地" in standalone
         assert "MAX_PLACES=3" in standalone
         assert "nearestLines" in standalone
         assert "Natural Earth" in archive.read("app/acg/cities.min.json").decode("utf-8")

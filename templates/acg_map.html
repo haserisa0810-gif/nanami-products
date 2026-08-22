@@ -467,11 +467,12 @@
         <div class="geo-results" id="geo-results"></div>
       </div>
 
-      <div class="panel" id="nearby-panel" hidden>
+      <div class="panel" id="nearby-panel">
         <h2>{{ "Lines near this point" if en else "この地点の近くの線" }}</h2>
-        <p id="nearby-title"></p>
+        <p id="nearby-title">{{ "Choose a place on the map to see its nearby lines." if en else "地図で気になる場所を選ぶと、近くの線と星のメッセージを確認できます。" }}</p>
         <ul id="nearby-list"></ul>
-        <button class="action-btn" id="btn-copy-yaml" type="button">{{ "Copy location context for AI" if en else "AIへ場所コンテキストをコピー" }}</button>
+        <button class="action-btn" id="btn-copy-yaml" type="button" disabled>{{ "Ask AI what this place means for me" if en else "この場所の星のメッセージをAIに聞く" }}</button>
+        <p class="note">{{ "Once you choose a place, this copies everything you need to paste into your preferred AI." if en else "場所を選ぶと、お好きなAIに貼り付ける内容をコピーできます。" }}</p>
       </div>
 
       <details class="control-group" id="line-controls" open>
@@ -1325,7 +1326,11 @@
       lastQuery = null;
       lastLatLng = null;
       lastLocationName = "";
-      document.getElementById("nearby-panel").hidden = true;
+      document.getElementById("nearby-title").textContent = EN
+        ? "Choose a place on the map to see its nearby lines."
+        : "地図で気になる場所を選ぶと、近くの線と星のメッセージを確認できます。";
+      document.getElementById("nearby-list").innerHTML = "";
+      document.getElementById("btn-copy-yaml").disabled = true;
       if (clickMarker) { map.removeLayer(clickMarker); clickMarker = null; }
     }
 
@@ -1416,6 +1421,7 @@
         list.appendChild(li);
       });
       panel.hidden = false;
+      document.getElementById("btn-copy-yaml").disabled = false;
 
       if (clickMarker) { map.removeLayer(clickMarker); }
       clickMarker = L.circleMarker(latlng, {
@@ -1865,7 +1871,7 @@
     document.getElementById("btn-copy-yaml").addEventListener("click", function () {
       var text = buildExportYaml();
       if (!text) { return; }
-      function done() { setStatus(EN ? "Location context copied for AI." : "AIへ場所コンテキストをコピーしました。"); }
+      function done() { setStatus(EN ? "Copied. Paste it into your preferred AI to hear this place's message." : "AIに貼り付ける内容をコピーしました。お好きなAIで、この場所の星のメッセージを聞けます。"); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
       } else {

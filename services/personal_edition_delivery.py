@@ -14,7 +14,7 @@ from services.acg_api import personal_geojson
 
 ROOT = Path(__file__).resolve().parent.parent
 PE_DIR = ROOT / "personal-edition"
-VERSION = "1.1.2"
+VERSION = "1.1.4"
 _build_lock = threading.Lock()
 
 

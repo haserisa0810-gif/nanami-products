@@ -104,7 +104,11 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     assert "出生図の関連配置と組み合わせて読む。" in template
     assert "function yamlString(value)" in template
     assert "function appendFoldedScalar(lines, indent, key, text)" in template
-    assert "AIへ場所コンテキストをコピー" in template
+    assert "この場所の星のメッセージをAIに聞く" in template
+    assert 'id="btn-copy-yaml" type="button" disabled' in template
+    assert "場所を選ぶと、お好きなAIに貼り付ける内容をコピーできます。" in template
+    assert 'document.getElementById("btn-copy-yaml").disabled = false;' in template
+    assert "AIに貼り付ける内容をコピーしました。" in template
 
 
 def test_acg_map_uses_shared_planet_labels_line_styles_and_globe_link() -> None:

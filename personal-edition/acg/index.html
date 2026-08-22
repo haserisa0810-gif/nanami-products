@@ -10,7 +10,7 @@
     *{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--base);color:var(--text);font-family:"Noto Sans JP","Yu Gothic",sans-serif;display:grid;grid-template-rows:auto 1fr}
     header{padding:10px 14px;border-bottom:1px solid var(--gold-soft);display:flex;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:1rem;color:var(--gold);margin:0}.note{font-size:.74rem;color:var(--dim);margin:0;line-height:1.55}.back{margin-left:auto;color:var(--gold);text-decoration:none;font-size:.78rem}
     main{display:grid;grid-template-columns:340px 1fr;min-height:0}.side{padding:12px;background:var(--panel);overflow:auto}.section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid rgba(201,162,39,.16)}.section:last-child{border-bottom:0}.side h2{font-size:.84rem;color:var(--gold);margin:0 0 8px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}button{padding:9px;border:1px solid rgba(201,162,39,.55);border-radius:7px;background:transparent;color:var(--gold);cursor:pointer}button:hover{background:rgba(201,162,39,.1)}button.active,.primary{background:var(--gold);color:var(--base);font-weight:700}.primary:disabled{opacity:.42;cursor:not-allowed}.status{font-size:.76rem;color:var(--dim);line-height:1.6}.status.error{color:var(--danger)}.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:.78rem}.checks label{display:flex;gap:6px;align-items:center}.badge{position:absolute;z-index:600;top:10px;left:50%;transform:translateX(-50%);background:rgba(16,26,60,.94);border:1px solid rgba(201,162,39,.4);border-radius:999px;padding:6px 12px;font-size:.72rem}.map-wrap{position:relative;min-width:0}#map{width:100%;height:100%}
-    .search-row{display:grid;grid-template-columns:1fr auto;gap:6px}.search-row input{min-width:0;padding:9px 10px;border:1px solid rgba(201,162,39,.38);border-radius:7px;background:var(--base);color:var(--text);font:inherit}.search-row input::placeholder{color:#7f879f}.search-results{display:grid;gap:5px;margin-top:7px}.search-results button{text-align:left;padding:7px 9px;color:var(--text);font-size:.74rem}.places-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.places-count{font-size:.72rem;color:var(--dim)}.places{display:grid;gap:8px;margin-top:8px}.place-card{padding:10px;border:1px solid var(--gold-soft);border-radius:9px;background:var(--panel-2)}.place-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.place-name{font-weight:700;color:var(--text);font-size:.84rem;line-height:1.4}.remove{padding:2px 6px;border:0;color:var(--dim);font-size:1rem}.coords{font-size:.68rem;color:var(--dim);margin:3px 0 7px}.nearby{list-style:none;padding:0;margin:0;display:grid;gap:7px}.nearby li{font-size:.72rem;line-height:1.45}.line-top{display:flex;justify-content:space-between;gap:8px;color:var(--gold)}.line-meaning{color:var(--dim);margin-top:2px}.empty{font-size:.73rem;color:var(--dim);line-height:1.5}.place-pin{background:transparent;border:0}.place-pin-shape{position:relative;display:block;width:22px;height:22px;border:2px solid #0a1128;border-radius:50% 50% 50% 0;background:#c9a227;box-shadow:0 2px 5px rgba(0,0,0,.4);transform:rotate(-45deg)}.place-pin-shape::after{content:"";position:absolute;width:6px;height:6px;left:6px;top:6px;border-radius:50%;background:#fff}.print-action{width:100%;margin-top:9px}.print-report,.print-map-heading,.print-place-label{display:none}.map-wrap.print-preparing{position:fixed;left:-10000px;top:0;width:182mm!important;height:auto!important;min-height:0!important}.map-wrap.print-preparing #map{width:182mm!important;height:125mm!important}
+    .search-row{display:grid;grid-template-columns:1fr auto;gap:6px}.search-row input{min-width:0;padding:9px 10px;border:1px solid rgba(201,162,39,.38);border-radius:7px;background:var(--base);color:var(--text);font:inherit}.search-row input::placeholder{color:#7f879f}.search-results{display:grid;gap:5px;margin-top:7px}.search-results button{text-align:left;padding:7px 9px;color:var(--text);font-size:.74rem}.places-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.places-count{font-size:.72rem;color:var(--dim)}.places{display:grid;gap:8px;margin-top:8px}.place-card{padding:10px;border:1px solid var(--gold-soft);border-radius:9px;background:var(--panel-2)}.place-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.place-name{font-weight:700;color:var(--text);font-size:.84rem;line-height:1.4}.remove{padding:2px 6px;border:0;color:var(--dim);font-size:1rem}.coords{font-size:.68rem;color:var(--dim);margin:3px 0 7px}.nearby{list-style:none;padding:0;margin:0;display:grid;gap:7px}.nearby li{font-size:.72rem;line-height:1.45}.line-top{display:flex;justify-content:space-between;gap:8px;color:var(--gold)}.line-meaning{color:var(--dim);margin-top:2px}.empty{font-size:.73rem;color:var(--dim);line-height:1.5}.place-pin{background:transparent;border:0}.place-pin-shape{position:relative;display:block;width:22px;height:22px;border:2px solid #0a1128;border-radius:50% 50% 50% 0;background:#c9a227;box-shadow:0 2px 5px rgba(0,0,0,.4);transform:rotate(-45deg)}.place-pin-shape::after{content:"";position:absolute;width:6px;height:6px;left:6px;top:6px;border-radius:50%;background:#fff}.place-action{width:100%;margin-top:9px}.print-report,.print-map-heading,.print-place-label{display:none}.map-wrap.print-preparing{position:fixed;left:-10000px;top:0;width:182mm!important;height:auto!important;min-height:0!important}.map-wrap.print-preparing #map{width:182mm!important;height:125mm!important}
     @media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:auto 1fr}.side{max-height:52vh}.map-wrap{min-height:48vh}.back{margin-left:0}}
     @media print{
       @page{size:A4;margin:14mm}html,body{width:100%!important;min-width:0!important;height:auto!important;background:#fff;color:#17203b;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{display:block!important;font-family:"Noto Sans JP","Yu Gothic",sans-serif}header{display:none!important}main{display:block!important;width:100%!important;height:auto!important;min-height:0!important}.side{display:none!important}.map-wrap,.map-wrap.print-preparing{display:block!important;position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:auto!important;min-height:0!important;break-after:page;page-break-after:always}.print-map-heading{display:block!important;margin:0 0 5mm}.print-map-heading h1,.print-report h1{font-size:22pt;color:#67520f;margin:0 0 3mm}.print-map-meta,.print-meta{font-size:9pt;color:#687087;margin:0}.map-wrap #map,.map-wrap.print-preparing #map{display:block!important;width:100%!important;height:125mm!important;border:1px solid #d7c88f;border-radius:3mm}.map-wrap .badge,.leaflet-control-zoom{display:none!important}.leaflet-land-pane{opacity:1!important}.print-place-label{display:block!important}.print-report{display:block!important;width:auto!important;max-width:none!important;margin:0!important;padding-top:1mm!important}.print-meta{margin-bottom:6mm}.print-grid{display:block!important;width:100%!important}.print-card{display:block;width:auto!important;margin:0 0 5mm;border:1px solid #d7c88f;border-radius:3mm;padding:4mm;break-inside:avoid;page-break-inside:avoid}.print-card h2{font-size:13pt;margin:0 0 1mm;color:#17203b}.print-card .coords{color:#687087;margin-bottom:3mm}.print-card ol{margin:0;padding-left:5mm}.print-card li{margin-bottom:3mm;font-size:9.5pt;line-height:1.4}.print-card strong{color:#67520f}.print-note{margin-top:5mm;padding-top:4mm;border-top:1px solid #ddd;font-size:8.5pt;color:#687087;line-height:1.5;break-inside:avoid;page-break-inside:avoid}
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-<header><h1>ACG · あなたの天空線</h1><p class="note">出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。</p><a class="back" href="/">ミュージアムへ戻る</a></header>
+<header><h1>ACG · あなたの天空線</h1><p class="note">出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。</p><a class="back" href="/">占術データへ戻る</a></header>
 <main>
   <aside class="side">
     <section class="section">
@@ -35,7 +35,9 @@
       <p class="status" id="search-status" aria-live="polite"></p>
       <div class="search-results" id="search-results"></div>
       <div class="places" id="places"></div>
-      <button class="primary print-action" id="print-button" type="button" disabled>地図＋3都市レポートを印刷・PDF保存</button>
+      <button class="primary place-action" id="copy-prompt-button" type="button" disabled>選んだ場所の星のメッセージをAIに聞く</button>
+      <p class="status" id="copy-status" aria-live="polite"></p>
+      <button class="place-action" id="print-button" type="button" disabled>地図＋3都市レポートを印刷・PDF保存</button>
     </section>
     <p class="status" id="status">個人線データを読み込んでいます…</p>
   </aside>
@@ -131,7 +133,7 @@
   }
   function renderPlaces(){
     var host=document.getElementById('places'),printGrid=document.getElementById('print-grid');host.textContent='';printGrid.textContent='';markerLayer.clearLayers();markers=[];
-    document.getElementById('places-count').textContent=places.length+' / '+MAX_PLACES;document.getElementById('print-button').disabled=places.length===0;
+    document.getElementById('places-count').textContent=places.length+' / '+MAX_PLACES;document.getElementById('copy-prompt-button').disabled=places.length===0;document.getElementById('print-button').disabled=places.length===0;
     places.forEach(function(place,index){
       var lines=nearestLines(place),card=document.createElement('article'),head=document.createElement('div'),name=document.createElement('div'),remove=document.createElement('button'),coords=document.createElement('p');
       card.className='place-card';head.className='place-title';name.className='place-name';name.textContent=(index+1)+'. '+place.name;remove.className='remove';remove.type='button';remove.setAttribute('aria-label',place.name+'を削除');remove.textContent='×';remove.onclick=function(){removePlace(index);};
@@ -163,9 +165,45 @@
     setSearchStatus('検索結果を選択してください。');showSearchResults(items);
   }
 
+  function buildConsultationPrompt(){
+    var lines=[
+      '以下は、出生時刻とタイムゾーンを確認して計算済みの個人アストロカートグラフィ（ACG）地点データです。',
+      '天体位置やラインを生年月日から再計算せず、記載された計算結果をそのまま使って相談に答えてください。',
+      '各地点は出生地ではなく、旅行・移住・仕事・活動拠点などの候補地です。占星術的な傾向として読み、現実の安全・費用・制度なども別途確認するよう促してください。',
+      '',
+      '相談したいこと:',
+      '- 登録地点ごとの特徴、活かしやすいテーマ、注意点を具体的に説明してください。',
+      '- 複数地点がある場合は、共通点と違いを比較し、目的別に向く地点を整理してください。',
+      '- 情報が足りなければ、最初に私の目的や滞在期間などを質問してください。',
+      '',
+      '表示テーマ: '+presets[selectedKey].label,
+      '計算基準（UTC）: '+((data&&data.meta&&data.meta.datetime_utc)||'確認済み出生日時'),
+      '',
+      '登録地点と500km以内の近接ライン:'
+    ];
+    places.forEach(function(place,index){
+      var nearby=nearestLines(place);lines.push('');lines.push((index+1)+'. '+place.name);lines.push('   座標: 緯度 '+place.lat.toFixed(3)+' / 経度 '+place.lon.toFixed(3));
+      if(!nearby.length){lines.push('   - 現在の表示テーマでは500km以内に対象ラインなし');return;}
+      nearby.forEach(function(line){lines.push('   - '+line.label+'（約'+line.distance+'km）: '+line.meaning);});
+    });
+    lines.push('');lines.push('まず、私が今回いちばん知りたい目的を一つ質問してから読み解きを始めてください。');
+    return lines.join('\n');
+  }
+  function setCopyStatus(message,isError){var el=document.getElementById('copy-status');el.textContent=message||'';el.className=isError?'status error':'status'}
+  function copyConsultationPrompt(){
+    var prompt=buildConsultationPrompt();
+    function done(){setCopyStatus('AIに貼り付ける内容をコピーしました。お好きなAIで、選んだ場所の星のメッセージを聞けます。');}
+    function fallback(){
+      var area=document.createElement('textarea');area.value=prompt;area.setAttribute('readonly','');area.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(area);area.select();
+      try{if(!document.execCommand('copy'))throw Error('copy failed');done();}catch(_e){setCopyStatus('コピーに失敗しました。ブラウザの権限を確認してください。',true);}finally{document.body.removeChild(area);}
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(prompt).then(done).catch(fallback);}else{fallback();}
+  }
+
   ['MC','IC','ASC','DSC'].forEach(function(a){var label=document.createElement('label'),cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.a.indexOf(a)>=0;cb.dataset.angle=a;cb.onchange=function(){var x=cb.dataset.angle,i=selected.a.indexOf(x);if(cb.checked&&i<0)selected.a.push(x);if(!cb.checked&&i>=0)selected.a.splice(i,1);render();renderPlaces();};label.append(cb,document.createTextNode(a));document.getElementById('angles').appendChild(label);});
   document.querySelectorAll('[data-preset]').forEach(function(b){b.onclick=function(){document.querySelectorAll('[data-preset]').forEach(function(x){x.classList.remove('active')});b.classList.add('active');selectedKey=b.dataset.preset;selected={p:presets[selectedKey].p.slice(),a:presets[selectedKey].a.slice()};document.querySelectorAll('[data-angle]').forEach(function(c){c.checked=selected.a.indexOf(c.dataset.angle)>=0});render();renderPlaces();};});
   document.getElementById('search-button').onclick=searchCity;document.getElementById('city-search').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();searchCity();}};
+  document.getElementById('copy-prompt-button').onclick=copyConsultationPrompt;
   var printView=null,printWrap=document.querySelector('.map-wrap');
   function preparePrint(){
     if(printView)return;printView={center:map.getCenter(),zoom:map.getZoom()};renderPlaces();printWrap.classList.add('print-preparing');
