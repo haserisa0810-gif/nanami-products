@@ -28,7 +28,8 @@ MAX_YAML_ALIASES = 50
 MAX_YAML_NODES = 20_000
 
 YAML_PARSE_ERROR = (
-    "YAMLを解析できませんでした。インデントやYAMLコードブロックの囲み方を確認してください。"
+    "貼り付け内容から占術YAMLを解析できませんでした。"
+    "プロンプトとYAMLをコピーした内容は、そのまま貼り付けられます。"
 )
 YAML_MISSING_BIRTH_DATA_ERROR = (
     "YAMLは読み込めましたが、ACG計算に必要な出生日時データが見つかりませんでした。"
@@ -56,9 +57,15 @@ _YAML_FENCE_RE = re.compile(
     re.IGNORECASE,
 )
 _EMBEDDED_YAML_FENCE_RE = re.compile(
-    r"^```(?:yaml|yml)[ \t]*\r?\n(?P<body>[\s\S]*?)\r?\n```[ \t]*$",
+    r"^[ \t]*```(?P<lang>[^\r\n`]*)[ \t]*\r?\n"
+    r"(?P<body>[\s\S]*?)\r?\n[ \t]*```[ \t]*(?=\r?$)",
     re.IGNORECASE | re.MULTILINE,
 )
+_RAW_YAML_ROOT_RE = re.compile(
+    r"^(?:version|input|systems|birth_time):(?:[ \t].*)?$", re.MULTILINE
+)
+MAX_EMBEDDED_BLOCKS = 16
+MAX_RAW_YAML_STARTS = 16
 
 # マンデン線の代表時刻（対象日の 03:00 UTC 固定 = 日本時間の正午時点の空）
 MUNDANE_HOUR_UTC = 3
@@ -168,8 +175,73 @@ def _normalize_acg_document(doc: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _select_birth_document(documents: list[Any]) -> dict[str, Any] | None:
+    if len(documents) > MAX_YAML_DOCUMENTS:
+        raise AcgYamlFormatError(
+            f"YAMLドキュメントが多すぎます（上限{MAX_YAML_DOCUMENTS}件）。"
+        )
+    candidates = [
+        doc
+        for doc in documents
+        if isinstance(doc, dict) and _has_supported_birth_source(doc)
+    ]
+    if len(candidates) > 1:
+        raise AcgYamlFormatError(YAML_AMBIGUOUS_DOCUMENT_ERROR)
+    return candidates[0] if candidates else None
+
+
+def _extract_birth_document_from_blocks(text: str) -> dict[str, Any] | None:
+    """文章内のコードブロックから出生データを含むYAMLを1件だけ選ぶ。"""
+    blocks = list(_EMBEDDED_YAML_FENCE_RE.finditer(text))
+    if len(blocks) > MAX_EMBEDDED_BLOCKS:
+        raise AcgYamlFormatError(
+            f"コードブロックが多すぎます（上限{MAX_EMBEDDED_BLOCKS}件）。"
+        )
+
+    candidates: list[dict[str, Any]] = []
+    relevant_parse_failed = False
+    for block in blocks:
+        lang = block.group("lang").strip().lower()
+        # プロンプト内のコード例も走査するが、明らかに別言語のブロックは除外する。
+        if lang not in ("", "yaml", "yml", "text", "txt"):
+            continue
+        try:
+            documents = _load_yaml_documents(block.group("body"))
+        except AcgYamlFormatError:
+            if lang in ("", "yaml", "yml"):
+                relevant_parse_failed = True
+            continue
+        candidate = _select_birth_document(documents)
+        if candidate is not None:
+            candidates.append(candidate)
+
+    if len(candidates) > 1:
+        raise AcgYamlFormatError(YAML_AMBIGUOUS_DOCUMENT_ERROR)
+    if candidates:
+        return candidates[0]
+    if relevant_parse_failed:
+        raise AcgYamlFormatError(YAML_PARSE_ERROR)
+    return None
+
+
+def _extract_birth_document_from_raw_suffix(text: str) -> dict[str, Any] | None:
+    """プロンプトの後ろにコード囲みなしで続くYAMLを検出する。"""
+    starts = list(_RAW_YAML_ROOT_RE.finditer(text))
+    if len(starts) > MAX_RAW_YAML_STARTS:
+        starts = starts[-MAX_RAW_YAML_STARTS:]
+    for start in starts:
+        try:
+            documents = _load_yaml_documents(text[start.start():])
+        except AcgYamlFormatError:
+            continue
+        candidate = _select_birth_document(documents)
+        if candidate is not None:
+            return candidate
+    return None
+
+
 def parse_acg_yaml_document(yaml_text: str) -> dict[str, Any]:
-    """安全にYAMLを読み、既知の出生日時パスを持つ文書だけを選択する。"""
+    """YAML単体またはプロンプト付き全文から、出生図YAMLだけを安全に選ぶ。"""
     if not yaml_text or not yaml_text.strip():
         raise AcgYamlFormatError("占術YAMLを貼り付けてください。")
     if len(yaml_text.encode("utf-8")) > MAX_YAML_BYTES:
@@ -177,41 +249,32 @@ def parse_acg_yaml_document(yaml_text: str) -> dict[str, Any]:
 
     stripped = yaml_text.strip()
     outer_fence = _YAML_FENCE_RE.fullmatch(stripped)
-    embedded = list(_EMBEDDED_YAML_FENCE_RE.finditer(stripped))
-    outer_is_explicit_yaml = stripped.lower().startswith(("```yaml", "```yml"))
-    if outer_fence and (not outer_is_explicit_yaml or len(embedded) == 1):
-        documents = _load_yaml_documents(outer_fence.group("body"))
+    embedded_blocks = list(_EMBEDDED_YAML_FENCE_RE.finditer(stripped))
+    if outer_fence and len(embedded_blocks) == 1:
+        candidate = _select_birth_document(
+            _load_yaml_documents(outer_fence.group("body"))
+        )
     else:
+        candidate = None
+        full_parse_failed = False
         try:
             documents = _load_yaml_documents(yaml_text)
-        except AcgYamlFormatError as full_parse_error:
-            if len(embedded) > 1:
-                raise AcgYamlFormatError(
-                    "YAMLコードブロックが複数見つかりました。出生図を含むブロックを1つだけ貼り付けてください。"
-                ) from full_parse_error
-            if not embedded:
-                if "```" in stripped:
-                    raise AcgYamlFormatError(
-                        "入力全文をYAMLとして解析できませんでした。前後に文章がある場合は、"
-                        "YAMLコードブロックを ```yaml または ```yml で明示してください。"
-                    ) from full_parse_error
-                raise
-            documents = _load_yaml_documents(embedded[0].group("body"))
-    if len(documents) > MAX_YAML_DOCUMENTS:
-        raise AcgYamlFormatError(
-            f"YAMLドキュメントが多すぎます（上限{MAX_YAML_DOCUMENTS}件）。"
-        )
+        except AcgYamlFormatError:
+            # 「プロンプト＋YAML」全文はYAML文書としては不正でも正常な入力。
+            full_parse_failed = True
+        else:
+            # 複数の出生YAMLがあるという意味上の曖昧さは握りつぶさない。
+            candidate = _select_birth_document(documents)
+        if candidate is None:
+            candidate = _extract_birth_document_from_blocks(stripped)
+        if candidate is None:
+            candidate = _extract_birth_document_from_raw_suffix(stripped)
+        if candidate is None and full_parse_failed:
+            raise AcgYamlFormatError(YAML_PARSE_ERROR)
 
-    candidates = [
-        doc
-        for doc in documents
-        if isinstance(doc, dict) and _has_supported_birth_source(doc)
-    ]
-    if not candidates:
+    if candidate is None:
         raise AcgYamlFormatError(YAML_MISSING_BIRTH_DATA_ERROR)
-    if len(candidates) > 1:
-        raise AcgYamlFormatError(YAML_AMBIGUOUS_DOCUMENT_ERROR)
-    return _normalize_acg_document(candidates[0])
+    return _normalize_acg_document(candidate)
 
 
 def _validate_mundane_date(value: str) -> str:

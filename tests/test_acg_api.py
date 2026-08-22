@@ -197,15 +197,43 @@ dynamic_resources:
             datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
         )
 
-    def test_rejects_unlabelled_fence_with_surrounding_body(self) -> None:
+    def test_accepts_unlabelled_fence_with_surrounding_body(self) -> None:
         text = f"コピーしたYAMLです。\n```\n{INPUT_ONLY_YAML.strip()}\n```"
-        with self.assertRaisesRegex(AcgYamlFormatError, "yaml または ```yml"):
-            natal_dt_utc_from_yaml(text)
+        self.assertEqual(
+            natal_dt_utc_from_yaml(text),
+            datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
+        )
 
-    def test_rejects_multiple_embedded_yaml_fences(self) -> None:
+    def test_multiple_blocks_selects_only_block_with_birth_data(self) -> None:
+        text = (
+            "参考例です。\n```text\n相談テーマ: 引っ越し\n```\n"
+            f"以下が占術データです。\n```yaml\n{INPUT_ONLY_YAML.strip()}\n```"
+        )
+        self.assertEqual(
+            natal_dt_utc_from_yaml(text),
+            datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
+        )
+
+    def test_multiple_birth_blocks_are_rejected_as_ambiguous(self) -> None:
         block = f"```yaml\n{INPUT_ONLY_YAML.strip()}\n```"
-        with self.assertRaisesRegex(AcgYamlFormatError, "コードブロックが複数"):
+        with self.assertRaisesRegex(AcgYamlFormatError, YAML_AMBIGUOUS_DOCUMENT_ERROR):
             natal_dt_utc_from_yaml(block + "\n説明\n" + block)
+
+    def test_accepts_prompt_followed_by_raw_yaml_without_fence(self) -> None:
+        text = (
+            "あなたは占星術師です。次のデータだけを使って読んでください。\n\n"
+            "以下がYAMLデータです。\n\n"
+            + INPUT_ONLY_YAML.strip()
+        )
+        self.assertEqual(
+            natal_dt_utc_from_yaml(text),
+            datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
+        )
+
+    def test_prompt_with_multiple_raw_birth_documents_is_ambiguous(self) -> None:
+        text = "説明文です。\n" + INPUT_ONLY_YAML + "\n---\n" + INPUT_ONLY_YAML
+        with self.assertRaisesRegex(AcgYamlFormatError, YAML_AMBIGUOUS_DOCUMENT_ERROR):
+            natal_dt_utc_from_yaml(text)
 
     def test_rejects_invalid_yaml_inside_embedded_fence(self) -> None:
         text = "説明文です。\n```yaml\ninput:\n birth_date: [broken\n```"
@@ -402,6 +430,16 @@ systems:
         fenced = f"```yaml\n{PROMPT_ENRICHED_YAML.strip()}\n```"
         res = self.client.post("/api/acg/personal", json={"yaml_text": fenced})
         self.assertEqual(res.status_code, 200)
+
+    def test_personal_endpoint_accepts_full_copied_prompt_and_yaml(self) -> None:
+        copied = (
+            "この出生図を再計算せずに読み解いてください。\n\n---\n\n"
+            "以下がYAMLデータです。\n\n"
+            f"```yaml\n{PROMPT_ENRICHED_YAML.strip()}\n```\n"
+        )
+        res = self.client.post("/api/acg/personal", json={"yaml_text": copied})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["meta"]["datetime_utc"], "1990-01-14T23:30:00+00:00")
 
     def test_personal_endpoint_unsupported_yaml_is_422(self) -> None:
         res = self.client.post("/api/acg/personal", json={"yaml_text": "version: 1\n"})
