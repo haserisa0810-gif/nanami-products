@@ -14,7 +14,7 @@ def test_macos_workflow_builds_and_launches_personal_edition() -> None:
     assert "runs-on: macos-15" in workflow
     assert "uses: actions/checkout@v7" in workflow
     assert "uses: actions/setup-python@v7" in workflow
-    assert "python -m pip install -r requirements.txt pytest" in workflow
+    assert "python -m pip install -r requirements.txt pytest httpx==0.27.2" in workflow
     assert "python personal-edition/build.py" in workflow
     assert "bash scripts/verify_personal_edition_macos.sh" in workflow
     assert "test_acg_bundle_zip_contains_precomputed_lines_and_local_map" in workflow
