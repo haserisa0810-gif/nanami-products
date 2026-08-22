@@ -31,7 +31,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-VERSION = "1.1.4"
+VERSION = "1.1.5"
 PRODUCT = "BirthChartMuseum-PersonalEdition"
 
 # 配布バリアント: Etsy=英語デフォルト / STORES=日本語デフォルト。

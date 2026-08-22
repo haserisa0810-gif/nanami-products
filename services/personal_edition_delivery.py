@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import io
 import json
 import re
@@ -8,13 +9,14 @@ import sys
 import threading
 import zipfile
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from services.acg_api import personal_geojson
 
 
 ROOT = Path(__file__).resolve().parent.parent
 PE_DIR = ROOT / "personal-edition"
-VERSION = "1.1.4"
+VERSION = "1.1.5"
 _build_lock = threading.Lock()
 
 
@@ -82,6 +84,7 @@ def _standalone_acg_html(
     city_data: dict,
     world_data: dict,
     chart_url: str | None,
+    show_ipad_online_link: bool = False,
 ) -> str:
     """Build a file://-safe ACG app with personal data and Leaflet embedded."""
     data_json = json.dumps(acg_data, ensure_ascii=False, separators=(",", ":"))
@@ -124,6 +127,27 @@ def _standalone_acg_html(
     )
     if chart_url:
         result = result.replace('href="/"', f'href="{chart_url}"', 1)
+        if show_ipad_online_link:
+            parts = urlsplit(chart_url)
+            chart_path = parts.path.rstrip("/")
+            online_path = f"{chart_path}/acg-app/"
+            lang_query = [
+                (key, value)
+                for key, value in parse_qsl(parts.query)
+                if key == "lang"
+            ]
+            online_url = urlunsplit(
+                (parts.scheme, parts.netloc, online_path, urlencode(lang_query), "")
+            )
+            ipad_link = (
+                '<style>.ipad-online-acg{display:block;padding:9px 12px;background:#c9a227;'
+                'color:#0a1128;text-decoration:none;font-size:.78rem;font-weight:700;'
+                'text-align:center}</style>'
+                '<a class="ipad-online-acg" href="'
+                + html.escape(online_url, quote=True)
+                + '">iPad・iPhone：オンラインACG地図を開く / Open online ACG map</a>'
+            )
+            result = result.replace("</header>", "</header>" + ipad_link, 1)
     else:
         result = result.replace('href="/"', 'href="#" onclick="return false"', 1)
     if (
@@ -349,6 +373,7 @@ def build_personalized_zip(
                     city_data=city_data,
                     world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
                     chart_url=chart_url,
+                    show_ipad_online_link=True,
                 ).encode("utf-8"),
             )
         guide = (

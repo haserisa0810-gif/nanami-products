@@ -218,6 +218,8 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert '"line_group":"Sun_MC"' in standalone
         assert "leaflet" in standalone.lower()
         assert "https://chart.example/chart/private?lang=ja" in standalone
+        assert "iPad・iPhone：オンラインACG地図を開く" in standalone
+        assert "https://chart.example/chart/private/acg-app/?lang=ja" in standalone
         assert 'id="city-search"' in standalone
         assert "占術データへ戻る" in standalone
         assert "ミュージアムへ戻る" not in standalone
@@ -269,6 +271,11 @@ def test_personal_acg_mobile_app_is_installable_and_self_contained(monkeypatch):
     assert 'id="pwa-install"' in page.text
     assert "ホーム画面に追加" in page.text
     assert "serviceWorker.register" in page.text
+    assert "@media(max-width:900px)" in page.text
+    assert "height:100dvh" in page.text
+    assert "window.addEventListener('orientationchange',refreshMapSize)" in page.text
+    assert "window.visualViewport.addEventListener('resize',refreshMapSize)" in page.text
+    assert "iPad・iPhone：オンラインACG地図を開く" not in page.text
     assert '"line_group":"Sun_MC"' in page.text
     assert "MAX_PLACES=3" in page.text
     assert "cities.min.json" not in page.text
