@@ -71,6 +71,15 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(campaign.days, 38)
         self.assertEqual(len(campaign.access_key_hash), 64)
 
+    def test_september_campaign_has_fixed_period(self) -> None:
+        campaign = get_note_transit_campaign("2026-09")
+
+        self.assertIsNotNone(campaign)
+        self.assertEqual(campaign.start_date.isoformat(), "2026-09-01")
+        self.assertEqual(campaign.end_date.isoformat(), "2026-10-08")
+        self.assertEqual(campaign.days, 38)
+        self.assertEqual(len(campaign.access_key_hash), 64)
+
     def test_campaign_is_resolved_by_secret_key_not_month(self) -> None:
         test_key = "unit-test-secret"
         test_campaign = NoteTransitCampaign(
