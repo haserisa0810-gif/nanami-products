@@ -6,6 +6,14 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 A FastAPI web service that generates structured YAML data for AI-driven astrology readings. It computes Western natal charts (via Swiss Ephemeris / pyswisseph) and optionally Four Pillars of Destiny (四柱推命), then stores results in SQLite keyed by a URL-safe token. The output YAML is intended to be fed verbatim into Codex for interpretation — the AI must not re-derive positions from the birth date.
 
+## Knowledge management
+
+開発・商品仕様の正式ナレッジと、`nanami-content` の運用ナレッジは
+`knowledge/README.md` の分類規則に従う。会話ログや作業中メモを自動的に正式ナレッジへ
+混ぜない。DBは検索用の派生インデックスであり、Git管理されたMarkdown/YAMLを正本とする。
+本番DBへの `scripts/knowledge_sync.py sync-db --apply` は、通常のデプロイとは別の
+明示承認を必要とする。
+
 ## Running Locally
 
 ```bash

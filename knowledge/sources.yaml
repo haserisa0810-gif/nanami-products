@@ -1,0 +1,87 @@
+schema_version: 1
+
+collections:
+  - id: product
+    label: Product development
+    root: .
+    defaults:
+      kind: source
+      status: active
+      owner: nanami-products
+    include:
+      - AGENTS.md
+      - CLAUDE.md
+      - README.md
+      - README_DEPLOY.md
+      - API_CALC_SPEC.md
+      - ASTROLOGY_DATA_PRICING.md
+      - docs/**/*.md
+      - knowledge/**/*.md
+      - knowledge/**/*.yaml
+    exclude:
+      - knowledge/_templates/**
+      - knowledge/generated/**
+      - knowledge/sources.yaml
+
+  - id: operations
+    label: Content and sales operations
+    root_env: NANAMI_CONTENT_ROOT
+    fallback_root: ../../work/nanami-content
+    defaults:
+      kind: source
+      status: active
+      owner: nanami-content
+    include:
+      - AGENTS.md
+      - knowledge/README.md
+      - knowledge/operations/**/*.md
+      - knowledge/decisions/**/*.md
+      - marketing/social/ai_hayama/README.md
+      - marketing/social/ai_hayama/OPERATING_POLICY.md
+      - marketing/social/ai_hayama/AI_HAYAMA_INTERESTS.md
+      - marketing/social/ai_hayama/BIRTH_CHART_NOTES.md
+      - marketing/social/ai_hayama/API_HEALTH.md
+      - pinterest/strategy/*.md
+      - pinterest/research/*.md
+      - youtube/*/RESEARCH_SOURCES.md
+    exclude:
+      - knowledge/_templates/**
+
+  - id: operations_after_action
+    label: Post-publication results and lessons
+    root_env: NANAMI_CONTENT_ROOT
+    fallback_root: ../../work/nanami-content
+    defaults:
+      kind: after_action
+      status: active
+      owner: nanami-content
+    include:
+      - knowledge/after_action/**/*.md
+      - marketing/**/POST_LOG.md
+      - marketing/**/THREADS_ENGAGEMENT_LOG.md
+      - pinterest/log/*.md
+      - youtube/*/PUBLISH_LOG.md
+
+  - id: operations_archive
+    label: Conversation and handoff archives
+    root_env: NANAMI_CONTENT_ROOT
+    fallback_root: ../../work/nanami-content
+    defaults:
+      kind: conversation_archive
+      status: archived
+      owner: nanami-content
+    include:
+      - archives/knowledge/*.yaml
+      - archives/bookmarks/*.yaml
+      - archives/conversations/*.md
+
+  - id: operations_inbox
+    label: Unreviewed operational notes
+    root_env: NANAMI_CONTENT_ROOT
+    fallback_root: ../../work/nanami-content
+    defaults:
+      kind: note
+      status: draft
+      owner: nanami-content
+    include:
+      - knowledge/inbox/**/*.md
