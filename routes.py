@@ -3279,9 +3279,12 @@ def acg_map_page(request: Request):
 NEKO_DEMO_YAML_PATH = Path(__file__).resolve().parent / "data" / "demo" / "chief_editor_neko.yaml"
 NEKO_DEMO_PLANNER_START = datetime(2026, 8, 1, tzinfo=timezone.utc)
 NEKO_DEMO_PLANNER_END = date(2027, 7, 31)
+NEKO_DEMO_PAGE_URL = "https://chart.nanami-astro.com/demo/neko"
 NEKO_DEMO_AI_URL = "https://chart.nanami-astro.com/demo/neko/planner-ai"
 _neko_demo_planner_cache: dict[str, bytes] = {}
 _neko_demo_planner_lock = threading.Lock()
+_neko_demo_personal_zip_cache: dict[str, bytes] = {}
+_neko_demo_personal_zip_lock = threading.Lock()
 
 
 def _neko_demo_yaml() -> str:
@@ -3295,16 +3298,50 @@ def _neko_demo_yaml() -> str:
 
 @app.get("/demo/neko", response_class=HTMLResponse)
 def neko_demo_page(request: Request):
-    from config import MUSEUM_SHOP_URL_EN
+    from config import ETSY_SHOP_URL
 
     response = templates.TemplateResponse(
         "neko_demo.html",
         {
             "request": request,
-            "shop_url": MUSEUM_SHOP_URL_EN,
+            "etsy_shop_url": ETSY_SHOP_URL,
         },
     )
     response.headers["Cache-Control"] = "public, max-age=300"
+    return response
+
+
+def _neko_demo_personal_zip(lang: str) -> bytes:
+    cached = _neko_demo_personal_zip_cache.get(lang)
+    if cached is not None:
+        return cached
+    with _neko_demo_personal_zip_lock:
+        cached = _neko_demo_personal_zip_cache.get(lang)
+        if cached is not None:
+            return cached
+        chart_url = NEKO_DEMO_PAGE_URL + ("?lang=en" if lang == "en" else "?lang=ja")
+        cached = build_personalized_zip(
+            yaml_text=_neko_demo_yaml(),
+            lang=lang,
+            include_acg=True,
+            chart_url=chart_url,
+        )
+        _neko_demo_personal_zip_cache[lang] = cached
+        return cached
+
+
+@app.get("/demo/neko/personal-edition.zip")
+def neko_demo_personal_zip(request: Request):
+    lang = _resolve_lang(request)
+    try:
+        zip_bytes = _neko_demo_personal_zip(lang)
+    except Exception as exc:
+        logger.exception("neko_demo_personal_zip_generation_failed lang=%s", lang)
+        raise HTTPException(status_code=503, detail="Demo ZIP is unavailable") from exc
+    filename = f"Chief-Editor-Neko-Personal-Edition-ACG-Sample-{lang.upper()}.zip"
+    response = Response(content=zip_bytes, media_type="application/zip")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
 
@@ -3342,7 +3379,8 @@ def neko_demo_planner_pdf(request: Request):
         raise HTTPException(status_code=503, detail="Demo planner is unavailable") from exc
     filename = f"Chief-Editor-Neko-Planner-{lang.upper()}.pdf"
     response = Response(content=pdf_bytes, media_type="application/pdf")
-    response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    disposition = "attachment" if request.query_params.get("download") == "1" else "inline"
+    response.headers["Content-Disposition"] = f'{disposition}; filename="{filename}"'
     response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
