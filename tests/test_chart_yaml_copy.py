@@ -139,7 +139,8 @@ class ChartYamlCopyTest(unittest.TestCase):
     def test_chart_companion_switches_description_and_prompt(self) -> None:
         self.assertIn("function selectCompanionMode(mode)", self.template)
         self.assertIn("UI_TEXT.consultationModeDesc", self.template)
-        self.assertIn("if (companionMode === 'consultation') return CHART_COMPANION_PROMPT;", self.template)
+        self.assertIn("if (companionMode === 'consultation')", self.template)
+        self.assertIn("return CHART_COMPANION_PROMPT.replace", self.template)
         self.assertIn("return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;", self.template)
 
     def test_all_ai_actions_use_shared_mode_aware_payload_builder(self) -> None:
@@ -164,11 +165,17 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn("配置の根拠が薄い場合", CHART_COMPANION_PROMPT)
         self.assertIn("【相談モード（ACG連携）】", CHART_COMPANION_PROMPT)
         self.assertIn("https://chart.nanami-astro.com/acg", CHART_COMPANION_PROMPT)
-        self.assertIn("ACGアプリへ貼り付ける占術YAMLをこの会話に表示しますか？", CHART_COMPANION_PROMPT)
-        self.assertIn("要約・再計算・書き換えせず", CHART_COMPANION_PROMPT)
-        self.assertIn("元のYAMLを正確に参照できない場合は再構成や推測をせず", CHART_COMPANION_PROMPT)
+        self.assertIn("保存済みの元YAMLが自動で読み込まれます", CHART_COMPANION_PROMPT)
+        self.assertIn("AIによるYAMLの再掲・再構成はしない", CHART_COMPANION_PROMPT)
         self.assertIn("ACGアプリから出力されたYAMLを会話へ貼り付けて", CHART_COMPANION_PROMPT)
         self.assertTrue(CHART_COMPANION_PROMPT.rstrip().endswith("以下がYAMLデータです。"))
+
+    def test_consultation_mode_exposes_direct_acg_link_without_ai_yaml_replay(self) -> None:
+        self.assertIn('id="companion-acg-guide" hidden', self.template)
+        self.assertIn("const PERSONAL_ACG_URL = new URL", self.template)
+        self.assertIn("CHART_COMPANION_PROMPT.replace('https://chart.nanami-astro.com/acg', PERSONAL_ACG_URL)", self.template)
+        self.assertIn("if (acgGuide) acgGuide.hidden = !isConsultation;", self.template)
+        self.assertIn("AIにYAMLを再表示させる必要はありません", self.template)
 
     def test_chart_companion_labels_are_localized(self) -> None:
         self.assertEqual(I18N["ja"]["chart_companion_title"], "Chart Companion β")

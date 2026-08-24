@@ -197,6 +197,15 @@
     }
     .companion-selected-mode { margin: 0 0 4px; font-weight: 700; }
     .companion-mode-description { margin: 0 0 14px; }
+    .companion-acg-guide {
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border: 1px solid rgba(31, 123, 144, .28);
+      border-radius: 12px;
+      background: rgba(31, 123, 144, .08);
+    }
+    .companion-acg-guide p { margin: 0 0 9px; }
+    .companion-acg-guide a { font-weight: 700; }
     .ai-data-box .mode-help {
       margin: 0 0 12px;
       color: var(--dim);
@@ -809,6 +818,12 @@
         </div>
         <p class="companion-selected-mode"><span>{{ t["selected_mode"] }}</span><span id="companion-selected-label">{{ t["reading_mode"] }}</span></p>
         <p class="companion-mode-description" id="companion-mode-description">{{ t["reading_mode_desc"] }}</p>
+        {% if has_horoscope_svg and not birth_time_notice.show %}
+        <div class="companion-acg-guide" id="companion-acg-guide" hidden>
+          <p>{% if lang == 'ja' %}旅行・移住・活動場所や土地との相性は、ACG（アストロカートグラフィ）も使って相談できます。元のYAMLは自動で読み込まれるため、AIにYAMLを再表示させる必要はありません。{% else %}For travel, relocation, activity locations, or your connection with a place, you can also use ACG (astrocartography). Your saved YAML loads automatically, so you do not need to ask the AI to reproduce it.{% endif %}</p>
+          <a href="{{ personal_acg_url }}" target="_blank" rel="noopener">{% if lang == 'ja' %}あなたのデータでACGを開く{% else %}Open ACG with your data{% endif %}</a>
+        </div>
+        {% endif %}
         <div class="key-actions">
           <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
           <p class="helper-note-inline">{{ t.helper_note }}</p>
@@ -1145,6 +1160,7 @@
     const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
     const SHARE_PROMPT = {{ share_prompt_text | tojson }};
     const CHART_COMPANION_PROMPT = {{ chart_companion_prompt | tojson }};
+    const PERSONAL_ACG_URL = new URL({{ personal_acg_url | tojson }}, window.location.href).href;
     const SHARE_YAML = {{ share_yaml_text | tojson }};
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
@@ -1246,7 +1262,9 @@
     }
 
     function getCompanionPrompt(outputMode = getSelectedAiMode()) {
-      if (companionMode === 'consultation') return CHART_COMPANION_PROMPT;
+      if (companionMode === 'consultation') {
+        return CHART_COMPANION_PROMPT.replace('https://chart.nanami-astro.com/acg', PERSONAL_ACG_URL);
+      }
       return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;
     }
 
@@ -1259,6 +1277,8 @@
       if (consultationButton) consultationButton.setAttribute('aria-pressed', isConsultation ? 'true' : 'false');
       setText('companion-selected-label', isConsultation ? UI_TEXT.consultationMode : UI_TEXT.readingMode);
       setText('companion-mode-description', isConsultation ? UI_TEXT.consultationModeDesc : UI_TEXT.readingModeDesc);
+      const acgGuide = document.getElementById('companion-acg-guide');
+      if (acgGuide) acgGuide.hidden = !isConsultation;
       preparedAiTextFiles.paste = null;
       preparedAiTextFiles.asteroids = null;
       preparedAiTextFiles.full = null;
