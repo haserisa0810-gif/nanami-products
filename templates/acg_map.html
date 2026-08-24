@@ -1107,6 +1107,9 @@
 
     function friendlyPersonalError(message) {
       var raw = String(message || "");
+      if (/大きすぎ|上限|too large|limit/i.test(raw)) {
+        return raw;
+      }
       if (/birth|datetime|systems\.western|input\./i.test(raw)) {
         return EN
           ? "The birth date and time could not be read. Please choose the YAML file included in your reading ZIP."

@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from datetime import date as date_type, datetime, timedelta, timezone
 import re
+import textwrap
 from typing import Any
 
 import yaml
@@ -62,7 +63,8 @@ _EMBEDDED_YAML_FENCE_RE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 _RAW_YAML_ROOT_RE = re.compile(
-    r"^(?:version|input|systems|birth_time):(?:[ \t].*)?$", re.MULTILINE
+    r"^(?P<prefix>[ \t]*(?:>[ \t]?)?)(?:version|input|systems|birth_time):(?:[ \t].*)?$",
+    re.MULTILINE,
 )
 MAX_EMBEDDED_BLOCKS = 16
 MAX_RAW_YAML_STARTS = 16
@@ -230,14 +232,63 @@ def _extract_birth_document_from_raw_suffix(text: str) -> dict[str, Any] | None:
     if len(starts) > MAX_RAW_YAML_STARTS:
         starts = starts[-MAX_RAW_YAML_STARTS:]
     for start in starts:
+        candidate_text = _normalize_raw_yaml_suffix(text[start.start():], start.group("prefix"))
+        if not candidate_text:
+            continue
         try:
-            documents = _load_yaml_documents(text[start.start():])
+            documents = _load_yaml_documents(candidate_text)
         except AcgYamlFormatError:
             continue
         candidate = _select_birth_document(documents)
         if candidate is not None:
             return candidate
     return None
+
+
+def _normalize_raw_yaml_suffix(text: str, prefix: str) -> str:
+    """スマホ等で引用・字下げされた貼り付けからYAML本文だけを戻す。
+
+    Markdownの引用（``> ``）、コードブロックの閉じフェンス、YAML後に続く
+    AIの説明文を取り除く。ユーザーに手作業でYAML部分を切り出させないための
+    フォールバックであり、返した文字列は後段の制限付きSafeLoaderで検証する。
+    """
+    lines = text.splitlines()
+    if not lines:
+        return ""
+
+    quoted = ">" in prefix
+    indent = prefix.split(">", 1)[0] if quoted else prefix
+    normalized: list[str] = []
+    for line in lines:
+        if quoted:
+            match = re.match(r"^[ \t]*>[ \t]?(.*)$", line)
+            if match:
+                line = match.group(1)
+            elif line.strip():
+                break
+            else:
+                line = ""
+        elif indent:
+            if line.startswith(indent):
+                line = line[len(indent):]
+            elif line.strip():
+                break
+            else:
+                line = ""
+
+        if re.match(r"^[ \t]*```", line):
+            break
+        # YAMLルートの後ろにAIの通常文章が続くケースをここで切る。
+        if (
+            normalized
+            and line
+            and not line[0].isspace()
+            and not re.match(r"^(?:[A-Za-z_][A-Za-z0-9_-]*:|---$|\.\.\.$|#)", line)
+        ):
+            break
+        normalized.append(line)
+
+    return textwrap.dedent("\n".join(normalized)).strip()
 
 
 def parse_acg_yaml_document(yaml_text: str) -> dict[str, Any]:

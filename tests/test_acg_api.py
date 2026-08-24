@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import textwrap
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
@@ -182,6 +183,35 @@ dynamic_resources:
 
     def test_accepts_one_explicit_yml_fence_with_surrounding_body(self) -> None:
         text = f"コピーしたYAMLです。\n```yml\n{INPUT_ONLY_YAML.strip()}\n```"
+        self.assertEqual(
+            natal_dt_utc_from_yaml(text),
+            datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
+        )
+
+    def test_accepts_markdown_quoted_prompt_and_yaml(self) -> None:
+        quoted_yaml = "\n".join(f"> {line}" for line in INPUT_ONLY_YAML.strip().splitlines())
+        text = (
+            "AIからコピーした占術データです。\n"
+            "> ```yaml\n"
+            f"{quoted_yaml}\n"
+            "> ```\n"
+            "この下はAIの説明文です。"
+        )
+        self.assertEqual(
+            natal_dt_utc_from_yaml(text),
+            datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
+        )
+
+    def test_accepts_indented_yaml_after_prompt(self) -> None:
+        indented_yaml = textwrap.indent(INPUT_ONLY_YAML.strip(), "    ")
+        text = f"プロンプト全文です。\n\n{indented_yaml}\nAIの説明文が続きます。"
+        self.assertEqual(
+            natal_dt_utc_from_yaml(text),
+            datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
+        )
+
+    def test_accepts_unfenced_yaml_with_trailing_ai_text(self) -> None:
+        text = INPUT_ONLY_YAML.strip() + "\nこの後はAIが追加した説明文です。"
         self.assertEqual(
             natal_dt_utc_from_yaml(text),
             datetime(1990, 1, 14, 23, 30, tzinfo=timezone.utc),
