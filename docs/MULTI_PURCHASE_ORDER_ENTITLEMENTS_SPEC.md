@@ -130,7 +130,16 @@
 
 - Museum分離、同期認証、販売元識別、Add-on導線、複数購入を含む重点テスト: `135 passed + 68 subtests passed`。
 - Add-on購入元自動判定の重点テスト（通常時非表示、一意判定、未一致後の同期、衝突時のみ候補表示を含む）: `50 passed + 54 subtests passed`。
-- 2026-08-28にデプロイ用 `.venv` で、今回のリリース対象外である `tests/test_love_edition.py` のみを除外して `pytest tests -q --ignore=tests/test_love_edition.py` を実行: `629 passed + 145 subtests passed`。`pypdf 6.16.1` を含むPDF検証テストも除外せず完走した。作業ツリー全体（未関連のLove Editionテスト6件を含む）では `635 passed + 145 subtests passed`。
+- 2026-08-28にデプロイ用 `.venv` で、今回のリリース対象外である `tests/test_love_edition.py` のみを除外して `pytest tests -q --ignore=tests/test_love_edition.py` を実行: `633 passed + 145 subtests passed`。`pypdf 6.16.1` を含むPDF検証テストと、注文専用マイグレーションの安全テスト4件も除外せず完走した。作業ツリー全体（未関連のLove Editionテスト6件を含む）では `639 passed + 145 subtests passed` 相当。
+
+### 10.1 本番DBの専用マイグレーション
+
+- 本番適用には `scripts/migrate_marketplace_order_entitlements.py` を使う。標準動作は同一トランザクション内でDDL・コピー後の件数まで確認してからロールバックするドライラン。
+- 適用時は `--apply --confirm MIGRATE:marketplace-order-entitlements` の明示確認を必須とする。
+- 対象は `stores_orders`、`marketplace_orders`、`order_entitlements` と関連インデックスだけとし、`pg_store.init_db()` は呼ばない。
+- `charts`、`redemptions`、既存URL、YAML、`expires_at` は変更禁止。テストで禁止語が専用SQLへ混入していないことを検証する。
+- 既存 `stores_orders` は削除・更新せず、`provider + order_code` をキーに `marketplace_orders` へ `ON CONFLICT DO NOTHING` でコピーする。
+- `order_entitlements` の明細・数量展開は、専用マイグレーションでは推測して作らない。メール再同期で元メールを再解析して作成し、既存チャートがある場合は対応する権利を発行済みに結び付ける。
 - リポジトリ直下から無指定で `pytest` を実行すると、既知の `output/` / `tmp/` 内の旧QA成果物まで自動収集する問題がある。この問題は今回変更していない。
 - 2026-08-28に本番と同じGmail API設定を一時的に読み取り専用で使用し、直近20件をDB非書込で確認した。20件取得、14件解析（STORES 12、Etsy 1、Payhip 1）、6件は注文として未解析、複数明細・数量2の実例は0件だった。顧客情報・注文番号は出力していない。解析14件のうちSTORES通知1件だけ商品種別不明であり、公開前に当該商品の商品コード有無を確認する。
 
