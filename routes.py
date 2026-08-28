@@ -925,7 +925,7 @@ I18N = {
         ],
         "addon_generate_section_title": "生成する追加部品",
         "addon_type_label": "addon種別",
-        "addon_purchase_reference_label": "注文番号／購入ID",
+        "addon_purchase_reference_label": "オーダー番号",
         "addon_purchase_reference_placeholder": "注文番号、Order ID、または購入時のユーザー名",
         "addon_purchase_reference_hint": "購入確認メールなどに記載された番号または購入時のユーザー名を入力してください。購入元は自動で確認します。",
         "addon_provider_collision_label": "購入元を選択してください",

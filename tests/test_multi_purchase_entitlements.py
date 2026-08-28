@@ -522,7 +522,7 @@ def test_existing_chart_backfill_is_scoped_to_the_selected_provider() -> None:
 
 def test_addon_form_keeps_language_and_hides_purchase_provider_dropdown() -> None:
     expected_labels = {
-        "ja": "注文番号／購入ID",
+        "ja": "オーダー番号",
         "en": "Order number or purchase ID",
         "es": "Número de pedido o ID de compra",
         "de": "Bestellnummer oder Kauf-ID",
