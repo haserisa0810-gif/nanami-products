@@ -105,6 +105,7 @@ def build_prompt_for_doc(
     include_asteroids: bool = False,
     include_shichusuimei: bool = False,
     include_transit: bool = False,
+    lang: str = "ja",
 ) -> str:
     """
     計算済みドキュメントから鑑定プロンプトだけを組み立てる。
@@ -121,6 +122,7 @@ def build_prompt_for_doc(
         include_transit=include_transit,
         birth_time_accuracy=accuracy,
         interpretation_flags=doc.get("interpretation_flags") or {},
+        lang=lang,
     )
 
 
@@ -500,6 +502,7 @@ def build_product_yaml(
     birth_time_note: str | None = None,
     data_role: str = "base_chart",
     base: dict[str, Any] | None = None,
+    lang: str = "ja",
 ) -> tuple[str, str, dict[str, Any]]:
     include_western = not (include_shichusuimei and not include_asteroids and not include_transit)
     if birth_time_accuracy == "auto":
@@ -769,6 +772,7 @@ def build_product_yaml(
         include_transit=include_transit,
         birth_time_accuracy=birth_time_accuracy,
         interpretation_flags=interpretation_flags,
+        lang=lang,
     )
     return yaml_text, prompt_text, doc
 

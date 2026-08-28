@@ -5,10 +5,26 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 import routes
+from scripts.issue_personal_edition_codes import _delivery_text
 from services.personal_edition_delivery import build_free_museum_zip, build_personalized_zip
 
 
 client = TestClient(routes.app)
+
+
+def test_cli_delivery_text_supports_four_languages_without_museum_copy():
+    expected = {
+        "ja": "引換コード",
+        "en": "Access code",
+        "es": "Código de acceso",
+        "de": "Zugangscode",
+    }
+    for lang, phrase in expected.items():
+        text = _delivery_text("PE-FULL-SAMPLE", lang)
+        assert phrase in text
+        assert f"lang={lang}" in text
+        assert "Museum" not in text
+        assert "MUSEUM" not in text
 
 
 def test_activation_page_is_independent_from_redeem():
@@ -22,6 +38,8 @@ def test_activation_page_is_independent_from_redeem():
     assert 'name="birth_date" type="text"' in response.text
     assert '(?:\\d{8}|\\d{4}-\\d{2}-\\d{2})' in response.text
     assert "normalizePEBirthDate" in response.text
+    assert "NANAMI ASTRO · PERSONAL EDITION" in response.text
+    assert "BIRTH CHART MUSEUM · PERSONAL" not in response.text
 
 
 def test_activation_code_is_prefilled_from_query_without_validation(monkeypatch):
@@ -173,22 +191,53 @@ def test_single_delivery_download_is_buyer_ready_zip_without_outer_zip(monkeypat
         assert "ADMIN-README.txt" not in names
 
 
-def test_personalized_zip_contains_chart_and_autoload():
-    data = build_personalized_zip(yaml_text="version: test\nsystems: {}\n", lang="en", chart_url="https://chart.example/chart/private")
+def test_full_delivery_readme_describes_data_zip_without_museum_start_files(monkeypatch):
+    monkeypatch.setenv("ADMIN_BASIC_USER", "admin")
+    monkeypatch.setenv("ADMIN_BASIC_PASSWORD", "secret")
+    response = client.post(
+        "/admin/personal-edition/code-pdfs.zip",
+        auth=("admin", "secret"),
+        data={
+            "codes": "PE-FULL-7K9M-4X2P-H8RW",
+            "product_type": "western_full",
+            "lang": "en",
+            "provider": "etsy",
+        },
+    )
+    assert response.status_code == 200
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        readme = archive.read("README-FIRST.txt").decode("utf-8-sig")
+        assert "calculated YAML" in readme
+        assert "AI prompt" in readme
+        assert "private chart URL" in readme
+        assert "Museum" not in readme
+        assert "START files" not in readme
+
+
+def test_paid_full_zip_contains_data_prompt_and_no_museum_app():
+    data = build_personalized_zip(
+        yaml_text="version: test\nsystems: {}\n",
+        prompt_text="Interpret the stored values without recalculating.\n",
+        lang="en",
+        chart_url="https://chart.example/chart/private",
+    )
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
-        names = archive.namelist()
-        chart_name = next(name for name in names if name == "app/birth-chart.yaml")
-        index_name = next(name for name in names if name == "app/index.html")
-        assert archive.read(chart_name).decode("utf-8").startswith("version: test")
-        html = archive.read(index_name).decode("utf-8")
-        assert "fetch('/birth-chart.yaml'" in html
-        assert "ht-last-yaml" in html
-        assert "START-MUSEUM-WINDOWS.bat" in names
-        assert "START-MUSEUM-MAC.command" in names
-        assert "README-FIRST.txt" in names
-        assert "PRIVATE-CHART-URL.txt" in names
-        assert "OPEN-ONLINE-CHART.url" not in names
-        assert not any(name.startswith("BirthChartMuseum-PersonalEdition-") for name in names)
+        names = set(archive.namelist())
+        assert names == {
+            "ASTROLOGY-DATA.yaml",
+            "AI-PROMPT.txt",
+            "README-FIRST.txt",
+            "PRIVATE-CHART-URL.txt",
+        }
+        assert archive.read("ASTROLOGY-DATA.yaml").decode("utf-8").startswith("version: test")
+        assert "without recalculating" in archive.read("AI-PROMPT.txt").decode("utf-8-sig")
+        combined = "\n".join(
+            archive.read(name).decode("utf-8-sig") for name in names
+        )
+        assert "1-year Planner" in combined
+        assert "Birth Chart Museum" not in combined
+        assert "MUSEUM" not in combined
+        assert not any(name.startswith("app/") for name in names)
 
 
 def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
@@ -403,6 +452,7 @@ def test_zip_failure_releases_code(monkeypatch):
 def test_chart_personal_edition_zip_and_acg_autoload(monkeypatch):
     chart = {
         "yaml_text": "version: test\n",
+        "prompt_text": "prompt test\n",
         "options": {
             "personal_edition": True,
             "personal_edition_locale": "ja",
@@ -426,9 +476,11 @@ def test_chart_personal_edition_zip_and_acg_autoload(monkeypatch):
     response = client.get("/chart/test-token/personal-edition.zip")
     assert response.status_code == 200
     assert response.content == b"PK-personal"
-    assert "ACG-Bundle.zip" in response.headers["content-disposition"]
+    assert "nanamiastro-ACG-Premium-Bundle-Personal-Edition-JA.zip" in response.headers["content-disposition"]
+    assert "BirthChartMuseum" not in response.headers["content-disposition"]
     assert len(zip_calls) == 1
     assert "planner_pdf" not in zip_calls[0]
+    assert zip_calls[0]["prompt_text"] == "prompt test\n"
 
     chart_page = client.get("/chart/test-token?lang=ja")
     assert chart_page.status_code == 200
@@ -436,8 +488,8 @@ def test_chart_personal_edition_zip_and_acg_autoload(monkeypatch):
     assert "あなたのACGアプリを開く" in chart_page.text
     assert "Personal Editionだけを保存" in chart_page.text
     assert "すべてまとめてZIP保存" in chart_page.text
-    assert "無料ミュージアム＋Dream Skyを別で保存" in chart_page.text
-    assert "/downloads/birth-chart-museum-free.zip?lang=ja" in chart_page.text
+    assert "無料ミュージアム＋Dream Skyを別で保存" not in chart_page.text
+    assert "/downloads/birth-chart-museum-free.zip?lang=ja" not in chart_page.text
 
     acg_page = client.get("/acg?load=/chart/test-token.yaml")
     assert acg_page.status_code == 200

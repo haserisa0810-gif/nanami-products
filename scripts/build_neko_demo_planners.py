@@ -1,4 +1,4 @@
-"""Build the permanent Chief Editor Neko demo planners in English and Japanese."""
+"""Build permanent Chief Editor Neko demo planners in selected locales."""
 
 from __future__ import annotations
 
@@ -16,11 +16,14 @@ PLANNER_START = datetime(2026, 8, 1, tzinfo=timezone.utc)
 AI_URL = "https://chart.nanami-astro.com/demo/neko/planner-ai"
 
 
-def build(output_dir: Path) -> list[Path]:
+SUPPORTED_LANGS = ("en", "es", "de", "ja")
+
+
+def build(output_dir: Path, languages: tuple[str, ...] = ("en", "ja")) -> list[Path]:
     chart_yaml = SOURCE_YAML.read_text(encoding="utf-8")
     output_dir.mkdir(parents=True, exist_ok=True)
     outputs: list[Path] = []
-    for lang in ("en", "ja"):
+    for lang in languages:
         planner_yaml = build_planner_yaml_from_natal_yaml(
             chart_yaml=chart_yaml,
             lang=lang,
@@ -42,8 +45,15 @@ def build(output_dir: Path) -> list[Path]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--langs",
+        nargs="+",
+        choices=SUPPORTED_LANGS,
+        default=["en", "ja"],
+        help="Planner locales to generate (default: en ja)",
+    )
     args = parser.parse_args()
-    for path in build(args.output_dir):
+    for path in build(args.output_dir, tuple(args.langs)):
         print(path)
 
 

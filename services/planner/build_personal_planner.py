@@ -22,7 +22,7 @@ from . import generate_planner as gp
 
 
 def build(yaml_path: Path, lang: str, out_path: Path, *, months: int = 12,
-          chart_url: str | None = None) -> Path:
+          chart_url: str | None = None, holiday_country: str | None = None) -> Path:
     source = yaml_lib.safe_load(yaml_path.read_text(encoding="utf-8"))
     western = (source.get("systems") or {}).get("western") or {}
     long_term = western.get("transit_long_term") or {}
@@ -44,7 +44,8 @@ def build(yaml_path: Path, lang: str, out_path: Path, *, months: int = 12,
 
     gp.register_fonts(lang)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    planner = gp.Planner(snapshot, out_path, "personal", lang, chart_url=chart_url)
+    planner = gp.Planner(snapshot, out_path, "personal", lang, chart_url=chart_url,
+                         holiday_country=holiday_country)
     planner.render()
     return out_path
 
@@ -52,14 +53,16 @@ def build(yaml_path: Path, lang: str, out_path: Path, *, months: int = 12,
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--yaml", type=Path, required=True, help="nanami-products YAML (natal + transit_long_term)")
-    parser.add_argument("--lang", choices=["en", "ja"], default="en")
+    parser.add_argument("--lang", choices=["en", "es", "de", "ja"], default="en")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--months", type=int, default=12)
     parser.add_argument("--chart-url", default=None)
+    parser.add_argument("--holiday-country", choices=["ES", "MX", "CO", "AR", "CL"], default=None)
     args = parser.parse_args()
     if not args.yaml.exists():
         raise SystemExit(f"YAML not found: {args.yaml}")
-    out = build(args.yaml, args.lang, args.out, months=args.months, chart_url=args.chart_url)
+    out = build(args.yaml, args.lang, args.out, months=args.months, chart_url=args.chart_url,
+                holiday_country=args.holiday_country)
     print(f"Wrote {out}")
 
 

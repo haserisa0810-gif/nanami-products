@@ -5,7 +5,7 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% if lang == 'en' %}Activate Personal Edition{% else %}Personal Editionを発行{% endif %}</title>
+  <title>{{ ui.title }}</title>
   <link rel="stylesheet" href="/static/style.css">
   {% include "_head_icons.html" %}
   <style>
@@ -16,72 +16,74 @@
 <main class="wrap">
   <div class="card buyer-card product-western_full">
     <div class="language-switcher">
-      <a href="?lang=ja" class="{% if lang == 'ja' %}is-active{% endif %}">日本語</a>
-      <a href="?lang=en" class="{% if lang == 'en' %}is-active{% endif %}">English</a>
+      <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{% if lang == 'ja' %}日本語{% else %}JA{% endif %}</a>
+      <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">English</a>
+      <a href="{{ lang_urls.es }}" class="{% if lang == 'es' %}is-active{% endif %}">Español</a>
+      <a href="{{ lang_urls.de }}" class="{% if lang == 'de' %}is-active{% endif %}">Deutsch</a>
     </div>
-    <p class="eyebrow">BIRTH CHART MUSEUM · PERSONAL</p>
-    <h1>{% if lang == 'en' %}Create your Personal Edition{% else %}あなた専用のPersonal Editionを作成{% endif %}</h1>
-    <p class="lead">{% if lang == 'en' %}Enter the personal activation code sent through Etsy Messages and your birth details. A private chart page will be issued and your personalized ZIP will download automatically.{% else %}別途お送りしたアクティベーションコードと出生情報を入力してください。作成後、専用の鑑定ページを発行し、あなた専用のZIPも自動で保存します。{% endif %}</p>
+    <p class="eyebrow">NANAMI ASTRO · PERSONAL EDITION</p>
+    <h1>{{ ui.heading }}</h1>
+    <p class="lead">{{ ui.lead }}</p>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
     <form method="post" action="/personal-edition/activate?lang={{ lang }}" class="form">
       <div class="form-section">
-        <h2>{% if lang == 'en' %}Access code{% else %}引換コード{% endif %}</h2>
-        <label>{% if lang == 'en' %}Personal activation code{% else %}アクティベーションコード{% endif %}<span class="required">*</span>
+        <h2>{{ ui.access_section }}</h2>
+        <label>{{ ui.access_code }}<span class="required">*</span>
           <input name="access_code" required autocomplete="off" value="{{ form.access_code or '' }}" placeholder="PE-FULL-XXXX-XXXX-XXXX">
         </label>
-        <label>{% if lang == 'en' %}Name (optional){% else %}お名前（任意）{% endif %}
+        <label>{{ ui.name_optional }}
           <input name="buyer_name" value="{{ form.buyer_name or '' }}">
         </label>
       </div>
 
       <div class="form-section">
-        <h2>{% if lang == 'en' %}Birth details{% else %}出生情報{% endif %}</h2>
-        <label>{% if lang == 'en' %}Birth date{% else %}生年月日{% endif %}<span class="required">*</span>
-          {% if lang == 'en' %}<input name="birth_date" type="text" id="pe-birth-date" required inputmode="numeric" autocomplete="bday" placeholder="YYYYMMDD or YYYY-MM-DD" pattern="(?:\d{8}|\d{4}-\d{2}-\d{2})" title="Enter the date as YYYYMMDD or YYYY-MM-DD" value="{{ form.birth_date or '' }}">{% else %}<input name="birth_date" type="date" required value="{{ form.birth_date or '' }}">{% endif %}
+        <h2>{{ ui.birth_section }}</h2>
+        <label>{{ ui.birth_date }}<span class="required">*</span>
+          {% if lang != 'ja' %}<input name="birth_date" type="text" id="pe-birth-date" required inputmode="numeric" autocomplete="bday" placeholder="YYYYMMDD or YYYY-MM-DD" pattern="(?:\d{8}|\d{4}-\d{2}-\d{2})" value="{{ form.birth_date or '' }}">{% else %}<input name="birth_date" type="date" required value="{{ form.birth_date or '' }}">{% endif %}
         </label>
-        <label>{% if lang == 'en' %}Birth time accuracy{% else %}出生時刻の精度{% endif %}<span class="required">*</span>
+        <label>{{ ui.time_accuracy }}<span class="required">*</span>
           {% set accuracy = form.birth_time_accuracy or 'exact' %}
           <select name="birth_time_accuracy" id="pe-time-accuracy">
-            <option value="exact" {% if accuracy == 'exact' %}selected{% endif %}>{% if lang == 'en' %}Exact time{% else %}正確な時刻{% endif %}</option>
-            <option value="unknown" {% if accuracy == 'unknown' %}selected{% endif %}>{% if lang == 'en' %}Unknown{% else %}不明{% endif %}</option>
-            <option value="morning" {% if accuracy == 'morning' %}selected{% endif %}>{% if lang == 'en' %}Morning{% else %}午前{% endif %}</option>
-            <option value="afternoon" {% if accuracy == 'afternoon' %}selected{% endif %}>{% if lang == 'en' %}Afternoon{% else %}午後{% endif %}</option>
-            <option value="night" {% if accuracy == 'night' %}selected{% endif %}>{% if lang == 'en' %}Evening / night{% else %}夜{% endif %}</option>
+            <option value="exact" {% if accuracy == 'exact' %}selected{% endif %}>{{ ui.exact }}</option>
+            <option value="unknown" {% if accuracy == 'unknown' %}selected{% endif %}>{{ ui.unknown }}</option>
+            <option value="morning" {% if accuracy == 'morning' %}selected{% endif %}>{{ ui.morning }}</option>
+            <option value="afternoon" {% if accuracy == 'afternoon' %}selected{% endif %}>{{ ui.afternoon }}</option>
+            <option value="night" {% if accuracy == 'night' %}selected{% endif %}>{{ ui.night }}</option>
           </select>
         </label>
-        <label id="pe-time-field">{% if lang == 'en' %}Birth time{% else %}出生時刻{% endif %}
+        <label id="pe-time-field">{{ ui.birth_time }}
           <input name="birth_time" type="time" value="{{ form.birth_time or '' }}">
         </label>
       </div>
 
       <div class="form-section">
-        <h2>{% if lang == 'en' %}Birthplace{% else %}出生地{% endif %}</h2>
+        <h2>{{ ui.place_section }}</h2>
         {% set place_kind = form.birth_place_kind or 'domestic' %}
-        <div class="pe-place-toggle" role="radiogroup" aria-label="{% if lang == 'en' %}Birthplace region{% else %}出生地域{% endif %}">
-          <label class="pe-place-option"><input type="radio" name="birth_place_kind" value="domestic" {% if place_kind != 'overseas' %}checked{% endif %}> <span>{% if lang == 'en' %}Japan{% else %}日本国内{% endif %}</span></label>
-          <label class="pe-place-option"><input type="radio" name="birth_place_kind" value="overseas" {% if place_kind == 'overseas' %}checked{% endif %}> <span>{% if lang == 'en' %}Outside Japan{% else %}海外{% endif %}</span></label>
+        <div class="pe-place-toggle" role="radiogroup" aria-label="{{ ui.place_region }}">
+          <label class="pe-place-option"><input type="radio" name="birth_place_kind" value="domestic" {% if place_kind != 'overseas' %}checked{% endif %}> <span>{{ ui.japan }}</span></label>
+          <label class="pe-place-option"><input type="radio" name="birth_place_kind" value="overseas" {% if place_kind == 'overseas' %}checked{% endif %}> <span>{{ ui.outside_japan }}</span></label>
         </div>
         <div id="pe-domestic">
-          <label>{% if lang == 'en' %}Prefecture{% else %}都道府県{% endif %}<span class="required">*</span>
+          <label>{{ ui.prefecture }}<span class="required">*</span>
             <select name="prefecture">
               <option value="">--</option>
-              {% for pref in prefectures %}<option value="{{ pref }}" {% if form.prefecture == pref %}selected{% endif %}>{{ pref }}</option>{% endfor %}
+              {% for pref in prefectures %}<option value="{{ pref.value }}" {% if form.prefecture == pref.value %}selected{% endif %}>{{ pref.label }}</option>{% endfor %}
             </select>
           </label>
-          <label>{% if lang == 'en' %}City (optional){% else %}市区町村（任意）{% endif %}<input name="birth_place_city" value="{{ form.birth_place_city or '' }}"></label>
+          <label>{{ ui.city_optional }}<input name="birth_place_city" value="{{ form.birth_place_city or '' }}"></label>
         </div>
         <div id="pe-overseas">
-          <label>{% if lang == 'en' %}City / country{% else %}都市・国名{% endif %}<input name="birth_place_overseas" value="{{ form.birth_place_overseas or '' }}"></label>
-          <label>{% if lang == 'en' %}Latitude{% else %}緯度{% endif %}<input name="birth_lat" type="number" step="any" min="-90" max="90" value="{{ form.birth_lat or '' }}"></label>
-          <label>{% if lang == 'en' %}Longitude{% else %}経度{% endif %}<input name="birth_lng" type="number" step="any" min="-180" max="180" value="{{ form.birth_lng or '' }}"></label>
-          <label>{% if lang == 'en' %}Timezone{% else %}タイムゾーン{% endif %}
+          <label>{{ ui.city_country }}<input name="birth_place_overseas" value="{{ form.birth_place_overseas or '' }}"></label>
+          <label>{{ ui.latitude }}<input name="birth_lat" type="number" step="any" min="-90" max="90" value="{{ form.birth_lat or '' }}"></label>
+          <label>{{ ui.longitude }}<input name="birth_lng" type="number" step="any" min="-180" max="180" value="{{ form.birth_lng or '' }}"></label>
+          <label>{{ ui.timezone }}
             <select name="birth_timezone"><option value="">--</option>{% for tz in timezone_options %}<option value="{{ tz.value }}" {% if form.birth_timezone == tz.value %}selected{% endif %}>{{ tz.label }}</option>{% endfor %}</select>
           </label>
         </div>
       </div>
-      <label class="check-row"><input type="checkbox" name="agree_final" value="1" {% if form.agree_final %}checked{% endif %}> <span>{% if lang == 'en' %}I have reviewed my birth details. The code is consumed after the ZIP is successfully created.{% else %}出生情報を確認しました。ZIPの作成成功後、このコードは使用済みになります。{% endif %}</span></label>
-      <button type="submit" class="primary-link">{% if lang == 'en' %}Issue chart page and save ZIP{% else %}鑑定ページを発行してZIPを保存{% endif %}</button>
+      <label class="check-row"><input type="checkbox" name="agree_final" value="1" {% if form.agree_final %}checked{% endif %}> <span>{{ ui.agree }}</span></label>
+      <button type="submit" class="primary-link">{{ ui.submit }}</button>
     </form>
   </div>
 </main>
@@ -95,7 +97,8 @@ function syncPEFields(){
 }
 function applyAccessCodeFromUrl(){
   const params=new URLSearchParams(location.search);
-  const code=(params.get('code')||'').trim().toUpperCase();
+  const hashParams=new URLSearchParams(location.hash.replace(/^#/,''));
+  const code=(params.get('code')||hashParams.get('code')||'').trim().toUpperCase();
   if(!/^PE-(?:FULL|ACG)-[A-Z0-9-]{10,40}$/.test(code))return;
   const input=document.querySelector('[name="access_code"]');
   if(input&&!input.value)input.value=code;

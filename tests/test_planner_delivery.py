@@ -101,10 +101,15 @@ class PlannerDeliveryTest(unittest.TestCase):
 
         self.assertEqual(response.media_type, "application/pdf")
         self.assertEqual(response.body, b"%PDF-test")
+        self.assertEqual(
+            response.headers["content-disposition"],
+            'attachment; filename="Personal-Planner-JA.pdf"',
+        )
         build.assert_called_once_with(
             chart,
             lang="ja",
             chart_url="https://chart.nanami-astro.com/chart/short-transit-token/planner-ai",
+            holiday_country=None,
         )
 
     def test_query_lang_en_overrides_stored_locale(self) -> None:
@@ -128,10 +133,46 @@ class PlannerDeliveryTest(unittest.TestCase):
         ):
             response = chart_planner_pdf(request, "en-token")
         self.assertEqual(response.body, b"%PDF-en")
+        self.assertEqual(
+            response.headers["content-disposition"],
+            'attachment; filename="Personal-Planner.pdf"',
+        )
         build.assert_called_once_with(
             chart,
             lang="en",
             chart_url="https://chart.nanami-astro.com/chart/en-token/planner-ai?lang=en",
+            holiday_country=None,
+        )
+
+    def test_spanish_planner_passes_selected_nationwide_holiday_country(self) -> None:
+        yaml_text = FIXTURE.read_text(encoding="utf-8").replace(
+            "transit_long_term:", "transit:", 1
+        ).replace("days: 365", "days: 38", 1)
+        chart = {
+            "token": "es-token",
+            "options": {"product_type": "western_full", "personal_edition_locale": "es"},
+            "yaml_text": yaml_text,
+        }
+        request = Request({
+            "type": "http", "method": "GET", "scheme": "https",
+            "server": ("chart.nanami-astro.com", 443),
+            "path": "/chart/es-token/planner.pdf",
+            "query_string": b"lang=es&holiday_country=MX", "headers": [],
+        })
+        with (
+            patch("routes._load_chart_or_404", return_value=chart),
+            patch("routes._build_personal_planner_pdf", return_value=b"%PDF-es") as build,
+        ):
+            response = chart_planner_pdf(request, "es-token")
+        self.assertEqual(
+            response.headers["content-disposition"],
+            'attachment; filename="Personal-Planner-ES-MX.pdf"',
+        )
+        build.assert_called_once_with(
+            chart,
+            lang="es",
+            chart_url="https://chart.nanami-astro.com/chart/es-token/planner-ai?lang=es",
+            holiday_country="MX",
         )
 
     def test_concurrent_build_for_same_chart_is_rejected(self) -> None:
@@ -150,7 +191,7 @@ class PlannerDeliveryTest(unittest.TestCase):
         started = threading.Event()
         release = threading.Event()
 
-        def slow_build(_chart, *, lang, chart_url=None):
+        def slow_build(_chart, *, lang, chart_url=None, holiday_country=None):
             started.set()
             release.wait(timeout=5)
             return b"%PDF-slow"

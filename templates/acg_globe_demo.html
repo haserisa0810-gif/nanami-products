@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="{{ lang }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ACG仕組み理解デモ — MC/ICライン地球儀</title>
+<title>{{ globe_ui.title }}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 <style>
@@ -124,37 +124,39 @@
     border-radius:8px;padding:18px 20px;line-height:1.8;
   }
   #fallback b{color:var(--accent)}
+  .locale-switch{display:flex;gap:6px;margin:0 0 12px}.locale-switch a{border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--ink-dim);text-decoration:none;font-size:10px}.locale-switch a.active{border-color:var(--accent);color:var(--accent)}
 </style>
 {% include "_head_icons.html" %}
 </head>
 <body>
 
 <div id="panel">
-  <h1>ACG 仕組み理解デモ</h1>
-  <div class="sub">出生瞬間に各天体がどの経度で南中(MC)/反対側で反南中(IC)になるかを可視化する教育用デモ。鑑定用ではない。</div>
+  <nav class="locale-switch" aria-label="Language"><a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}active{% endif %}">JA</a><a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}active{% endif %}">EN</a><a href="{{ lang_urls.es }}" class="{% if lang == 'es' %}active{% endif %}">ES</a><a href="{{ lang_urls.de }}" class="{% if lang == 'de' %}active{% endif %}">DE</a></nav>
+  <h1>{{ globe_ui.heading }}</h1>
+  <div class="sub">{{ globe_ui.subtitle }}</div>
 
   <div class="caveat" id="caveat">
-    <b>計算精度に関する注意</b><br>
-    このデモは簡易計算です。黄経のみの天体は黄緯0と仮定して赤経へ変換します(実際の惑星は黄緯を持つため数度ずれ得ます)。章動・光行差などは無視。正確な値は pyswisseph 側の計算を正としてください。
+    <b>{{ globe_ui.caveat_title }}</b><br>
+    {{ globe_ui.caveat }}
   </div>
 
   <div class="box">
-    <h2>YAML 入力(natal.planets / subject.datetime)</h2>
-    <textarea id="yamlIn" spellcheck="false" placeholder="ここにYAMLを貼り付け"></textarea>
+    <h2>{{ globe_ui.yaml_input }}</h2>
+    <textarea id="yamlIn" spellcheck="false" placeholder="{{ globe_ui.yaml_placeholder }}"></textarea>
     <div class="btnrow">
-      <button id="btnLoad">読み込む</button>
-      <button id="btnSample" class="ghost">サンプルを挿入</button>
+      <button id="btnLoad">{{ globe_ui.load }}</button>
+      <button id="btnSample" class="ghost">{{ globe_ui.sample }}</button>
     </div>
   </div>
 
   <div class="box">
-    <h2>読み込み結果</h2>
-    <div id="status">未読み込み。サンプルで動作を確認できます。</div>
+    <h2>{{ globe_ui.result }}</h2>
+    <div id="status">{{ globe_ui.not_loaded }}</div>
   </div>
 
   <div class="box">
-    <h2>天体 ON/OFF(実線=MC / 破線=IC)</h2>
-    <div id="planets"><span style="color:var(--ink-dim)">YAML読み込み後に表示</span></div>
+    <h2>{{ globe_ui.planet_toggle }}</h2>
+    <div id="planets"><span style="color:var(--ink-dim)">{{ globe_ui.after_load }}</span></div>
   </div>
 </div>
 
@@ -164,36 +166,38 @@
   <div id="tip"></div>
   <div id="flycap"></div>
   <div id="timebar" class="disabled">
-    <button id="tReset" title="出生時へ戻る">⏮</button>
-    <button id="tPlay" title="再生/停止">▶</button>
-    <select id="tSpeed" title="再生速度">
+    <button id="tReset" title="{{ globe_ui.reset_title }}">⏮</button>
+    <button id="tPlay" title="{{ globe_ui.play_title }}">▶</button>
+    <select id="tSpeed" title="{{ globe_ui.speed_title }}">
       <option value="1">×1</option>
       <option value="10">×10</option>
       <option value="60" selected>×60</option>
       <option value="600">×600</option>
     </select>
     <input type="range" id="tSlider" min="0" max="86400" step="60" value="0">
-    <span class="ro" id="tInfo">YAML読み込み後に有効</span>
-    <select id="tFollow" title="MC点を画面中央に追跡">
-      <option value="">追跡: なし</option>
+    <span class="ro" id="tInfo">{{ globe_ui.after_load }}</span>
+    <select id="tFollow" title="{{ globe_ui.follow_title }}">
+      <option value="">{{ globe_ui.follow_none }}</option>
     </select>
   </div>
   <div id="educap">
-    <b>天体はほぼ動かず、地球の自転によってMCになる地域が移り変わります。</b><br>
-    <span class="pts">太陽MC=真昼 / 太陽IC=真夜中 / 昼夜境界の円=日の出・日の入り(≒太陽のASC/DSC)</span><br>
-    ※実際には天体も公転で動きます(特に月は1日で約13°)。本デモは出生時の天体位置に固定した簡易表示です。
+    <b>{{ globe_ui.education }}</b><br>
+    <span class="pts">{{ globe_ui.education_points }}</span><br>
+    {{ globe_ui.education_note }}
   </div>
   <div id="legend">
-    <span class="solid">━ MCライン(南中する経度)</span><br>
-    <span class="dash">┄ ICライン(対蹠経度)</span><br>
-    <span class="solid">● MC点(天体が真上の地点)</span>
+    <span class="solid">{{ globe_ui.legend_mc }}</span><br>
+    <span class="dash">{{ globe_ui.legend_ic }}</span><br>
+    <span class="solid">{{ globe_ui.legend_point }}</span>
     <div id="symList"></div>
   </div>
-  <div id="hud">ドラッグ: 回転 / ホイール: ズーム / 線・●クリック: 詳細 / 左パネルの「MC ▸」: 自動回転</div>
+  <div id="hud">{{ globe_ui.hud }}</div>
 </div>
 
 <script>
 "use strict";
+
+const UI = {{ globe_ui | tojson }};
 
 function showFatal(message, detail){
   const fallback = document.getElementById("fallback");
@@ -210,8 +214,8 @@ function showFatal(message, detail){
 
 if(!window.THREE || !window.jsyaml){
   showFatal(
-    "3D表示に必要なライブラリを読み込めませんでした。",
-    "three.js または js-yaml のCDN読み込みがブロックされています。ネットワーク設定またはCDNへの接続を確認してください。"
+    UI.cdn_error,
+    UI.cdn_detail
   );
   throw new Error("Required CDN libraries failed to load");
 }
@@ -241,14 +245,7 @@ const PLANET_SYMBOLS = {
   "Sun":"☉","Moon":"☽","Mercury":"☿","Venus":"♀","Mars":"♂",
   "Jupiter":"♃","Saturn":"♄","Uranus":"♅","Neptune":"♆","Pluto":"♇"
 };
-// 表示名の日本語化(YAMLキーが英語の場合)
-const NAME_JA = {
-  "Sun":"太陽","Moon":"月","Mercury":"水星","Venus":"金星","Mars":"火星",
-  "Jupiter":"木星","Saturn":"土星","Uranus":"天王星","Neptune":"海王星","Pluto":"冥王星",
-  "North Node":"ドラゴンヘッド","South Node":"ドラゴンテイル",
-  "Lilith":"リリス","Chiron":"キロン","Ceres":"セレス","Pallas":"パラス",
-  "Juno":"ジュノー","Vesta":"ベスタ"
-};
+const DISPLAY_NAMES = UI.planet_names || {};
 const isSunName = n => n==="太陽" || n==="Sun";
 
 // 緯度経度 → 三次元座標(経度0=グリニッジをZ+方向に置く)
@@ -325,7 +322,7 @@ function extractPlanets(doc){
       const dec = toNumber(pick(src,["dec","declination","赤緯","Dec"]));
       const lon = toNumber(pick(src,["absolute_longitude","longitude","ecliptic_longitude","黄経","lon","lng"]));
       const raw = String(name);
-      return {name: NAME_JA[raw] ?? raw, rawName: raw, ra, dec, eclLon:lon};
+      return {name: DISPLAY_NAMES[raw] ?? raw, rawName: raw, ra, dec, eclLon:lon};
     })
     .filter(p => p.ra !== undefined || p.eclLon !== undefined);
 }
@@ -361,8 +358,8 @@ try {
   renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 } catch(err) {
   showFatal(
-    "WebGLを初期化できませんでした。",
-    "ブラウザまたは実行環境でWebGLが無効です。別ブラウザ、GPU設定、端末設定を確認してください。"
+    UI.webgl_error,
+    UI.webgl_detail
   );
   throw err;
 }
@@ -465,10 +462,10 @@ const NE_LAND = [[[[180,-16.07],[180,-16.56],[178.73,-17.01],[178.6,-16.64],[179
   hud.appendChild(note);
   try {
     const n = drawEarthTexture(NE_LAND);
-    note.textContent = `海岸線: Natural Earth 1:110m 埋め込み(${n}ポリゴン)`;
+    note.textContent = `${UI.coastline} (${n})`;
   } catch(err){
     console.error("drawEarthTexture failed:", err);
-    note.innerHTML = `<span style="color:var(--warn)">海岸線の描画エラー: ${err.message}</span>`;
+    note.innerHTML = `<span style="color:var(--warn)">${UI.coastline_error}: ${err.message}</span>`;
   }
 })();
 
@@ -618,7 +615,7 @@ function buildLines(planets, gmst){
     lineGroup.add(mMC); lineGroup.add(mIC); lineGroup.add(dot); lineGroup.add(glow);
     lineObjects.push({mesh:mMC, planet:p, kind:"MC", lon:lonMC});
     lineObjects.push({mesh:mIC, planet:p, kind:"IC", lon:lonIC});
-    lineObjects.push({mesh:dot, planet:p, kind:"MC点", lon:lonMC});
+  lineObjects.push({mesh:dot, planet:p, kind:"MC_POINT", lon:lonMC});
     lineObjects.push({mesh:glow, planet:p, kind:"_glow", lon:lonMC});
     dotMeshes.push(dot, glow);
     p.lonMC = lonMC; p.lonIC = lonIC; p.color = color;
@@ -700,7 +697,7 @@ function updateTimeReadout(){
   const local = new Date(sim.dt0.getTime() + sim.sec*1000 + (sim.tzOff ?? 0)*3600e3);
   const t = local.toISOString().slice(5,16).replace("T"," ");
   const g = norm360(sim.gmst0 + deltaGmst());
-  $tInfo.innerHTML = `<b>${fmtHM(sim.sec)}</b> ${t} ${sim.tzLabel} | GMST(概算) ${g.toFixed(1)}°`;
+  $tInfo.innerHTML = `<b>${fmtHM(sim.sec)}</b> ${t} ${sim.tzLabel} | ${UI.gmst} ${g.toFixed(1)}°`;
   if(!$tSlider.matches(":active")) $tSlider.value = sim.sec;
 }
 
@@ -726,7 +723,7 @@ function flyToMC(p){
     dy: shortestAngle(ty - rotY)
   };
   const cap = document.getElementById("flycap");
-  cap.textContent = `${PLANET_SYMBOLS[p.name] ?? ""} ${p.name} MC地点へ回転中…`;
+  cap.textContent = `${PLANET_SYMBOLS[p.name] ?? ""} ${p.name} ${UI.fly}`;
   cap.style.display = "block";
 }
 
@@ -775,23 +772,23 @@ function handleClick(e){
     const lonTxt = Math.abs(o.lon).toFixed(2) + "°" + (o.lon>=0?"E":"W");
     const curLon = norm180(o.lon - deltaGmst());
     const curTxt = Math.abs(curLon).toFixed(2) + "°" + (curLon>=0?"E":"W");
-    const curLine = sim.sec > 0 ? `<br>現在(${fmtHM(sim.sec)})の地上経度: ${curTxt}` : "";
+    const curLine = sim.sec > 0 ? `<br>${UI.current} (${fmtHM(sim.sec)}) ${UI.ground_longitude}: ${curTxt}` : "";
     let body;
-    if(o.kind==="MC点"){
+    if(o.kind==="MC_POINT"){
       const lat = o.planet.decUsed ?? 0;
       const latTxt = Math.abs(lat).toFixed(2)+"°"+(lat>=0?"N":"S");
-      body = `<b>${o.planet.name} 天頂点(MC)</b><br>`
-        + `出生時: ${latTxt} / ${lonTxt}${curLine}<br>`
-        + `この地点では${o.planet.name}が真上に見える。緯度=赤緯。`;
+      body = `<b>${o.planet.name} ${UI.zenith}</b><br>`
+        + `${UI.birth}: ${latTxt} / ${lonTxt}${curLine}<br>`
+        + UI.zenith_detail;
     } else {
-      body = `<b>${o.planet.name} ${o.kind}ライン</b><br>`
-        + `出生時の経度: ${lonTxt}${curLine}<br>`
+      body = `<b>${o.planet.name} ${o.kind} ${UI.line}</b><br>`
+        + `${UI.birth_longitude}: ${lonTxt}${curLine}<br>`
         + (o.kind==="MC"
-           ? "この経度上ではこの天体が真南(天頂側の子午線)を通過。"
-           : "MCの正反対。この天体が地下で子午線を通過する経度。");
+           ? UI.mc_detail
+           : UI.ic_detail);
     }
     tip.innerHTML = body
-      + (o.planet.raSource==="ecl" ? `<br><span style="color:var(--warn)">※黄緯0仮定の簡易値</span>` : "");
+      + (o.planet.raSource==="ecl" ? `<br><span style="color:var(--warn)">${UI.approx_value}</span>` : "");
     tip.style.display = "block";
     tip.style.left = (e.clientX-rect.left+14)+"px";
     tip.style.top  = (e.clientY-rect.top+14)+"px";
@@ -808,15 +805,15 @@ const $planets = document.getElementById("planets");
 function loadYaml(){
   tip.style.display="none";
   const text = document.getElementById("yamlIn").value.trim();
-  if(!text){ $status.innerHTML = `<span class="warn">YAMLが空です。</span>`; return; }
+  if(!text){ $status.innerHTML = `<span class="warn">${UI.yaml_empty}</span>`; return; }
 
   let doc;
   try { doc = jsyaml.load(text); }
-  catch(err){ $status.innerHTML = `<span class="warn">YAML解析エラー:</span> ${err.message}`; return; }
+  catch(err){ $status.innerHTML = `<span class="warn">${UI.yaml_parse_error}:</span> ${err.message}`; return; }
 
   const planets = extractPlanets(doc);
   if(!planets.length){
-    $status.innerHTML = `<span class="warn">natal.planets から天体データを読み取れませんでした。</span>\n必要: 天体名 + 黄経(longitude/黄経) または 赤経(ra/赤経)`;
+    $status.innerHTML = `<span class="warn">${UI.planet_missing}</span>\n${UI.planet_required}`;
     return;
   }
 
@@ -824,10 +821,10 @@ function loadYaml(){
   let gmst, timeNote;
   if(dt){
     gmst = gmstDeg(jdFromDate(dt));
-    timeNote = `<span class="ok">日時:</span> ${dt.toISOString().replace("T"," ").slice(0,16)} UTC\nGMST(概算): ${gmst.toFixed(3)}°`;
+    timeNote = `<span class="ok">${UI.datetime}:</span> ${dt.toISOString().replace("T"," ").slice(0,16)} UTC\n${UI.gmst}: ${gmst.toFixed(3)}°`;
   } else {
     gmst = 0;
-    timeNote = `<span class="warn">subject.datetime が見つからないため GMST=0° と仮定。\nラインの絶対位置は不正確です(相対配置のみ有効)。</span>`;
+    timeNote = `<span class="warn">${UI.datetime_missing}</span>`;
   }
 
   // RA・赤緯の決定
@@ -849,18 +846,18 @@ function loadYaml(){
   let lightNote;
   if(sunP && dt){
     enableDayNight(sunP.decUsed, sunP.lonMC);
-    lightNote = `昼夜表現: 太陽直下点(${sunP.decUsed.toFixed(1)}°, ${sunP.lonMC.toFixed(1)}°)から算出。暗い側=出生時に夜だった地域。`;
+    lightNote = `${UI.daylight}: (${sunP.decUsed.toFixed(1)}°, ${sunP.lonMC.toFixed(1)}°)`;
   } else {
-    lightNote = `<span class="warn">太陽データ${dt?"":"または日時"}が無いため昼夜表現は無効(全体照明)。</span>`;
+    lightNote = `<span class="warn">${UI.daylight_disabled}</span>`;
   }
 
   // ステータス
-  let s = `<span class="ok">天体 ${planets.length} 件を読み込みました。</span>\n` + timeNote;
+  let s = `<span class="ok">${UI.loaded_prefix} ${planets.length} ${UI.loaded_suffix}</span>\n` + timeNote;
   if(approxCount>0){
-    s += `\n<span class="warn">${approxCount}件は黄経のみのため黄緯0仮定でRA/赤緯へ簡易変換(数度の誤差あり得ます)。</span>`;
+    s += `\n<span class="warn">${approxCount} ${UI.approx_count}</span>`;
   }
   s += `\n${lightNote}`;
-  s += `\n※ASC/DSCラインは未実装(次段階)。`;
+  s += `\n${UI.asc_missing}`;
   $status.innerHTML = s;
 
   // トグルUI
@@ -875,7 +872,7 @@ function loadYaml(){
       `<input type="checkbox" checked>`+
       `<span class="sw" style="background:${cssColor}"></span>`+
       `<span>${PLANET_SYMBOLS[p.name] ?? ""} ${p.name}${p.raSource==="ecl"?" *":""}</span>`+
-      `<span class="deg fly" title="クリックでMC地点へ回転">MC ${lonTxt} ▸</span>`;
+      `<span class="deg fly" title="${UI.rotate_title}">MC ${lonTxt} ▸</span>`;
     label.querySelector("input").addEventListener("change", ev=>{
       checkboxState[p.name] = ev.target.checked;
       updateVisibility();
@@ -890,7 +887,7 @@ function loadYaml(){
   if(approxCount>0){
     const note = document.createElement("div");
     note.style.cssText = "color:var(--ink-dim);font-size:10px;margin-top:6px";
-    note.textContent = "* = 黄緯0仮定の簡易変換";
+    note.textContent = UI.approx_note;
     $planets.appendChild(note);
   }
 
@@ -903,7 +900,7 @@ function loadYaml(){
     el.className = "sym";
     el.dataset.name = p.name;
     el.style.color = cssColor;
-    el.title = `${p.name}のみ表示 / もう一度で全表示`;
+    el.title = `${p.name} ${UI.solo_title}`;
     el.textContent = `${PLANET_SYMBOLS[p.name] ?? "・"} ${p.name}`;
     el.addEventListener("click", ()=>{
       soloName = (soloName === p.name) ? null : p.name;
@@ -928,9 +925,9 @@ function loadYaml(){
   $tPlay.textContent = "▶";
   $tSlider.value = 0;
   document.getElementById("timebar").classList.toggle("disabled", !sim.enabled);
-  if(!sim.enabled) $tInfo.textContent = "日時が無いため時間シミュレーション不可";
-  $tFollow.innerHTML = `<option value="">追跡: なし</option>` +
-    planets.map(p=>`<option value="${p.name}">追跡: ${PLANET_SYMBOLS[p.name] ?? ""}${p.name}</option>`).join("");
+  if(!sim.enabled) $tInfo.textContent = UI.simulation_unavailable;
+  $tFollow.innerHTML = `<option value="">${UI.follow_none}</option>` +
+    planets.map(p=>`<option value="${p.name}">${UI.follow_prefix}${PLANET_SYMBOLS[p.name] ?? ""}${p.name}</option>`).join("");
 
   updateVisibility();
 }
@@ -939,6 +936,7 @@ document.getElementById("btnLoad").addEventListener("click", loadYaml);
 
 document.getElementById("btnSample").addEventListener("click", ()=>{
   document.getElementById("yamlIn").value =
+{% if lang == "ja" %}
 `# サンプル(値は例示用のダミー)
 subject:
   datetime: "2026-08-13T03:00:00Z"
@@ -959,6 +957,28 @@ natal:
     - name: 土星
       longitude: 25.64
 `;
+{% else %}
+`# Sample values for demonstration only
+subject:
+  datetime: "2026-08-13T03:00:00Z"
+natal:
+  planets:
+    - name: Sun
+      longitude: 140.53
+    - name: Moon
+      longitude: 312.10
+    - name: Mercury
+      longitude: 128.77
+    - name: Venus
+      longitude: 165.42
+    - name: Mars
+      longitude: 201.88
+    - name: Jupiter
+      longitude: 98.30
+    - name: Saturn
+      longitude: 25.64
+`;
+{% endif %}
 });
 
 /* ========== ループ & リサイズ ========== */

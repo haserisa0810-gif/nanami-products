@@ -40,12 +40,28 @@ from services.planner_delivery import (
     build_planner_pdf_from_yaml,
     build_planner_yaml_from_natal_yaml,
 )
-from services.planner_ai import build_daily_ai_prompt
+from services.planner_ai import build_daily_ai_prompt, get_planner_ai_ui
+from services.planner.planner_holidays import SUPPORTED_COUNTRIES
+from services.acg_locales import get_acg_ui, localize_acg_error
+from services.acg_globe_locales import get_globe_ui
+from services.neko_demo_locales import get_neko_demo_ui
+from services.site_locales import (
+    CHART_EXTRA_UI,
+    PERSONAL_EDITION_UI,
+    PRODUCT_COPY,
+    SITE_LOCALE_OVERRIDES,
+    redeem_error,
+)
 from services.personal_edition_code_pdf import build_personal_edition_code_pdf
 from services.common_access_package import ETSY_PACKAGE_FILENAME, build_common_access_package
 from services.api_calc import calc_combined_api, calc_shichu_api, calc_transit_api, calc_western_api
 from services.api_demo import build_demo_response, build_demo_shichu_svg, build_demo_svg
 from services.birth_time import extract_birth_time_notice, resolve_birth_time_accuracy
+from services.buyer_input_locales import (
+    buyer_error,
+    form_ui as buyer_form_ui,
+    prefecture_options as localized_prefecture_options,
+)
 from services.chart_svg import build_horoscope_svg_from_yaml, has_asteroid_svg_data
 from services.api_yaml import build_handoff_yaml
 from services.location import PREFECTURE_OPTIONS, prefecture_full_name, resolve_municipality, resolve_prefecture
@@ -75,8 +91,7 @@ from services.note_transit import (
 )
 from services.post_chart import build_post_chart
 from services.prompt_builder import (
-    CHART_COMPANION_PROMPT,
-    SHICHUSUIMEI_CHART_COMPANION_PROMPT,
+    build_chart_companion_prompt,
     build_prompt,
     ensure_transit_date_guidance,
 )
@@ -564,7 +579,7 @@ PRODUCT_SLUGS = {
 PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
 CHART_EXPIRES_DAYS = 90
 NO_EXPIRY_CHART_POLICY = "no_expiry"
-SUPPORTED_LANGS = {"ja", "en"}
+SUPPORTED_LANGS = {"ja", "en", "es", "de"}
 
 I18N = {
     "ja": {
@@ -618,7 +633,7 @@ I18N = {
         "input_title_suffix": "鑑定データ入力",
         "shichu_input_title_suffix": "データ入力",
         "precheck": "入力前チェック",
-        "precheck_strong": "送信後は同じ注文番号で再生成できません。",
+        "precheck_strong": "購入した個数ごとに1回発行できます。数量2の場合は2件発行できます。",
         "precheck_note": "生年月日・出生時刻・出生地を確認してから送信してください。",
         "order_info": "注文情報",
         "order_provider": "購入元",
@@ -626,7 +641,7 @@ I18N = {
         "provider_gumroad": "Gumroad",
         "provider_payhip": "Payhip",
         "provider_etsy": "Etsy",
-        "provider_coconala": "ココナラ",
+        "provider_coconala": "ココナラ（販売終了・過去購入のみ）",
         "stores_order": "注文番号",
         "coconala_buyer_name": "ココナラのユーザー名",
         "coconala_buyer_hint": "購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。",
@@ -663,8 +678,8 @@ I18N = {
         "select_placeholder": "選択してください",
         "place_details": "出生地の詳細",
         "place_kind": "出生地区分",
-        "domestic": "国内",
-        "international": "海外",
+        "domestic": "日本国内",
+        "international": "日本国外",
         "coordinates": "緯度・経度で入力",
         "domestic_place_note": "都道府県は必須です。市区町村は任意です。対応する座標があれば市区町村を使用し、緯度・経度を入力した場合はそちらを最優先で使用します。",
         "domestic_coordinates_summary": "詳細座標を指定する（任意）",
@@ -697,7 +712,7 @@ I18N = {
         "submit_generate": "AI鑑定データを生成する",
         "submit_confirm": "この内容でAI鑑定データを生成します。送信後は変更・再生成できません。よろしいですか？",
         "confirm_title": "最終確認",
-        "confirm_lead": "作成前に入力内容を確認してください。",
+        "confirm_lead": "入力内容を確認してください。作成すると購入分を1件使用します。",
         "confirm_modify": "修正する",
         "confirm_create": "この内容で作成する",
         "confirm_order": "注文番号",
@@ -910,6 +925,10 @@ I18N = {
         ],
         "addon_generate_section_title": "生成する追加部品",
         "addon_type_label": "addon種別",
+        "addon_purchase_reference_label": "注文番号／購入ID",
+        "addon_purchase_reference_placeholder": "注文番号、Order ID、または購入時のユーザー名",
+        "addon_purchase_reference_hint": "購入確認メールなどに記載された番号または購入時のユーザー名を入力してください。購入元は自動で確認します。",
+        "addon_provider_collision_label": "購入元を選択してください",
         "order_code_label": "STORESオーダー番号",
         "etsy_order_label": "Etsyの注文番号",
         "order_code_placeholder": "例：9824333454",
@@ -999,7 +1018,7 @@ I18N = {
         "input_title_suffix": "AI-readable astrology data input",
         "shichu_input_title_suffix": "Data input",
         "precheck": "Before you submit",
-        "precheck_strong": "You cannot generate the data again with the same order number after submission.",
+        "precheck_strong": "Each purchased copy can be generated once. Quantity 2 allows two personalized editions.",
         "precheck_note": "Please check the birth date, birth time, and place of birth before submitting.",
         "order_info": "Order information",
         "order_provider": "Purchase provider",
@@ -1007,7 +1026,7 @@ I18N = {
         "provider_gumroad": "Gumroad",
         "provider_payhip": "Payhip",
         "provider_etsy": "Etsy",
-        "provider_coconala": "Coconala",
+        "provider_coconala": "Coconala (legacy purchases only)",
         "stores_order": "Order number",
         "coconala_buyer_name": "Coconala username",
         "coconala_buyer_hint": "Enter the exact username shown on the Coconala account used for purchase.",
@@ -1044,8 +1063,8 @@ I18N = {
         "select_placeholder": "Select",
         "place_details": "Details of the place of birth",
         "place_kind": "Place of birth type",
-        "domestic": "Domestic",
-        "international": "International",
+        "domestic": "Japan",
+        "international": "Outside Japan",
         "coordinates": "Use latitude / longitude",
         "domestic_place_note": "Prefecture is required and city/ward is optional. If matching coordinates exist, the city/ward coordinates are used. Entered latitude and longitude are always used first.",
         "domestic_coordinates_summary": "Optional detailed coordinates",
@@ -1078,7 +1097,7 @@ I18N = {
         "submit_generate": "Generate AI-readable astrology data",
         "submit_confirm": "Generate AI-readable astrology data with this input? You cannot change or regenerate it after submission.",
         "confirm_title": "Final review",
-        "confirm_lead": "Check your input before creating the data.",
+        "confirm_lead": "Check your input. Creating this edition uses one purchased copy.",
         "confirm_modify": "Edit",
         "confirm_create": "Create with this data",
         "confirm_order": "Order number",
@@ -1291,6 +1310,10 @@ I18N = {
         ],
         "addon_generate_section_title": "Add-on to generate",
         "addon_type_label": "Add-on type",
+        "addon_purchase_reference_label": "Order number or purchase ID",
+        "addon_purchase_reference_placeholder": "Order number, Order ID, or purchase username",
+        "addon_purchase_reference_hint": "Enter the reference shown in your purchase confirmation, or the username used for purchase. The provider is checked automatically.",
+        "addon_provider_collision_label": "Select the purchase provider",
         "order_code_label": "STORES order number",
         "etsy_order_label": "Etsy order number",
         "order_code_placeholder": "Example: 9824333454",
@@ -1329,6 +1352,27 @@ I18N = {
         "download_started": "Download started.",
     },
 }
+
+# Spanish and German begin from the complete English catalogue, then override
+# translated strings. This prevents an accidental fallback to Japanese while
+# each customer-facing section is localized.
+I18N["ja"].update({"lang_es": "Español", "lang_de": "Deutsch"})
+I18N["en"].update({"lang_ja": "JA", "lang_es": "Español", "lang_de": "Deutsch"})
+I18N["es"] = {
+    **I18N["en"],
+    "lang_label": "Idioma", "lang_ja": "JA", "lang_en": "English",
+    "lang_es": "Español", "lang_de": "Deutsch",
+}
+I18N["de"] = {
+    **I18N["en"],
+    "lang_label": "Sprache", "lang_ja": "JA", "lang_en": "English",
+    "lang_es": "Español", "lang_de": "Deutsch",
+}
+I18N["es"].update(SITE_LOCALE_OVERRIDES["es"])
+I18N["de"].update(SITE_LOCALE_OVERRIDES["de"])
+for _locale, _copy in CHART_EXTRA_UI.items():
+    I18N[_locale].update(_copy)
+
 OVERSEAS_TIMEZONE_OPTIONS = [
     {"value": "Asia/Tokyo", "label_ja": "日本（Tokyo）", "label_en": "Japan (Tokyo)"},
     {"value": "Europe/London", "label_ja": "イギリス（London）", "label_en": "United Kingdom (London)"},
@@ -1351,7 +1395,7 @@ OVERSEAS_TIMEZONE_OPTIONS = [
 
 
 def _timezone_options(lang: str) -> list[dict[str, str]]:
-    label_key = "label_en" if lang == "en" else "label_ja"
+    label_key = "label_ja" if lang == "ja" else "label_en"
     return [
         {"value": option["value"], "label": option[label_key]}
         for option in OVERSEAS_TIMEZONE_OPTIONS
@@ -1410,6 +1454,8 @@ def _lang_urls(request: Request) -> dict[str, str]:
     return {
         "ja": relative_url("ja"),
         "en": relative_url("en"),
+        "es": relative_url("es"),
+        "de": relative_url("de"),
     }
 
 
@@ -1418,10 +1464,14 @@ def _localized_product(product_type: str, lang: str) -> dict:
     localized = dict(config)
     product_i18n = I18N.get(lang, I18N["ja"])
     localized["label"] = product_i18n["product_labels"].get(product_type, config["label"])
-    if lang == "en":
+    translated_product = PRODUCT_COPY.get(lang, {}).get(product_type)
+    if translated_product:
+        localized.update(translated_product)
+        return localized
+    if lang != "ja":
         english_descriptions = {
             "western_basic": "Creates core birth chart data for Western astrology. No asteroids, Four Pillars, or day-boundary options are shown.",
-            "western_full": "Includes asteroids and a 38-day transit set. The transits also unlock a one-year Transit Planner (PDF). No selection is required from the buyer.",
+            "western_full": "Includes asteroids and a 31-day transit set. The transits also unlock a one-year Transit Planner (PDF). No selection is required from the buyer.",
             "western_asteroids_addon": "Creates the asteroid add-on YAML to use with the basic version.",
             "shichu": "Creates Four Pillars data. The day-change boundary can be set to the standard 1:00 AM or 11:00 PM.",
             "transit_yaml": "Creates YAML for the planetary positions at a specific event, date, and place. Birth information is not used.",
@@ -1436,7 +1486,7 @@ def _localized_product(product_type: str, lang: str) -> dict:
             "western_full": [
                 "Western astrology birth chart data",
                 "Includes asteroids",
-                "Includes 38-day transits",
+                "Includes 31-day transits",
                 "No Four Pillars data",
             ],
             "western_asteroids_addon": [
@@ -1463,6 +1513,27 @@ def _localized_product(product_type: str, lang: str) -> dict:
     return localized
 
 
+def _product_label_for_lang(product_type: object, lang: str) -> str:
+    product_key = str(product_type or "").strip()
+    if lang == "ja":
+        return _product_label(product_key or None)
+    if product_key in PRODUCT_CONFIG:
+        return str(_localized_product(product_key, lang)["label"])
+    return product_key or "product"
+
+
+def _provider_label_for_lang(provider: str | None, lang: str) -> str:
+    if lang == "ja":
+        return _provider_label(provider)
+    return {
+        "coconala": "Coconala",
+        "etsy": "Etsy",
+        "payhip": "Payhip",
+        "gumroad": "Gumroad",
+        "stores": "STORES",
+    }.get(provider or "", "store")
+
+
 def _i18n_context(request: Request) -> dict:
     lang = _resolve_lang(request)
     return {
@@ -1477,18 +1548,29 @@ def _chart_i18n_context(request: Request, product_type: str | None) -> dict:
     if product_type != "shichu":
         return context
     t = dict(context["t"])
-    if context["lang"] == "en":
-        t.update({
-            "chart_companion_lead": "Use your Four Pillars data to start an AI reading or consult an AI practitioner.",
-            "reading_mode_desc": "Get a complete reading based on your Four Pillars chart, elemental balance, luck cycles, and annual influences.",
-            "consultation_mode_desc": "Discuss what is on your mind with an AI practitioner who understands your Four Pillars chart and changing luck cycles.",
-        })
-    else:
-        t.update({
+    shichu_copy = {
+        "ja": {
             "chart_companion_lead": "四柱推命の命式データを使って、AI鑑定またはAI占い師への相談を始められます。",
             "reading_mode_desc": "命式・五行バランス・通変星・大運・流年をもとに、全体像や運気の流れをまとめて鑑定します。",
             "consultation_mode_desc": "命式と運気の流れを理解したAI占い師へ、気になっていることを相談できます。",
-        })
+        },
+        "en": {
+            "chart_companion_lead": "Use your Four Pillars data to start an AI reading or consult an AI practitioner.",
+            "reading_mode_desc": "Get a complete reading based on your Four Pillars chart, elemental balance, luck cycles, and annual influences.",
+            "consultation_mode_desc": "Discuss what is on your mind with an AI practitioner who understands your Four Pillars chart and changing luck cycles.",
+        },
+        "es": {
+            "chart_companion_lead": "Utiliza tus datos de Cuatro Pilares para iniciar una lectura o consulta con IA.",
+            "reading_mode_desc": "Recibe una lectura completa basada en tus pilares, el equilibrio de elementos, los ciclos de suerte y las influencias anuales.",
+            "consultation_mode_desc": "Consulta tus dudas con una IA que comprenda tu carta de Cuatro Pilares y sus ciclos de cambio.",
+        },
+        "de": {
+            "chart_companion_lead": "Nutze deine Vier-Säulen-Daten für eine KI-Deutung oder Beratung.",
+            "reading_mode_desc": "Erhalte eine vollständige Deutung auf Basis deiner Säulen, Elementeverteilung, Glückszyklen und Jahreseinflüsse.",
+            "consultation_mode_desc": "Besprich deine Fragen mit einer KI, die dein Vier-Säulen-Horoskop und seine Zyklen berücksichtigt.",
+        },
+    }
+    t.update(shichu_copy[context["lang"]])
     context["t"] = t
     return context
 
@@ -1635,16 +1717,17 @@ def _payhip_metadata_from_form(
     payhip_product_code: str,
     payhip_order_id: str,
     expected_product_type: str,
+    lang: str = "ja",
 ) -> tuple[dict[str, str], str | None]:
     email_clean = _normalize_payhip_email(payhip_email)
     product_code_clean = (payhip_product_code or "").strip().upper()
     optional_order_id = (payhip_order_id or "").strip()
     if email_clean and "@" not in email_clean:
-        return {}, "Payhipの購入時メールアドレスを正しい形式で入力してください。"
+        return {}, redeem_error(lang, "payhip_email_invalid")
     if not optional_order_id:
-        return {}, "Payhipを選択した場合は、Order IDを入力してください。"
+        return {}, redeem_error(lang, "payhip_order_required")
     if not _is_valid_order_code(optional_order_id):
-        return {}, "Order IDには英数字、ハイフン、アンダースコア、イコールのみ使用できます。"
+        return {}, redeem_error(lang, "payhip_order_format")
     product = PAYHIP_PRODUCTS.get(product_code_clean)
     selected_product_type = str(product["product_type"]) if product else expected_product_type
     metadata = {
@@ -1657,17 +1740,30 @@ def _payhip_metadata_from_form(
     return metadata, None
 
 
-def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, dict | None, str | None, int]:
+def _resolve_payhip_order_from_metadata(
+    metadata: dict[str, str], *, lang: str = "ja"
+) -> tuple[str, dict | None, str | None, int]:
     email_clean = metadata.get("purchaser_email") or ""
     product_code = metadata.get("selected_product_code") or ""
+    selected_product_type = metadata.get("selected_product_type") or str(
+        (PAYHIP_PRODUCTS.get(product_code) or {}).get("product_type") or ""
+    )
     order_id = _normalize_stores_order_no(metadata.get("optional_order_id") or "")
     if not os.environ.get("DATABASE_URL"):
-        return "", None, "Payhip購入履歴の照合に必要なDATABASE_URLが未設定です。", 503
+        return "", None, redeem_error(lang, "payhip_service_unavailable"), 503
     try:
-        status, order_row = stores_mail_sync.verify_order_no(order_id)
+        status, order_row = stores_mail_sync.verify_order_entitlement(
+            order_id,
+            provider="payhip",
+            product_type=selected_product_type,
+        )
         if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
             _sync_stores_orders_for_lookup()
-            status, order_row = stores_mail_sync.verify_order_no(order_id)
+            status, order_row = stores_mail_sync.verify_order_entitlement(
+                order_id,
+                provider="payhip",
+                product_type=selected_product_type,
+            )
     except Exception as exc:
         logger.exception(
             "payhip_order_check_failed order_id=%s email_present=%s product_code=%s error_type=%s error=%r",
@@ -1677,12 +1773,15 @@ def _resolve_payhip_order_from_metadata(metadata: dict[str, str]) -> tuple[str, 
             type(exc).__name__,
             exc,
         )
-        return "", None, _public_error_message(exc, fallback="Payhip購入履歴の照合に失敗しました。時間をおいて再試行してください。"), 503
+        message = redeem_error(lang, "payhip_verification_failed")
+        if lang == "ja":
+            message = _public_error_message(exc, fallback=message)
+        return "", None, message, 503
     order_code = str((order_row or {}).get("stores_order_no") or "").strip()
     if status == "not_found":
-        return "", order_row, "Payhip購入履歴を確認できません。Order IDを確認してください。", 400
+        return "", order_row, redeem_error(lang, "payhip_not_found"), 400
     if not order_code:
-        return "", order_row, "Payhip購入履歴の注文IDを確認できません。管理者に連絡してください。", 400
+        return "", order_row, redeem_error(lang, "payhip_order_id_missing"), 400
     resolved_order_row = dict(order_row or {})
     resolved_order_row["_redemption_status"] = status
     return order_code, resolved_order_row, None, 200
@@ -1692,14 +1791,15 @@ def _resolve_coconala_order_from_buyer(
     *,
     buyer_reference: str,
     product_type: str,
+    lang: str = "ja",
 ) -> tuple[str, dict | None, str | None, int]:
     buyer_reference_clean = (buyer_reference or "").strip()
     if not buyer_reference_clean:
-        return "", None, "ココナラのユーザー名を入力してください。", 400
+        return "", None, redeem_error(lang, "coconala_username_required"), 400
     if len(buyer_reference_clean) > 100:
-        return "", None, "ココナラのユーザー名が長すぎます。", 400
+        return "", None, redeem_error(lang, "coconala_username_too_long"), 400
     if not os.environ.get("DATABASE_URL"):
-        return "", None, "ココナラ購入履歴の照合に必要なDATABASE_URLが未設定です。", 503
+        return "", None, redeem_error(lang, "coconala_service_unavailable"), 503
     try:
         status, order_row = stores_mail_sync.verify_coconala_buyer(
             buyer_reference_clean,
@@ -1719,15 +1819,15 @@ def _resolve_coconala_order_from_buyer(
             type(exc).__name__,
             exc,
         )
-        return "", None, _public_error_message(
-            exc,
-            fallback="ココナラ購入履歴の照合に失敗しました。時間をおいて再試行してください。",
-        ), 503
+        message = redeem_error(lang, "coconala_verification_failed")
+        if lang == "ja":
+            message = _public_error_message(exc, fallback=message)
+        return "", None, message, 503
     if status == "not_found" or not order_row:
-        return "", order_row, "購入を確認できません。ココナラのユーザー名を確認してください。", 400
+        return "", order_row, redeem_error(lang, "coconala_not_found"), 400
     order_code = str(order_row.get("stores_order_no") or "").strip()
     if not order_code:
-        return "", order_row, "ココナラ購入履歴を確認できません。管理者に連絡してください。", 503
+        return "", order_row, redeem_error(lang, "coconala_order_id_missing"), 503
     resolved_order_row = dict(order_row)
     resolved_order_row["_redemption_status"] = status
     return order_code, resolved_order_row, None, 200
@@ -1739,12 +1839,33 @@ def _check_payhip_order_row_for_redeem(
     order_row: dict | None,
     product_type: str,
     enforce_product_type: bool = True,
+    lang: str = "ja",
 ) -> tuple[str, dict | None, str | None, int]:
     if not order_row:
-        return "not_found", None, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
+        return "not_found", None, redeem_error(
+            lang, "order_not_found", order_code=order_id
+        ), 400
 
     if order_row.get("_redemption_status") == "already_used":
-        return "already_used", order_row, f"この注文番号（{order_id}）はすでに使用済みです。", 409
+        return "already_used", order_row, redeem_error(
+            lang, "order_already_used", order_code=order_id
+        ), 409
+
+    redemption_status = str(order_row.get("_redemption_status") or "ok")
+    if redemption_status == "product_mismatch":
+        return (
+            "product_mismatch",
+            order_row,
+            redeem_error(
+                lang,
+                "order_product_mismatch",
+                purchased_product=_product_label_for_lang(
+                    ((order_row.get("_purchased_product_types") or [None])[0]), lang
+                ),
+                requested_product=_product_label_for_lang(product_type, lang),
+            ),
+            409,
+        )
 
     payment_status = str((order_row or {}).get("payment_status") or "").lower()
 
@@ -1753,13 +1874,17 @@ def _check_payhip_order_row_for_redeem(
         return (
             "product_mismatch",
             order_row,
-            f"この注文番号は{_product_label(purchased_type)}用です。"
-            f"{_product_label(product_type)}の入力フォームでは使用できません。",
+            redeem_error(
+                lang,
+                "order_product_mismatch",
+                purchased_product=_product_label_for_lang(purchased_type, lang),
+                requested_product=_product_label_for_lang(product_type, lang),
+            ),
             409,
         )
     if payment_status in {"reusable", "test", "permanent"}:
         return "reusable", order_row, None, 200
-    return "ok", order_row, None, 200
+    return redemption_status, order_row, None, 200
 
 
 def _log_order_check(
@@ -1790,9 +1915,8 @@ def _warn_unverified_product_type(
     """
     商品種別を判定できない注文を、発行は止めずに警告として残す。
 
-    product_type が NULL の注文は商品種別チェックを素通りする
-    （_check_order_for_redeem / _is_compatible_addon_purchase とも
-    未設定なら通す）。安い注文番号で高い商品を発行できてしまうため、
+    product_type が NULL の注文は商品種別チェックを素通りする。
+    安い注文番号で高い商品を発行できてしまうため、
     運用で気づけるように warning で記録する。
     主因は商品コードの判定漏れなので、対処先も一緒に出す。
     """
@@ -1840,6 +1964,15 @@ def _chart_redirect_url(
     return url
 
 
+def _next_transit_addon_url(canonical_chart_url: str, *, lang: str) -> str:
+    return (
+        "/addon/new"
+        "?addon_type=western_31days_transit_addon"
+        f"&previous_chart_url={quote(canonical_chart_url, safe='')}"
+        f"&lang={lang if lang in SUPPORTED_LANGS else 'ja'}"
+    )
+
+
 def _acg_personal_edition_options(
     *,
     product_type: str,
@@ -1857,19 +1990,27 @@ def _acg_personal_edition_options(
     return {
         "personal_edition": True,
         "personal_edition_product_type": "acg_bundle",
-        "personal_edition_locale": lang if lang in {"ja", "en"} else "en",
+        "personal_edition_locale": lang if lang in SUPPORTED_LANGS else "en",
         "expires_policy": NO_EXPIRY_CHART_POLICY,
     }
 
 
-def _existing_chart_redirect(order_code: str, *, lang: str = "ja") -> RedirectResponse | None:
+def _existing_chart_redirect(
+    order_code: str,
+    *,
+    lang: str = "ja",
+    provider: str | None = None,
+    product_type: str | None = None,
+) -> RedirectResponse | None:
     if not os.environ.get("DATABASE_URL"):
         return None
     try:
-        redemption = pg_store.get_redemption_by_order_code(order_code)
+        redemption = pg_store.get_redemption_by_order_code(order_code, provider=provider)
         token = redemption.get("token") if redemption else None
         if not token:
-            charts = pg_store.list_charts_by_order_code(order_code)
+            charts = pg_store.list_charts_by_order_code(
+                order_code, provider=provider, product_type=product_type
+            )
             token = charts[0].get("token") if charts else None
         if token:
             logger.info("redirect_existing_chart order_id=%s token_prefix=%s", order_code, str(token)[:8])
@@ -1887,8 +2028,111 @@ def _existing_chart_redirect(order_code: str, *, lang: str = "ja") -> RedirectRe
     return None
 
 
-def _verify_strict_stores_order(order_id: str) -> tuple[str, dict | None]:
-    status, order_row = stores_mail_sync.verify_order_no(order_id)
+def _existing_chart_response(
+    request: Request,
+    order_code: str,
+    *,
+    lang: str,
+    provider: str,
+    product_type: str,
+    order_row: dict | None = None,
+    force_list: bool = False,
+) -> Response | None:
+    """単品は従来どおり直接開き、複数発行は結果一覧を表示する。"""
+    if not os.environ.get("DATABASE_URL"):
+        return None
+    try:
+        charts = pg_store.list_charts_by_order_code(
+            order_code, provider=provider, product_type=product_type
+        )
+        if len(charts) == 1 and not force_list:
+            return RedirectResponse(
+                _chart_redirect_url(str(charts[0]["token"]), lang=lang),
+                status_code=303,
+            )
+        if not charts:
+            return _existing_chart_redirect(
+                order_code,
+                lang=lang,
+                provider=provider,
+                product_type=product_type,
+            )
+        available = int((order_row or {}).get("_available_entitlements") or 0)
+        copy = {
+            "ja": {
+                "title": "この注文で発行したデータ",
+                "description": "複数購入分の発行結果です。開きたいデータを選んでください。",
+                "open": "発行済みデータを開く",
+                "issue_next": "残りの購入分を発行する",
+                "remaining": "残り {count} 件",
+            },
+            "en": {
+                "title": "Data issued for this order",
+                "description": "Choose the result you want to open.",
+                "open": "Open issued data",
+                "issue_next": "Issue another purchased copy",
+                "remaining": "{count} remaining",
+            },
+            "es": {
+                "title": "Datos emitidos para este pedido",
+                "description": "Elige el resultado que deseas abrir.",
+                "open": "Abrir datos emitidos",
+                "issue_next": "Emitir otra copia comprada",
+                "remaining": "Quedan {count}",
+            },
+            "de": {
+                "title": "Für diese Bestellung erstellte Daten",
+                "description": "Wähle das Ergebnis aus, das du öffnen möchtest.",
+                "open": "Erstellte Daten öffnen",
+                "issue_next": "Weiteres gekauftes Exemplar erstellen",
+                "remaining": "Noch {count}",
+            },
+        }.get(lang) or {}
+        return _mark_no_store(templates.TemplateResponse(
+            "order_entitlements.html",
+            {
+                "request": request,
+                **_i18n_context(request),
+                "copy": copy,
+                "charts": charts,
+                "available_count": available,
+                "remaining_label": str(copy.get("remaining", "{count}")).format(count=available),
+                "order_code": order_code,
+                "provider": provider,
+                "product_type": product_type,
+                "redeem_url": _redeem_url(product_type),
+            },
+        ))
+    except Exception as exc:
+        logger.exception(
+            "existing_chart_list_failed order_id=%s error_type=%s error=%r",
+            order_code,
+            type(exc).__name__,
+            exc,
+        )
+        return _existing_chart_redirect(
+            order_code,
+            lang=lang,
+            provider=provider,
+            product_type=product_type,
+        )
+
+
+def _verify_strict_stores_order(
+    order_id: str,
+    *,
+    provider: str | None = None,
+    product_type: str | None = None,
+) -> tuple[str, dict | None]:
+    if provider and product_type:
+        verify = lambda: stores_mail_sync.verify_order_entitlement(
+            order_id,
+            provider=provider,
+            product_type=product_type,
+        )
+    else:
+        verify = lambda: stores_mail_sync.verify_order_no(order_id)
+    status, order_row = verify()
     if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
         try:
             submit_limit = int(os.getenv("STORES_MAIL_SYNC_SUBMIT_LIMIT", "100"))
@@ -1903,7 +2147,7 @@ def _verify_strict_stores_order(order_id: str) -> tuple[str, dict | None]:
                 sync_result.get("errors"),
             )
             raise RuntimeError("購入履歴の同期に失敗しました。管理者に連絡してください。")
-        status, order_row = stores_mail_sync.verify_order_no(order_id)
+        status, order_row = verify()
     return status, order_row
 
 
@@ -1972,6 +2216,7 @@ def _check_order_for_redeem(
     product_type: str,
     enforce_product_type: bool = True,
     allow_gumroad_relaxed: bool = True,
+    lang: str = "ja",
 ) -> tuple[str, dict | None, str | None, int]:
     policy = _get_order_check_policy(provider)
     strict_check = bool(policy["strict"])
@@ -1983,7 +2228,9 @@ def _check_order_for_redeem(
             check_result="provider_unknown",
             reason="provider could not be resolved",
         )
-        return "not_found", None, f"注文番号（{order_id}）を確認できません。購入確認メールに記載の番号を確認してください。", 400
+        return "not_found", None, redeem_error(
+            lang, "order_not_verified", order_code=order_id
+        ), 400
 
     if (
         provider == "gumroad"
@@ -2014,7 +2261,7 @@ def _check_order_for_redeem(
             check_result="relaxed_not_allowed",
             reason="temporary Gumroad relaxed verification is disabled for this flow",
         )
-        return "not_found", None, "Gumroad注文はこのフォームでは使用できません。", 400
+        return "not_found", None, redeem_error(lang, "gumroad_not_allowed"), 400
 
     if not os.environ.get("DATABASE_URL"):
         _log_order_check(
@@ -2025,11 +2272,19 @@ def _check_order_for_redeem(
             reason="DATABASE_URL is not configured",
         )
         if provider != "stores":
-            return "error", None, f"{_provider_label(provider)}注文の確認に必要なDATABASE_URLが未設定です。", 503
+            return "error", None, redeem_error(
+                lang,
+                "order_service_unavailable",
+                provider=_provider_label_for_lang(provider, lang),
+            ), 503
         return "ok", None, None, 200
 
     try:
-        status, order_row = _verify_strict_stores_order(order_id)
+        status, order_row = _verify_strict_stores_order(
+            order_id,
+            provider=provider,
+            product_type=product_type,
+        )
     except Exception as exc:
         logger.exception(
             "order_check_failed provider=%s order_id=%s product_type=%s error_type=%s error=%r",
@@ -2046,7 +2301,10 @@ def _check_order_for_redeem(
             check_result="error",
             reason=repr(exc),
         )
-        return "error", None, _public_error_message(exc, fallback="注文番号の照合に失敗しました。時間をおいて再試行してください。"), 503
+        message = redeem_error(lang, "order_verification_failed")
+        if lang == "ja":
+            message = _public_error_message(exc, fallback=message)
+        return "error", None, message, 503
 
     _log_order_check(
         provider=provider,
@@ -2056,10 +2314,9 @@ def _check_order_for_redeem(
         reason="stores strict check",
     )
     if status == "not_found":
-        return "not_found", order_row, f"注文番号（{order_id}）が見つかりません。購入確認メールに記載の番号を確認してください。", 400
-    if status == "already_used":
-        return "already_used", order_row, f"この注文番号（{order_id}）はすでに使用済みです。", 409
-
+        return "not_found", order_row, redeem_error(
+            lang, "order_not_found", order_code=order_id
+        ), 400
     row_provider = str((order_row or {}).get("provider") or "").strip().lower()
     if provider == "etsy" and row_provider != "etsy":
         _log_order_check(
@@ -2069,7 +2326,12 @@ def _check_order_for_redeem(
             check_result="provider_missing",
             reason="Etsy orders must originate from an Etsy notification email",
         )
-        return "not_found", order_row, f"注文番号（{order_id}）をEtsyの注文として確認できません。", 400
+        return "not_found", order_row, redeem_error(
+            lang,
+            "provider_order_not_verified",
+            order_code=order_id,
+            provider="Etsy",
+        ), 400
     if row_provider and row_provider != provider:
         _log_order_check(
             provider=provider,
@@ -2078,7 +2340,32 @@ def _check_order_for_redeem(
             check_result="provider_mismatch",
             reason=f"order provider={row_provider} requested={provider}",
         )
-        return "not_found", order_row, f"注文番号（{order_id}）を{_provider_label(provider)}の注文として確認できません。", 400
+        return "not_found", order_row, redeem_error(
+            lang,
+            "provider_order_not_verified",
+            order_code=order_id,
+            provider=_provider_label_for_lang(provider, lang),
+        ), 400
+
+    if status == "already_used":
+        return "already_used", order_row, redeem_error(
+            lang, "order_already_used", order_code=order_id
+        ), 409
+    if status == "product_mismatch":
+        purchased_types = (order_row or {}).get("_purchased_product_types") or [
+            (order_row or {}).get("product_type")
+        ]
+        return (
+            "product_mismatch",
+            order_row,
+            redeem_error(
+                lang,
+                "order_product_mismatch",
+                purchased_product=_product_label_for_lang(purchased_types[0], lang),
+                requested_product=_product_label_for_lang(product_type, lang),
+            ),
+            409,
+        )
 
     if provider == "gumroad":
         product_error, product_error_status = _verify_gumroad_order_product(
@@ -2088,6 +2375,15 @@ def _check_order_for_redeem(
             enforce_product_type=enforce_product_type,
         )
         if product_error:
+            if lang != "ja":
+                product_error = redeem_error(
+                    lang,
+                    "order_product_mismatch",
+                    purchased_product=_product_label_for_lang(
+                        (order_row or {}).get("product_type"), lang
+                    ),
+                    requested_product=_product_label_for_lang(product_type, lang),
+                )
             return "product_mismatch", order_row, product_error, product_error_status
         return status, order_row, None, 200
 
@@ -2103,7 +2399,7 @@ def _check_order_for_redeem(
         return (
             "product_unverified",
             order_row,
-            "Etsyの商品を確認できませんでした。購入商品の商品コードを販売者に確認してください。",
+            redeem_error(lang, "etsy_product_unverified"),
             409,
         )
     # Etsy以外は未分類でも発行を止めない。ただし商品チェックが効いていないので警告を残す。
@@ -2123,8 +2419,12 @@ def _check_order_for_redeem(
         return (
             "product_mismatch",
             order_row,
-            f"この注文番号は{_product_label(purchased_type)}用です。"
-            f"{_product_label(product_type)}の入力フォームでは使用できません。",
+            redeem_error(
+                lang,
+                "order_product_mismatch",
+                purchased_product=_product_label_for_lang(purchased_type, lang),
+                requested_product=_product_label_for_lang(product_type, lang),
+            ),
             409,
         )
     return status, order_row, None, 200
@@ -2180,19 +2480,19 @@ def _api_key_issue_credits(product_type: str | None = None) -> int:
     return fallback
 
 
-def _parse_optional_float(value: str, field_name: str) -> float | None:
+def _parse_optional_float(value: str, field_name: str, lang: str = "ja") -> float | None:
     raw = value.strip()
     if not raw:
         return None
     try:
         return float(raw)
     except ValueError as exc:
-        raise ValueError(f"{field_name}は数値で入力してください。") from exc
+        raise ValueError(buyer_error(lang, "number", field=field_name)) from exc
 
 
-def _validate_lat_lon(lat: float, lon: float) -> tuple[float, float]:
+def _validate_lat_lon(lat: float, lon: float, lang: str = "ja") -> tuple[float, float]:
     if not (-90 <= lat <= 90):
-        raise ValueError("緯度は -90 から 90 の範囲で入力してください。")
+        raise ValueError(buyer_error(lang, "latitude_range"))
     # 経度は周期的なので、範囲外（地図クリックで世界地図が横に繰り返し表示された
     # 箇所を選んだ場合など）は弾かずに ±180 へ正規化する。範囲内の値は
     # 浮動小数の誤差を出さないようそのまま返す。
@@ -2204,25 +2504,18 @@ def _validate_lat_lon(lat: float, lon: float) -> tuple[float, float]:
 def _validate_birth_date(value: str, lang: str = "ja") -> str:
     raw = value.strip()
     digits = re.sub(r"\D", "", raw)
+    t = I18N.get(lang, I18N["ja"])
     if not digits:
-        raise ValueError("Enter your date of birth." if lang == "en" else "生年月日を入力してください。")
+        raise ValueError(str(t["birth_date_required_error"]))
     if len(digits) != 8:
-        raise ValueError(
-            "Enter 8 digits so the date can be interpreted as YYYY-MM-DD. Example: 1990-01-01"
-            if lang == "en"
-            else "生年月日は YYYY-MM-DD として解釈できる8桁の数字で入力してください。例: 1990-01-01"
-        )
+        raise ValueError(str(t["birth_date_format_error"]))
     try:
         selected = date(int(digits[0:4]), int(digits[4:6]), int(digits[6:8]))
     except ValueError as exc:
-        raise ValueError(
-            "That date does not exist. Enter a date that can be interpreted as YYYY-MM-DD."
-            if lang == "en"
-            else "存在しない日付です。YYYY-MM-DD として解釈できる日付を入力してください。"
-        ) from exc
+        raise ValueError(str(t["birth_date_invalid_error"])) from exc
     today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     if selected > today_jst:
-        raise ValueError("Future dates are not allowed." if lang == "en" else "生年月日は未来日を指定できません。")
+        raise ValueError(str(t["birth_date_future_error"]))
     return selected.isoformat()
 
 
@@ -2235,26 +2528,27 @@ def _build_birth_location(
     birth_lat: str,
     birth_lng: str,
     birth_timezone: str,
+    lang: str = "ja",
 ) -> dict[str, object]:
     kind = birth_place_kind.strip().lower() or "domestic"
     if kind == "overseas":
         if prefecture.strip():
-            raise ValueError("海外出生の場合は、出生都道府県を未選択にしてください。")
+            raise ValueError(buyer_error(lang, "overseas_prefecture"))
         place = birth_place_overseas.strip()
         if not place:
-            raise ValueError("海外出生の場合は出生地名を入力してください。")
+            raise ValueError(buyer_error(lang, "overseas_place"))
         tz_name = birth_timezone.strip()
         if not tz_name:
-            raise ValueError("海外出生の場合はタイムゾーンを入力してください。")
+            raise ValueError(buyer_error(lang, "overseas_timezone"))
         try:
             tz = ZoneInfo(tz_name)
         except Exception as exc:
-            raise ValueError("タイムゾーンが正しくありません。例: America/New_York") from exc
-        lat = _parse_optional_float(birth_lat, "緯度")
-        lon = _parse_optional_float(birth_lng, "経度")
+            raise ValueError(buyer_error(lang, "timezone_invalid")) from exc
+        lat = _parse_optional_float(birth_lat, buyer_error(lang, "latitude"), lang)
+        lon = _parse_optional_float(birth_lng, buyer_error(lang, "longitude"), lang)
         if lat is None or lon is None:
-            raise ValueError("海外出生の場合は緯度・経度を入力してください。")
-        lat, lon = _validate_lat_lon(lat, lon)
+            raise ValueError(buyer_error(lang, "overseas_coordinates"))
+        lat, lon = _validate_lat_lon(lat, lon, lang)
         return {
             "kind": "overseas",
             "birth_place": place,
@@ -2266,15 +2560,15 @@ def _build_birth_location(
         }
     pref_name = prefecture.strip()
     if not pref_name:
-        raise ValueError("出生都道府県を選択してください。")
+        raise ValueError(buyer_error(lang, "prefecture_required"))
     if birth_place_overseas.strip() or birth_timezone.strip():
-        raise ValueError("国内出生の場合は、海外出生地名とタイムゾーン欄を空にしてください。")
-    lat = _parse_optional_float(birth_lat, "緯度")
-    lon = _parse_optional_float(birth_lng, "経度")
+        raise ValueError(buyer_error(lang, "domestic_overseas_fields"))
+    lat = _parse_optional_float(birth_lat, buyer_error(lang, "latitude"), lang)
+    lon = _parse_optional_float(birth_lng, buyer_error(lang, "longitude"), lang)
     if (lat is None) != (lon is None):
-        raise ValueError("緯度・経度を指定する場合は、両方入力してください。")
+        raise ValueError(buyer_error(lang, "coordinate_pair"))
     if lat is not None and lon is not None:
-        lat, lon = _validate_lat_lon(lat, lon)
+        lat, lon = _validate_lat_lon(lat, lon, lang)
     city_name = birth_place_city.strip()
     place_label = f"{pref_name} {city_name}" if city_name else pref_name
     if lat is None and lon is None and city_name:
@@ -2306,11 +2600,13 @@ def startup() -> None:
 @app.post("/internal/init-db")
 def internal_init_db(request: Request):
     expected = os.getenv("STORES_MAIL_SYNC_TOKEN", "").strip()
-    if expected:
-        auth = request.headers.get("Authorization", "")
-        token = auth.removeprefix("Bearer ").strip()
-        if token != expected:
-            raise HTTPException(status_code=401, detail="unauthorized")
+    if not expected:
+        logger.error("internal_init_db_disabled reason=STORES_MAIL_SYNC_TOKEN_not_configured")
+        raise HTTPException(status_code=503, detail="DB initialization is disabled")
+    auth = request.headers.get("Authorization", "")
+    token = auth.removeprefix("Bearer ").strip()
+    if not secrets.compare_digest(token, expected):
+        raise HTTPException(status_code=401, detail="unauthorized")
     if not os.environ.get("DATABASE_URL"):
         raise HTTPException(status_code=500, detail="DATABASE_URL が未設定です")
     pg_store.init_db()
@@ -2558,7 +2854,7 @@ def internal_reissue_api_key(request: Request, payload: dict[str, object] = Body
     )
 
 
-ADMIN_REDEMPTION_PROVIDERS = {"stores", "etsy", "coconala"}
+ADMIN_REDEMPTION_PROVIDERS = {"stores", "etsy", "payhip", "coconala"}
 
 
 def _resolve_admin_redemption_target(
@@ -2568,7 +2864,7 @@ def _resolve_admin_redemption_target(
     if provider not in ADMIN_REDEMPTION_PROVIDERS:
         return None, _api_error(
             "INVALID_PROVIDER",
-            "provider must be stores, etsy, or coconala",
+            "provider must be stores, etsy, payhip, or coconala",
             400,
         )
 
@@ -2622,10 +2918,16 @@ def _resolve_admin_redemption_target(
                 400,
             )
         try:
-            status, order_row = stores_mail_sync.verify_order_no(order_code)
+            status, order_row = stores_mail_sync.verify_order_no(
+                order_code,
+                provider=provider,
+            )
             if status == "not_found":
                 sync_result = _sync_stores_orders_for_lookup()
-                status, order_row = stores_mail_sync.verify_order_no(order_code)
+                status, order_row = stores_mail_sync.verify_order_no(
+                    order_code,
+                    provider=provider,
+                )
         except Exception as exc:
             return None, _api_error("ORDER_LOOKUP_FAILED", str(exc), 500)
         if status == "not_found" or not order_row:
@@ -2662,9 +2964,19 @@ def internal_lookup_redemption(request: Request, payload: dict[str, object] = Bo
     order_code_clean = target["order_code"]
 
     try:
-        redemption = pg_store.get_redemption_by_order_code(order_code_clean)
-        reset_override = pg_store.get_redemption_reset_by_order_code(order_code_clean)
-        charts = pg_store.list_charts_by_order_code(order_code_clean)
+        provider = str(target["provider"])
+        redemption = pg_store.get_redemption_by_order_code(
+            order_code_clean,
+            provider=provider,
+        )
+        reset_override = pg_store.get_redemption_reset_by_order_code(
+            order_code_clean,
+            provider=provider,
+        )
+        charts = pg_store.list_charts_by_order_code(
+            order_code_clean,
+            provider=provider,
+        )
     except Exception as exc:
         return _api_error("REDEMPTION_LOOKUP_FAILED", str(exc), 500)
 
@@ -2700,8 +3012,15 @@ def internal_reset_redemption(request: Request, payload: dict[str, object] = Bod
         return _api_error("CONFIRMATION_REQUIRED", "confirm must match order_reference", 400)
 
     try:
-        result = pg_store.reset_redemption_by_order_code(order_code_clean)
-        new_status, _new_order_row = stores_mail_sync.verify_order_no(order_code_clean)
+        provider = str(target["provider"])
+        result = pg_store.reset_redemption_by_order_code(
+            order_code_clean,
+            provider=provider,
+        )
+        new_status, _new_order_row = stores_mail_sync.verify_order_no(
+            order_code_clean,
+            provider=provider,
+        )
     except Exception as exc:
         return _api_error("REDEMPTION_RESET_FAILED", str(exc), 500)
 
@@ -2736,8 +3055,8 @@ def internal_issue_personal_edition_codes(request: Request, payload: dict[str, o
     if provider not in {"etsy", "coconala", "manual"}:
         return _api_error("INVALID_INPUT", "provider must be etsy, coconala, or manual", 400)
     locale = str(payload.get("lang") or "ja").strip().lower()
-    if locale not in {"ja", "en"}:
-        return _api_error("INVALID_INPUT", "lang must be ja or en", 400)
+    if locale not in SUPPORTED_LANGS:
+        return _api_error("INVALID_INPUT", "lang must be ja, en, es, or de", 400)
     product_type = str(payload.get("product_type") or "western_full").strip()
     if product_type not in {"western_full", "acg_bundle"}:
         return _api_error("UNSUPPORTED_PRODUCT", "product_type must be western_full or acg_bundle", 400)
@@ -2769,8 +3088,8 @@ def admin_common_access_package(request: Request, lang: str = "en"):
     auth_error = _admin_basic_auth_error(request)
     if auth_error:
         return auth_error
-    if lang not in {"en", "ja"}:
-        raise HTTPException(status_code=400, detail="lang must be en or ja")
+    if lang not in SUPPORTED_LANGS:
+        raise HTTPException(status_code=400, detail="unsupported language")
     redeem_url = f"{_public_base_url(request)}/redeem/acg-bundle?lang={lang}&provider=etsy"
     response = Response(
         content=build_common_access_package(redeem_url=redeem_url, lang=lang),
@@ -2793,7 +3112,7 @@ def admin_personal_edition_code_pdf(
     normalized = code.strip().upper()
     expected_prefix = "PE-ACG-" if product_type == "acg_bundle" else "PE-FULL-"
     if (product_type not in {"western_full", "acg_bundle"}
-            or lang not in {"ja", "en"}
+            or lang not in SUPPORTED_LANGS
             or not normalized.startswith(expected_prefix)
             or len(normalized) > 64):
         raise HTTPException(status_code=400, detail="invalid Personal Edition code")
@@ -2820,7 +3139,7 @@ def admin_personal_edition_code_pdfs_zip(
     auth_error = _admin_basic_auth_error(request)
     if auth_error:
         return auth_error
-    if product_type not in {"western_full", "acg_bundle"} or lang not in {"ja", "en"}:
+    if product_type not in {"western_full", "acg_bundle"} or lang not in SUPPORTED_LANGS:
         raise HTTPException(status_code=400, detail="invalid PDF bundle settings")
     expected_prefix = "PE-ACG-" if product_type == "acg_bundle" else "PE-FULL-"
     normalized_codes = [line.strip().upper() for line in codes.splitlines() if line.strip()]
@@ -2829,6 +3148,22 @@ def admin_personal_edition_code_pdfs_zip(
     if any(not code.startswith(expected_prefix) or len(code) > 64 for code in normalized_codes):
         raise HTTPException(status_code=400, detail="invalid Personal Edition code")
     activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
+
+    def delivery_readme(*, is_acg: bool) -> str:
+        copy = {
+            "ja": ["PERSONAL EDITION　購入者さまへ", "「ACCESS-CODE.pdf」を開き、リンクを押すかQRコードを読み取ります。", "出生情報を入力します。引換コードはURLから自動入力されます。", "専用鑑定ページが発行され、Personal Edition ZIPもダウンロードされます。", "専用鑑定ページURLを保存してください。ページからZIPを再保存できます。", "ACGは、専用鑑定ページからオンラインでも、ダウンロードしたZIPからローカルでも使えます。"],
+            "en": ["PERSONAL EDITION - START HERE", "Open ACCESS-CODE.pdf and select the link or scan the QR code.", "Enter your birth details. Your code is already filled in.", "A private chart page will be issued and your Personal Edition ZIP will download.", "Save the private chart page URL. You can download the ZIP again from that page.", "Your ACG Bundle works both online from the chart page and offline inside the downloaded ZIP."],
+            "es": ["PERSONAL EDITION - EMPIEZA AQUÍ", "Abre ACCESS-CODE.pdf y pulsa el enlace o escanea el código QR.", "Introduce tus datos de nacimiento. El código ya estará rellenado.", "Se creará una página privada y se descargará tu ZIP de Personal Edition.", "Guarda la URL privada; desde ella podrás volver a descargar el ZIP.", "El ACG Bundle funciona online desde tu página y también dentro del ZIP descargado."],
+            "de": ["PERSONAL EDITION – HIER STARTEN", "Öffne ACCESS-CODE.pdf und nutze den Link oder QR-Code.", "Gib deine Geburtsdaten ein. Der Code ist bereits vorausgefüllt.", "Deine private Horoskopseite wird erstellt und die Personal-Edition-ZIP heruntergeladen.", "Speichere die private URL; dort kannst du die ZIP erneut herunterladen.", "Das ACG Bundle funktioniert online über deine Seite und offline in der heruntergeladenen ZIP."],
+        }[lang]
+        steps = copy[1:5] + ([copy[5]] if is_acg else [])
+        zip_note = {
+            "ja": "ACG ZIPにはREADMEとSTART-ACG.htmlが入っています。" if is_acg else "FULL版ZIPには計算済みYAML、AI相談文、README、専用鑑定ページURLが入っています。",
+            "en": "The ACG ZIP contains a README and START-ACG.html." if is_acg else "The FULL ZIP contains calculated YAML, an AI prompt, a README, and your private chart URL.",
+            "es": "El ZIP de ACG contiene un README y START-ACG.html." if is_acg else "El ZIP FULL contiene el YAML calculado, un prompt para IA, un README y la URL privada de tu carta.",
+            "de": "Die ACG-ZIP enthält eine README und START-ACG.html." if is_acg else "Die FULL-ZIP enthält berechnete YAML, eine KI-Anleitung, eine README und deine private Horoskop-URL.",
+        }[lang]
+        return copy[0] + "\n\n" + "\n".join(f"{index}. {line}" for index, line in enumerate(steps, 1)) + "\n\n" + zip_note + "\n"
 
     # A single issued code should download as the buyer-ready ZIP itself. An
     # outer/master ZIP is only necessary when one response contains packages
@@ -2843,35 +3178,16 @@ def admin_personal_edition_code_pdfs_zip(
         )
         buyer_url = f"{activation_url}&code={quote(code)}"
         is_acg = product_type == "acg_bundle"
-        if lang == "en":
-            buyer_readme = (
-                "PERSONAL EDITION - START HERE\n\n"
-                "1. Open ACCESS-CODE.pdf and select the link or scan the QR code.\n"
-                "2. Enter your birth details. Your code is already filled in.\n"
-                "3. A private chart page will be issued and your Personal Edition ZIP will download.\n"
-                "4. Save the private chart page URL. You can download the ZIP again from that page.\n"
-                + ("5. Your ACG Bundle works both online from the chart page and offline inside the downloaded ZIP.\n" if is_acg else "")
-                + "\nThe ZIP downloaded after activation contains a separate detailed README and clearly named START files.\n"
-            )
-        else:
-            buyer_readme = (
-                "PERSONAL EDITION　購入者さまへ\n\n"
-                "1. 「ACCESS-CODE.pdf」を開き、リンクを押すかQRコードを読み取ります。\n"
-                "2. 出生情報を入力します。引換コードはURLから自動入力されます。\n"
-                "3. 専用鑑定ページが発行され、Personal Edition ZIPもダウンロードされます。\n"
-                "4. 専用鑑定ページURLを保存してください。ページからZIPを再保存できます。\n"
-                + ("5. ACGは、専用鑑定ページからオンラインでも、ダウンロードしたZIPからローカルでも使えます。\n" if is_acg else "")
-                + "\nコード使用後に保存されるZIPにも、詳しいREADMEと分かりやすいSTARTファイルが入っています。\n"
-            )
+        buyer_readme = delivery_readme(is_acg=is_acg)
         buyer_buffer = io.BytesIO()
         with zipfile.ZipFile(buyer_buffer, "w", compression=zipfile.ZIP_DEFLATED) as buyer_zip:
             buyer_zip.writestr("ACCESS-CODE.pdf", pdf_bytes)
             buyer_zip.writestr(
-                "README-FIRST.txt" if lang == "en" else "はじめに_README.txt",
+                "README-FIRST.txt" if lang != "ja" else "はじめに_README.txt",
                 buyer_readme.encode("utf-8-sig"),
             )
             buyer_zip.writestr(
-                "ACTIVATION-URL.txt" if lang == "en" else "引換ページ_URL.txt",
+                "ACTIVATION-URL.txt" if lang != "ja" else "引換ページ_URL.txt",
                 (buyer_url + "\n").encode("utf-8-sig"),
             )
             buyer_zip.writestr(
@@ -2895,35 +3211,16 @@ def admin_personal_edition_code_pdfs_zip(
             )
             buyer_url = f"{activation_url}&code={quote(code)}"
             is_acg = product_type == "acg_bundle"
-            if lang == "en":
-                buyer_readme = (
-                    "PERSONAL EDITION - START HERE\n\n"
-                    "1. Open ACCESS-CODE.pdf and select the link or scan the QR code.\n"
-                    "2. Enter your birth details. Your code is already filled in.\n"
-                    "3. A private chart page will be issued and your Personal Edition ZIP will download.\n"
-                    "4. Save the private chart page URL. You can download the ZIP again from that page.\n"
-                    + ("5. Your ACG Bundle works both online from the chart page and offline inside the downloaded ZIP.\n" if is_acg else "")
-                    + "\nThe ZIP downloaded after activation contains a separate detailed README and clearly named START files.\n"
-                )
-            else:
-                buyer_readme = (
-                    "PERSONAL EDITION　購入者さまへ\n\n"
-                    "1. 「ACCESS-CODE.pdf」を開き、リンクを押すかQRコードを読み取ります。\n"
-                    "2. 出生情報を入力します。引換コードはURLから自動入力されます。\n"
-                    "3. 専用鑑定ページが発行され、Personal Edition ZIPもダウンロードされます。\n"
-                    "4. 専用鑑定ページURLを保存してください。ページからZIPを再保存できます。\n"
-                    + ("5. ACGは、専用鑑定ページからオンラインでも、ダウンロードしたZIPからローカルでも使えます。\n" if is_acg else "")
-                    + "\nコード使用後に保存されるZIPにも、詳しいREADMEと分かりやすいSTARTファイルが入っています。\n"
-                )
+            buyer_readme = delivery_readme(is_acg=is_acg)
             buyer_buffer = io.BytesIO()
             with zipfile.ZipFile(buyer_buffer, "w", compression=zipfile.ZIP_DEFLATED) as buyer_zip:
                 buyer_zip.writestr("ACCESS-CODE.pdf", pdf_bytes)
                 buyer_zip.writestr(
-                    "README-FIRST.txt" if lang == "en" else "はじめに_README.txt",
+                    "README-FIRST.txt" if lang != "ja" else "はじめに_README.txt",
                     buyer_readme.encode("utf-8-sig"),
                 )
                 buyer_zip.writestr(
-                    "ACTIVATION-URL.txt" if lang == "en" else "引換ページ_URL.txt",
+                    "ACTIVATION-URL.txt" if lang != "ja" else "引換ページ_URL.txt",
                     (buyer_url + "\n").encode("utf-8-sig"),
                 )
                 buyer_zip.writestr(
@@ -2931,11 +3228,12 @@ def admin_personal_edition_code_pdfs_zip(
                     ("[InternetShortcut]\r\nURL=" + buyer_url + "\r\n").encode("utf-8"),
                 )
             archive.writestr(f"{index:03d}_{code}_BUYER-DELIVERY.zip", buyer_buffer.getvalue())
-        admin_readme = (
-            "Each BUYER-DELIVERY ZIP is ready for one buyer. Send one ZIP only; never send this entire master ZIP.\n"
-            if lang == "en" else
-            "BUYER-DELIVERY ZIPは、1つにつき購入者1名分です。購入者には該当ZIPを1つだけ渡し、この一括ZIP全体は渡さないでください。\n"
-        )
+        admin_readme = {
+            "ja": "BUYER-DELIVERY ZIPは、1つにつき購入者1名分です。購入者には該当ZIPを1つだけ渡し、この一括ZIP全体は渡さないでください。\n",
+            "en": "Each BUYER-DELIVERY ZIP is ready for one buyer. Send one ZIP only; never send this entire master ZIP.\n",
+            "es": "Cada archivo BUYER-DELIVERY ZIP corresponde a una sola persona. Envía únicamente su ZIP y nunca compartas este ZIP maestro completo.\n",
+            "de": "Jede BUYER-DELIVERY-ZIP ist für genau eine Person bestimmt. Sende nur die passende ZIP und niemals diese gesamte Master-ZIP.\n",
+        }.get(lang, "Each BUYER-DELIVERY ZIP is ready for one buyer. Send one ZIP only; never send this entire master ZIP.\n")
         archive.writestr("ADMIN-README.txt", admin_readme.encode("utf-8-sig"))
     safe_provider = provider if provider in {"etsy", "coconala", "manual"} else "manual"
     response = Response(content=archive_buffer.getvalue(), media_type="application/zip")
@@ -2950,7 +3248,7 @@ def admin_personal_edition_codes_post(
     request: Request,
     count: int = Form(1),
     provider: str = Form("coconala"),
-    lang: str = Form("ja"),
+    lang: str = Form(""),
     expiration_days: int = Form(30),
     product_type: str = Form("western_full"),
     marketplace_order_id: str = Form(""),
@@ -2959,17 +3257,15 @@ def admin_personal_edition_codes_post(
     auth_error = _admin_basic_auth_error(request)
     if auth_error:
         return auth_error
-    if provider == "etsy":
-        lang = "en"
-    elif provider == "coconala":
-        lang = "ja"
+    if not lang:
+        lang = "en" if provider == "etsy" else "ja"
     form = {"count": count, "provider": provider, "lang": lang, "expiration_days": expiration_days,
             "product_type": product_type, "marketplace_order_id": marketplace_order_id,
             "buyer_note": buyer_note}
     if not 1 <= count <= 100:
         error = "発行件数は1〜100件で指定してください。"
         codes = []
-    elif (provider not in {"etsy", "coconala", "manual"} or lang not in {"ja", "en"}
+    elif (provider not in {"etsy", "coconala", "manual"} or lang not in SUPPORTED_LANGS
           or product_type not in {"western_full", "acg_bundle"}):
         error = "販売先または言語が正しくありません。"
         codes = []
@@ -2981,7 +3277,7 @@ def admin_personal_edition_codes_post(
                 marketplace_order_id=marketplace_order_id.strip() or None,
                 buyer_note=buyer_note.strip() or None,
             )
-            activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang=en"
+            activation_url = f"{_public_base_url(request)}/personal-edition/activate?lang={lang}"
             for item in codes:
                 code = str(item["code"])
                 prefilled_url = f"{activation_url}&code={quote(code)}"
@@ -3105,18 +3401,13 @@ def _personal_acg_pwa_html(*, html: str, token: str, lang: str) -> str:
     app_path = f"/chart/{token_path}/acg-app/"
     manifest_url = f"{app_path}manifest.webmanifest?lang={lang}"
     sw_url = f"{app_path}sw.js?lang={lang}&v={ASSET_VERSION}"
-    install_label = "ホーム画面に追加" if lang == "ja" else "Install app"
-    installed_label = "アプリとして起動中" if lang == "ja" else "Running as an app"
-    ios_help = (
-        "Safariの共有ボタンを押し、「ホーム画面に追加」を選んでください。"
-        if lang == "ja"
-        else "Tap Safari's Share button, then choose Add to Home Screen."
-    )
-    browser_help = (
-        "ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。"
-        if lang == "ja"
-        else "Open your browser menu and choose Add to Home Screen or Install app."
-    )
+    pwa_copy = {
+        "ja": ("ホーム画面に追加", "アプリとして起動中", "Safariの共有ボタンを押し、「ホーム画面に追加」を選んでください。", "ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。"),
+        "en": ("Install app", "Running as an app", "Tap Safari's Share button, then choose Add to Home Screen.", "Open your browser menu and choose Add to Home Screen or Install app."),
+        "es": ("Añadir a inicio", "Ejecutándose como aplicación", "Pulsa Compartir en Safari y elige Añadir a pantalla de inicio.", "Abre el menú del navegador y elige Añadir a pantalla de inicio o Instalar aplicación."),
+        "de": ("App installieren", "Als App geöffnet", "Tippe in Safari auf Teilen und dann auf Zum Home-Bildschirm.", "Öffne das Browsermenü und wähle Zum Home-Bildschirm oder App installieren."),
+    }[lang]
+    install_label, installed_label, ios_help, browser_help = pwa_copy
     head = f"""
   <link rel="manifest" href="{manifest_url}">
   <meta name="theme-color" content="#0a1128">
@@ -3172,11 +3463,12 @@ def personal_acg_app(request: Request, token: str):
     lang = _resolve_lang(request)
     token_path = quote(token, safe="")
     chart_url = f"{_public_base_url(request)}/chart/{token_path}?lang={lang}"
-    html = build_personal_acg_html(yaml_text=chart["yaml_text"], chart_url=chart_url)
+    html = build_personal_acg_html(yaml_text=chart["yaml_text"], chart_url=chart_url, lang=lang)
     html = _personal_acg_pwa_html(html=html, token=token, lang=lang)
     response = HTMLResponse(html)
     response.headers["Cache-Control"] = "private, no-store, max-age=0"
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["Referrer-Policy"] = "no-referrer"
     return response
 
 
@@ -3189,13 +3481,14 @@ def personal_acg_manifest(request: Request, token: str):
     identity = hashlib.sha256(token.encode("utf-8")).hexdigest()[:20]
     manifest = {
         "id": f"/personal-acg-{identity}",
-        "name": "My Personal Astrocartography" if lang == "en" else "わたしのアストロカートグラフィ",
+        "name": {"ja": "わたしのアストロカートグラフィ", "en": "My Personal Astrocartography", "es": "Mi astrocartografía personal", "de": "Meine persönliche Astrokartografie"}[lang],
         "short_name": "My ACG",
-        "description": (
-            "Compare up to three places with your personal astrocartography lines."
-            if lang == "en"
-            else "あなたの天空線で最大3都市を比較できるパーソナルACGアプリです。"
-        ),
+        "description": {
+            "ja": "あなたの天空線で最大3都市を比較できるパーソナルACGアプリです。",
+            "en": "Compare up to three places with your personal astrocartography lines.",
+            "es": "Compara hasta tres lugares con tus líneas personales de astrocartografía.",
+            "de": "Vergleiche bis zu drei Orte mit deinen persönlichen Astrokartografie-Linien.",
+        }[lang],
         "start_url": f"{app_path}?lang={lang}&source=homescreen",
         "scope": app_path,
         "display": "standalone",
@@ -3264,16 +3557,22 @@ self.addEventListener('fetch',event=>{{
 
 @app.get("/acg", response_class=HTMLResponse)
 def acg_map_page(request: Request):
-    """ACG 天空線マップ（マンデン＋YAML貼り付けパーソナル）。?lang=en で英語表示。"""
-    return templates.TemplateResponse(
+    """ACG sky-line map, localized for all supported buyer languages."""
+    lang = _resolve_lang(request)
+    response = templates.TemplateResponse(
         "acg_map.html",
         {
             "request": request,
-            "lang": _resolve_lang(request),
+            "lang": lang,
+            "lang_urls": _lang_urls(request),
+            "acg_ui": get_acg_ui(lang),
             "public_base_url": _public_base_url(request),
             "demo_mode": request.query_params.get("demo") == "neko",
         },
     )
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
 
 
 NEKO_DEMO_YAML_PATH = Path(__file__).resolve().parent / "data" / "demo" / "chief_editor_neko.yaml"
@@ -3298,13 +3597,35 @@ def _neko_demo_yaml() -> str:
 
 @app.get("/demo/neko", response_class=HTMLResponse)
 def neko_demo_page(request: Request):
-    from config import ETSY_SHOP_URL
+    from config import (
+        NEKO_SHOP_URL_DE,
+        NEKO_SHOP_URL_EN,
+        NEKO_SHOP_URL_ES,
+        NEKO_SHOP_URL_JA,
+    )
 
+    requested_lang = request.query_params.get("lang", "").strip().lower()
+    lang = requested_lang if requested_lang in SUPPORTED_LANGS else "en"
+    shop_url = {
+        "ja": NEKO_SHOP_URL_JA,
+        "en": NEKO_SHOP_URL_EN,
+        "es": NEKO_SHOP_URL_ES,
+        "de": NEKO_SHOP_URL_DE,
+    }[lang]
+    page_url = f"{_public_base_url(request)}/demo/neko?lang={lang}"
+    og_image_url = f"{_public_base_url(request)}/static/ogp_acg_{lang}.jpg"
+    if lang == "ja":
+        og_image_url = f"{_public_base_url(request)}/static/ogp_acg.jpg"
     response = templates.TemplateResponse(
         "neko_demo.html",
         {
             "request": request,
-            "etsy_shop_url": ETSY_SHOP_URL,
+            "shop_url": shop_url,
+            "page_url": page_url,
+            "og_image_url": og_image_url,
+            "lang": lang,
+            "lang_urls": _lang_urls(request),
+            "ui": get_neko_demo_ui(lang),
         },
     )
     response.headers["Cache-Control"] = "public, max-age=300"
@@ -3319,7 +3640,8 @@ def _neko_demo_personal_zip(lang: str) -> bytes:
         cached = _neko_demo_personal_zip_cache.get(lang)
         if cached is not None:
             return cached
-        chart_url = NEKO_DEMO_PAGE_URL + ("?lang=en" if lang == "en" else "?lang=ja")
+        safe_lang = lang if lang in SUPPORTED_LANGS else "en"
+        chart_url = f"{NEKO_DEMO_PAGE_URL}?lang={safe_lang}"
         cached = build_personalized_zip(
             yaml_text=_neko_demo_yaml(),
             lang=lang,
@@ -3363,7 +3685,7 @@ def _neko_demo_planner_pdf(lang: str) -> bytes:
             yaml_text=planner_yaml,
             lang=lang,
             months=12,
-            chart_url=NEKO_DEMO_AI_URL + ("?lang=en" if lang == "en" else "?lang=ja"),
+            chart_url=NEKO_DEMO_AI_URL + f"?lang={lang}",
         )
         _neko_demo_planner_cache[lang] = cached
         return cached
@@ -3387,19 +3709,20 @@ def neko_demo_planner_pdf(request: Request):
 
 @app.get("/demo/neko/planner-ai", response_class=HTMLResponse)
 def neko_demo_planner_ai(request: Request, date: str):
+    lang = _resolve_lang(request)
+    ui = get_planner_ai_ui(lang)
     try:
         target_date = datetime.strptime(date, "%Y-%m-%d").date()
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD") from exc
+        raise HTTPException(status_code=400, detail=ui["invalid_date"]) from exc
     if target_date < NEKO_DEMO_PLANNER_START.date() or target_date > NEKO_DEMO_PLANNER_END:
-        raise HTTPException(status_code=400, detail="date is outside the demo planner range")
-    lang = _resolve_lang(request)
+        raise HTTPException(status_code=400, detail=ui["outside_range"])
     try:
         prompt_text = build_daily_ai_prompt(
             chart_yaml=_neko_demo_yaml(), target_date=target_date, lang=lang)
     except Exception as exc:
         logger.exception("neko_demo_daily_ai_prompt_failed lang=%s date=%s", lang, date)
-        raise HTTPException(status_code=503, detail="The demo prompt could not be generated.") from exc
+        raise HTTPException(status_code=503, detail=ui["unavailable"]) from exc
     response = templates.TemplateResponse(
         "planner_ai_day.html",
         {
@@ -3407,6 +3730,7 @@ def neko_demo_planner_ai(request: Request, date: str):
             "lang": lang,
             "target_date": date,
             "prompt_text": prompt_text,
+            "ui": ui,
         },
     )
     response.headers["Cache-Control"] = "public, max-age=86400"
@@ -3429,7 +3753,16 @@ def neko_demo_horoscope_svg():
 @app.get("/acg/globe-demo", response_class=HTMLResponse)
 def acg_globe_demo_page(request: Request):
     """ACG 3D地球儀デモ（仕組み理解用）。"""
-    return templates.TemplateResponse("acg_globe_demo.html", {"request": request})
+    lang = _resolve_lang(request)
+    return templates.TemplateResponse(
+        "acg_globe_demo.html",
+        {
+            "request": request,
+            "lang": lang,
+            "lang_urls": _lang_urls(request),
+            "globe_ui": get_globe_ui(lang),
+        },
+    )
 
 
 # ─── Astro Earth（3Dアストロカートグラフィ地球儀ビューア） ──────────────
@@ -3463,19 +3796,11 @@ def birth_chart_museum_entrance(request: Request):
 
 
 def _museum_demo_context(request: Request) -> dict:
-    """無料デモ共通コンテキスト。サンプル出生図固定・YAML読込なし・英語デフォルト。
-
-    販売先URLは環境変数 MUSEUM_SHOP_URL_EN / MUSEUM_SHOP_URL_JA。
-    未設定ならデモ内の購入ボタンは「近日発売」表示になる。
-    """
-    from config import MUSEUM_SHOP_URL_EN, MUSEUM_SHOP_URL_JA
-
+    """無料デモ共通コンテキスト。サンプル出生図固定・YAML読込なし・英語デフォルト。"""
     return {
         "request": request,
         "demo": True,
         "demo_default_lang": "en",
-        "shop_url_en": MUSEUM_SHOP_URL_EN,
-        "shop_url_ja": MUSEUM_SHOP_URL_JA,
     }
 
 
@@ -3628,28 +3953,35 @@ def transit_flight_from_url(
 
 
 @app.get("/api/geocode")
-def api_geocode(q: str = ""):
+def api_geocode(request: Request, q: str = ""):
     """地名検索（source=manual_search）。結果は内部共通形式の配列で返す。
 
     プロバイダ（MVP: Nominatim）は services/geocoding_service に分離。
     """
     from services.geocoding_service import GeocodingError, search
 
+    lang = _resolve_lang(request)
+    messages = {
+        "ja": ("検索する地名を入力してください。", "地名をもう少し具体的に入力してください（2文字以上）。", "地名の検索に失敗しました。時間をおいて再試行してください。", "地点が見つかりませんでした。"),
+        "en": ("Enter a place name to search.", "Please enter a more specific place name (at least 2 characters).", "The place search failed. Please try again later.", "No matching place was found."),
+        "es": ("Introduce un lugar para buscar.", "Introduce un lugar más específico (al menos 2 caracteres).", "La búsqueda del lugar ha fallado. Inténtalo de nuevo más tarde.", "No se encontró ningún lugar."),
+        "de": ("Gib einen Ortsnamen für die Suche ein.", "Gib einen genaueren Ortsnamen ein (mindestens 2 Zeichen).", "Die Ortssuche ist fehlgeschlagen. Bitte versuche es später erneut.", "Es wurde kein passender Ort gefunden."),
+    }[lang]
     query = (q or "").strip()
     if not query:
-        return JSONResponse({"results": [], "error": "検索する地名を入力してください。"}, status_code=400)
+        return JSONResponse({"results": [], "error": messages[0]}, status_code=400)
     if len(query) < 2:
-        return JSONResponse({"results": [], "error": "地名をもう少し具体的に入力してください（2文字以上）。"}, status_code=400)
+        return JSONResponse({"results": [], "error": messages[1]}, status_code=400)
 
     try:
-        results = search(query)
+        results = search(query, lang=lang)
     except GeocodingError:
         return JSONResponse(
-            {"results": [], "error": "地名の検索に失敗しました。時間をおいて再試行してください。"},
+            {"results": [], "error": messages[2]},
             status_code=502,
         )
     if not results:
-        return _mark_no_store(JSONResponse({"results": [], "error": "地点が見つかりませんでした。"}))
+        return _mark_no_store(JSONResponse({"results": [], "error": messages[3]}))
     return _mark_no_store(JSONResponse({"results": results}))
 
 
@@ -3690,8 +4022,19 @@ async def astro_earth_point(request: Request):
     return _mark_no_store(JSONResponse({"ok": True, **result}))
 
 
+def _acg_input_error_response(exc: Exception | str, *, lang: str, status_code: int) -> JSONResponse:
+    original = str(exc)
+    code, message = localize_acg_error(original, lang)
+    if lang == "ja":
+        message = original
+    return JSONResponse(
+        {"ok": False, "error_code": code, "error": message},
+        status_code=status_code,
+    )
+
+
 @app.get("/api/acg/mundane")
-def acg_mundane(date: str = ""):
+def acg_mundane(request: Request, date: str = ""):
     """指定日のマンデン ACG 線 GeoJSON。認証なし・日付単位で全ユーザー共通。
 
     計算基準時刻は当該日 03:00 UTC 固定（= 日本時間の正午時点の空）。
@@ -3702,7 +4045,9 @@ def acg_mundane(date: str = ""):
     try:
         geojson = mundane_geojson(target)
     except AcgInputError as exc:
-        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+        return _acg_input_error_response(
+            exc, lang=_resolve_lang(request), status_code=400
+        )
     return JSONResponse(
         geojson,
         headers={"Cache-Control": "public, max-age=86400"},
@@ -3723,9 +4068,11 @@ async def acg_personal(request: Request):
     )
 
     body = await request.body()
+    lang = _resolve_lang(request)
     if len(body) > MAX_YAML_BYTES:
-        return JSONResponse(
-            {"ok": False, "error": "YAMLテキストが大きすぎます（上限256KB）。"},
+        return _acg_input_error_response(
+            "YAMLテキストが大きすぎます（上限256KB）。",
+            lang=lang,
             status_code=413,
         )
 
@@ -3743,9 +4090,9 @@ async def acg_personal(request: Request):
     try:
         geojson = personal_geojson(yaml_text)
     except AcgYamlFormatError as exc:
-        return JSONResponse({"ok": False, "error": str(exc)}, status_code=422)
+        return _acg_input_error_response(exc, lang=lang, status_code=422)
     except AcgInputError as exc:
-        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+        return _acg_input_error_response(exc, lang=lang, status_code=400)
     return _mark_no_store(JSONResponse(geojson))
 
 
@@ -4498,11 +4845,13 @@ def api_key_redeem(
 @app.post("/internal/mail-sync")
 def internal_mail_sync(request: Request):
     expected = os.getenv("STORES_MAIL_SYNC_TOKEN", "").strip()
-    if expected:
-        auth = request.headers.get("Authorization", "")
-        token = auth.removeprefix("Bearer ").strip()
-        if token != expected:
-            raise HTTPException(status_code=401, detail="unauthorized")
+    if not expected:
+        logger.error("internal_mail_sync_disabled reason=STORES_MAIL_SYNC_TOKEN_not_configured")
+        raise HTTPException(status_code=503, detail="Mail synchronization is disabled")
+    auth = request.headers.get("Authorization", "")
+    token = auth.removeprefix("Bearer ").strip()
+    if token != expected:
+        raise HTTPException(status_code=401, detail="unauthorized")
 
     try:
         limit = int(os.getenv("STORES_MAIL_SYNC_LIMIT", "100"))
@@ -4524,8 +4873,11 @@ def _personal_edition_context(request: Request, *, error: str | None = None,
         "lang": lang,
         "error": error,
         "form": form or {},
-        "prefectures": PREFECTURE_OPTIONS,
+        "prefectures": localized_prefecture_options(PREFECTURE_OPTIONS, lang),
         "timezone_options": _timezone_options(lang),
+        "ui": PERSONAL_EDITION_UI.get(lang, PERSONAL_EDITION_UI["en"]),
+        "form_ui": buyer_form_ui(lang),
+        "lang_urls": _lang_urls(request),
     }
 
 
@@ -4566,9 +4918,38 @@ def personal_edition_activate_post(
     }
 
     def fail(ja: str, en: str, status: int = 400):
+        localized = {
+            "es": {
+                "Enter your access code.": "Introduce tu código de acceso.",
+                "The code could not be verified. Please try again later.": "No se pudo verificar el código. Inténtalo de nuevo más tarde.",
+                "The access code is invalid.": "El código de acceso no es válido.",
+                "This access code has already been used.": "Este código de acceso ya se ha utilizado.",
+                "This access code has expired.": "Este código de acceso ha caducado.",
+                "This access code has been revoked.": "Este código de acceso ha sido anulado.",
+                "This product type is not supported yet.": "Este tipo de producto todavía no es compatible.",
+                "Review your details and select the confirmation checkbox.": "Revisa tus datos y marca la casilla de confirmación.",
+                "The ACG Bundle requires a confirmed exact birth time.": "El ACG Bundle requiere una hora de nacimiento exacta y confirmada.",
+                "This code is not currently available.": "Este código no está disponible en este momento.",
+                "The ZIP could not be created. Please try again later.": "No se pudo crear el ZIP. Inténtalo de nuevo más tarde.",
+            },
+            "de": {
+                "Enter your access code.": "Gib deinen Zugangscode ein.",
+                "The code could not be verified. Please try again later.": "Der Code konnte nicht geprüft werden. Versuche es später erneut.",
+                "The access code is invalid.": "Der Zugangscode ist ungültig.",
+                "This access code has already been used.": "Dieser Zugangscode wurde bereits verwendet.",
+                "This access code has expired.": "Dieser Zugangscode ist abgelaufen.",
+                "This access code has been revoked.": "Dieser Zugangscode wurde widerrufen.",
+                "This product type is not supported yet.": "Dieser Produkttyp wird noch nicht unterstützt.",
+                "Review your details and select the confirmation checkbox.": "Prüfe deine Angaben und aktiviere das Bestätigungsfeld.",
+                "The ACG Bundle requires a confirmed exact birth time.": "Für das ACG Bundle ist eine genaue, bestätigte Geburtszeit erforderlich.",
+                "This code is not currently available.": "Dieser Code ist derzeit nicht verfügbar.",
+                "The ZIP could not be created. Please try again later.": "Die ZIP-Datei konnte nicht erstellt werden. Versuche es später erneut.",
+            },
+        }
+        message = ja if lang == "ja" else localized.get(lang, {}).get(en, en)
         return _mark_no_store(templates.TemplateResponse(
             "personal_edition_activate.html",
-            _personal_edition_context(request, error=en if lang == "en" else ja, form=form),
+            _personal_edition_context(request, error=message, form=form),
             status_code=status,
         ))
 
@@ -4598,12 +4979,13 @@ def personal_edition_activate_post(
     try:
         birth_date_clean = _validate_birth_date(birth_date, lang)
         time_info = resolve_birth_time_accuracy(
-            selected_accuracy=birth_time_accuracy, birth_time=birth_time
+            selected_accuracy=birth_time_accuracy, birth_time=birth_time, lang=lang
         )
         location = _build_birth_location(
             prefecture=prefecture, birth_place_kind=birth_place_kind,
             birth_place_overseas=birth_place_overseas, birth_place_city=birth_place_city,
             birth_lat=birth_lat, birth_lng=birth_lng, birth_timezone=birth_timezone,
+            lang=lang,
         )
         if code_row["product_type"] == "acg_bundle" and str(time_info["accuracy"]) != "exact":
             return fail(
@@ -4633,14 +5015,17 @@ def personal_edition_activate_post(
             birth_time_accuracy=str(time_info["accuracy"]),
             birth_time_range=time_info["range"],
             birth_time_note=str(time_info["note"]),
+            lang=str(code_row["locale"]),
         )
         chart_token = secrets.token_urlsafe(18)
         chart_url = f"{_public_base_url(request)}/chart/{chart_token}"
+        chart_locale = str(code_row["locale"])
         build_personalized_zip(
             yaml_text=yaml_text,
-            lang=str(code_row["locale"]),
+            lang=chart_locale,
             include_acg=code_row["product_type"] == "acg_bundle",
-            chart_url=chart_url if str(code_row["locale"]) == "ja" else f"{chart_url}?lang=en",
+            chart_url=chart_url if chart_locale == "ja" else f"{chart_url}?lang={chart_locale}",
+            prompt_text=_prompt_text,
         )
         pg_store.save_chart(
             token=chart_token,
@@ -4654,6 +5039,7 @@ def personal_edition_activate_post(
                 "personal_edition": True,
                 "personal_edition_product_type": code_row["product_type"],
                 "personal_edition_locale": code_row["locale"],
+                "product_locale": code_row["locale"],
                 "acg_enabled": code_row["product_type"] == "acg_bundle",
                 "expires_policy": "no_expiry",
             },
@@ -4724,14 +5110,17 @@ def redeem_get(request: Request, product_slug: str | None = None):
         form["order_code"] = order_code
     if requested_provider in ORDER_PROVIDERS:
         form["order_provider"] = requested_provider
+    if _truthy(request.query_params.get("new")):
+        form["issue_next"] = "1"
     provider_locked = requested_provider in ORDER_PROVIDERS
     return templates.TemplateResponse(
         _buyer_template("redeem", product_type),
         {
             "request": request,
             **_i18n_context(request),
-            "prefectures": PREFECTURE_OPTIONS,
+            "prefectures": localized_prefecture_options(PREFECTURE_OPTIONS, lang),
             "timezone_options": _timezone_options(lang),
+            "form_ui": buyer_form_ui(lang),
             "error": None,
             "form": form or None,
             "provider_locked": provider_locked,
@@ -4776,6 +5165,7 @@ def redeem_post(
     input_calendar: str = Form("gregorian"),
     calendar_note: str = Form(""),
     agree_final: str | None = Form(None),
+    issue_next: str | None = Form(None),
 ):
     if product_slug:
         product_type = _product_type_from_slug(product_slug)
@@ -4801,8 +5191,9 @@ def redeem_post(
             {
                 "request": request,
                 **_i18n_context(request),
-                "prefectures": PREFECTURE_OPTIONS,
+                "prefectures": localized_prefecture_options(PREFECTURE_OPTIONS, lang),
                 "timezone_options": _timezone_options(lang),
+                "form_ui": buyer_form_ui(lang),
                 "error": msg,
                 "form": {
                     "order_code": order_code,
@@ -4835,6 +5226,7 @@ def redeem_post(
                     "input_calendar": input_calendar,
                     "calendar_note": calendar_note,
                     "agree_final": bool(agree_final),
+                    "issue_next": bool(issue_next),
                 },
                 "provider_locked": (
                     request.query_params.get("provider", "").strip().lower()
@@ -4855,10 +5247,13 @@ def redeem_post(
             payhip_product_code=payhip_product_code,
             payhip_order_id=payhip_order_id,
             expected_product_type=product_type,
+            lang=lang,
         )
         if payhip_error:
             return _form_err(payhip_error)
-        order_code_clean, payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(payhip_metadata)
+        order_code_clean, payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(
+            payhip_metadata, lang=lang
+        )
         if payhip_order_error:
             return _form_err(payhip_order_error, status=payhip_order_error_status)
         order_provider_clean = "payhip"
@@ -4871,6 +5266,7 @@ def redeem_post(
         ) = _resolve_coconala_order_from_buyer(
             buyer_reference=order_code,
             product_type=product_type,
+            lang=lang,
         )
         if coconala_order_error:
             return _form_err(coconala_order_error, status=coconala_order_error_status)
@@ -4878,20 +5274,20 @@ def redeem_post(
     else:
         order_code_clean = _normalize_stores_order_no(order_code)
         if not order_code_clean:
-            return _form_err("注文番号を入力してください。")
+            return _form_err(redeem_error(lang, "order_required"))
         if not _is_valid_order_code(order_code_clean):
-            return _form_err("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+            return _form_err(redeem_error(lang, "order_format"))
         order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
     if not agree_final:
-        return _form_err("入力後は変更できないことを確認し、チェックを入れてください。")
+        return _form_err(redeem_error(lang, "confirmation_required"))
 
     if product_type == "transit_yaml":
         try:
-            lat = _parse_optional_float(event_lat, "緯度")
-            lng = _parse_optional_float(event_lng, "経度")
+            lat = _parse_optional_float(event_lat, buyer_error(lang, "latitude"), lang)
+            lng = _parse_optional_float(event_lng, buyer_error(lang, "longitude"), lang)
             if lat is None or lng is None:
                 raise ValueError("緯度・経度を入力してください。")
-            lat, lng = _validate_lat_lon(lat, lng)
+            lat, lng = _validate_lat_lon(lat, lng, lang)
             if not event_name.strip():
                 raise ValueError("イベント名を入力してください。")
             if not event_date.strip():
@@ -4910,6 +5306,7 @@ def redeem_post(
                 timezone_name=event_timezone.strip() or "Asia/Tokyo",
                 input_calendar=input_calendar.strip() or "gregorian",
                 calendar_note=calendar_note.strip() or "歴史日付は諸説あり。必要に応じて検証してください。",
+                lang=lang,
             )
         except Exception as e:
             return _form_err(str(e))
@@ -4919,18 +5316,34 @@ def redeem_post(
                 order_id=order_code_clean,
                 order_row=payhip_order_row,
                 product_type=product_type,
+                lang=lang,
             )
         else:
             status, _order_row, order_error, order_error_status = _check_order_for_redeem(
                 order_id=order_code_clean,
                 provider=order_provider_clean,
                 product_type=product_type,
+                lang=lang,
             )
+        if status == "partial" and not _truthy(issue_next):
+            existing = _existing_chart_response(
+                request, order_code_clean, lang=lang, provider=order_provider_clean,
+                product_type=product_type, order_row=_order_row, force_list=True,
+            )
+            if existing:
+                return existing
         if status == "already_used":
-            existing = _existing_chart_redirect(order_code_clean, lang=lang)
+            existing = _existing_chart_response(
+                request, order_code_clean, lang=lang, provider=order_provider_clean,
+                product_type=product_type, order_row=_order_row,
+            )
             if existing:
                 return existing
         if order_error:
+            if status == "already_used":
+                order_error = redeem_error(
+                    lang, "order_already_used", order_code=order_code_clean
+                )
             return _form_err(order_error, status=order_error_status)
 
         token = secrets.token_urlsafe(18)
@@ -4986,13 +5399,19 @@ def redeem_post(
                 type(e).__name__,
                 e,
             )
-            existing = _existing_chart_redirect(order_code_clean, lang=lang)
+            existing = _existing_chart_response(
+                request, order_code_clean, lang=lang, provider=order_provider_clean,
+                product_type=product_type, order_row=_order_row,
+            )
             if existing:
                 return existing
             return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
 
         if not ok:
-            existing = _existing_chart_redirect(order_code_clean, lang=lang)
+            existing = _existing_chart_response(
+                request, order_code_clean, lang=lang, provider=order_provider_clean,
+                product_type=product_type, order_row=_order_row,
+            )
             if existing:
                 return existing
             _log_order_check(
@@ -5002,7 +5421,12 @@ def redeem_post(
                 check_result="already_used",
                 reason="redemption insert rejected duplicate order_id",
             )
-            return _form_err(f"この注文番号（{order_code_clean}）はすでに使用済みです。別の注文番号をご確認ください。", status=409)
+            return _form_err(
+                redeem_error(
+                    lang, "order_already_used", order_code=order_code_clean
+                ),
+                status=409,
+            )
 
         chart_redirect = _chart_redirect_url(
             token,
@@ -5020,15 +5444,17 @@ def redeem_post(
         birth_time_info = resolve_birth_time_accuracy(
             selected_accuracy=birth_time_accuracy,
             birth_time=birth_time,
+            lang=lang,
         )
     except Exception as e:
         return _form_err(str(e))
     if product_type == "acg_bundle" and str(birth_time_info["accuracy"]) != "exact":
-        return _form_err(
-            "The ACG Bundle requires a confirmed exact birth time."
-            if lang == "en"
-            else "ACG付きBundleは、正確な出生時刻が確認できる方のみ発行できます。"
-        )
+        return _form_err({
+            "ja": "ACG付きBundleは、正確な出生時刻が確認できる方のみ発行できます。",
+            "en": "The ACG Bundle requires a confirmed exact birth time.",
+            "es": "El ACG Bundle requiere una hora de nacimiento exacta y confirmada.",
+            "de": "Für das ACG Bundle ist eine genaue, bestätigte Geburtszeit erforderlich.",
+        }.get(lang, "The ACG Bundle requires a confirmed exact birth time."))
 
     try:
         birth_location = _build_birth_location(
@@ -5039,6 +5465,7 @@ def redeem_post(
             birth_lat=birth_lat,
             birth_lng=birth_lng,
             birth_timezone=birth_timezone,
+            lang=lang,
         )
         birth_place_label = str(birth_location["birth_place"])
         birth_lat_value = birth_location["lat"]
@@ -5052,18 +5479,34 @@ def redeem_post(
             order_id=order_code_clean,
             order_row=payhip_order_row,
             product_type=product_type,
+            lang=lang,
         )
     else:
         status, _order_row, order_error, order_error_status = _check_order_for_redeem(
             order_id=order_code_clean,
             provider=order_provider_clean,
             product_type=product_type,
+            lang=lang,
         )
+    if status == "partial" and not _truthy(issue_next):
+        existing = _existing_chart_response(
+            request, order_code_clean, lang=lang, provider=order_provider_clean,
+            product_type=product_type, order_row=_order_row, force_list=True,
+        )
+        if existing:
+            return existing
     if status == "already_used":
-        existing = _existing_chart_redirect(order_code_clean, lang=lang)
+        existing = _existing_chart_response(
+            request, order_code_clean, lang=lang, provider=order_provider_clean,
+            product_type=product_type, order_row=_order_row,
+        )
         if existing:
             return existing
     if order_error:
+        if status == "already_used":
+            order_error = redeem_error(
+                lang, "order_already_used", order_code=order_code_clean
+            )
         return _form_err(order_error, status=order_error_status)
 
     try:
@@ -5090,6 +5533,7 @@ def redeem_post(
                 include_shichusuimei=include_shichusuimei,
                 include_transit=include_transit,
                 day_change_at_23=day_change_at_23_bool,
+                lang=lang,
             )
     except Exception as e:
         return _form_err(str(e))
@@ -5100,6 +5544,7 @@ def redeem_post(
         "product_type": product_type,
         "order_provider": order_provider_clean,
         "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+        "product_locale": lang,
         **payhip_metadata,
         **_acg_personal_edition_options(
             product_type=product_type,
@@ -5153,13 +5598,19 @@ def redeem_post(
             type(e).__name__,
             e,
         )
-        existing = _existing_chart_redirect(order_code_clean, lang=lang)
+        existing = _existing_chart_response(
+            request, order_code_clean, lang=lang, provider=order_provider_clean,
+            product_type=product_type, order_row=_order_row,
+        )
         if existing:
             return existing
         return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
 
     if not ok:
-        existing = _existing_chart_redirect(order_code_clean, lang=lang)
+        existing = _existing_chart_response(
+            request, order_code_clean, lang=lang, provider=order_provider_clean,
+            product_type=product_type, order_row=_order_row,
+        )
         if existing:
             return existing
         _log_order_check(
@@ -5170,8 +5621,9 @@ def redeem_post(
             reason="redemption insert rejected duplicate order_id",
         )
         return _form_err(
-            f"この注文番号（{order_code_clean}）はすでに使用済みです。"
-            "別の注文番号をご確認ください。",
+            redeem_error(
+                lang, "order_already_used", order_code=order_code_clean
+            ),
             status=409,
         )
 
@@ -5316,7 +5768,12 @@ _planner_builds_in_flight: set[tuple[str, str]] = set()
 
 
 def _build_personal_planner_pdf(
-    chart: dict, *, lang: str, chart_url: str | None = None) -> bytes | None:
+    chart: dict,
+    *,
+    lang: str,
+    chart_url: str | None = None,
+    holiday_country: str | None = None,
+) -> bytes | None:
     """Standalone personal planner PDF for a stored chart, or None.
 
     Recomputed from the chart's stored birth inputs at download time (~a few
@@ -5335,6 +5792,7 @@ def _build_personal_planner_pdf(
                 lang=lang,
                 months=12,
                 chart_url=chart_url,
+                holiday_country=holiday_country,
             )
     except Exception:
         logger.exception(
@@ -5365,6 +5823,7 @@ def _build_personal_planner_pdf(
             birth_time_range=source.get("birth_time_range"),
             birth_time_note=source.get("birth_time_note"),
             chart_url=chart_url,
+            holiday_country=holiday_country,
         )
     except Exception:
         logger.exception("personal_planner_generation_failed token=%s", chart.get("token"))
@@ -5397,11 +5856,15 @@ def chart_planner_pdf(request: Request, token: str):
     # An explicit ?lang wins so the buyer's chosen language (from the chart page)
     # always applies; otherwise fall back to the stored purchase locale.
     requested_lang = request.query_params.get("lang", "").strip().lower()
-    if requested_lang in {"ja", "en"}:
+    if requested_lang in SUPPORTED_LANGS:
         safe_lang = requested_lang
     else:
         locale = str(options.get("personal_edition_locale") or _resolve_lang(request))
-        safe_lang = locale if locale in {"ja", "en"} else "ja"
+        safe_lang = locale if locale in SUPPORTED_LANGS else "ja"
+    requested_country = request.query_params.get("holiday_country", "").strip().upper()
+    if requested_country and requested_country not in SUPPORTED_COUNTRIES:
+        raise HTTPException(status_code=400, detail="unsupported holiday country")
+    holiday_country = requested_country or None
     build_key = (token, safe_lang)
     with _planner_build_lock:
         if build_key in _planner_builds_in_flight:
@@ -5413,15 +5876,29 @@ def chart_planner_pdf(request: Request, token: str):
         _planner_builds_in_flight.add(build_key)
     try:
         ai_page_url = f"{_public_base_url(request)}/chart/{token}/planner-ai"
-        if safe_lang == "en":
-            ai_page_url = f"{ai_page_url}?lang=en"
-        planner_pdf = _build_personal_planner_pdf(chart, lang=safe_lang, chart_url=ai_page_url)
+        if safe_lang != "ja":
+            ai_page_url = f"{ai_page_url}?lang={safe_lang}"
+        planner_pdf = _build_personal_planner_pdf(
+            chart,
+            lang=safe_lang,
+            chart_url=ai_page_url,
+            holiday_country=holiday_country,
+        )
     finally:
         with _planner_build_lock:
             _planner_builds_in_flight.discard(build_key)
     if not planner_pdf:
         raise HTTPException(status_code=503, detail="The planner could not be generated. Please try again later.")
-    filename = "Personal-Planner.pdf" if safe_lang == "en" else "Personal-Planner-JA.pdf"
+    # Preserve the established Japanese/English download names so existing
+    # buyer instructions, bookmarks, and automations keep working.  New
+    # locales get an explicit suffix.
+    if safe_lang == "en":
+        filename = "Personal-Planner.pdf"
+    elif safe_lang == "ja":
+        filename = "Personal-Planner-JA.pdf"
+    else:
+        country_suffix = f"-{requested_country}" if requested_country else ""
+        filename = f"Personal-Planner-{safe_lang.upper()}{country_suffix}.pdf"
     response = Response(content=planner_pdf, media_type="application/pdf")
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     _apply_public_chart_headers(response, chart, max_age=0)
@@ -5436,18 +5913,22 @@ def _personal_edition_zip_payload(
         raise HTTPException(status_code=404, detail="Personal Edition ZIP not found")
     include_acg = bool(options.get("acg_enabled"))
     lang = str(options.get("personal_edition_locale") or "ja")
-    safe_lang = lang if lang in {"ja", "en"} else "ja"
+    safe_lang = lang if lang in SUPPORTED_LANGS else "ja"
     chart_url = f"{_public_base_url(request)}/chart/{token}"
-    if lang == "en":
-        chart_url = f"{chart_url}?lang=en"
+    if safe_lang != "ja":
+        chart_url = f"{chart_url}?lang={safe_lang}"
     zip_bytes = build_personalized_zip(
         yaml_text=chart["yaml_text"],
         lang=safe_lang,
         include_acg=include_acg,
         chart_url=chart_url,
+        prompt_text=str(chart.get("prompt_text") or ""),
     )
-    filename = ("BirthChartMuseum-PersonalEdition-ACG-Bundle.zip"
-                if include_acg else "BirthChartMuseum-PersonalEdition-FULL.zip")
+    filename = (
+        f"nanamiastro-ACG-Premium-Bundle-Personal-Edition-{safe_lang.upper()}.zip"
+        if include_acg
+        else f"nanamiastro-FULL-Personal-Edition-{safe_lang.upper()}.zip"
+    )
     return zip_bytes, filename
 
 
@@ -5455,11 +5936,7 @@ def _personal_edition_zip_payload(
 def free_birth_chart_museum_zip(request: Request):
     lang = _resolve_lang(request)
     zip_bytes = build_free_museum_zip(lang)
-    filename = (
-        "BirthChartMuseum-DreamSky-Free-EN.zip"
-        if lang == "en"
-        else "BirthChartMuseum-DreamSky-Free-JA.zip"
-    )
+    filename = f"BirthChartMuseum-DreamSky-Free-{lang.upper()}.zip"
     response = Response(content=zip_bytes, media_type="application/zip")
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     response.headers["Cache-Control"] = "public, max-age=3600"
@@ -5479,6 +5956,8 @@ def chart_personal_edition_zip(request: Request, token: str):
 @app.get("/chart/{token}/planner-ai", response_class=HTMLResponse)
 def chart_planner_ai(request: Request, token: str, date: str):
     chart = _load_chart_or_404(token, include_svgs=False)
+    lang = _resolve_lang(request)
+    ui = get_planner_ai_ui(lang)
     options = chart.get("options") or {}
     try:
         loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
@@ -5495,22 +5974,25 @@ def chart_planner_ai(request: Request, token: str, date: str):
         }
     )
     if not allowed:
-        raise HTTPException(status_code=404, detail="Daily AI prompt not available")
+        raise HTTPException(status_code=404, detail=ui["not_available"])
     try:
         target_date = datetime.strptime(date, "%Y-%m-%d").date()
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD") from exc
+        raise HTTPException(status_code=400, detail=ui["invalid_date"]) from exc
     today = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     if target_date < today - timedelta(days=366 * 5) or target_date > today + timedelta(days=366 * 5):
-        raise HTTPException(status_code=400, detail="date is outside the supported range")
-    lang = _resolve_lang(request)
+        raise HTTPException(status_code=400, detail=ui["outside_range"])
     try:
         prompt_text = build_daily_ai_prompt(
             chart_yaml=chart["yaml_text"], target_date=target_date, lang=lang)
     except Exception as exc:
-        logger.exception("planner_daily_ai_prompt_failed token=%s date=%s", token, date)
+        logger.exception(
+            "planner_daily_ai_prompt_failed chart_id=%s date=%s",
+            mask_chart_id(token),
+            date,
+        )
         raise HTTPException(
-            status_code=503, detail="The daily prompt could not be generated.") from exc
+            status_code=503, detail=ui["unavailable"]) from exc
     return templates.TemplateResponse(
         "planner_ai_day.html",
         {
@@ -5518,6 +6000,7 @@ def chart_planner_ai(request: Request, token: str, date: str):
             "lang": lang,
             "target_date": date,
             "prompt_text": prompt_text,
+            "ui": ui,
         },
     )
 
@@ -5525,10 +6008,13 @@ def chart_planner_ai(request: Request, token: str, date: str):
 @app.get("/chart/{token}/download.zip")
 def chart_download_zip(request: Request, token: str):
     chart = _load_chart_or_404(token)
+    lang = _resolve_lang(request)
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)
     order_provider = str(options.get("order_provider") or "").strip().lower()
     chart_page_url = f"{_public_base_url(request)}/chart/{token}"
+    if lang != "ja":
+        chart_page_url = f"{chart_page_url}?lang={lang}"
     try:
         loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
         chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
@@ -5547,8 +6033,8 @@ def chart_download_zip(request: Request, token: str):
         detail_yaml = build_detail_astrology_yaml(full_yaml_text)
     except Exception:
         detail_yaml = share_yaml_text
-    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text, doc=chart_doc)
-    prompt_text = _chart_prompt_text(chart, doc=chart_doc)
+    ai_paste_text = _chart_ai_paste_text(chart, share_yaml_text, doc=chart_doc, lang=lang)
+    prompt_text = _chart_prompt_for_yaml_text(chart, full_yaml_text, fallback_doc=chart_doc, lang=lang)
     personal_edition_payload = None
     if options.get("personal_edition"):
         personal_edition_payload = _personal_edition_zip_payload(
@@ -5593,14 +6079,20 @@ def chart_download_zip(request: Request, token: str):
                         personal_zip.read(item.filename),
                     )
         if order_provider in {"stores", "payhip", "etsy"}:
+            chart_url_copy = {
+                "ja": ("鑑定ページURL", "URLには有効期限があります。期限内にアクセスしてください。", "このZIP内の鑑定データは、URLの期限後も手元で利用できます。"),
+                "en": ("Private chart page URL", "This URL has an expiration date. Open it before it expires.", "The chart files in this ZIP remain available after the URL expires."),
+                "es": ("URL privada de tu carta", "Esta URL tiene fecha de caducidad. Ábrela antes de que caduque.", "Los datos de este ZIP seguirán disponibles después de que caduque la URL."),
+                "de": ("Private Horoskop-URL", "Diese URL hat ein Ablaufdatum. Öffne sie bitte rechtzeitig.", "Die Horoskopdaten in dieser ZIP bleiben nach Ablauf der URL verfügbar."),
+            }[lang]
             zf.writestr(
                 "CHART-PAGE-URL.txt",
-                "鑑定ページURL\n"
+                f"{chart_url_copy[0]}\n"
                 f"{chart_page_url}\n\n"
-                "URLには有効期限があります。期限内にアクセスしてください。\n"
-                "このZIP内の鑑定データは、URLの期限後も手元で利用できます。\n",
+                f"{chart_url_copy[1]}\n"
+                f"{chart_url_copy[2]}\n",
             )
-        zf.writestr("README.txt", _chart_zip_readme(chart))
+        zf.writestr("README.txt", _chart_zip_readme(chart, lang=lang))
     response = Response(content=buffer.getvalue(), media_type="application/zip")
     response.headers["Content-Disposition"] = f'attachment; filename="{_chart_zip_filename(token)}"'
     _apply_public_chart_headers(response, chart, max_age=0)
@@ -5608,9 +6100,13 @@ def chart_download_zip(request: Request, token: str):
 
 
 @app.get("/chart/{token}/prompt.txt", response_class=PlainTextResponse)
-def chart_prompt(token: str):
+def chart_prompt(request: Request, token: str):
     chart = _load_chart_or_404(token, include_svgs=False)
-    response = PlainTextResponse(_chart_prompt_text(chart), media_type="text/plain; charset=utf-8")
+    lang = _resolve_lang(request)
+    response = PlainTextResponse(
+        _chart_prompt_for_yaml_text(chart, str(chart.get("yaml_text") or ""), lang=lang),
+        media_type="text/plain; charset=utf-8",
+    )
     _apply_public_chart_headers(response, chart, max_age=86400)
     return response
 
@@ -5659,7 +6155,9 @@ def chart_page(request: Request, token: str):
         has_horoscope_svg = has_western_natal
         has_shichusuimei_svg = product_type == "shichu"
         timings["display判定_ms"] = _elapsed_ms(step_start)
-        chart["prompt_text"] = _chart_prompt_text(chart, doc=chart_doc)
+        chart["prompt_text"] = _chart_prompt_for_yaml_text(
+            chart, str(chart.get("yaml_text") or ""), fallback_doc=chart_doc, lang=lang
+        )
 
         has_asteroids = False
         step_start = time.perf_counter()
@@ -5680,18 +6178,16 @@ def chart_page(request: Request, token: str):
             except Exception:
                 birth_time_notice = {"show": False}
         share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
-        share_prompt_text = _chart_prompt_for_yaml_text(chart, share_yaml_text, fallback_doc=chart_doc)
+        share_prompt_text = _chart_prompt_for_yaml_text(
+            chart, share_yaml_text, fallback_doc=chart_doc, lang=lang
+        )
         asteroid_yaml_text = None
         expires_at = _chart_expiry(chart)
         expires_label = _chart_expiry_label(expires_at)
         base_url = _public_base_url(request)
         canonical_chart_url = f"{base_url}/chart/{token}"
         chart_url = canonical_chart_url if lang == "ja" else f"{canonical_chart_url}?lang={lang}"
-        next_transit_url = (
-            "/addon/new"
-            f"?addon_type=western_31days_transit_addon"
-            f"&previous_chart_url={quote(canonical_chart_url, safe='')}"
-        )
+        next_transit_url = _next_transit_addon_url(canonical_chart_url, lang=lang)
         # 星読みの暦アプリ（HOSHIYOMI_APP_URL 設定時のみ）: チャートYAML＋ホロスコープSVGを
         # ?load= で自動読み込みさせるリンク。西洋占星術チャートのときだけ出す。
         hoshiyomi_app_url = None
@@ -5733,10 +6229,14 @@ def chart_page(request: Request, token: str):
                     }
                     else None
                 ),
+                # Keep the country-specific generation code available, but do
+                # not expose a selector until every storefront locale has a
+                # consistent country list and an explicit "no holidays" option.
+                "planner_holiday_countries": [],
                 "personal_acg_url": (
                     f"/chart/{quote(token, safe='')}/acg-app/?lang={lang}"
                     if personal_edition_acg
-                    else f"/acg?load={quote(f'/chart/{token}.yaml', safe='')}"
+                    else f"/acg?lang={lang}&load={quote(f'/chart/{token}.yaml', safe='')}"
                 ),
                 "can_continue_with_transit": can_continue_with_transit,
                 "has_31day_transit": has_31day_transit,
@@ -5749,11 +6249,10 @@ def chart_page(request: Request, token: str):
                 "birth_time_notice": birth_time_notice,
                 "share_yaml_text": share_yaml_text,
                 "share_prompt_text": share_prompt_text,
-                "chart_companion_prompt": (
-                    SHICHUSUIMEI_CHART_COMPANION_PROMPT
-                    if product_type == "shichu"
-                    else CHART_COMPANION_PROMPT
-                ).strip() + "\n",
+                "chart_companion_prompt": build_chart_companion_prompt(
+                    lang=lang,
+                    include_shichusuimei=product_type == "shichu",
+                ),
                 "asteroid_yaml_text": asteroid_yaml_text,
                 "chart_url": chart_url,
                 "yaml_url": f"{base_url}/chart/{token}.yaml",
@@ -5764,7 +6263,10 @@ def chart_page(request: Request, token: str):
                 "detail_yaml_url": f"{base_url}/chart/{token}/detail.yaml",
                 "horoscope_svg_url": f"{base_url}/chart/{token}/horoscope.svg",
                 "shichusuimei_svg_url": f"{base_url}/chart/{token}/shichusuimei.svg",
-                "download_zip_url": f"{base_url}/chart/{token}/download.zip",
+                "download_zip_url": (
+                    f"{base_url}/chart/{token}/download.zip"
+                    + (f"?lang={lang}" if lang != "ja" else "")
+                ),
                 "auto_download_chart_zip": (
                     request.query_params.get("chart_download") == "1"
                     or (
@@ -5772,7 +6274,10 @@ def chart_page(request: Request, token: str):
                         and request.query_params.get("personal_download") == "1"
                     )
                 ),
-                "prompt_url": f"{base_url}/chart/{token}/prompt.txt",
+                "prompt_url": (
+                    f"{base_url}/chart/{token}/prompt.txt"
+                    + (f"?lang={lang}" if lang != "ja" else "")
+                ),
                 "usage_guide_url": "https://guide.nanami-astro.com/",
                 "birth_time_reissue_url": os.getenv("LINE_ADD_FRIEND_URL", "").strip(),
                 "hoshiyomi_app_url": hoshiyomi_app_url,
@@ -6613,21 +7118,33 @@ ADDON_FORM_OPTIONS = [
     {"value": "western_31days_transit_addon", "label": "38日トランジット追加"},
     {"value": "western_long_term_transits_addon", "label": "長期トランジット（1年）追加"},
 ]
+ADDON_ORDER_PROVIDERS = ("stores", "etsy", "payhip", "coconala")
 
 
 def _localized_addon_options(lang: str) -> list[dict[str, str]]:
-    if lang == "en":
-        labels = {
-            "western_asteroids_addon": "Asteroid add-on",
-            "western_31days_transit_addon": "38-day transit add-on",
-            "western_long_term_transits_addon": "Long-term transits add-on (1 year)",
-        }
-    else:
-        labels = {
+    labels_by_lang = {
+        "ja": {
             "western_asteroids_addon": "小惑星追加",
             "western_31days_transit_addon": "38日トランジット追加",
             "western_long_term_transits_addon": "長期トランジット（1年）追加",
-        }
+        },
+        "en": {
+            "western_asteroids_addon": "Asteroid add-on",
+            "western_31days_transit_addon": "38-day transit add-on",
+            "western_long_term_transits_addon": "Long-term transits add-on (1 year)",
+        },
+        "es": {
+            "western_asteroids_addon": "Complemento de asteroides",
+            "western_31days_transit_addon": "Complemento de tránsitos de 38 días",
+            "western_long_term_transits_addon": "Complemento de tránsitos a largo plazo (1 año)",
+        },
+        "de": {
+            "western_asteroids_addon": "Asteroiden-Add-on",
+            "western_31days_transit_addon": "38-Tage-Transit-Add-on",
+            "western_long_term_transits_addon": "Langzeittransit-Add-on (1 Jahr)",
+        },
+    }
+    labels = labels_by_lang.get(lang, labels_by_lang["en"])
     return [{"value": item["value"], "label": labels.get(item["value"], item["label"])} for item in ADDON_FORM_OPTIONS]
 
 
@@ -6640,20 +7157,24 @@ def _addon_form_response(
     transit_download_url: str = "",
     transit_expires_label: str = "",
     error: str | None = None,
+    provider_candidates: list[str] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
     today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     lang_ctx = _i18n_context(request)
+    requested_provider = (request.query_params.get("provider") or "").strip().lower()
     response = templates.TemplateResponse(
         "addon_form.html",
         {
             "request": request,
             **lang_ctx,
             "addon_options": _localized_addon_options(lang_ctx["lang"]),
+            "provider_locked": requested_provider in ADDON_ORDER_PROVIDERS,
+            "provider_candidates": provider_candidates or [],
             "form": form or {
                 "addon_type": "western_asteroids_addon",
                 "order_code": "",
-                "order_provider": "stores",
+                "order_provider": "",
                 "payhip_email": "",
                 "payhip_product_code": "",
                 "payhip_order_id": "",
@@ -6689,7 +7210,7 @@ def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
     )
     previous_chart_url = (request.query_params.get("previous_chart_url") or "").strip()
     requested_provider = (request.query_params.get("provider") or "").strip().lower()
-    order_provider = requested_provider if requested_provider in ORDER_PROVIDERS else "stores"
+    order_provider = requested_provider if requested_provider in ADDON_ORDER_PROVIDERS else ""
     return {
         "addon_type": addon_type,
         "order_code": "",
@@ -6701,6 +7222,105 @@ def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
         "previous_chart_url": previous_chart_url,
         "transit_start_date": today_jst,
     }
+
+
+def _lookup_addon_purchase_candidates(
+    reference: str,
+    addon_type: str,
+) -> tuple[list[dict[str, str]], list[dict]]:
+    """Find provider-scoped add-on purchases without consuming an entitlement."""
+    candidates: list[dict[str, str]] = []
+    mismatches: list[dict] = []
+    for provider in ("stores", "etsy", "payhip"):
+        status, order_row = stores_mail_sync.verify_order_entitlement(
+            reference,
+            provider=provider,
+            product_type=addon_type,
+        )
+        if order_row and status not in {"not_found", "product_mismatch"}:
+            candidates.append(
+                {
+                    "provider": provider,
+                    "order_code": str(order_row.get("stores_order_no") or reference).strip(),
+                }
+            )
+        elif order_row and status == "product_mismatch":
+            mismatches.append(dict(order_row))
+
+    coconala_status, coconala_row = stores_mail_sync.verify_coconala_buyer(
+        reference,
+        product_type=addon_type,
+    )
+    if coconala_row and coconala_status != "not_found":
+        candidates.append(
+            {
+                "provider": "coconala",
+                "order_code": str(coconala_row.get("stores_order_no") or "").strip(),
+            }
+        )
+
+    unique: dict[tuple[str, str], dict[str, str]] = {}
+    for candidate in candidates:
+        key = (candidate["provider"], candidate["order_code"])
+        if candidate["order_code"]:
+            unique[key] = candidate
+    return list(unique.values()), mismatches
+
+
+def _auto_resolve_addon_purchase(
+    reference: str,
+    addon_type: str,
+    *,
+    lang: str,
+) -> tuple[str, str, str | None, int, list[str]]:
+    """Resolve an add-on reference to one provider, syncing mail once on a miss."""
+    reference_clean = (reference or "").strip()
+    if not reference_clean:
+        return "", "", redeem_error(lang, "order_required"), 400, []
+    if len(reference_clean) > 100:
+        return "", "", redeem_error(lang, "order_format"), 400, []
+    if not os.environ.get("DATABASE_URL"):
+        return "", "", redeem_error(lang, "addon_service_unavailable"), 503, []
+
+    try:
+        candidates, mismatches = _lookup_addon_purchase_candidates(reference_clean, addon_type)
+        if not candidates and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
+            _sync_stores_orders_for_lookup()
+            candidates, mismatches = _lookup_addon_purchase_candidates(reference_clean, addon_type)
+    except Exception as exc:
+        logger.exception(
+            "addon_provider_auto_resolution_failed reference_present=%s addon_type=%s error_type=%s error=%r",
+            bool(reference_clean),
+            addon_type,
+            type(exc).__name__,
+            exc,
+        )
+        message = redeem_error(lang, "order_verification_failed")
+        if lang == "ja":
+            message = _public_error_message(exc, fallback=message)
+        return "", "", message, 503, []
+
+    if len(candidates) == 1:
+        candidate = candidates[0]
+        return candidate["provider"], candidate["order_code"], None, 200, []
+    if len(candidates) > 1:
+        providers = [candidate["provider"] for candidate in candidates]
+        return "", "", redeem_error(lang, "addon_provider_collision"), 409, providers
+    if mismatches:
+        purchased_type = mismatches[0].get("product_type")
+        return (
+            "",
+            "",
+            redeem_error(
+                lang,
+                "addon_product_mismatch",
+                purchased_product=_product_label_for_lang(purchased_type, lang),
+                requested_product=_product_label_for_lang(addon_type, lang),
+            ),
+            409,
+            [],
+        )
+    return "", "", redeem_error(lang, "addon_reference_not_found"), 400, []
 
 
 def _load_addon_base_yaml(base_yaml: str) -> dict:
@@ -7486,12 +8106,17 @@ def _transit_addon_expires_at() -> datetime:
     return _chart_expires_at()
 
 
-def _existing_addon_chart_result(order_code: str, addon_type: str) -> tuple[str, datetime | None] | None:
+def _existing_addon_chart_result(
+    order_code: str, addon_type: str, *, provider: str | None = None
+) -> tuple[str, datetime | None] | None:
     try:
-        chart = pg_store.get_addon_chart_by_order_code(
-            order_code=order_code,
-            addon_type=addon_type,
-        )
+        lookup_kwargs = {
+            "order_code": order_code,
+            "addon_type": addon_type,
+        }
+        if provider:
+            lookup_kwargs["provider"] = provider
+        chart = pg_store.get_addon_chart_by_order_code(**lookup_kwargs)
     except Exception as exc:
         logger.exception(
             "existing_addon_chart_lookup_failed order_id=%s addon_type=%s error_type=%s error=%r",
@@ -7520,14 +8145,15 @@ def _redeem_and_save_transit_addon_or_raise(
     yaml_text: str,
     *,
     chart_payload: dict[str, object] | None = None,
+    lang: str = "ja",
 ) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
-        raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
+        raise ValueError(redeem_error(lang, "addon_service_unavailable"))
     order_code_clean = _normalize_stores_order_no(order_code)
     if not order_code_clean:
-        raise ValueError("注文番号を入力してください。")
+        raise ValueError(redeem_error(lang, "order_required"))
     if not _is_valid_order_code(order_code_clean):
-        raise ValueError("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+        raise ValueError(redeem_error(lang, "order_format"))
     order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
     policy = _get_order_check_policy(order_provider_clean)
     if order_provider_clean not in ORDER_PROVIDERS:
@@ -7538,7 +8164,9 @@ def _redeem_and_save_transit_addon_or_raise(
             check_result="provider_unknown",
             reason="provider could not be resolved",
         )
-        raise ValueError(f"注文番号（{order_code_clean}）を確認できません。購入確認メールに記載の番号を確認してください。")
+        raise ValueError(redeem_error(
+            lang, "order_not_verified", order_code=order_code_clean
+        ))
     if order_provider_clean == "gumroad":
         _log_order_check(
             provider=order_provider_clean,
@@ -7547,7 +8175,7 @@ def _redeem_and_save_transit_addon_or_raise(
             check_result="unsupported",
             reason="gumroad product tags are only mapped for western_basic/western_full",
         )
-        raise ValueError("Gumroad注文はこの追加商品では使用できません。対応商品タグを確認してください。")
+        raise ValueError(redeem_error(lang, "gumroad_addon_not_allowed"))
 
     last_exc: Exception | None = None
     for _ in range(3):
@@ -7557,6 +8185,7 @@ def _redeem_and_save_transit_addon_or_raise(
             # addonは常にstrict照合。非strictなのはgumroadだけで、それは上で弾いている。
             status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
                 order_code=order_code_clean,
+                provider=order_provider_clean,
                 addon_type=addon_type,
                 token=token,
                 yaml_text=yaml_text,
@@ -7567,6 +8196,7 @@ def _redeem_and_save_transit_addon_or_raise(
                 _sync_stores_orders_for_lookup()
                 status, order_row = pg_store.redeem_addon_order_and_save_transit_link(
                     order_code=order_code_clean,
+                    provider=order_provider_clean,
                     addon_type=addon_type,
                     token=token,
                     yaml_text=yaml_text,
@@ -7604,26 +8234,39 @@ def _redeem_and_save_transit_addon_or_raise(
                 )
             return token, expires_at
         if status == "not_found":
-            raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
+            raise ValueError(redeem_error(
+                lang, "order_not_found", order_code=order_code_clean
+            ))
         if status == "already_used":
-            existing = _existing_addon_chart_result(order_code_clean, addon_type)
+            existing = _existing_addon_chart_result(
+                order_code_clean, addon_type, provider=order_provider_clean
+            )
             if existing:
                 return existing
-            raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
+            raise ValueError(redeem_error(
+                lang, "addon_order_already_used", order_code=order_code_clean
+            ))
         if status == "product_mismatch":
             purchased_type = (order_row or {}).get("product_type")
-            raise ValueError(
-                f"この注文番号は{_product_label(purchased_type)}用です。"
-                f"{_product_label(addon_type)}の生成には使用できません。"
-            )
-        raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
+            raise ValueError(redeem_error(
+                lang,
+                "addon_product_mismatch",
+                purchased_product=_product_label_for_lang(purchased_type, lang),
+                requested_product=_product_label_for_lang(addon_type, lang),
+            ))
+        raise ValueError(redeem_error(lang, "order_verification_unknown"))
 
     if last_exc:
-        existing = _existing_addon_chart_result(order_code_clean, addon_type)
+        existing = _existing_addon_chart_result(
+            order_code_clean, addon_type, provider=order_provider_clean
+        )
         if existing:
             return existing
-        raise ValueError(_public_error_message(last_exc, fallback="トランジットデータの一時保存に失敗しました。時間をおいて再試行してください。")) from last_exc
-    raise ValueError("トランジットデータの一時保存に失敗しました。時間をおいて再試行してください。")
+        message = redeem_error(lang, "transit_addon_save_failed")
+        if lang == "ja":
+            message = _public_error_message(last_exc, fallback=message)
+        raise ValueError(message) from last_exc
+    raise ValueError(redeem_error(lang, "transit_addon_save_failed"))
 
 
 def _redeem_and_save_chart_addon_or_raise(
@@ -7632,14 +8275,15 @@ def _redeem_and_save_chart_addon_or_raise(
     addon_type: str,
     *,
     chart_payload: dict[str, object],
+    lang: str = "ja",
 ) -> tuple[str, datetime]:
     if not os.environ.get("DATABASE_URL"):
-        raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
+        raise ValueError(redeem_error(lang, "addon_service_unavailable"))
     order_code_clean = _normalize_stores_order_no(order_code)
     if not order_code_clean:
-        raise ValueError("注文番号を入力してください。")
+        raise ValueError(redeem_error(lang, "order_required"))
     if not _is_valid_order_code(order_code_clean):
-        raise ValueError("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+        raise ValueError(redeem_error(lang, "order_format"))
     order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
     policy = _get_order_check_policy(order_provider_clean)
     if order_provider_clean not in ORDER_PROVIDERS:
@@ -7650,7 +8294,9 @@ def _redeem_and_save_chart_addon_or_raise(
             check_result="provider_unknown",
             reason="provider could not be resolved",
         )
-        raise ValueError(f"注文番号（{order_code_clean}）を確認できません。購入確認メールに記載の番号を確認してください。")
+        raise ValueError(redeem_error(
+            lang, "order_not_verified", order_code=order_code_clean
+        ))
     if order_provider_clean == "gumroad":
         _log_order_check(
             provider=order_provider_clean,
@@ -7659,7 +8305,7 @@ def _redeem_and_save_chart_addon_or_raise(
             check_result="unsupported",
             reason="gumroad product tags are only mapped for western_basic/western_full",
         )
-        raise ValueError("Gumroad注文はこの追加商品では使用できません。対応商品タグを確認してください。")
+        raise ValueError(redeem_error(lang, "gumroad_addon_not_allowed"))
 
     last_exc: Exception | None = None
     for _ in range(3):
@@ -7669,6 +8315,7 @@ def _redeem_and_save_chart_addon_or_raise(
             # addonは常にstrict照合。非strictなのはgumroadだけで、それは上で弾いている。
             status, order_row = pg_store.redeem_addon_order_and_save_chart(
                 order_code=order_code_clean,
+                provider=order_provider_clean,
                 addon_type=addon_type,
                 token=token,
                 expires_at=expires_at,
@@ -7678,6 +8325,7 @@ def _redeem_and_save_chart_addon_or_raise(
                 _sync_stores_orders_for_lookup()
                 status, order_row = pg_store.redeem_addon_order_and_save_chart(
                     order_code=order_code_clean,
+                    provider=order_provider_clean,
                     addon_type=addon_type,
                     token=token,
                     expires_at=expires_at,
@@ -7714,38 +8362,53 @@ def _redeem_and_save_chart_addon_or_raise(
                 )
             return token, expires_at
         if status == "not_found":
-            raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
+            raise ValueError(redeem_error(
+                lang, "order_not_found", order_code=order_code_clean
+            ))
         if status == "already_used":
-            existing = _existing_addon_chart_result(order_code_clean, addon_type)
+            existing = _existing_addon_chart_result(
+                order_code_clean, addon_type, provider=order_provider_clean
+            )
             if existing:
                 return existing
-            raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
+            raise ValueError(redeem_error(
+                lang, "addon_order_already_used", order_code=order_code_clean
+            ))
         if status == "product_mismatch":
             purchased_type = (order_row or {}).get("product_type")
-            raise ValueError(
-                f"この注文番号は{_product_label(purchased_type)}用です。"
-                f"{_product_label(addon_type)}の生成には使用できません。"
-            )
-        raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
+            raise ValueError(redeem_error(
+                lang,
+                "addon_product_mismatch",
+                purchased_product=_product_label_for_lang(purchased_type, lang),
+                requested_product=_product_label_for_lang(addon_type, lang),
+            ))
+        raise ValueError(redeem_error(lang, "order_verification_unknown"))
 
     if last_exc:
-        existing = _existing_addon_chart_result(order_code_clean, addon_type)
+        existing = _existing_addon_chart_result(
+            order_code_clean, addon_type, provider=order_provider_clean
+        )
         if existing:
             return existing
-        raise ValueError(_public_error_message(last_exc, fallback="追加データの保存に失敗しました。時間をおいて再試行してください。")) from last_exc
-    raise ValueError("追加データの保存に失敗しました。時間をおいて再試行してください。")
+        message = redeem_error(lang, "addon_save_failed")
+        if lang == "ja":
+            message = _public_error_message(last_exc, fallback=message)
+        raise ValueError(message) from last_exc
+    raise ValueError(redeem_error(lang, "addon_save_failed"))
 
 
 def _redeem_addon_order_or_raise(
     order_code: str,
     order_provider: str,
     addon_type: str,
+    *,
+    lang: str = "ja",
 ) -> str:
     order_code_clean = _normalize_stores_order_no(order_code)
     if not order_code_clean:
-        raise ValueError("注文番号を入力してください。")
+        raise ValueError(redeem_error(lang, "order_required"))
     if not _is_valid_order_code(order_code_clean):
-        raise ValueError("注文番号には英数字、ハイフン、アンダースコア、イコールのみ使用できます。")
+        raise ValueError(redeem_error(lang, "order_format"))
     order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
     policy = _get_order_check_policy(order_provider_clean)
     if order_provider_clean not in ORDER_PROVIDERS:
@@ -7756,7 +8419,9 @@ def _redeem_addon_order_or_raise(
             check_result="provider_unknown",
             reason="provider could not be resolved",
         )
-        raise ValueError(f"注文番号（{order_code_clean}）を確認できません。購入確認メールに記載の番号を確認してください。")
+        raise ValueError(redeem_error(
+            lang, "order_not_verified", order_code=order_code_clean
+        ))
     if order_provider_clean == "gumroad":
         _log_order_check(
             provider=order_provider_clean,
@@ -7765,16 +8430,24 @@ def _redeem_addon_order_or_raise(
             check_result="unsupported",
             reason="gumroad product tags are only mapped for western_basic/western_full",
         )
-        raise ValueError("Gumroad注文はこの追加商品では使用できません。対応商品タグを確認してください。")
+        raise ValueError(redeem_error(lang, "gumroad_addon_not_allowed"))
     if not os.environ.get("DATABASE_URL"):
-        raise ValueError("注文番号照合用のDATABASE_URLが未設定です。管理者に連絡してください。")
+        raise ValueError(redeem_error(lang, "addon_service_unavailable"))
 
     try:
         # addonは常にstrict照合。非strictなのはgumroadだけで、それは上で弾いている。
-        status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+        status, order_row = pg_store.redeem_addon_order(
+            order_code=order_code_clean,
+            provider=order_provider_clean,
+            addon_type=addon_type,
+        )
         if status == "not_found" and _truthy(os.getenv("STORES_MAIL_SYNC_ON_SUBMIT", "1")):
             _sync_stores_orders_for_lookup()
-            status, order_row = pg_store.redeem_addon_order(order_code=order_code_clean, addon_type=addon_type)
+            status, order_row = pg_store.redeem_addon_order(
+                order_code=order_code_clean,
+                provider=order_provider_clean,
+                addon_type=addon_type,
+            )
     except Exception as exc:
         logger.exception(
             "addon_order_check_failed order_id=%s addon_type=%s error_type=%s error=%r",
@@ -7783,7 +8456,10 @@ def _redeem_addon_order_or_raise(
             type(exc).__name__,
             exc,
         )
-        raise ValueError(_public_error_message(exc, fallback="注文番号の照合に失敗しました。時間をおいて再試行してください。")) from exc
+        message = redeem_error(lang, "order_verification_failed")
+        if lang == "ja":
+            message = _public_error_message(exc, fallback=message)
+        raise ValueError(message) from exc
 
     _log_order_check(
         provider=order_provider_clean,
@@ -7803,16 +8479,22 @@ def _redeem_addon_order_or_raise(
             )
         return order_code_clean
     if status == "not_found":
-        raise ValueError(f"注文番号（{order_code_clean}）が見つかりません。購入確認メールに記載の番号を確認してください。")
+        raise ValueError(redeem_error(
+            lang, "order_not_found", order_code=order_code_clean
+        ))
     if status == "already_used":
-        raise ValueError(f"この注文番号（{order_code_clean}）は、この追加部品ですでに使用済みです。")
+        raise ValueError(redeem_error(
+            lang, "addon_order_already_used", order_code=order_code_clean
+        ))
     if status == "product_mismatch":
         purchased_type = (order_row or {}).get("product_type")
-        raise ValueError(
-            f"この注文番号は{_product_label(purchased_type)}用です。"
-            f"{_product_label(addon_type)}の生成には使用できません。"
-        )
-    raise ValueError("注文番号を確認できませんでした。時間をおいて再度お試しください。")
+        raise ValueError(redeem_error(
+            lang,
+            "addon_product_mismatch",
+            purchased_product=_product_label_for_lang(purchased_type, lang),
+            requested_product=_product_label_for_lang(addon_type, lang),
+        ))
+    raise ValueError(redeem_error(lang, "order_verification_unknown"))
 
 
 @app.get("/admin/addon/new", response_class=HTMLResponse)
@@ -7839,6 +8521,10 @@ def addon_generate(
     previous_chart_url: str = Form(""),
     transit_start_date: str = Form(""),
 ):
+    # Real ASGI requests always include query_string. Some established unit
+    # tests call this handler with a minimal Request scope, so retain the
+    # historical Japanese default for those internal/direct calls.
+    lang = _resolve_lang(request) if "query_string" in request.scope else "ja"
     form = {
         "addon_type": addon_type,
         "order_code": order_code,
@@ -7856,18 +8542,44 @@ def addon_generate(
     payhip_metadata: dict[str, str] = {}
     order_code_for_redeem = order_code
     order_provider_for_redeem = order_provider
-    if requested_provider == "payhip":
+    if not requested_provider:
+        (
+            auto_provider,
+            auto_order_code,
+            auto_error,
+            auto_error_status,
+            provider_candidates,
+        ) = _auto_resolve_addon_purchase(order_code, addon_type, lang=lang)
+        if auto_error:
+            return _addon_form_response(
+                request,
+                form=form,
+                error=auto_error,
+                provider_candidates=provider_candidates,
+                status_code=auto_error_status,
+            )
+        order_provider_for_redeem = auto_provider
+        order_code_for_redeem = auto_order_code
+    elif requested_provider == "payhip" and payhip_order_id.strip():
         payhip_metadata, payhip_error = _payhip_metadata_from_form(
             payhip_email=payhip_email,
             payhip_product_code=payhip_product_code,
             payhip_order_id=payhip_order_id,
             expected_product_type=addon_type,
+            lang=lang,
         )
         if payhip_error:
             return _addon_form_response(request, form=form, error=payhip_error, status_code=400)
-        order_code_for_redeem, _payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(payhip_metadata)
+        order_code_for_redeem, _payhip_order_row, payhip_order_error, payhip_order_error_status = _resolve_payhip_order_from_metadata(
+            payhip_metadata, lang=lang
+        )
         if payhip_order_error:
             return _addon_form_response(request, form=form, error=payhip_order_error, status_code=payhip_order_error_status)
+        order_provider_for_redeem = "payhip"
+    elif requested_provider == "payhip":
+        # The provider-collision step submits the common reference field.
+        # Existing Payhip-specific URLs continue to submit payhip_order_id.
+        order_code_for_redeem = order_code
         order_provider_for_redeem = "payhip"
     elif requested_provider == "coconala":
         (
@@ -7878,6 +8590,7 @@ def addon_generate(
         ) = _resolve_coconala_order_from_buyer(
             buyer_reference=order_code,
             product_type=addon_type,
+            lang=lang,
         )
         if coconala_order_error:
             return _addon_form_response(
@@ -7926,8 +8639,9 @@ def addon_generate(
                 order_provider_for_redeem,
                 addon_type,
                 chart_payload=chart_payload,
+                lang=lang,
             )
-            return RedirectResponse(f"/chart/{token}", status_code=303)
+            return RedirectResponse(_chart_redirect_url(token, lang=lang), status_code=303)
         if addon_type == "western_31days_transit_addon":
             if not base_yaml.strip() and not previous_chart_url.strip():
                 return _addon_form_response(
@@ -7971,8 +8685,9 @@ def addon_generate(
                 addon_type,
                 result_yaml,
                 chart_payload=chart_payload,
+                lang=lang,
             )
-            return RedirectResponse(f"/chart/{token}", status_code=303)
+            return RedirectResponse(_chart_redirect_url(token, lang=lang), status_code=303)
         if addon_type == "western_long_term_transits_addon":
             if not base_yaml.strip() and not previous_chart_url.strip():
                 return _addon_form_response(
@@ -8016,8 +8731,9 @@ def addon_generate(
                 addon_type,
                 result_yaml,
                 chart_payload=chart_payload,
+                lang=lang,
             )
-            return RedirectResponse(f"/chart/{token}", status_code=303)
+            return RedirectResponse(_chart_redirect_url(token, lang=lang), status_code=303)
         if not base_yaml.strip():
             return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
         doc = _load_addon_base_yaml(base_yaml)
@@ -8026,6 +8742,7 @@ def addon_generate(
             order_code_for_redeem,
             order_provider_for_redeem,
             addon_type,
+            lang=lang,
         )
     except Exception as exc:
         return _addon_form_response(request, form=form, error=str(exc), status_code=400)
@@ -8225,20 +8942,60 @@ def _chart_share_yaml_text(chart: dict, *, doc: dict | None = None) -> str:
     return yaml_text
 
 
-def _chart_ai_paste_text(chart: dict, share_yaml_text: str | None = None, *, doc: dict | None = None) -> str:
+def _chart_ai_paste_text(
+    chart: dict,
+    share_yaml_text: str | None = None,
+    *,
+    doc: dict | None = None,
+    lang: str | None = None,
+) -> str:
     yaml_text = share_yaml_text or chart.get("share_yaml_text") or chart.get("yaml_text") or ""
-    prompt_text = _chart_prompt_for_yaml_text(chart, str(yaml_text), fallback_doc=doc).rstrip()
-    parts = [prompt_text, "", "---", "", "以下がYAMLデータです。", "", "```yaml", str(yaml_text), "```"]
+    locale = lang if lang in SUPPORTED_LANGS else str((chart.get("options") or {}).get("product_locale") or "ja")
+    prompt_text = _chart_prompt_for_yaml_text(chart, str(yaml_text), fallback_doc=doc, lang=locale).rstrip()
+    yaml_labels = {
+        "en": "The YAML data follows.",
+        "es": "A continuación se incluyen los datos YAML.",
+        "de": "Anschließend folgen die YAML-Daten.",
+        "ja": "以下がYAMLデータです。",
+    }
+    parts = [prompt_text, "", "---", "", yaml_labels.get(locale, yaml_labels["ja"]), "", "```yaml", str(yaml_text), "```"]
     return "\n".join(parts).rstrip() + "\n"
 
 
-def _chart_prompt_for_yaml_text(chart: dict, yaml_text: str, *, fallback_doc: dict | None = None) -> str:
+def _chart_prompt_for_yaml_text(
+    chart: dict,
+    yaml_text: str,
+    *,
+    fallback_doc: dict | None = None,
+    lang: str | None = None,
+) -> str:
     try:
         loaded_doc = yaml.safe_load(yaml_text) or {}
         prompt_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
     except Exception:
         prompt_doc = fallback_doc if isinstance(fallback_doc, dict) else {}
     product_options = ((prompt_doc.get("product") or {}).get("options") or {}) if isinstance(prompt_doc, dict) else {}
+    product = (prompt_doc.get("product") or {}) if isinstance(prompt_doc, dict) else {}
+    meta = (prompt_doc.get("meta") or {}) if isinstance(prompt_doc, dict) else {}
+    prompt_product_type = str(
+        (product.get("type") if isinstance(product, dict) else "")
+        or (meta.get("product_type") if isinstance(meta, dict) else "")
+        or _chart_product_type(chart.get("options") or {})
+    )
+    effective_lang = lang if lang in SUPPORTED_LANGS else str((chart.get("options") or {}).get("product_locale") or "ja")
+    if prompt_product_type in {"transit_yaml", "transit_only_yaml"}:
+        from services.transit_yaml import TRANSIT_ONLY_PROMPTS
+        return TRANSIT_ONLY_PROMPTS.get(effective_lang, TRANSIT_ONLY_PROMPTS["en"]).strip() + "\n"
+    if (
+        prompt_product_type.endswith("_addon")
+        or (isinstance(meta, dict) and meta.get("data_role") == "addon")
+    ):
+        from services.addon_prompt_locales import build_addon_prompt
+        return build_addon_prompt(
+            prompt_product_type,
+            effective_lang,
+            stored_prompt=str(chart.get("prompt_text") or ""),
+        )
     western = (((prompt_doc.get("systems") or {}).get("western") or {}) if isinstance(prompt_doc, dict) else {})
     if isinstance(product_options, dict) and isinstance(western, dict) and product_options:
         include_transit = bool(
@@ -8255,12 +9012,15 @@ def _chart_prompt_for_yaml_text(chart: dict, yaml_text: str, *, fallback_doc: di
             include_transit=include_transit,
             birth_time_accuracy=str((prompt_doc.get("birth_time") or {}).get("accuracy") or "exact"),
             interpretation_flags=prompt_doc.get("interpretation_flags") or {},
+            lang=effective_lang,
         )
     return _chart_prompt_text(chart, doc=fallback_doc)
 
 
 def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
     prompt_text = str(chart.get("prompt_text") or "")
+    if str((chart.get("options") or {}).get("product_locale") or "ja") != "ja":
+        return prompt_text
     guided_prompt = ensure_transit_date_guidance(prompt_text)
     if guided_prompt == prompt_text:
         return prompt_text
@@ -8276,8 +9036,44 @@ def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
     return prompt_text
 
 
-def _chart_zip_readme(chart: dict) -> str:
+def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
     no_expiry = _chart_has_no_expiry(chart)
+    if lang in {"en", "es", "de"}:
+        copy = {
+            "en": {
+                "title": "nanami-products chart data archive",
+                "intro": "This ZIP keeps a local copy of your chart data.",
+                "expiry_none": "The private chart URL does not expire.",
+                "expiry": "The private chart URL is available for 90 days after issuance. The files in this ZIP remain usable afterwards.",
+                "files": "Main files",
+                "items": ["ai_paste.txt — recommended text to paste into an AI", "detail.yaml — compact chart data for ordinary readings", "full.yaml — complete data for storage and verification", "prompt.txt — instructions for interpreting the YAML"],
+                "tip": "For a quick reading, use ai_paste.txt. Use full.yaml when you need every calculated detail.",
+                "note": "Planet positions, houses and aspects are already calculated. Ask the AI to interpret the YAML without recalculating from the birth date.",
+            },
+            "es": {
+                "title": "Archivo de datos de la carta de nanami-products",
+                "intro": "Este ZIP guarda una copia local de los datos de tu carta.",
+                "expiry_none": "La URL privada de la carta no caduca.",
+                "expiry": "La URL privada de la carta está disponible durante 90 días desde su emisión. Los archivos del ZIP seguirán siendo utilizables después.",
+                "files": "Archivos principales",
+                "items": ["ai_paste.txt — texto recomendado para pegar en una IA", "detail.yaml — datos compactos para una lectura habitual", "full.yaml — datos completos para guardar y verificar", "prompt.txt — instrucciones para interpretar el YAML"],
+                "tip": "Para una lectura rápida, usa ai_paste.txt. Usa full.yaml cuando necesites todos los detalles calculados.",
+                "note": "Las posiciones, casas y aspectos ya están calculados. Pide a la IA que interprete el YAML sin recalcular a partir de la fecha de nacimiento.",
+            },
+            "de": {
+                "title": "nanami-products – Archiv deiner Horoskopdaten",
+                "intro": "Diese ZIP-Datei enthält eine lokale Kopie deiner Horoskopdaten.",
+                "expiry_none": "Die private Horoskop-URL läuft nicht ab.",
+                "expiry": "Die private Horoskop-URL ist 90 Tage ab Ausstellung verfügbar. Die Dateien in dieser ZIP bleiben danach nutzbar.",
+                "files": "Wichtige Dateien",
+                "items": ["ai_paste.txt — empfohlener Text zum Einfügen in eine KI", "detail.yaml — kompakte Daten für gewöhnliche Deutungen", "full.yaml — vollständige Daten zur Aufbewahrung und Prüfung", "prompt.txt — Anweisungen zur Deutung der YAML-Daten"],
+                "tip": "Für eine schnelle Deutung verwende ai_paste.txt. Nutze full.yaml, wenn du alle berechneten Details brauchst.",
+                "note": "Planetenpositionen, Häuser und Aspekte sind bereits berechnet. Bitte die KI, die YAML-Daten zu deuten, ohne anhand des Geburtsdatums neu zu rechnen.",
+            },
+        }[lang]
+        expiry = copy["expiry_none"] if no_expiry else copy["expiry"]
+        items = "\n".join(f"- {item}" for item in copy["items"])
+        return f"{copy['title']}\n\n{copy['intro']}\n{expiry}\n\n{copy['files']}:\n{items}\n\n{copy['tip']}\n\n{copy['note']}\n"
     expires_label = "有効期限なし" if no_expiry else _chart_expiry_label(_chart_expiry(chart))
     expiry_line = (
         "共有URLに有効期限はありません。"
@@ -8333,7 +9129,7 @@ def _chart_zip_readme(chart: dict) -> str:
             if options.get("acg_enabled")
             else (
                 "Personal-Edition/README-FIRST.txt"
-                if options.get("personal_edition_locale") == "en"
+                if options.get("personal_edition_locale") != "ja"
                 else "Personal-Edition/はじめに_README.txt"
             )
         )
@@ -8368,6 +9164,7 @@ def _chart_zip_readme(chart: dict) -> str:
 
 def _apply_public_chart_headers(response: Response, chart: dict, *, max_age: int) -> None:
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["Referrer-Policy"] = "no-referrer"
     # 星読みの暦アプリ（別オリジン）が ?load= で YAML/SVG を fetch できるようにする。
     # token を知っている人には元々公開のデータなので、CORS 許可で公開範囲は変わらない。
     response.headers["Access-Control-Allow-Origin"] = "*"

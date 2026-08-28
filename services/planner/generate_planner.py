@@ -24,6 +24,7 @@ from reportlab.graphics.shapes import Drawing
 
 from . import planner_i18n as i18n
 from .planner_i18n import S
+from .planner_holidays import holidays_for_year, scope_note
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +51,8 @@ ROSE = HexColor("#B78083")
 
 ASPECT_SHORT = {
     "en": {"conjunction": "conj", "sextile": "sext", "square": "square", "trine": "trine", "opposition": "opp"},
+    "es": {"conjunction": "conj.", "sextile": "sext.", "square": "cuad.", "trine": "tríg.", "opposition": "opos."},
+    "de": {"conjunction": "Konj.", "sextile": "Sext.", "square": "Quadr.", "trine": "Trig.", "opposition": "Opp."},
     "ja": {"conjunction": "合", "sextile": "60度", "square": "90度", "trine": "120度", "opposition": "180度"},
 }
 
@@ -247,12 +250,13 @@ def fit_text(text: str, font: str, preferred: float, max_width: float, minimum: 
 
 class Planner:
     def __init__(self, data: dict[str, Any], output: Path, mode: str, lang: str,
-                 chart_url: str | None = None) -> None:
+                 chart_url: str | None = None, holiday_country: str | None = None) -> None:
         self.data = data
         self.output = output
         self.mode = mode
         self.lang = lang
         self.chart_url = chart_url
+        self.holiday_country = (holiday_country or "").upper()
         meta = data["metadata"]
         self.tz = i18n.tz_label(meta.get("tz", "UTC"))
         self.period_label = meta.get("period_label", "2027")
@@ -263,6 +267,9 @@ class Planner:
         self.personal = data.get("personal")
         self.sample = data.get("personal_sample")
         self.daily_by_date = {item["date"]: item for item in data["daily"]}
+        self.holidays: dict[date, str] = {}
+        for holiday_year in range(self.start_date.year, self.end_date.year + 1):
+            self.holidays.update(holidays_for_year(self.holiday_country, holiday_year, lang))
         self.events = sorted(
             data["moon_phases"] + data["stations"] + data["ingresses"] + data["outer_aspects"],
             key=lambda item: item["utc"],
@@ -486,7 +493,7 @@ class Planner:
     def _pos_display(self, item: dict[str, Any]) -> str:
         if self.lang == "ja":
             return f"{i18n.sign_name('ja', item['sign'])} {item['degree']:02d}度{item['minute']:02d}分"
-        return item["display"]
+        return f"{item['degree']:02d}° {i18n.sign_name(self.lang, item['sign'])} {item['minute']:02d}'"
 
     def _events_for_month(self, year: int, month: int, maximum: int = 9) -> list[dict[str, Any]]:
         prefix = f"{year:04d}-{month:02d}"
@@ -575,7 +582,10 @@ class Planner:
         self._card(38, y, 520, 152, CREAM)
         self._section_label(S(lang, "calc_standard"), 54, y - 24, GOLD)
         cursor = y - 49
-        for item in S(lang, "calc_items"):
+        calc_items = list(S(lang, "calc_items"))
+        if self.holiday_country:
+            calc_items.append(scope_note(self.holiday_country, lang))
+        for item in calc_items:
             pdf.setFillColor(LAVENDER)
             pdf.circle(58, cursor + 9.5, 2.3, fill=1, stroke=0)
             cursor = draw_wrapped(pdf, item.format(tz=self.tz), 69, cursor + 7, 465, "Helvetica", 9, 12.5, INK) - 3
@@ -808,7 +818,7 @@ class Planner:
                 pdf.setFont("Helvetica-Bold", 6.7)
                 pdf.drawString(x + 10, cursor - 17, f"{i18n.fmt_month_day(lang, stamp).upper()}  {event['time']}")
                 pdf.setFillColor(NAVY)
-                name = i18n.PHASE_EVENTS_JA[event["name"]] if lang == "ja" else event["name"]
+                name = i18n.phase_event_name(lang, event["name"])
                 pdf.setFont("Times-Bold", 9.2)
                 pdf.drawString(x + 90, cursor - 17, name)
                 pdf.setFillColor(MUTED)
@@ -910,6 +920,11 @@ class Planner:
                 pdf.drawString(x + 6, cell_top - 16, str(day))
                 events = self._events_on_date(iso)[:2]
                 cursor = cell_top - 32
+                holiday = self.holidays.get(date(year, month, day))
+                if holiday:
+                    pdf.setFillColor(ROSE)
+                    cursor = draw_wrapped(pdf, holiday, x + 6, cursor, col_width - 11, "Helvetica-Bold", 5.6, 7.0, ROSE, 2) - 2
+                    events = events[:1]
                 for event in events:
                     label = i18n.event_display(lang, event)
                     cursor = draw_wrapped(pdf, label, x + 6, cursor, col_width - 11, "Helvetica", 5.8, 7.2, MUTED, 2) - 2
@@ -1062,10 +1077,7 @@ class Planner:
         pdf.roundRect(button_x, button_y, 126, 22, 5, fill=1, stroke=0)
         pdf.setFillColor(NAVY)
         pdf.setFont("Helvetica-Bold", 6.8)
-        label = (
-            "READ THIS DAY WITH AI" if lang == "en"
-            else "AI\u3067\u3053\u306e\u65e5\u3092\u8aad\u307f\u89e3\u304f"
-        )
+        label = S(lang, "daily_ai_button")
         pdf.drawCentredString(button_x + 63, button_y + 8, label)
         if ai_url:
             pdf.linkURL(
@@ -1222,7 +1234,7 @@ class Planner:
         short = ASPECT_SHORT[lang if lang in ASPECT_SHORT else "en"][window["aspect"]]
         if lang == "ja":
             return f"{i18n.body_name('ja', window['transiting_body'])}→{i18n.body_name('ja', window['natal_body'])} {short}"
-        return f"{window['transiting_body']} {short} {window['natal_body']}"
+        return f"{i18n.body_name(lang, window['transiting_body'])} {short} {i18n.body_name(lang, window['natal_body'])}"
 
     def _date_to_x(self, value: date, plot_x: float, plot_w: float) -> float:
         total = (self.end_date - self.start_date).days + 1
@@ -1468,7 +1480,7 @@ class Planner:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["prototype", "full", "personal"], default="prototype")
-    parser.add_argument("--lang", choices=["en", "ja"], default="en")
+    parser.add_argument("--lang", choices=["en", "es", "de", "ja"], default="en")
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()

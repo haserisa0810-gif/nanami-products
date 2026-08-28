@@ -42,13 +42,13 @@ def _long_term_items(yaml_text: str) -> list:
 
 
 def _apply_display_timezone(yaml_text: str, lang: str) -> str:
-    """English planners show the collective sky in UTC (the neutral
-    international standard); Japanese planners keep the buyer's local timezone.
+    """International planners show the collective sky in UTC (the neutral
+    standard); Japanese planners keep the buyer's local timezone.
 
     Natal positions are stored as absolute longitudes, so only the planner's
     display/period timezone changes here — birth-chart accuracy is unaffected.
     """
-    if lang != "en":
+    if lang == "ja":
         return yaml_text
     try:
         doc = yaml.safe_load(yaml_text)
@@ -75,8 +75,8 @@ def build_planner_yaml_from_natal_yaml(
     The birth profile retains its original timezone, while the English planner
     may use UTC for its calendar and transit samples.
     """
-    if lang not in {"ja", "en"}:
-        raise ValueError(f"lang must be ja or en, got {lang!r}")
+    if lang not in {"ja", "en", "es", "de"}:
+        raise ValueError(f"unsupported planner language: {lang!r}")
     loaded = yaml.safe_load(chart_yaml) or {}
     if not isinstance(loaded, dict):
         raise ValueError("chart YAML must contain a mapping")
@@ -92,7 +92,7 @@ def build_planner_yaml_from_natal_yaml(
     lng = source.get("birth_lng")
     if lat is None or lng is None:
         raise ValueError("chart YAML has no birth coordinates")
-    display_tz = "UTC" if lang == "en" else str(source.get("timezone") or "Asia/Tokyo")
+    display_tz = str(source.get("timezone") or "Asia/Tokyo") if lang == "ja" else "UTC"
     western["transit_long_term"] = build_transit_for_profile(
         profile="long_term",
         start_date=transit_start_date,
@@ -117,6 +117,7 @@ def build_planner_pdf_from_yaml(
     lang: str = "ja",
     months: int = 12,
     chart_url: str | None = None,
+    holiday_country: str | None = None,
 ) -> bytes:
     """Render planner bytes from stored natal + long-term-transit YAML.
 
@@ -132,6 +133,7 @@ def build_planner_pdf_from_yaml(
         lang=lang,
         months=months,
         chart_url=chart_url,
+        holiday_country=holiday_country,
     )
     try:
         return pdf_path.read_bytes()
@@ -156,10 +158,11 @@ def build_planner_pdf(
     birth_time_note: str | None = None,
     transit_start_date: datetime | None = None,
     chart_url: str | None = None,
+    holiday_country: str | None = None,
 ) -> bytes:
     """Return personal planner PDF bytes for the given birth data."""
-    if lang not in {"ja", "en"}:
-        raise ValueError(f"lang must be ja or en, got {lang!r}")
+    if lang not in {"ja", "en", "es", "de"}:
+        raise ValueError(f"unsupported planner language: {lang!r}")
     # The planner runs in whole calendar months, so the transit scan has to
     # start at the first of the month too — otherwise the days before "today"
     # fall outside the computed windows and read as having no transits.
@@ -200,4 +203,5 @@ def build_planner_pdf(
         lang=lang,
         months=months,
         chart_url=chart_url,
+        holiday_country=holiday_country,
     )

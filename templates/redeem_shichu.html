@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
@@ -20,13 +20,14 @@
 
       <div class="mini-panel">
         <p class="mini-label">入力前チェック</p>
-        <strong>送信後は同じ注文番号で再生成できません。</strong>
+        <strong>購入した個数ごとに1回発行できます。数量2の場合は2件発行できます。</strong>
         <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
       </div>
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
       <form method="post" action="{{ redeem_url }}?lang={{ lang }}{% if provider_locked %}&provider={{ form.order_provider }}{% endif %}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
+        {% if form and form.issue_next %}<input type="hidden" name="issue_next" value="1">{% endif %}
         <input type="hidden" name="product_type" value="shichu">
 
         <div class="form-section">
@@ -39,7 +40,7 @@
             {% else %}
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>STORES</option>
-              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>ココナラ</option>
+              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>ココナラ（販売終了・過去購入のみ）</option>
             </select>
             {% endif %}
           </label>

@@ -47,7 +47,12 @@ def ensure_template_zip(lang: str) -> Path:
 def _autoload_script(*, include_acg: bool, lang: str) -> str:
     acg_link = ""
     if include_acg:
-        acg_label = "View your ACG map" if lang == "en" else "あなたのACG地図を開く"
+        acg_label = {
+            "ja": "あなたのACG地図を開く",
+            "en": "View your ACG map",
+            "es": "Ver tu mapa ACG",
+            "de": "Deine ACG-Karte ansehen",
+        }.get(lang, "View your ACG map")
         acg_link = f"""
       var acg = document.createElement('a');
       acg.href = '/acg/';
@@ -85,6 +90,34 @@ def _personal_acg_online_url(chart_url: str | None) -> str | None:
     return urlunsplit(
         (parts.scheme, parts.netloc, online_path, urlencode(lang_query), "")
     )
+
+
+def _localize_personal_acg_geojson(acg_data: dict, lang: str) -> dict:
+    """Localize display-only ACG properties without changing any coordinates."""
+    if lang == "ja":
+        return acg_data
+    safe_lang = lang if lang in {"en", "es", "de"} else "en"
+    catalog_path = ROOT / "static" / f"acg_interpretations_{safe_lang}.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    localized = json.loads(json.dumps(acg_data, ensure_ascii=False))
+    for feature in localized.get("features") or []:
+        properties = feature.get("properties") if isinstance(feature, dict) else None
+        if not isinstance(properties, dict):
+            continue
+        entry = catalog.get(str(properties.get("line_group") or ""))
+        if not isinstance(entry, dict):
+            continue
+        for key in ("label", "meaning", "meaning_hint"):
+            if entry.get(key):
+                properties[key] = entry[key]
+    context = ((localized.get("meta") or {}).get("personal_context") or {})
+    if isinstance(context, dict):
+        context["note"] = {
+            "en": "See the full YAML for detailed natal chart interpretation",
+            "es": "Consulta el YAML completo para una interpretación detallada de la carta natal",
+            "de": "Für eine ausführliche Radixdeutung das vollständige YAML heranziehen",
+        }[safe_lang]
+    return localized
 
 
 def _acg_licenses() -> str:
@@ -128,17 +161,26 @@ def _standalone_acg_html(
     world_data: dict,
     chart_url: str | None,
     show_ipad_online_link: bool = False,
+    lang: str = "ja",
 ) -> str:
     """Build a file://-safe ACG app with personal data and Leaflet embedded."""
+    acg_data = _localize_personal_acg_geojson(acg_data, lang)
     data_json = json.dumps(acg_data, ensure_ascii=False, separators=(",", ":"))
     cities_json = json.dumps(city_data.get("cities", []), ensure_ascii=False, separators=(",", ":"))
     world_json = json.dumps(world_data, ensure_ascii=False, separators=(",", ":"))
+    status_label, status_fallback = {
+        "ja": ("計算基準: ", "確認済み出生日時"),
+        "en": ("Calculation time: ", "confirmed birth time"),
+        "es": ("Momento de cálculo: ", "hora de nacimiento confirmada"),
+        "de": ("Berechnungszeit: ", "bestätigte Geburtszeit"),
+    }.get(lang, ("Calculation time: ", "confirmed birth time"))
     embedded_code = (
         f"data={data_json};render();renderPlaces();"
-        "document.getElementById('status').textContent='計算基準: '+"
-        "((data.meta&&data.meta.datetime_utc)||'確認済み出生日時');"
+        "document.getElementById('status').textContent="
+        f"{json.dumps(status_label, ensure_ascii=False)}+"
+        f"((data.meta&&data.meta.datetime_utc)||{json.dumps(status_fallback, ensure_ascii=False)});"
     )
-    result = acg_html.replace(
+    result = _localize_personal_acg_html(acg_html, lang).replace(
         '<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">',
         f"<style>\n{leaflet_css}\n</style>",
         1,
@@ -172,13 +214,19 @@ def _standalone_acg_html(
         result = result.replace('href="/"', f'href="{chart_url}"', 1)
         if show_ipad_online_link:
             online_url = _personal_acg_online_url(chart_url)
+            online_label = {
+                "ja": "iPad・iPhone：オンラインACG地図を開く",
+                "en": "iPad / iPhone: Open the online ACG map",
+                "es": "iPad / iPhone: Abrir el mapa ACG online",
+                "de": "iPad / iPhone: Online-ACG-Karte öffnen",
+            }.get(lang, "iPad / iPhone: Open the online ACG map")
             ipad_link = (
                 '<style>.ipad-online-acg{display:block;padding:9px 12px;background:#c9a227;'
                 'color:#0a1128;text-decoration:none;font-size:.78rem;font-weight:700;'
                 'text-align:center}</style>'
                 '<a class="ipad-online-acg" href="'
                 + html.escape(online_url, quote=True)
-                + '">iPad・iPhone：オンラインACG地図を開く / Open online ACG map</a>'
+                + '">' + html.escape(online_label) + '</a>'
             )
             result = result.replace("</header>", "</header>" + ipad_link, 1)
     else:
@@ -195,7 +243,40 @@ def _standalone_acg_html(
     return result
 
 
-def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None) -> str:
+def _localize_personal_acg_html(source: str, lang: str) -> str:
+    """Localize the self-contained ACG shell without changing its calculations."""
+    if lang == "ja":
+        return source
+    translations = {
+        "en": {
+            "ACG · あなたの天空線": "ACG · Your Sky Lines", "出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。": "Showing pre-calculated data based on your confirmed birth time and time zone.", "占術データへ戻る": "Back to your chart", "表示テーマ": "Theme", "基本": "Essentials", "仕事": "Career", "人の縁": "Relationships", "すべて": "All", "アングル": "Angles", "3都市比較": "Compare 3 places", "検索": "Search", "例：": "Example: ", "検索結果を選ぶか、地図をクリックして最大3地点を登録できます。都市検索はローカル内蔵データを使用します。": "Choose a search result or click the map to save up to three places. City search uses built-in offline data.", "選んだ場所の星のメッセージをAIに聞く": "Ask AI about the selected places", "地図＋3都市レポートを印刷・PDF保存": "Print or save the map and report as PDF", "個人線データを読み込んでいます…": "Loading your personal lines…", "個人の天空線": "Personal sky lines", "約": "About ", "緯度 ": "Lat ", " / 経度 ": " / Lon ", "検索する都市名を入力してください。": "Enter a city name.", "検索結果を選択してください。": "Choose a search result.", "比較地点に追加しました。": "Added to comparison.", "コピーに失敗しました。ブラウザの権限を確認してください。": "Copy failed. Check your browser permissions.", "個人線データを読み込めませんでした。": "Your personal lines could not be loaded.",
+        },
+        "es": {
+            "ACG · あなたの天空線": "ACG · Tus líneas celestes", "出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。": "Datos ya calculados con tu hora y zona horaria de nacimiento confirmadas.", "占術データへ戻る": "Volver a tu carta", "表示テーマ": "Tema", "基本": "Esencial", "仕事": "Profesión", "人の縁": "Relaciones", "すべて": "Todo", "アングル": "Ángulos", "3都市比較": "Comparar 3 lugares", "検索": "Buscar", "例：": "Ejemplo: ", "検索結果を選ぶか、地図をクリックして最大3地点を登録できます。都市検索はローカル内蔵データを使用します。": "Elige un resultado o toca el mapa para guardar hasta tres lugares. La búsqueda usa datos locales.", "選んだ場所の星のメッセージをAIに聞く": "Preguntar a la IA por los lugares elegidos", "地図＋3都市レポートを印刷・PDF保存": "Imprimir o guardar el mapa y el informe en PDF", "個人線データを読み込んでいます…": "Cargando tus líneas personales…", "個人の天空線": "Líneas celestes personales", "検索する都市名を入力してください。": "Introduce una ciudad.", "検索結果を選択してください。": "Elige un resultado.", "比較地点に追加しました。": "Lugar añadido a la comparación.", "コピーに失敗しました。ブラウザの権限を確認してください。": "No se pudo copiar. Comprueba los permisos del navegador.", "個人線データを読み込めませんでした。": "No se pudieron cargar tus líneas personales.",
+        },
+        "de": {
+            "ACG · あなたの天空線": "ACG · Deine Himmelslinien", "出生時刻・タイムゾーン確認済みの計算済みデータを表示しています。": "Bereits berechnete Daten auf Basis der bestätigten Geburtszeit und Zeitzone.", "占術データへ戻る": "Zurück zum Horoskop", "表示テーマ": "Thema", "基本": "Grundlagen", "仕事": "Beruf", "人の縁": "Beziehungen", "すべて": "Alle", "アングル": "Achsen", "3都市比較": "3 Orte vergleichen", "検索": "Suchen", "例：": "Beispiel: ", "検索結果を選ぶか、地図をクリックして最大3地点を登録できます。都市検索はローカル内蔵データを使用します。": "Wähle ein Suchergebnis oder klicke auf die Karte, um bis zu drei Orte zu speichern. Die Ortssuche nutzt integrierte Offline-Daten.", "選んだ場所の星のメッセージをAIに聞く": "KI zu den gewählten Orten befragen", "地図＋3都市レポートを印刷・PDF保存": "Karte und Bericht drucken oder als PDF speichern", "個人線データを読み込んでいます…": "Deine persönlichen Linien werden geladen…", "個人の天空線": "Persönliche Himmelslinien", "検索する都市名を入力してください。": "Gib einen Ortsnamen ein.", "検索結果を選択してください。": "Wähle ein Suchergebnis.", "比較地点に追加しました。": "Zum Vergleich hinzugefügt.", "コピーに失敗しました。ブラウザの権限を確認してください。": "Kopieren fehlgeschlagen. Prüfe die Browser-Berechtigungen.", "個人線データを読み込めませんでした。": "Deine persönlichen Linien konnten nicht geladen werden.",
+        },
+    }.get(lang, {})
+    translations.update({
+        "en": {
+            "このレポートは、登録地点から近い出生時のACGラインを距離順に整理したものです。土地との相性を断定するものではなく、移住・旅行・活動拠点を考えるための占星術的な参考情報としてお使いください。": "This report lists natal ACG lines near your saved places by distance. It is astrological reference material for travel, relocation or activity planning, not a guarantee of compatibility with a place.",
+            "個人線データの読み込み後に追加してください。": "Wait until your personal lines have loaded.", "比較できる地点は3件までです。": "You can compare up to three places.", "選択した地点": "Selected place", "この地点はすでに追加されています。": "This place is already saved.", "選択中のテーマでは500km以内に対象ラインがありません。": "No matching line is within 500 km for this theme.", "を削除": "Remove ", "テーマ: ": "Theme: ", " ｜ 作成日: ": " | Created: ", " ｜ 表示地点: ": " | Places: ", "都市データを読み込んでいます。少し待ってから再度お試しください。": "City data is loading. Please try again shortly.", "内蔵データに見つかりませんでした。地図をクリックして地点を追加できます。": "Not found in the built-in data. Click the map to add the place.", "以下は、出生時刻とタイムゾーンを確認して計算済みの個人アストロカートグラフィ（ACG）地点データです。": "The following personal astrocartography place data was pre-calculated using a confirmed birth time and time zone.", "天体位置やラインを生年月日から再計算せず、記載された計算結果をそのまま使って相談に答えてください。": "Do not recalculate planets or lines from the birth date. Use the stated results as given.", "各地点は出生地ではなく、旅行・移住・仕事・活動拠点などの候補地です。占星術的な傾向として読み、現実の安全・費用・制度なども別途確認するよう促してください。": "These are candidate places for travel, relocation, work or activities. Read them as astrological tendencies and recommend separate checks for safety, cost and regulations.", "相談したいこと:": "Consultation request:", "登録地点ごとの特徴、活かしやすいテーマ、注意点を具体的に説明してください。": "Explain the character, useful themes and cautions for each saved place.", "複数地点がある場合は、共通点と違いを比較し、目的別に向く地点を整理してください。": "Compare similarities and differences and organize the places by purpose.", "情報が足りなければ、最初に私の目的や滞在期間などを質問してください。": "If information is missing, first ask about my purpose and intended length of stay.", "計算基準（UTC）: ": "Calculation time (UTC): ", "確認済み出生日時": "confirmed birth time", "登録地点と500km以内の近接ライン:": "Saved places and lines within 500 km:", "座標: 緯度 ": "Coordinates: lat ", "現在の表示テーマでは500km以内に対象ラインなし": "No matching line within 500 km for the current theme", "まず、私が今回いちばん知りたい目的を一つ質問してから読み解きを始めてください。": "Before interpreting, ask one question about what I most want to learn this time.", "AIに貼り付ける内容をコピーしました。お好きなAIで、選んだ場所の星のメッセージを聞けます。": "Copied. Paste it into your preferred AI to explore the selected places.", "選択地点 ": "Selected point ", "都市データを読み込めませんでした。地図クリックは利用できます。": "City data could not be loaded. You can still click the map.", "計算基準: ": "Calculation time: ",
+        },
+        "es": {
+            "このレポートは、登録地点から近い出生時のACGラインを距離順に整理したものです。土地との相性を断定するものではなく、移住・旅行・活動拠点を考えるための占星術的な参考情報としてお使いください。": "Este informe ordena por distancia las líneas ACG natales cercanas. Es una referencia astrológica para viajes, mudanzas o actividades, no una garantía de compatibilidad con un lugar.", "個人線データの読み込み後に追加してください。": "Espera a que se carguen tus líneas personales.", "比較できる地点は3件までです。": "Puedes comparar hasta tres lugares.", "選択した地点": "Lugar elegido", "この地点はすでに追加されています。": "Este lugar ya está guardado.", "選択中のテーマでは500km以内に対象ラインがありません。": "No hay líneas del tema elegido a menos de 500 km.", "を削除": "Eliminar ", "テーマ: ": "Tema: ", " ｜ 作成日: ": " | Creado: ", " ｜ 表示地点: ": " | Lugares: ", "都市データを読み込んでいます。少し待ってから再度お試しください。": "Los datos de ciudades se están cargando. Inténtalo de nuevo en breve.", "内蔵データに見つかりませんでした。地図をクリックして地点を追加できます。": "No aparece en los datos locales. Toca el mapa para añadirlo.", "以下は、出生時刻とタイムゾーンを確認して計算済みの個人アストロカートグラフィ（ACG）地点データです。": "Estos datos personales de astrocartografía se calcularon con una hora y zona horaria de nacimiento confirmadas.", "天体位置やラインを生年月日から再計算せず、記載された計算結果をそのまま使って相談に答えてください。": "No recalcules planetas ni líneas. Usa directamente los resultados indicados.", "各地点は出生地ではなく、旅行・移住・仕事・活動拠点などの候補地です。占星術的な傾向として読み、現実の安全・費用・制度なども別途確認するよう促してください。": "Son lugares candidatos para viajar, mudarse, trabajar o desarrollar actividades. Léelos como tendencias astrológicas y recomienda comprobar aparte seguridad, costes y normas.", "相談したいこと:": "Consulta:", "登録地点ごとの特徴、活かしやすいテーマ、注意点を具体的に説明してください。": "Explica las características, temas favorables y precauciones de cada lugar.", "複数地点がある場合は、共通点と違いを比較し、目的別に向く地点を整理してください。": "Compara semejanzas y diferencias y organiza los lugares según el objetivo.", "情報が足りなければ、最初に私の目的や滞在期間などを質問してください。": "Si falta información, pregunta primero por mi objetivo y la duración de la estancia.", "計算基準（UTC）: ": "Momento de cálculo (UTC): ", "確認済み出生日時": "hora de nacimiento confirmada", "登録地点と500km以内の近接ライン:": "Lugares guardados y líneas a menos de 500 km:", "座標: 緯度 ": "Coordenadas: lat. ", "現在の表示テーマでは500km以内に対象ラインなし": "No hay líneas del tema actual a menos de 500 km", "まず、私が今回いちばん知りたい目的を一つ質問してから読み解きを始めてください。": "Antes de interpretar, hazme una pregunta sobre lo que más quiero saber esta vez.", "AIに貼り付ける内容をコピーしました。お好きなAIで、選んだ場所の星のメッセージを聞けます。": "Copiado. Pégalo en tu IA preferida para explorar los lugares elegidos.", "選択地点 ": "Punto elegido ", "都市データを読み込めませんでした。地図クリックは利用できます。": "No se cargaron las ciudades. Aún puedes tocar el mapa.", "計算基準: ": "Momento de cálculo: ", "緯度 ": "Lat. ", " / 経度 ": " / Long. ", "約": "Aprox. ",
+        },
+        "de": {
+            "このレポートは、登録地点から近い出生時のACGラインを距離順に整理したものです。土地との相性を断定するものではなく、移住・旅行・活動拠点を考えるための占星術的な参考情報としてお使いください。": "Dieser Bericht ordnet geburtsbezogene ACG-Linien in der Nähe deiner Orte nach Entfernung. Er dient als astrologische Orientierung für Reisen, Umzug oder Aktivitäten und ist keine Garantie für die Eignung eines Ortes.", "個人線データの読み込み後に追加してください。": "Warte, bis deine persönlichen Linien geladen sind.", "比較できる地点は3件までです。": "Du kannst bis zu drei Orte vergleichen.", "選択した地点": "Gewählter Ort", "この地点はすでに追加されています。": "Dieser Ort ist bereits gespeichert.", "選択中のテーマでは500km以内に対象ラインがありません。": "Für dieses Thema liegt keine passende Linie innerhalb von 500 km.", "を削除": " entfernen", "テーマ: ": "Thema: ", " ｜ 作成日: ": " | Erstellt: ", " ｜ 表示地点: ": " | Orte: ", "都市データを読み込んでいます。少し待ってから再度お試しください。": "Ortsdaten werden geladen. Versuche es gleich noch einmal.", "内蔵データに見つかりませんでした。地図をクリックして地点を追加できます。": "Nicht in den integrierten Daten gefunden. Klicke zum Hinzufügen auf die Karte.", "以下は、出生時刻とタイムゾーンを確認して計算済みの個人アストロカートグラフィ（ACG）地点データです。": "Die folgenden persönlichen Astrokartografie-Daten wurden mit bestätigter Geburtszeit und Zeitzone berechnet.", "天体位置やラインを生年月日から再計算せず、記載された計算結果をそのまま使って相談に答えてください。": "Berechne Planeten oder Linien nicht neu. Verwende die angegebenen Ergebnisse unverändert.", "各地点は出生地ではなく、旅行・移住・仕事・活動拠点などの候補地です。占星術的な傾向として読み、現実の安全・費用・制度なども別途確認するよう促してください。": "Es sind mögliche Orte für Reise, Umzug, Arbeit oder Aktivitäten. Deute sie als astrologische Tendenzen und empfehle zusätzliche Prüfungen zu Sicherheit, Kosten und Regeln.", "相談したいこと:": "Beratungswunsch:", "登録地点ごとの特徴、活かしやすいテーマ、注意点を具体的に説明してください。": "Erkläre Merkmale, nutzbare Themen und Hinweise für jeden Ort.", "複数地点がある場合は、共通点と違いを比較し、目的別に向く地点を整理してください。": "Vergleiche Gemeinsamkeiten und Unterschiede und ordne die Orte nach Zweck.", "情報が足りなければ、最初に私の目的や滞在期間などを質問してください。": "Falls Angaben fehlen, frage zuerst nach meinem Ziel und der Aufenthaltsdauer.", "計算基準（UTC）: ": "Berechnungszeit (UTC): ", "確認済み出生日時": "bestätigte Geburtszeit", "登録地点と500km以内の近接ライン:": "Gespeicherte Orte und Linien innerhalb von 500 km:", "座標: 緯度 ": "Koordinaten: Breite ", "現在の表示テーマでは500km以内に対象ラインなし": "Keine passende Linie innerhalb von 500 km", "まず、私が今回いちばん知りたい目的を一つ質問してから読み解きを始めてください。": "Frage mich vor der Deutung zuerst, was ich diesmal vor allem wissen möchte.", "AIに貼り付ける内容をコピーしました。お好きなAIで、選んだ場所の星のメッセージを聞けます。": "Kopiert. Füge den Text in deine bevorzugte KI ein, um die gewählten Orte zu erkunden.", "選択地点 ": "Gewählter Punkt ", "都市データを読み込めませんでした。地図クリックは利用できます。": "Ortsdaten konnten nicht geladen werden. Du kannst weiterhin auf die Karte klicken.", "計算基準: ": "Berechnungszeit: ", "緯度 ": "Breite ", " / 経度 ": " / Länge ", "約": "Ca. ",
+        },
+    }.get(lang, {}))
+    result = source.replace('<html lang="ja">', f'<html lang="{lang}">', 1)
+    for original, translated in sorted(translations.items(), key=lambda item: len(item[0]), reverse=True):
+        result = result.replace(original, translated)
+    return result
+
+
+def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None, lang: str = "ja") -> str:
     """Build the self-contained Personal ACG app used by web and ZIP delivery."""
     acg_html = (PE_DIR / "acg" / "index.html").read_text(encoding="utf-8")
     city_data = json.loads((PE_DIR / "acg" / "cities.min.json").read_text(encoding="utf-8"))
@@ -208,11 +289,31 @@ def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None) -> 
         city_data=city_data,
         world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
         chart_url=chart_url,
+        lang=lang,
     )
 
 
 def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
     online_url = _personal_acg_online_url(chart_url)
+    if lang in {"es", "de"}:
+        copy = {
+            "es": (
+                "NANAMI ASTRO - APLICACIÓN ACG PERSONAL\nLEE PRIMERO ESTE ARCHIVO\n\n",
+                "WINDOWS / MAC\n1. Extrae completamente el ZIP.\n2. Abre la carpeta extraída y haz doble clic en START-ACG.html.\n3. El mapa se abrirá en tu navegador.\n\nIPAD / IPHONE\nAbre la aplicación ACG en Safari desde tu página privada y usa Añadir a la pantalla de inicio. Se necesita conexión a internet para el mapa de fondo.\n\nUSO\nElige un tema, busca o marca hasta tres lugares y compara las líneas cercanas. El botón de IA copia una consulta basada en los datos ya calculados.\n",
+                "Tu aplicación ACG online", "Tu página privada",
+            ),
+            "de": (
+                "NANAMI ASTRO – PERSÖNLICHE ACG-APP\nBITTE ZUERST LESEN\n\n",
+                "WINDOWS / MAC\n1. Entpacke die ZIP-Datei vollständig.\n2. Öffne den entpackten Ordner und doppelklicke START-ACG.html.\n3. Die Karte öffnet sich im Browser.\n\nIPAD / IPHONE\nÖffne die ACG-App über deine private Seite in Safari und nutze Zum Home-Bildschirm. Für die Hintergrundkarte ist Internet erforderlich.\n\nVERWENDUNG\nWähle ein Thema, suche oder markiere bis zu drei Orte und vergleiche nahe Linien. Die KI-Schaltfläche kopiert eine Anfrage auf Basis der bereits berechneten Daten.\n",
+                "Deine persönliche Online-ACG-App", "Deine private Horoskopseite",
+            ),
+        }[lang]
+        links = ""
+        if online_url:
+            links += f"\n{copy[2]}:\n{online_url}\n"
+        if chart_url:
+            links += f"\n{copy[3]}:\n{chart_url}\n"
+        return copy[0] + copy[1] + links
     if lang == "en":
         online = (
             "\nYour personal online ACG app:\n"
@@ -297,74 +398,72 @@ def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
 
 
 def _buyer_readme(*, lang: str, include_acg: bool, chart_url: str | None) -> str:
-    if lang == "en":
-        acg = (
-            "\nACG (included with your bundle)\n"
-            "- Windows: double-click START-ACG-WINDOWS.bat.\n"
-            "- Mac: double-click START-ACG-MAC.command.\n"
-            "- Online: open your private chart URL and select 'View your ACG map'.\n"
-            "- You can also start the Museum, then select the gold ACG button.\n"
-            "- Your personal ACG data is already installed; no YAML paste is required.\n"
-            if include_acg else ""
-        )
-        url = f"\nPrivate chart page\n{chart_url}\n" if chart_url else ""
-        return (
-            "BIRTH CHART MUSEUM - PERSONAL EDITION\n\n"
-            "QUICK START\n"
-            + ("ACG on Windows: double-click START-ACG-WINDOWS.bat\nACG on Mac: double-click START-ACG-MAC.command\n" if include_acg else "") +
-            "Windows: unzip everything, then double-click START-MUSEUM-WINDOWS.bat\n"
-            "Mac: unzip everything, then double-click START-MUSEUM-MAC.command\n"
-            "Keep the black server window open while using the Museum. Close it when finished.\n\n"
-            "WHAT EACH ITEM DOES\n"
-            + ("- START-ACG-WINDOWS.bat: opens your personal ACG map on Windows.\n- START-ACG-MAC.command: opens your personal ACG map on Mac.\n" if include_acg else "") +
-            "- START-MUSEUM-WINDOWS.bat: starts the Museum on Windows.\n"
-            "- START-MUSEUM-MAC.command: starts the Museum on Mac.\n"
-            "- app: application files. Do not move or delete this folder.\n"
-            "- OPEN-ONLINE-CHART.url / PRIVATE-CHART-URL.txt: opens your private online chart.\n\n"
-            "MUSEUM\n"
-            "The START file opens the Birth Chart Museum in your browser. Your birth chart is already installed.\n"
-            + acg + url +
-            "\nPrivacy: the local edition runs only on your computer. Personal use only; do not redistribute.\n"
-        )
-    acg = (
-        "\n【ACG（ACG Bundleに含まれます）】\n"
-        "・Windows：START-ACG-WINDOWS.bat をダブルクリックします。\n"
-        "・Mac：START-ACG-MAC.command をダブルクリックします。\n"
-        "・オンライン：専用鑑定ページの「あなたのACG地図を見る」を押します。\n"
-        "・ミュージアム画面の金色のACGボタンから開くこともできます。\n"
-        "・あなた専用のACGデータは設定済みです。YAMLの貼り付けは不要です。\n"
-        if include_acg else ""
-    )
-    url = f"\n【専用鑑定ページ】\n{chart_url}\n" if chart_url else ""
-    museum_step = 3 if include_acg else 2
-    browser_step = museum_step + 1
-    close_step = museum_step + 2
-    return (
-        "BIRTH CHART MUSEUM - PERSONAL EDITION\n"
-        "購入者さま向け はじめにお読みください\n\n"
-        "【最初にすること】\n"
-        "1. ZIPを右クリックして「すべて展開」します。ZIPの中から直接起動しないでください。\n"
-        + ("2. ACGを開く：WindowsはSTART-ACG-WINDOWS.bat、MacはSTART-ACG-MAC.commandをダブルクリックします。\n" if include_acg else "") +
-        f"{museum_step}. ミュージアムを開く：WindowsはSTART-MUSEUM-WINDOWS.bat をダブルクリックします。\n"
-        "   Mac：START-MUSEUM-MAC.command をダブルクリックします。\n"
-        f"{browser_step}. ブラウザで画面が自動的に開きます。出生データは設定済みです。\n"
-        f"{close_step}. 使用中は黒いサーバー画面を閉じないでください。終了時に閉じます。\n\n"
-        "【ファイルの役割】\n"
-        + ("・START-ACG-WINDOWS.bat：Windowsであなた専用のACG地図を開きます。\n・START-ACG-MAC.command：Macであなた専用のACG地図を開きます。\n" if include_acg else "") +
-        "・START-MUSEUM-WINDOWS.bat：Windowsでミュージアムを起動します。\n"
-        "・START-MUSEUM-MAC.command：Macでミュージアムを起動します。\n"
-        "・appフォルダー：アプリ本体です。移動・削除しないでください。\n"
-        "・OPEN-ONLINE-CHART.url：Windowsで専用鑑定ページを開きます。\n"
-        "・専用鑑定ページ_URL.txt：専用鑑定ページURLの控えです。\n\n"
-        "【ミュージアム】\n"
-        "STARTファイルを押すとミュージアムが起動します。YAMLを貼り付ける必要はありません。\n"
-        + acg + url +
-        "\n【ご注意】\n"
-        "ローカル版はお使いのパソコン内だけで動作します。個人利用専用です。再配布・転売はしないでください。\n"
-    )
+    safe_lang = lang if lang in {"ja", "en", "es", "de"} else "en"
+    copy = {
+        "ja": {
+            "title": "NANAMI ASTRO - PERSONAL EDITION FULL",
+            "quick": "【最初にすること】",
+            "steps": [
+                "このZIPを安全な場所に保存し、すべて展開します。",
+                "ASTROLOGY-DATA.yamlで、計算済みの出生図・小惑星・トランジットデータを確認できます。",
+                "AI-PROMPT.txtとASTROLOGY-DATA.yamlをAIへ渡すと、再計算せず保存済みデータを読ませられます。",
+                "専用鑑定ページから、1年Plannerの作成・保存や各データの再ダウンロードができます。",
+            ],
+            "files": "【同梱ファイル】\n・ASTROLOGY-DATA.yaml：計算済み占術データ\n・AI-PROMPT.txt：AI相談用の案内文\n・専用鑑定ページ_URL.txt：専用ページURLの控え",
+            "url": "【専用鑑定ページ】",
+            "privacy": "出生情報を含むため、ZIPと専用URLは他人へ共有しないでください。個人利用専用です。再配布・転売は禁止です。",
+        },
+        "en": {
+            "title": "NANAMI ASTRO - PERSONAL EDITION FULL",
+            "quick": "QUICK START",
+            "steps": [
+                "Save this ZIP in a secure place and extract all files.",
+                "Open ASTROLOGY-DATA.yaml to view your calculated natal, asteroid, and transit data.",
+                "Give AI-PROMPT.txt and ASTROLOGY-DATA.yaml to an AI to interpret the stored values without recalculating them.",
+                "Use your private chart page to create and save the 1-year Planner or download your data again.",
+            ],
+            "files": "INCLUDED FILES\n- ASTROLOGY-DATA.yaml: calculated astrology data\n- AI-PROMPT.txt: instructions for an AI consultation\n- PRIVATE-CHART-URL.txt: a copy of your private page URL",
+            "url": "PRIVATE CHART PAGE",
+            "privacy": "The ZIP and private URL contain personal birth information. Keep them private. Personal use only; do not redistribute or resell.",
+        },
+        "es": {
+            "title": "NANAMI ASTRO - EDICIÓN PERSONAL FULL",
+            "quick": "INICIO RÁPIDO",
+            "steps": [
+                "Guarda este ZIP en un lugar seguro y extrae todos los archivos.",
+                "Abre ASTROLOGY-DATA.yaml para consultar tus datos calculados de carta natal, asteroides y tránsitos.",
+                "Entrega AI-PROMPT.txt y ASTROLOGY-DATA.yaml a una IA para interpretar los valores guardados sin recalcularlos.",
+                "Utiliza tu página privada para crear y guardar el Planner de 1 año o volver a descargar tus datos.",
+            ],
+            "files": "ARCHIVOS INCLUIDOS\n- ASTROLOGY-DATA.yaml: datos astrológicos calculados\n- AI-PROMPT.txt: instrucciones para una consulta con IA\n- PRIVATE-CHART-URL.txt: copia de la URL de tu página privada",
+            "url": "PÁGINA PRIVADA DE TU CARTA",
+            "privacy": "El ZIP y la URL privada contienen datos personales de nacimiento. No los compartas. Solo para uso personal; no se permite redistribuir ni revender.",
+        },
+        "de": {
+            "title": "NANAMI ASTRO - PERSONAL EDITION FULL",
+            "quick": "SCHNELLSTART",
+            "steps": [
+                "Speichere diese ZIP-Datei an einem sicheren Ort und entpacke alle Dateien.",
+                "Öffne ASTROLOGY-DATA.yaml, um berechnete Radix-, Asteroiden- und Transitdaten anzusehen.",
+                "Übergib AI-PROMPT.txt und ASTROLOGY-DATA.yaml an eine KI, damit sie die gespeicherten Werte ohne Neuberechnung deutet.",
+                "Nutze deine private Horoskopseite, um den 1-Jahres-Planer zu erstellen und zu speichern oder deine Daten erneut herunterzuladen.",
+            ],
+            "files": "ENTHALTENE DATEIEN\n- ASTROLOGY-DATA.yaml: berechnete Astrologiedaten\n- AI-PROMPT.txt: Anleitung für eine KI-Beratung\n- PRIVATE-CHART-URL.txt: Kopie der URL deiner privaten Seite",
+            "url": "PRIVATE HOROSKOPSEITE",
+            "privacy": "ZIP und private URL enthalten persönliche Geburtsdaten. Gib sie nicht weiter. Nur zur persönlichen Nutzung; Weitergabe und Weiterverkauf sind untersagt.",
+        },
+    }[safe_lang]
+    steps = "\n".join(f"{index}. {step}" for index, step in enumerate(copy["steps"], 1))
+    url = f"\n\n{copy['url']}\n{chart_url}" if chart_url else ""
+    return f"{copy['title']}\n\n{copy['quick']}\n{steps}\n\n{copy['files']}{url}\n\n{copy['privacy']}\n"
 
 
 def _free_museum_readme(lang: str) -> str:
+    if lang in {"es", "de"}:
+        return {
+            "es": "BIRTH CHART MUSEUM + DREAM SKY - EDICIÓN GRATUITA\n\nExtrae por completo el ZIP. En Windows abre START-MUSEUM-WINDOWS.bat; en Mac abre START-MUSEUM-MAC.command. Mantén abierta la ventana del servidor mientras usas el museo. Pega tu YAML astrológico en la entrada o utiliza la carta de ejemplo. La edición gratuita no incluye ACG personal ni el planificador personal.\n",
+            "de": "BIRTH CHART MUSEUM + DREAM SKY – KOSTENLOSE EDITION\n\nEntpacke die ZIP-Datei vollständig. Öffne unter Windows START-MUSEUM-WINDOWS.bat und auf dem Mac START-MUSEUM-MAC.command. Lass das Serverfenster während der Nutzung geöffnet. Füge am Eingang deine Astrologie-YAML ein oder nutze das Beispielhoroskop. Persönliches ACG und der persönliche Planer sind nicht enthalten.\n",
+        }[lang]
     if lang == "en":
         return (
             "BIRTH CHART MUSEUM + DREAM SKY - FREE EDITION\n\n"
@@ -392,7 +491,7 @@ def _free_museum_readme(lang: str) -> str:
 
 
 def _free_museum_direct_file_guard(lang: str) -> str:
-    if lang == "en":
+    if lang != "ja":
         title = "Please start the Museum from the START file"
         lead = "This page was opened directly from the app folder, so its design and features cannot load."
         steps = (
@@ -401,6 +500,16 @@ def _free_museum_direct_file_guard(lang: str) -> str:
             "<li>Mac: Control-click <strong>START-MUSEUM-MAC.command</strong>, then choose Open.</li>"
         )
         note = "Do not open HTML files inside the app folder directly."
+        if lang == "es":
+            title = "Inicia el museo desde el archivo START"
+            lead = "Esta página se abrió directamente desde la carpeta app, por lo que no puede cargar el diseño ni las funciones."
+            steps = ("<li>Cierra esta página y extrae por completo el ZIP.</li><li>Windows: abre <strong>START-MUSEUM-WINDOWS.bat</strong>.</li><li>Mac: abre <strong>START-MUSEUM-MAC.command</strong>.</li>")
+            note = "No abras directamente los archivos HTML de la carpeta app."
+        elif lang == "de":
+            title = "Starte das Museum über die START-Datei"
+            lead = "Diese Seite wurde direkt aus dem app-Ordner geöffnet; Design und Funktionen können so nicht geladen werden."
+            steps = ("<li>Schließe die Seite und entpacke die ZIP-Datei vollständig.</li><li>Windows: öffne <strong>START-MUSEUM-WINDOWS.bat</strong>.</li><li>Mac: öffne <strong>START-MUSEUM-MAC.command</strong>.</li>")
+            note = "Öffne HTML-Dateien im app-Ordner nicht direkt."
     else:
         title = "STARTファイルからミュージアムを起動してください"
         lead = "appフォルダー内のHTMLを直接開いたため、デザインや機能を読み込めていません。"
@@ -447,7 +556,7 @@ def _free_museum_direct_file_guard(lang: str) -> str:
 
 
 def build_free_museum_zip(lang: str = "ja") -> bytes:
-    safe_lang = lang if lang in {"ja", "en"} else "ja"
+    safe_lang = lang if lang in {"ja", "en", "es", "de"} else "ja"
     source_path = ensure_template_zip(safe_lang)
     output = io.BytesIO()
     free_root = "BirthChartMuseum-Free"
@@ -478,7 +587,7 @@ def build_free_museum_zip(lang: str = "ja") -> bytes:
                 )
                 data = page.encode("utf-8")
             target.writestr(f"{free_root}/{relative_name}", data)
-        readme_name = "README-FIRST.txt" if safe_lang == "en" else "00-はじめに_README.txt"
+        readme_name = "README-FIRST.txt" if safe_lang != "ja" else "00-はじめに_README.txt"
         target.writestr(
             f"{free_root}/{readme_name}",
             _free_museum_readme(safe_lang).encode("utf-8-sig"),
@@ -487,8 +596,35 @@ def build_free_museum_zip(lang: str = "ja") -> bytes:
 
 
 def build_personalized_zip(
-    *, yaml_text: str, lang: str, include_acg: bool = False, chart_url: str | None = None,
+    *,
+    yaml_text: str,
+    lang: str,
+    include_acg: bool = False,
+    chart_url: str | None = None,
+    prompt_text: str | None = None,
 ) -> bytes:
+    if not include_acg:
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as target:
+            target.writestr("ASTROLOGY-DATA.yaml", yaml_text.encode("utf-8"))
+            fallback_prompts = {
+                "ja": "ASTROLOGY-DATA.yamlの計算済みデータを再計算せず、日本語で解釈してください。\n",
+                "en": "Interpret the calculated values in ASTROLOGY-DATA.yaml in English without recalculating them.\n",
+                "es": "Interpreta en español los valores calculados de ASTROLOGY-DATA.yaml sin volver a calcularlos.\n",
+                "de": "Deute die berechneten Werte in ASTROLOGY-DATA.yaml auf Deutsch, ohne sie neu zu berechnen.\n",
+            }
+            ai_prompt = prompt_text or fallback_prompts.get(lang, fallback_prompts["en"])
+            target.writestr("AI-PROMPT.txt", ai_prompt.encode("utf-8-sig"))
+            guide_name = "README-FIRST.txt" if lang != "ja" else "はじめに_README.txt"
+            target.writestr(
+                guide_name,
+                _buyer_readme(lang=lang, include_acg=False, chart_url=chart_url).encode("utf-8-sig"),
+            )
+            if chart_url:
+                url_name = "PRIVATE-CHART-URL.txt" if lang != "ja" else "専用鑑定ページ_URL.txt"
+                target.writestr(url_name, (chart_url + "\n").encode("utf-8-sig"))
+        return output.getvalue()
+
     source_path = ensure_template_zip(lang)
     output = io.BytesIO()
     with zipfile.ZipFile(source_path, "r") as source, zipfile.ZipFile(
@@ -519,21 +655,7 @@ def build_personalized_zip(
                 leaflet_css = data.decode("utf-8")
             elif relative_name == "app/static/vendor/leaflet/leaflet.js":
                 leaflet_js = data.decode("utf-8")
-            if include_acg:
-                continue
-            if relative_name == "start.bat":
-                relative_name = "START-MUSEUM-WINDOWS.bat"
-            elif relative_name == "start.command":
-                relative_name = "START-MUSEUM-MAC.command"
-            elif relative_name in {"README.txt", "YOUR_CHART.txt"}:
-                continue
-            if relative_name == "app/index.html":
-                html = data.decode("utf-8")
-                html = html.replace("</head>", _autoload_script(include_acg=include_acg, lang=lang) + "</head>", 1)
-                data = html.encode("utf-8")
-            target.writestr(relative_name, data)
-        if not include_acg:
-            target.writestr("app/birth-chart.yaml", yaml_text.encode("utf-8"))
+            continue
         if include_acg:
             if city_data is None and city_json_data is None:
                 fallback_city_path = PE_DIR / "acg" / "cities.min.json"
@@ -571,21 +693,14 @@ def build_personalized_zip(
                     world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
                     chart_url=chart_url,
                     show_ipad_online_link=True,
+                    lang=lang,
                 ).encode("utf-8"),
             )
             target.writestr("LICENSES.txt", _acg_licenses().encode("utf-8-sig"))
-        guide = (
-            _acg_direct_start_readme(lang=lang, chart_url=chart_url)
-            if include_acg
-            else _buyer_readme(lang=lang, include_acg=False, chart_url=chart_url)
-        )
-        guide_name = (
-            "README-FIRST.txt"
-            if lang == "en"
-            else ("00-はじめに_README.txt" if include_acg else "はじめに_README.txt")
-        )
+        guide = _acg_direct_start_readme(lang=lang, chart_url=chart_url)
+        guide_name = "README-FIRST.txt" if lang != "ja" else "00-はじめに_README.txt"
         target.writestr(guide_name, guide.encode("utf-8-sig"))
         if chart_url:
-            url_name = "PRIVATE-CHART-URL.txt" if lang == "en" else "専用鑑定ページ_URL.txt"
+            url_name = "PRIVATE-CHART-URL.txt" if lang != "ja" else "専用鑑定ページ_URL.txt"
             target.writestr(url_name, (chart_url + "\n").encode("utf-8-sig"))
     return output.getvalue()

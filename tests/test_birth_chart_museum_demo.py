@@ -26,10 +26,14 @@ def test_demo_routes_load_with_demo_flag():
         assert 'id="ht-demo-overlay"' in html, url
 
 
-def test_demo_has_sample_notice_and_pe_pitch():
+def test_demo_has_sample_notice_and_free_download_without_paid_pitch():
     html = client.get("/birth-chart-museum/demo").text
     assert "Sample chart" in html or "サンプル出生図" in html
-    assert "Personal Edition" in html
+    assert "Download the free Museum + Dream Sky" in html
+    assert "/downloads/birth-chart-museum-free.zip?lang=" in html
+    assert "Get the Personal Edition" not in html
+    assert "Etsy" not in html
+    assert "STORES" not in html
 
 
 def test_regular_editions_have_no_demo_ui():

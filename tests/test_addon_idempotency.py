@@ -76,6 +76,7 @@ class AddonIdempotencyTest(unittest.TestCase):
     def test_first_redemption_saves_chart_in_same_transaction(self) -> None:
         connection = _RecordingConnection(
             [
+                None,
                 {
                     "stores_order_no": "1234567890",
                     "payment_status": "paid",
@@ -105,6 +106,7 @@ class AddonIdempotencyTest(unittest.TestCase):
     def test_duplicate_redemption_does_not_create_another_chart(self) -> None:
         connection = _RecordingConnection(
             [
+                None,
                 {
                     "stores_order_no": "1234567890",
                     "payment_status": "paid",
@@ -129,31 +131,64 @@ class AddonIdempotencyTest(unittest.TestCase):
         self.assertEqual(status, "already_used")
         insert_chart.assert_not_called()
 
-    def test_addon_purchase_treats_full_or_basic_as_transit_addon_compatible(self) -> None:
+    def test_full_order_cannot_be_used_as_a_transit_addon_purchase(self) -> None:
         with patch.object(pg_store, "_conn", return_value=_connection_context(_RecordingConnection(
             [
+                None,
                 {
                     "stores_order_no": "1234567890",
                     "payment_status": "paid",
                     "product_type": "western_full",
                 },
-                {"order_code": "1234567890"},
             ]
         ))), patch.object(pg_store, "_insert_chart") as insert_chart:
             status, _order = pg_store.redeem_addon_order_and_save_chart(
                 order_code="1234567890",
                 addon_type="western_31days_transit_addon",
-                token="compatible-token",
+                token="must-not-be-created",
                 expires_at=None,
                 chart_payload=_chart_payload(),
             )
 
-        self.assertEqual(status, "ok")
-        insert_chart.assert_called_once()
+        self.assertEqual(status, "product_mismatch")
+        insert_chart.assert_not_called()
+
+    def test_base_product_orders_cannot_be_used_as_addon_purchase_proof(self) -> None:
+        incompatible_pairs = [
+            ("western_basic", "western_asteroids_addon"),
+            ("western_full", "western_31days_transit_addon"),
+            ("western_transit", "western_long_term_transits_addon"),
+            ("acg_bundle", "western_31days_transit_addon"),
+            ("shichu", "shichu_fortune_cycles_addon"),
+        ]
+        for purchased_type, addon_type in incompatible_pairs:
+            with self.subTest(purchased_type=purchased_type, addon_type=addon_type), patch.object(
+                pg_store,
+                "_conn",
+                return_value=_connection_context(
+                    _RecordingConnection(
+                        [
+                            None,
+                            {
+                                "stores_order_no": "1234567890",
+                                "payment_status": "paid",
+                                "product_type": purchased_type,
+                            },
+                        ]
+                    )
+                ),
+            ):
+                status, _order = pg_store.redeem_addon_order(
+                    order_code="1234567890",
+                    addon_type=addon_type,
+                )
+
+            self.assertEqual(status, "product_mismatch")
 
     def test_addon_purchase_blocks_transit_yaml_for_transit_addon(self) -> None:
         with patch.object(pg_store, "_conn", return_value=_connection_context(_RecordingConnection(
             [
+                None,
                 {
                     "stores_order_no": "1234567890",
                     "payment_status": "paid",

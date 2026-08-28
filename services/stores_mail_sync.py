@@ -82,6 +82,15 @@ _PRODUCT_CODE_PATTERNS = [
     (re.compile(r"[\[［【]?\s*NP[-_ ]?TY\s*[\]］】]?", re.I), "transit_yaml"),
     (re.compile(r"[\[［【]?\s*NP[-_ ]?API\s*[\]］】]?", re.I), "api_key"),
 ]
+_PRODUCT_CODE_CAPTURE_RE = re.compile(
+    r"\bNP[-_ ]?(ACG|WBA|WBT|API|WB|WF|WA|AA|WT|TA|WL|SF|SC|TY)"
+    r"(?:[-_ ]?(JA|EN|ES|DE))?\b",
+    re.I,
+)
+_QUANTITY_RE = re.compile(
+    r"(?:個数|数量|Qty|Quantity)\s*[：:]?\s*([0-9]+)",
+    re.I,
+)
 # 旧商品名や手動テスト用の補助判定。通常運用では商品名コードを使う。
 _PRODUCT_TYPE_PATTERNS = [
     (re.compile(r"ACG\s*(?:bundle|バンドル)|アストロカートグラフィ.*(?:bundle|バンドル)|astrocartography.*(?:bundle|premium)", re.I), "acg_bundle"),
@@ -146,6 +155,42 @@ CREATE TABLE IF NOT EXISTS {SCHEMA}.stores_orders (
 )
 """
 
+MARKETPLACE_ORDERS_DDL = f"""
+CREATE TABLE IF NOT EXISTS {SCHEMA}.marketplace_orders (
+    provider         TEXT        NOT NULL,
+    order_code       TEXT        NOT NULL,
+    product_type     TEXT,
+    amount           INTEGER,
+    payment_status   TEXT        DEFAULT 'paid',
+    mail_subject     TEXT,
+    raw_message_id   TEXT,
+    buyer_reference  TEXT,
+    mail_received_at TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (provider, order_code)
+)
+"""
+
+ORDER_ENTITLEMENTS_DDL = f"""
+CREATE TABLE IF NOT EXISTS {SCHEMA}.order_entitlements (
+    id              BIGSERIAL   PRIMARY KEY,
+    provider        TEXT        NOT NULL,
+    order_code      TEXT        NOT NULL,
+    line_item_key   TEXT        NOT NULL,
+    sku             TEXT,
+    product_type    TEXT,
+    unit_index      INTEGER     NOT NULL CHECK (unit_index >= 1),
+    status          TEXT        NOT NULL DEFAULT 'available'
+                    CHECK (status IN ('available', 'redeemed', 'revoked')),
+    chart_token     TEXT        UNIQUE,
+    redeemed_at     TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (provider, order_code, line_item_key, unit_index)
+)
+"""
+
 
 def ensure_table() -> None:
     """テーブルが存在しない場合は作成する。起動時に呼ぶ。"""
@@ -156,12 +201,40 @@ def ensure_table() -> None:
             if not cur.fetchone()["schema_oid"]:
                 cur.execute(f"CREATE SCHEMA {SCHEMA}")
             cur.execute(STORES_ORDERS_DDL)
+            cur.execute(MARKETPLACE_ORDERS_DDL)
+            cur.execute(ORDER_ENTITLEMENTS_DDL)
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS product_type TEXT")
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS provider TEXT")
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS buyer_reference TEXT")
             cur.execute(
                 f"CREATE INDEX IF NOT EXISTS idx_stores_orders_provider_buyer "
                 f"ON {SCHEMA}.stores_orders (provider, buyer_reference)"
+            )
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_marketplace_orders_buyer "
+                f"ON {SCHEMA}.marketplace_orders (provider, buyer_reference)"
+            )
+            # Existing installations used stores_order_no as the global primary
+            # key. Copy those rows into the provider-scoped table without
+            # rewriting or deleting the legacy records.
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.marketplace_orders
+                    (provider, order_code, product_type, amount, payment_status,
+                     mail_subject, raw_message_id, buyer_reference,
+                     mail_received_at, created_at, updated_at)
+                SELECT COALESCE(NULLIF(LOWER(provider), ''), 'stores'),
+                       stores_order_no, product_type, amount, payment_status,
+                       mail_subject, raw_message_id, buyer_reference,
+                       mail_received_at, created_at, updated_at
+                FROM {SCHEMA}.stores_orders
+                ON CONFLICT (provider, order_code) DO NOTHING
+                """
+            )
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_order_entitlements_lookup "
+                f"ON {SCHEMA}.order_entitlements "
+                f"(order_code, provider, product_type, status)"
             )
         con.commit()
     except Exception:
@@ -175,6 +248,8 @@ def _require_stores_orders_table(con) -> None:
     """同期時はDDLを実行せず、既存テーブルを使えることだけ確認する。"""
     with con.cursor() as cur:
         cur.execute(f"SELECT stores_order_no FROM {SCHEMA}.stores_orders LIMIT 0")
+        cur.execute(f"SELECT order_code FROM {SCHEMA}.marketplace_orders LIMIT 0")
+        cur.execute(f"SELECT id FROM {SCHEMA}.order_entitlements LIMIT 0")
 
 
 # ── メール解析ユーティリティ ──────────────────────────────────────
@@ -293,6 +368,93 @@ def _guess_product_type(subject: str, body: str) -> str | None:
     return None
 
 
+def _normalize_sku(value: str) -> str:
+    """商品コードを ``NP-WF-ES`` 形式へ正規化する（言語制限には使わない）。"""
+    match = _PRODUCT_CODE_CAPTURE_RE.search(value or "")
+    if not match:
+        return ""
+    parts = ["NP", match.group(1).upper()]
+    if match.group(2):
+        parts.append(match.group(2).upper())
+    return "-".join(parts)
+
+
+def _extract_line_items(subject: str, body: str) -> list[dict[str, object]]:
+    """通知本文から商品明細と数量を抽出する。
+
+    SKU の言語サフィックスは発行権の識別情報として保持するが、フォームの
+    表示言語を制限する用途には使わない。メール形式に明細情報がない場合は、
+    従来の商品判定結果を数量1の明細として補完する。
+    """
+    lines = [re.sub(r"\s+", " ", line).strip() for line in body.splitlines()]
+    lines = [line for line in lines if line]
+    candidates: list[dict[str, object]] = []
+
+    for index, line in enumerate(lines):
+        sku = _normalize_sku(line)
+        product_type = _guess_product_type("", line)
+        is_labeled_product = bool(
+            re.match(r"^(?:商品|商品名|アイテム|アイテム名|Product|Item)\s*[：:]", line, re.I)
+        )
+        # SKU、明示的な商品行、または既知の現行商品名を候補とする。
+        if not sku and not is_labeled_product:
+            if not re.search(
+                r"Personalized Birth Chart Bundle|Personalized Astrology Planner|"
+                r"Astrocartography|AI-Readable (?:Natal|Astrology|Asteroid|Transit)",
+                line,
+                re.I,
+            ):
+                continue
+        if not product_type:
+            continue
+
+        quantity = None
+        for nearby in lines[index : min(len(lines), index + 5)]:
+            quantity_match = _QUANTITY_RE.search(nearby)
+            if quantity_match:
+                quantity = int(quantity_match.group(1))
+                break
+            if nearby is not line and (
+                _normalize_sku(nearby)
+                or re.match(r"^(?:商品|商品名|アイテム|アイテム名|Product|Item)\s*[：:]", nearby, re.I)
+            ):
+                break
+        quantity = max(1, min(quantity or 1, 100))
+        candidates.append(
+            {
+                "sku": sku or None,
+                "product_type": product_type,
+                "quantity": quantity,
+            }
+        )
+
+    if not candidates:
+        product_type = _guess_product_type(subject, body)
+        if product_type:
+            quantity_match = _QUANTITY_RE.search(body)
+            candidates.append(
+                {
+                    "sku": _normalize_sku(f"{subject}\n{body}") or None,
+                    "product_type": product_type,
+                    "quantity": max(1, min(int(quantity_match.group(1)) if quantity_match else 1, 100)),
+                }
+            )
+
+    # 同じ商品行をHTML/plain text双方から拾った場合でも、出現順を安定キーにする。
+    occurrences: dict[str, int] = {}
+    result: list[dict[str, object]] = []
+    for item in candidates:
+        identity = str(item.get("sku") or item.get("product_type") or "unknown")
+        occurrences[identity] = occurrences.get(identity, 0) + 1
+        result.append(
+            {
+                **item,
+                "line_item_key": f"{identity}:{occurrences[identity]}",
+            }
+        )
+    return result
+
+
 def _etsy_product_type(subject: str, body: str) -> str | None:
     product_type = _guess_product_type(subject, body)
     if product_type:
@@ -353,6 +515,7 @@ def _parse_stores_mail(
         "stores_order_no": order_no,
         "provider": "stores",
         "product_type": _guess_product_type(subject, body),
+        "line_items": _extract_line_items(subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
@@ -394,6 +557,7 @@ def _parse_payhip_mail(
         "stores_order_no": order_id,
         "provider": "payhip",
         "product_type": _guess_product_type(subject, body),
+        "line_items": _extract_line_items(subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
@@ -434,6 +598,7 @@ def _parse_etsy_mail(
         "stores_order_no": order_no,
         "provider": "etsy",
         "product_type": _etsy_product_type(subject, body),
+        "line_items": _extract_line_items(subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
@@ -480,6 +645,7 @@ def _parse_coconala_mail(
         "stores_order_no": order_no,
         "provider": "coconala",
         "product_type": _guess_product_type(subject, title),
+        "line_items": _extract_line_items(subject, title),
         "amount": _extract_amount(body),
         "buyer_reference": buyer_reference,
         "mail_subject": subject,
@@ -496,7 +662,53 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
     stores_ordersにupsert。
     新規登録の場合True、既存スキップの場合Falseを返す。
     """
+    provider = str(parsed.get("provider") or "").strip().lower()
+    order_code = str(parsed.get("stores_order_no") or "").strip()
+    if not provider or not order_code:
+        return False
+
+    values = (
+        provider,
+        order_code,
+        parsed.get("product_type"),
+        parsed.get("amount"),
+        parsed.get("payment_status", "paid"),
+        parsed.get("mail_subject"),
+        parsed.get("raw_message_id"),
+        parsed.get("buyer_reference"),
+        parsed.get("mail_received_at"),
+    )
     with con.cursor() as cur:
+        cur.execute(
+            f"""
+            INSERT INTO {SCHEMA}.marketplace_orders
+                (provider, order_code, product_type, amount, payment_status,
+                 mail_subject, raw_message_id, buyer_reference, mail_received_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (provider, order_code) DO UPDATE SET
+                product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.marketplace_orders.product_type),
+                amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.marketplace_orders.amount),
+                payment_status   = CASE
+                    WHEN {SCHEMA}.marketplace_orders.payment_status
+                         IN ('reset_once', 'reusable', 'test', 'permanent')
+                    THEN {SCHEMA}.marketplace_orders.payment_status
+                    WHEN EXCLUDED.payment_status = 'paid' THEN 'paid'
+                    ELSE COALESCE({SCHEMA}.marketplace_orders.payment_status, EXCLUDED.payment_status)
+                END,
+                mail_subject     = COALESCE(EXCLUDED.mail_subject,     {SCHEMA}.marketplace_orders.mail_subject),
+                raw_message_id   = COALESCE(EXCLUDED.raw_message_id,   {SCHEMA}.marketplace_orders.raw_message_id),
+                buyer_reference  = COALESCE(EXCLUDED.buyer_reference,  {SCHEMA}.marketplace_orders.buyer_reference),
+                mail_received_at = COALESCE(EXCLUDED.mail_received_at, {SCHEMA}.marketplace_orders.mail_received_at),
+                updated_at       = NOW()
+            RETURNING (xmax = 0) AS is_new
+            """,
+            values,
+        )
+        row = cur.fetchone()
+        is_new = bool(row and row["is_new"])
+
+        # Keep the old table as a compatibility mirror. A collision from a
+        # different marketplace must never overwrite its existing row.
         cur.execute(
             f"""
             INSERT INTO {SCHEMA}.stores_orders
@@ -504,13 +716,10 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
                  mail_subject, raw_message_id, buyer_reference, mail_received_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (stores_order_no) DO UPDATE SET
-                provider         = COALESCE(EXCLUDED.provider,         {SCHEMA}.stores_orders.provider),
+                provider         = COALESCE({SCHEMA}.stores_orders.provider, EXCLUDED.provider),
                 product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.stores_orders.product_type),
                 amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.stores_orders.amount),
                 payment_status   = CASE
-                    -- 管理者が設定した再発行・再利用ステータスは、過去メールの
-                    -- 再取得で paid に戻さない。reset_once は発行成功時に
-                    -- pg_store.redeem_and_save() が paid へ戻す。
                     WHEN {SCHEMA}.stores_orders.payment_status
                          IN ('reset_once', 'reusable', 'test', 'permanent')
                     THEN {SCHEMA}.stores_orders.payment_status
@@ -522,22 +731,111 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
                 buyer_reference  = COALESCE(EXCLUDED.buyer_reference,  {SCHEMA}.stores_orders.buyer_reference),
                 mail_received_at = COALESCE(EXCLUDED.mail_received_at, {SCHEMA}.stores_orders.mail_received_at),
                 updated_at       = NOW()
-            RETURNING (xmax = 0) AS is_new
+            WHERE {SCHEMA}.stores_orders.provider IS NULL
+               OR LOWER({SCHEMA}.stores_orders.provider) = EXCLUDED.provider
             """,
-            (
-                parsed["stores_order_no"],
-                parsed.get("provider"),
-                parsed.get("product_type"),
-                parsed.get("amount"),
-                parsed.get("payment_status", "paid"),
-                parsed.get("mail_subject"),
-                parsed.get("raw_message_id"),
-                parsed.get("buyer_reference"),
-                parsed.get("mail_received_at"),
-            ),
+            (order_code, provider, *values[2:]),
         )
-        row = cur.fetchone()
-        return bool(row and row["is_new"])
+    _upsert_order_entitlements(con, parsed)
+    return is_new
+
+
+def _upsert_order_entitlements(con, parsed: dict[str, Any]) -> None:
+    """解析済み明細を、再同期しても増殖しない発行権へ展開する。"""
+    provider = str(parsed.get("provider") or "").strip().lower()
+    order_code = str(parsed.get("stores_order_no") or "").strip()
+    if not provider or not order_code:
+        return
+    line_items = list(parsed.get("line_items") or [])
+    if not line_items and parsed.get("product_type"):
+        line_items = [
+            {
+                "line_item_key": f"{parsed['product_type']}:1",
+                "sku": None,
+                "product_type": parsed["product_type"],
+                "quantity": 1,
+            }
+        ]
+
+    with con.cursor() as cur:
+        for item in line_items:
+            try:
+                quantity = max(1, min(int(item.get("quantity") or 1), 100))
+            except (TypeError, ValueError):
+                quantity = 1
+            for unit_index in range(1, quantity + 1):
+                cur.execute(
+                    f"""
+                    INSERT INTO {SCHEMA}.order_entitlements
+                        (provider, order_code, line_item_key, sku, product_type, unit_index)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (provider, order_code, line_item_key, unit_index)
+                    DO UPDATE SET
+                        sku = COALESCE(EXCLUDED.sku, {SCHEMA}.order_entitlements.sku),
+                        product_type = COALESCE(
+                            EXCLUDED.product_type,
+                            {SCHEMA}.order_entitlements.product_type
+                        ),
+                        updated_at = NOW()
+                    """,
+                    (
+                        provider,
+                        order_code,
+                        str(item.get("line_item_key") or f"item:{unit_index}"),
+                        item.get("sku"),
+                        item.get("product_type"),
+                        unit_index,
+                    ),
+                )
+
+        # 旧方式ですでに発行済みの注文を再同期した場合、既存チャート数だけ
+        # 対応する未使用枠を消し込む。既存URLとredemptions行は変更しない。
+        cur.execute(
+            f"""
+            SELECT c.token, c.options->>'product_type' AS product_type
+            FROM {SCHEMA}.charts c
+            LEFT JOIN {SCHEMA}.order_entitlements linked
+              ON linked.chart_token = c.token
+            WHERE c.order_code = %s
+              AND (
+                c.options->>'order_provider' = %s
+                OR (
+                  %s = 'stores'
+                  AND COALESCE(c.options->>'order_provider', '') = ''
+                )
+              )
+              AND linked.id IS NULL
+            ORDER BY c.created_at, c.token
+            """,
+            (order_code, provider, provider),
+        )
+        for chart in cur.fetchall():
+            cur.execute(
+                f"""
+                SELECT id
+                FROM {SCHEMA}.order_entitlements
+                WHERE provider = %s
+                  AND order_code = %s
+                  AND status = 'available'
+                  AND (%s IS NULL OR product_type = %s)
+                ORDER BY id
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+                """,
+                (provider, order_code, chart.get("product_type"), chart.get("product_type")),
+            )
+            entitlement = cur.fetchone()
+            if not entitlement:
+                continue
+            cur.execute(
+                f"""
+                UPDATE {SCHEMA}.order_entitlements
+                SET status = 'redeemed', chart_token = %s,
+                    redeemed_at = COALESCE(redeemed_at, NOW()), updated_at = NOW()
+                WHERE id = %s AND status = 'available'
+                """,
+                (chart["token"], entitlement["id"]),
+            )
 
 
 # ── メイン同期関数 ─────────────────────────────────────────────────
@@ -687,7 +985,7 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
 
 # ── 注文番号照合（redeem_post から呼ぶ） ──────────────────────────
 
-def verify_order_no(order_no: str) -> tuple[str, dict | None]:
+def verify_order_no(order_no: str, *, provider: str | None = None) -> tuple[str, dict | None]:
     """
     注文番号がstores_ordersに存在するか照合する。
 
@@ -700,10 +998,37 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
     con = _get_conn()
     try:
         with con.cursor() as cur:
+            provider_clean = (provider or "").strip().lower()
             cur.execute(
-                f"SELECT * FROM {SCHEMA}.stores_orders WHERE stores_order_no = %s",
-                (order_no,),
+                "SELECT to_regclass(%s) AS table_name",
+                (f"{SCHEMA}.marketplace_orders",),
             )
+            marketplace_table = cur.fetchone()
+            if provider_clean and marketplace_table and marketplace_table.get("table_name"):
+                cur.execute(
+                    f"""
+                    SELECT order_code AS stores_order_no, provider, product_type,
+                           amount, payment_status, mail_subject, raw_message_id,
+                           buyer_reference, mail_received_at, created_at, updated_at
+                    FROM {SCHEMA}.marketplace_orders
+                    WHERE provider = %s AND order_code = %s
+                    """,
+                    (provider_clean, order_no),
+                )
+            elif provider_clean:
+                cur.execute(
+                    f"""
+                    SELECT * FROM {SCHEMA}.stores_orders
+                    WHERE stores_order_no = %s
+                      AND (LOWER(provider) = %s OR (provider IS NULL AND %s = 'stores'))
+                    """,
+                    (order_no, provider_clean, provider_clean),
+                )
+            else:
+                cur.execute(
+                    f"SELECT * FROM {SCHEMA}.stores_orders WHERE stores_order_no = %s",
+                    (order_no,),
+                )
             row = cur.fetchone()
             if not row:
                 return "not_found", None
@@ -714,11 +1039,28 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
             if payment_status in {"reusable", "test", "permanent"}:
                 return "reusable", dict(row)
 
-            # redemptionsに同じ注文番号があれば使用済み
-            cur.execute(
-                f"SELECT order_code FROM {SCHEMA}.redemptions WHERE order_code = %s",
-                (order_no,),
-            )
+            # Provider-scoped flows must not treat another marketplace's
+            # identical order number as used. Charts carry the provider in
+            # options; legacy Japanese STORES charts may omit it.
+            if provider_clean:
+                cur.execute(
+                    f"""
+                    SELECT token
+                    FROM {SCHEMA}.charts
+                    WHERE order_code = %s
+                      AND (
+                        options->>'order_provider' = %s
+                        OR (%s = 'stores' AND COALESCE(options->>'order_provider', '') = '')
+                      )
+                    LIMIT 1
+                    """,
+                    (order_no, provider_clean, provider_clean),
+                )
+            else:
+                cur.execute(
+                    f"SELECT order_code FROM {SCHEMA}.redemptions WHERE order_code = %s",
+                    (order_no,),
+                )
             used = cur.fetchone()
             if used:
                 return "already_used", dict(row)
@@ -726,6 +1068,85 @@ def verify_order_no(order_no: str) -> tuple[str, dict | None]:
         return "ok", dict(row)
     finally:
         con.close()
+
+
+def verify_order_entitlement(
+    order_no: str,
+    *,
+    provider: str,
+    product_type: str,
+) -> tuple[str, dict | None]:
+    """注文内の対象商品について、残っている発行権を照合する。
+
+    発行権テーブルにまだ移行されていない旧注文は ``verify_order_no`` の
+    結果をそのまま返す。言語別SKUは記録するが、言語一致は要求しない。
+    """
+    provider_clean = (provider or "").strip().lower()
+    legacy_status, legacy_row = verify_order_no(order_no, provider=provider_clean)
+    if not legacy_row or legacy_status in {"not_found", "reusable"}:
+        return legacy_status, legacy_row
+
+    con = _get_conn()
+    try:
+        with con.cursor() as cur:
+            cur.execute("SELECT to_regclass(%s) AS table_name", (f"{SCHEMA}.order_entitlements",))
+            table_row = cur.fetchone()
+            if not table_row or not table_row.get("table_name"):
+                return legacy_status, legacy_row
+            cur.execute(
+                f"""
+                SELECT provider, product_type, status, COUNT(*) AS unit_count
+                FROM {SCHEMA}.order_entitlements
+                WHERE order_code = %s AND provider = %s
+                GROUP BY provider, product_type, status
+                """,
+                (order_no, provider_clean),
+            )
+            groups = [dict(row) for row in cur.fetchall()]
+    finally:
+        con.close()
+
+    if not groups:
+        return legacy_status, legacy_row
+
+    matching = [
+        group
+        for group in groups
+        if str(group.get("provider") or "").lower() == provider_clean
+        and group.get("product_type") == product_type
+    ]
+    row = dict(legacy_row)
+    row["_entitlement_mode"] = True
+    row["_entitlement_groups"] = groups
+    row["_available_entitlements"] = sum(
+        int(group.get("unit_count") or 0)
+        for group in matching
+        if group.get("status") == "available"
+    )
+    row["_redeemed_entitlements"] = sum(
+        int(group.get("unit_count") or 0)
+        for group in matching
+        if group.get("status") == "redeemed"
+    )
+    if not matching:
+        row["_purchased_product_types"] = sorted(
+            {
+                str(group["product_type"])
+                for group in groups
+                if group.get("product_type")
+            }
+        )
+        return "product_mismatch", row
+    # 後続の商品照合は、stores_orders の代表値ではなく選択した明細を使う。
+    row["product_type"] = product_type
+    if str(row.get("payment_status") or "").lower() == "reset_once":
+        row["_entitlement_reset_once"] = True
+        return "ok", row
+    if row["_available_entitlements"] <= 0:
+        return "already_used", row
+    if row["_redeemed_entitlements"] > 0:
+        return "partial", row
+    return "ok", row
 
 
 def verify_coconala_buyer(

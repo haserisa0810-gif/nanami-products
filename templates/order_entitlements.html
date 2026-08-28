@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>{{ copy.title }}</title>
+  <link rel="stylesheet" href="{{ asset_url('buyer.css') }}">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>{{ copy.title }}</h1>
+      <p>{{ copy.description }}</p>
+      <div class="result-list">
+        {% for chart in charts %}
+          <article class="result-card">
+            <h2>{{ chart.buyer_name or chart.birth_date }}</h2>
+            <p>{{ chart.birth_date }}{% if chart.birth_time %} · {{ chart.birth_time }}{% endif %}</p>
+            <a class="button" href="/chart/{{ chart.token }}?lang={{ lang }}">{{ copy.open }}</a>
+          </article>
+        {% endfor %}
+      </div>
+      {% if available_count > 0 %}
+        <hr>
+        <p>{{ remaining_label }}</p>
+        <form method="get" action="{{ redeem_url }}">
+          <input type="hidden" name="lang" value="{{ lang }}">
+          <input type="hidden" name="provider" value="{{ provider }}">
+          <input type="hidden" name="order" value="{{ order_code }}">
+          <input type="hidden" name="new" value="1">
+          <button type="submit">{{ copy.issue_next }}</button>
+        </form>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

@@ -20,7 +20,10 @@ class UnverifiedProductTypeWarningTest(unittest.TestCase):
     """
 
     def _redeem_check(self, order_row, status="ok", provider="stores"):
-        with patch("routes.stores_mail_sync.verify_order_no", return_value=(status, order_row)):
+        with patch(
+            "routes.stores_mail_sync.verify_order_entitlement",
+            return_value=(status, order_row),
+        ):
             with self.assertLogs("nanami.chart", level="INFO") as captured:
                 result = routes._check_order_for_redeem(
                     order_id="9123456789",

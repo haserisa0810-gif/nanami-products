@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Bilingual (en/ja) strings, name maps, and formatters for the planner.
+"""English, Spanish, German, and Japanese planner localization.
 
 Data only, no reportlab dependency, so both pipeline stages can import it.
 """
@@ -17,10 +17,38 @@ PLANETS = {
     "ASC": "アセンダント", "MC": "MC",
 }
 
+PLANETS_ES = {
+    "Sun": "Sol", "Moon": "Luna", "Mercury": "Mercurio", "Venus": "Venus",
+    "Mars": "Marte", "Jupiter": "Júpiter", "Saturn": "Saturno", "Uranus": "Urano",
+    "Neptune": "Neptuno", "Pluto": "Plutón", "Chiron": "Quirón",
+    "North Node": "Nodo Norte", "South Node": "Nodo Sur", "Ascendant": "Ascendente",
+    "Midheaven": "Medio Cielo", "ASC": "Ascendente", "MC": "MC",
+}
+
+PLANETS_DE = {
+    "Sun": "Sonne", "Moon": "Mond", "Mercury": "Merkur", "Venus": "Venus",
+    "Mars": "Mars", "Jupiter": "Jupiter", "Saturn": "Saturn", "Uranus": "Uranus",
+    "Neptune": "Neptun", "Pluto": "Pluto", "Chiron": "Chiron",
+    "North Node": "Nördlicher Mondknoten", "South Node": "Südlicher Mondknoten",
+    "Ascendant": "Aszendent", "Midheaven": "Medium Coeli", "ASC": "Aszendent", "MC": "MC",
+}
+
 SIGNS_JA = {
     "Aries": "牡羊座", "Taurus": "牡牛座", "Gemini": "双子座", "Cancer": "蟹座",
     "Leo": "獅子座", "Virgo": "乙女座", "Libra": "天秤座", "Scorpio": "蠍座",
     "Sagittarius": "射手座", "Capricorn": "山羊座", "Aquarius": "水瓶座", "Pisces": "魚座",
+}
+
+SIGNS_ES = {
+    "Aries": "Aries", "Taurus": "Tauro", "Gemini": "Géminis", "Cancer": "Cáncer",
+    "Leo": "Leo", "Virgo": "Virgo", "Libra": "Libra", "Scorpio": "Escorpio",
+    "Sagittarius": "Sagitario", "Capricorn": "Capricornio", "Aquarius": "Acuario", "Pisces": "Piscis",
+}
+
+SIGNS_DE = {
+    "Aries": "Widder", "Taurus": "Stier", "Gemini": "Zwillinge", "Cancer": "Krebs",
+    "Leo": "Löwe", "Virgo": "Jungfrau", "Libra": "Waage", "Scorpio": "Skorpion",
+    "Sagittarius": "Schütze", "Capricorn": "Steinbock", "Aquarius": "Wassermann", "Pisces": "Fische",
 }
 
 ASPECTS_JA = {
@@ -28,6 +56,15 @@ ASPECTS_JA = {
     "Trine": "トライン", "Opposition": "オポジション",
     "conjunction": "合", "sextile": "セクスタイル", "square": "スクエア",
     "trine": "トライン", "opposition": "オポジション",
+}
+
+ASPECTS_ES = {
+    "conjunction": "conjunción", "sextile": "sextil", "square": "cuadratura",
+    "trine": "trígono", "opposition": "oposición",
+}
+ASPECTS_DE = {
+    "conjunction": "Konjunktion", "sextile": "Sextil", "square": "Quadrat",
+    "trine": "Trigon", "opposition": "Opposition",
 }
 
 PHASE_EVENTS_JA = {
@@ -42,16 +79,50 @@ PHASE_LABELS_JA = {
 }
 # "New"/"Full" need the word Moon in English; the other phase names stand alone.
 PHASE_LABELS_EN = {"New": "New Moon", "Full": "Full Moon"}
+PHASE_LABELS_ES = {
+    "New": "Luna nueva", "Waxing Crescent": "Luna creciente", "First Quarter": "Cuarto creciente",
+    "Waxing Gibbous": "Gibosa creciente", "Full": "Luna llena", "Waning Gibbous": "Gibosa menguante",
+    "Last Quarter": "Cuarto menguante", "Waning Crescent": "Luna menguante",
+}
+PHASE_LABELS_DE = {
+    "New": "Neumond", "Waxing Crescent": "Zunehmende Sichel", "First Quarter": "Erstes Viertel",
+    "Waxing Gibbous": "Zunehmender Mond", "Full": "Vollmond", "Waning Gibbous": "Abnehmender Mond",
+    "Last Quarter": "Letztes Viertel", "Waning Crescent": "Abnehmende Sichel",
+}
+
+PHASE_EVENTS_ES = {
+    "New Moon": "Luna nueva", "First Quarter": "Cuarto creciente",
+    "Full Moon": "Luna llena", "Last Quarter": "Cuarto menguante",
+}
+PHASE_EVENTS_DE = {
+    "New Moon": "Neumond", "First Quarter": "Erstes Viertel",
+    "Full Moon": "Vollmond", "Last Quarter": "Letztes Viertel",
+}
 
 
 def phase_label(lang: str, name: str) -> str:
     if lang == "ja":
         return PHASE_LABELS_JA.get(name, name)
+    if lang == "es":
+        return PHASE_LABELS_ES.get(name, name)
+    if lang == "de":
+        return PHASE_LABELS_DE.get(name, name)
     return PHASE_LABELS_EN.get(name, name)
+
+
+def phase_event_name(lang: str, name: str) -> str:
+    maps = {"ja": PHASE_EVENTS_JA, "es": PHASE_EVENTS_ES, "de": PHASE_EVENTS_DE}
+    return maps.get(lang, {}).get(name, name)
 
 MONTHS_JA = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
 WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]  # Monday first
 WEEKDAY_FULL_JA = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"]
+MONTHS_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+MONTHS_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
+MONTH_ABBR_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"]
+MONTH_ABBR_DE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
+WEEKDAYS_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+WEEKDAYS_DE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
 
 TZ_LABELS = {
     "UTC": "UTC", "Asia/Tokyo": "JST",
@@ -59,48 +130,65 @@ TZ_LABELS = {
 
 # Long-term transit hint templates: theme of the transiting body + tone of the aspect.
 TRANSIT_THEMES = {
-    "Jupiter": {"en": "Growth and opportunity", "ja": "拡大や可能性"},
-    "Saturn": {"en": "Structure and responsibility", "ja": "責任や現実化"},
-    "Uranus": {"en": "Change and independence", "ja": "変化や独立"},
-    "Neptune": {"en": "Vision and intuition", "ja": "理想や直感"},
-    "Pluto": {"en": "Deep transformation", "ja": "深い変容"},
-    "Chiron": {"en": "Healing and vulnerability", "ja": "癒しや弱点の扱い"},
-    "North Node": {"en": "Your growth direction", "ja": "今後伸ばす方向性"},
-    "South Node": {"en": "Release and old patterns", "ja": "手放しや過去パターン"},
+    "Jupiter": {"en": "Growth and opportunity", "es": "Crecimiento y oportunidad", "de": "Wachstum und Chancen", "ja": "拡大や可能性"},
+    "Saturn": {"en": "Structure and responsibility", "es": "Estructura y responsabilidad", "de": "Struktur und Verantwortung", "ja": "責任や現実化"},
+    "Uranus": {"en": "Change and independence", "es": "Cambio e independencia", "de": "Veränderung und Unabhängigkeit", "ja": "変化や独立"},
+    "Neptune": {"en": "Vision and intuition", "es": "Visión e intuición", "de": "Vision und Intuition", "ja": "理想や直感"},
+    "Pluto": {"en": "Deep transformation", "es": "Transformación profunda", "de": "Tiefe Transformation", "ja": "深い変容"},
+    "Chiron": {"en": "Healing and vulnerability", "es": "Sanación y vulnerabilidad", "de": "Heilung und Verletzlichkeit", "ja": "癒しや弱点の扱い"},
+    "North Node": {"en": "Your growth direction", "es": "Tu dirección de crecimiento", "de": "Deine Wachstumsrichtung", "ja": "今後伸ばす方向性"},
+    "South Node": {"en": "Release and old patterns", "es": "Soltar patrones antiguos", "de": "Loslassen alter Muster", "ja": "手放しや過去パターン"},
 }
 
 ASPECT_TONES = {
-    "conjunction": {"en": "strongly activates", "ja": "強く始動する"},
-    "sextile": {"en": "opens an opportunity around", "ja": "機会として使いやすい"},
-    "square": {"en": "creates productive tension with", "ja": "調整課題として表れやすい"},
-    "trine": {"en": "flows easily with", "ja": "自然に活かしやすい"},
-    "opposition": {"en": "brings awareness through others to", "ja": "外部との関係から意識化される"},
+    "conjunction": {"en": "strongly activates", "es": "activa con fuerza", "de": "aktiviert stark", "ja": "強く始動する"},
+    "sextile": {"en": "opens an opportunity around", "es": "abre una oportunidad en", "de": "öffnet eine Chance bei", "ja": "機会として使いやすい"},
+    "square": {"en": "creates productive tension with", "es": "crea una tensión productiva con", "de": "erzeugt produktive Spannung mit", "ja": "調整課題として表れやすい"},
+    "trine": {"en": "flows easily with", "es": "fluye con facilidad con", "de": "fließt leicht mit", "ja": "自然に活かしやすい"},
+    "opposition": {"en": "brings awareness through others to", "es": "aporta conciencia a través de otras personas sobre", "de": "bringt durch andere Bewusstsein für", "ja": "外部との関係から意識化される"},
 }
 
 
 def transit_hint(lang: str, transit_body: str, aspect: str, natal_body: str) -> str:
-    theme = TRANSIT_THEMES.get(transit_body, {"en": "This cycle", "ja": "この周期"})[lang if lang in ("en", "ja") else "en"]
-    tone = ASPECT_TONES.get(aspect.lower(), ASPECT_TONES["conjunction"])[lang if lang in ("en", "ja") else "en"]
+    safe_lang = lang if lang in ("en", "es", "de", "ja") else "en"
+    theme = TRANSIT_THEMES.get(transit_body, {"en": "This cycle", "es": "Este ciclo", "de": "Dieser Zyklus", "ja": "この周期"})[safe_lang]
+    tone = ASPECT_TONES.get(aspect.lower(), ASPECT_TONES["conjunction"])[safe_lang]
     if lang == "ja":
         return f"{theme}が{body_name('ja', natal_body)}のテーマに{tone}時期"
+    if lang == "es":
+        return f"{theme}: {tone} los temas de tu {body_name('es', natal_body)} natal"
+    if lang == "de":
+        return f"{theme} {tone} Themen deines Radix-{body_name('de', natal_body)}"
     return f"{theme} {tone} your natal {natal_body} themes"
 
 
 def body_name(lang: str, name: str) -> str:
     if lang == "ja":
         return PLANETS.get(name, name)
+    if lang == "es":
+        return PLANETS_ES.get(name, name)
+    if lang == "de":
+        return PLANETS_DE.get(name, name)
     return name
 
 
 def sign_name(lang: str, name: str) -> str:
     if lang == "ja":
         return SIGNS_JA.get(name, name)
+    if lang == "es":
+        return SIGNS_ES.get(name, name)
+    if lang == "de":
+        return SIGNS_DE.get(name, name)
     return name
 
 
 def aspect_name(lang: str, name: str) -> str:
     if lang == "ja":
         return ASPECTS_JA.get(name, name)
+    if lang == "es":
+        return ASPECTS_ES.get(name.lower(), name)
+    if lang == "de":
+        return ASPECTS_DE.get(name.lower(), name)
     return name
 
 
@@ -108,6 +196,10 @@ def month_name(lang: str, month: int) -> str:
     import calendar
     if lang == "ja":
         return MONTHS_JA[month - 1]
+    if lang == "es":
+        return MONTHS_ES[month - 1]
+    if lang == "de":
+        return MONTHS_DE[month - 1]
     return calendar.month_name[month]
 
 
@@ -115,36 +207,60 @@ def month_abbr(lang: str, month: int) -> str:
     import calendar
     if lang == "ja":
         return MONTHS_JA[month - 1]
+    if lang == "es":
+        return MONTH_ABBR_ES[month - 1]
+    if lang == "de":
+        return MONTH_ABBR_DE[month - 1]
     return calendar.month_abbr[month]
 
 
 def fmt_month_day(lang: str, value: date | datetime) -> str:
     if lang == "ja":
         return f"{value.month}/{value.day}"
+    if lang == "es":
+        return f"{value.day} {MONTH_ABBR_ES[value.month - 1]}"
+    if lang == "de":
+        return f"{value.day}. {MONTH_ABBR_DE[value.month - 1]}"
     return value.strftime("%b %d")
 
 
 def fmt_month_day_long(lang: str, value: date | datetime) -> str:
     if lang == "ja":
         return f"{value.month}月{value.day}日"
+    if lang == "es":
+        return f"{value.day} de {MONTHS_ES[value.month - 1]}"
+    if lang == "de":
+        return f"{value.day}. {MONTHS_DE[value.month - 1]}"
     return value.strftime("%B %d")
 
 
 def fmt_full_date(lang: str, value: date | datetime) -> str:
     if lang == "ja":
         return f"{value.year}年{value.month}月{value.day}日"
+    if lang == "es":
+        return f"{value.day} de {MONTHS_ES[value.month - 1]} de {value.year}"
+    if lang == "de":
+        return f"{value.day}. {MONTHS_DE[value.month - 1]} {value.year}"
     return value.strftime("%B %d, %Y")
 
 
 def fmt_weekday(lang: str, value: date | datetime) -> str:
     if lang == "ja":
         return WEEKDAY_FULL_JA[value.weekday()]
+    if lang == "es":
+        return WEEKDAYS_ES[value.weekday()]
+    if lang == "de":
+        return WEEKDAYS_DE[value.weekday()]
     return value.strftime("%A")
 
 
 def fmt_month_year(lang: str, year: int, month: int) -> str:
     if lang == "ja":
         return f"{year}年{MONTHS_JA[month - 1]}"
+    if lang == "es":
+        return f"{MONTHS_ES[month - 1]} de {year}"
+    if lang == "de":
+        return f"{MONTHS_DE[month - 1]} {year}"
     import calendar
     return f"{calendar.month_name[month]} {year}"
 
@@ -157,31 +273,44 @@ def event_display(lang: str, event: dict) -> str:
     """Localized display name for a common-layer event (structured fields preferred)."""
     kind = event.get("type")
     if kind == "moon_phase":
-        base = PHASE_EVENTS_JA[event["name"]] if lang == "ja" else event["name"]
+        phase_maps = {"ja": PHASE_EVENTS_JA, "es": PHASE_EVENTS_ES, "de": PHASE_EVENTS_DE}
+        base = phase_maps.get(lang, {}).get(event["name"], event["name"])
         if lang == "ja":
             return f"{sign_name('ja', event['sign'])}の{base}"
+        if lang == "es":
+            return f"{base} en {sign_name('es', event['sign'])}"
+        if lang == "de":
+            return f"{base} in {sign_name('de', event['sign'])}"
         return f"{base} in {event['sign']}"
     if kind == "station":
         body = body_name(lang, event["body"])
         if lang == "ja":
             return f"{body}が逆行開始" if event["direction"] == "Retrograde" else f"{body}が順行に戻る"
+        if lang == "es":
+            return f"{body} inicia su retrogradación" if event["direction"] == "Retrograde" else f"{body} vuelve directo"
+        if lang == "de":
+            return f"{body} wird rückläufig" if event["direction"] == "Retrograde" else f"{body} wird direktläufig"
         return event["name"]
     if kind == "ingress":
         if lang == "ja":
             return f"{body_name('ja', event['body'])}が{sign_name('ja', event['sign'])}入り"
+        if lang == "es":
+            return f"{body_name('es', event['body'])} entra en {sign_name('es', event['sign'])}"
+        if lang == "de":
+            return f"{body_name('de', event['body'])} wechselt in {sign_name('de', event['sign'])}"
         return event["name"]
     if kind == "outer_aspect":
-        if lang == "ja" and "bodies" in event:
+        if lang in {"ja", "es", "de"} and "bodies" in event:
             a, b = event["bodies"]
-            return f"{body_name('ja', a)} {aspect_name('ja', event['aspect'])} {body_name('ja', b)}"
+            return f"{body_name(lang, a)} {aspect_name(lang, event['aspect'])} {body_name(lang, b)}"
         return event["name"]
     return event.get("name", "")
 
 
 def aspect_display(lang: str, item: dict) -> str:
     """Localized display for a daily aspect item (needs body_a/aspect/body_b fields)."""
-    if lang == "ja" and "body_a" in item:
-        return f"{body_name('ja', item['body_a'])} {aspect_name('ja', item['aspect'])} {body_name('ja', item['body_b'])}"
+    if lang in {"ja", "es", "de"} and "body_a" in item:
+        return f"{body_name(lang, item['body_a'])} {aspect_name(lang, item['aspect'])} {body_name(lang, item['body_b'])}"
     return item["name"]
 
 
@@ -191,6 +320,10 @@ def personal_window_display(lang: str, item: dict) -> str:
     a = aspect_name(lang, item["aspect"])
     if lang == "ja":
         return f"{t}→出生の{n}（{a}）"
+    if lang == "es":
+        return f"{t} {a} {n} natal"
+    if lang == "de":
+        return f"{t} {a} Radix-{n}"
     return f"{item['transiting_body']} {item['aspect'].capitalize()} natal {item['natal_body']}"
 
 
@@ -286,7 +419,7 @@ STR = {
         "transit_reflection": "TRANSIT REFLECTION",
         "reflection_hint": "What matched? What did not? What else explains the day?",
         "notes_head": "NOTES",
-        "ai_guide_link": "AI PROMPT GUIDE",
+        "ai_guide_link": "AI PROMPT GUIDE", "daily_ai_button": "READ THIS DAY WITH AI",
         "day_calendar_link": "{month} CALENDAR",
         "reflection_title": "{month} Reflection",
         "reflection_eyebrow": "REVIEW THE RECORD  /  KEEP WHAT YOUR NOTES SUPPORT",
@@ -456,7 +589,7 @@ STR = {
         "transit_reflection": "トランジットの振り返り",
         "reflection_hint": "何が合った？合わなかった？他にこの日を説明するものは？",
         "notes_head": "メモ",
-        "ai_guide_link": "AI活用ガイド",
+        "ai_guide_link": "AI活用ガイド", "daily_ai_button": "AIでこの日を読み解く",
         "day_calendar_link": "{month}カレンダー",
         "reflection_title": "{month}の振り返り",
         "reflection_eyebrow": "記録を見直す  /  記録が裏づけたものだけ残す",
@@ -535,6 +668,297 @@ STR = {
         "notes_eyebrow": "自由な観察スペース",
         "date_topic": "日付・トピック:",
     },
+}
+
+# Spanish and German reuse only structural defaults from English. Every
+# buyer-facing planner label is overridden here so a localized PDF does not
+# fall back to English halfway through the document.
+STR["es"] = {
+    **STR["en"],
+    "planner_title": "Planificador de Tránsitos Astrológicos",
+    "tagline": "Observa el cielo, registra tu vida",
+    "cover_kicker": "NANAMI-ASTRO  /  PLANIFICADOR ANUAL DE TRÁNSITOS",
+    "cover_format": "PLANIFICADOR DIGITAL VERTICAL",
+    "cover_edition_common": "Edición común + muestra ficticia de la Edición Personal",
+    "cover_edition_personal": "Edición Personal  /  {name}",
+    "cover_note": "Datos celestes calculados en {tz}  |  PDF con hipervínculos",
+    "eyebrow_default": "OBSERVA EL CIELO. REGISTRA TU VIDA.",
+    "footer": "PLANIFICADOR DE TRÁNSITOS {period}  |  {tz}  |  {edition}",
+    "edition_prototype": "PROTOTIPO", "edition_full": "EDICIÓN COMPLETA", "edition_personal": "EDICIÓN PERSONAL",
+    "nav_index": "ÍNDICE", "nav_year": "AÑO", "nav_personal": "PERSONAL",
+    "guide_title": "Cómo usar este planificador",
+    "guide_intro": "Este es un registro de observación, no un guion para tu día. Observa el cielo, anota tu experiencia real y compara ambos con curiosidad.",
+    "guide_1_head": "1  OBSERVA", "guide_1_body": "Lee los tránsitos calculados y anota lo que llame tu atención.",
+    "guide_2_head": "2  REGISTRA", "guide_2_body": "Registra acontecimientos, estado de ánimo, señales corporales, decisiones y contexto con tus propias palabras.",
+    "guide_3_head": "3  REFLEXIONA", "guide_3_body": "Pregúntate qué coincidió, qué no y qué patrones respaldan realmente tus notas.",
+    "calc_standard": "CRITERIOS DE CÁLCULO",
+    "calc_items": [
+        "Zodiaco tropical; posiciones planetarias geocéntricas",
+        "Swiss Ephemeris con cálculos planetarios Moshier integrados",
+        "Posiciones diarias calculadas a las 12:00 {tz}; los eventos exactos incluyen la hora {tz}",
+        "Las fechas del calendario siguen la zona horaria {tz}",
+        "La versión comercial debe cotejarse con el motor de nanami-astro",
+    ],
+    "personal_boundary_head": "LÍMITES DE LA EDICIÓN PERSONAL",
+    "personal_boundary_body": "Las páginas de la Edición Personal de este prototipo usan datos natales ficticios. Un producto personalizado comercial requiere consentimiento explícito, un proceso de pedido seguro, una política de corrección y un calendario de eliminación de datos.",
+    "your_data_head": "ACERCA DE TUS DATOS",
+    "your_data_body": "Este planificador se generó con los datos natales de la página de perfil. Revísalos antes de continuar y solicita una corrección si hay algún error. Los cálculos se realizaron una sola vez; el PDF funciona sin conexión y no envía datos.",
+    "index_title": "Índice",
+    "idx_year": "VISTA ANUAL", "idx_aspects": "TRÁNSITOS PRINCIPALES", "idx_retro": "RETROGRADACIONES",
+    "idx_phases": "FASES LUNARES", "idx_personal": "PERSONAL", "idx_personal_sample": "MUESTRA PERSONAL",
+    "idx_ai": "NOTAS PARA IA", "idx_daily_full": "PÁGINAS DIARIAS", "idx_daily_sample": "MUESTRA DIARIA (1–7 ENE)",
+    "idx_reflection": "REFLEXIÓN MENSUAL", "idx_notes": "NOTAS",
+    "idx_months": "MESES", "idx_month_sub": "RESUMEN + CALENDARIO",
+    "scope_head_full": "CONTENIDO DE LA EDICIÓN",
+    "scope_full": "Incluye los paneles, calendarios, páginas diarias fechadas, reflexiones mensuales y páginas de notas de los {count} meses. Cada día enlaza con el día anterior, el siguiente y el calendario mensual.",
+    "scope_head_proto": "CONTENIDO DEL PROTOTIPO",
+    "scope_proto": "Incluye los paneles y calendarios de doce meses. Del 1 al 7 de enero se muestran páginas diarias de ejemplo. La versión completa genera los 365 días y las reflexiones mensuales.",
+    "scope_head_personal": "TU EDICIÓN",
+    "scope_personal": "Calculado con tus datos natales: doce meses desde {start}, todas las páginas diarias, reflexiones mensuales, tus temporadas de tránsito y fechas personales destacadas.",
+    "year_title": "Vista anual",
+    "weekday_letters": ["L", "M", "X", "J", "V", "S", "D"],
+    "new_short": "Nueva", "full_short": "Llena",
+    "aspects_title": "Tránsitos principales seleccionados",
+    "aspects_eyebrow": "PANORAMA CELESTE  /  HORAS EXACTAS EN {tz}",
+    "aspects_intro": "Selección de aspectos mayores exactos entre Júpiter, Saturno, Urano, Neptuno y Plutón. Úsalos como referencias de observación, no como resultados garantizados.",
+    "exact": "EXACTO", "what_observe": "¿QUÉ OBSERVARÁS?",
+    "retro_title": "Resumen de retrogradaciones",
+    "retro_eyebrow": "ESTACIONES Y PERIODOS RETRÓGRADOS  /  {tz}",
+    "retro_intro": "Cada periodo se extiende entre estaciones calculadas. «Antes de {start}» indica que el ciclo ya estaba activo cuando comienza el planificador.",
+    "retro_planet": "PLANETA", "retro_begins": "INICIO RETRÓGRADO", "retro_ends": "DIRECTO / FIN",
+    "before_start": "Antes de {start}", "into_next": "Continúa en {year}", "beyond_end": "Después de {date}",
+    "station_notes": "NOTAS DE OBSERVACIÓN",
+    "phases_title_1": "Fases lunares I", "phases_title_2": "Fases lunares II",
+    "phases_eyebrow": "CICLO LUNAR  /  HORAS EXACTAS EN {tz}",
+    "moon_in": "Luna en {sign}  /  {tz}",
+    "month_eyebrow": "PANEL MENSUAL DE TRÁNSITOS  /  {tz}",
+    "key_sky_dates": "FECHAS CELESTES CLAVE",
+    "monthly_intention": "INTENCIÓN DEL MES", "what_to_observe": "QUÉ OBSERVAR",
+    "body_energy": "CUERPO + ENERGÍA DE BASE",
+    "baseline_items": ["Sueño", "Energía", "Concentración", "Tensión"],
+    "questions_month": "PREGUNTAS PARA ESTE MES",
+    "month_questions": ["¿Qué cambió realmente?", "¿Qué se repitió?", "¿Qué no explicó el pronóstico?"],
+    "calendar_title": "Calendario de {month}",
+    "calendar_eyebrow": "MES DE UN VISTAZO  /  TOCA UNA PÁGINA FECHADA",
+    "weekday_heads": ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"],
+    "linked_daily": "Incluye página diaria enlazada", "back_overview": "VOLVER AL RESUMEN",
+    "personal_peak_legend": "Fecha personal destacada",
+    "daily_eyebrow": "{weekday}  /  REGISTRO DIARIO DE TRÁNSITOS  /  INSTANTÁNEA 12:00 {tz}",
+    "moon_head": "LUNA", "major_aspects": "ASPECTOS PRINCIPALES",
+    "no_major_aspect": "No hay aspectos mayores dentro del orbe mostrado", "orb_deg": "orbe {orb}°",
+    "long_term": "TRÁNSITOS A LARGO PLAZO", "your_transits": "TUS TRÁNSITOS ACTIVOS",
+    "no_long_term": "No hay aspectos de planetas exteriores dentro del orbe mostrado",
+    "no_personal_active": "Hoy no hay tránsitos a largo plazo activos", "peak": "pico {date}",
+    "mood": "ÁNIMO", "low": "BAJO", "high": "ALTO",
+    "body_health": "CUERPO + SALUD", "health_items": ["Dolor de cabeza", "Cansancio", "Mal sueño"],
+    "what_happened": "¿QUÉ OCURRIÓ HOY?", "transit_reflection": "REFLEXIÓN SOBRE LOS TRÁNSITOS",
+    "reflection_hint": "¿Qué coincidió? ¿Qué no? ¿Qué más explica el día?",
+    "notes_head": "NOTAS", "ai_guide_link": "GUÍA DE PROMPTS PARA IA", "daily_ai_button": "INTERPRETAR ESTE DÍA CON IA", "day_calendar_link": "CALENDARIO DE {month}",
+    "reflection_title": "Reflexión de {month}",
+    "reflection_eyebrow": "REVISA EL REGISTRO  /  CONSERVA LO QUE RESPALDEN TUS NOTAS",
+    "reflection_prompts": [
+        "¿Qué acontecimientos o emociones se repitieron?",
+        "¿Qué descripciones de tránsitos parecieron relevantes?",
+        "¿Qué descripciones no coincidieron con tu experiencia?",
+        "¿Qué factores no astrológicos influyeron más?",
+        "¿Qué te gustaría observar el próximo mes?",
+    ],
+    "personal_title_sample": "Muestra de la Edición Personal", "personal_title": "Tu Edición Personal",
+    "personal_eyebrow_sample": "PERFIL FICTICIO  /  DEMOSTRACIÓN DE TRÁNSITOS PERSONALIZADOS",
+    "personal_eyebrow": "EDICIÓN PERSONAL  /  CALCULADA PARA TU CARTA NATAL",
+    "profile_head_sample": "PERFIL DE MUESTRA A", "profile_head": "TU PERFIL",
+    "birth_label": "Nacimiento: {value}", "place_label": "Lugar: {value}",
+    "zodiac_label": "Zodiaco: {zodiac}  |  Casas: {houses}", "tz_line": "Zona horaria del planificador: {tz}",
+    "layer_personal_head": "CAPA PERSONALIZADA",
+    "layer_personal_body": "Posiciones natales, ángulos, temporadas de tránsito a tu carta, fechas personales destacadas y contexto de casas.",
+    "layer_common_head": "CAPA COMÚN",
+    "layer_common_body": "Fases lunares, ingresos, estaciones, aspectos colectivos y la misma estructura de diario reflexivo.",
+    "safeguards_head": "PROTECCIÓN DE DATOS",
+    "safeguards": [
+        "Recopilar solo los datos natales necesarios para el cálculo.",
+        "Mostrar al cliente la zona horaria interpretada antes de generar.",
+        "Permitir una corrección si los datos proporcionados son incorrectos.",
+        "Eliminar los datos del pedido y los archivos de trabajo según un calendario publicado.",
+        "Mantener el PDF final utilizable sin el servidor de nanami-astro.",
+    ],
+    "natal_title": "Instantánea natal", "natal_eyebrow": "EDICIÓN PERSONAL  /  {suffix}",
+    "natal_fictional": "DATOS FICTICIOS DE MUESTRA", "natal_yours": "TU CARTA NATAL",
+    "placements": "POSICIONES", "outer_angles": "PLANETAS EXTERIORES + ÁNGULOS",
+    "reading_boundary": "ANTES DE INTERPRETAR",
+    "reading_boundary_body_sample": "Estas posiciones se calcularon con un perfil ficticio. La edición de cliente debe mostrar los datos natales y el método de cálculo exactos para detectar errores antes de interpretar.",
+    "reading_boundary_body": "Estas posiciones se calcularon con los datos natales de la página anterior. Si la hora o el lugar son incorrectos, cambian todas las páginas personales: compruébalos antes de interpretar.",
+    "natal_themes": "TEMAS NATALES PARA OBSERVAR",
+    "seasons_title": "Tus temporadas de tránsito", "seasons_title_2": "Tus temporadas de tránsito II",
+    "seasons_eyebrow": "EDICIÓN PERSONAL  /  TRÁNSITOS A LARGO PLAZO A TU CARTA",
+    "seasons_intro": "Cada barra representa un periodo en el que un planeta lento forma un aspecto exacto con tu carta natal. El rombo marca el pico y las barras más oscuras indican mayor prioridad.",
+    "seasons_importance_high": "ALTA", "seasons_importance_medium": "MEDIA",
+    "timeline_title_1": "Cronología personal de tránsitos I", "timeline_title_2": "Cronología personal de tránsitos II",
+    "timeline_eyebrow": "EDICIÓN PERSONAL  /  ASPECTOS EXACTOS TRÁNSITO–NATAL",
+    "timeline_intro": "Selección de aspectos exactos de Júpiter a Plutón en tránsito al Sol, Luna, Mercurio, Venus, Marte, Ascendente y Medio Cielo natales.",
+    "observation_notes": "NOTAS DE OBSERVACIÓN", "continue_timeline": "CONTINUAR CRONOLOGÍA",
+    "personal_month_title": "Enfoque personal de {month}", "personal_month_eyebrow": "EDICIÓN PERSONAL  /  {name}",
+    "personal_dates": "FECHAS PERSONALES DESTACADAS", "month_dashboard": "PANEL DE {month}",
+    "no_personal_month": "Este mes no hay fechas personales destacadas.",
+    "pm_q1": "¿QUÉ CAMBIÓ ALREDEDOR DE ESTAS FECHAS?", "pm_q2": "¿DÓNDE TUVE MÁS CAPACIDAD DE ELEGIR?",
+    "pm_q3": "¿QUÉ OTRO CONTEXTO INFLUYÓ?", "active_seasons": "ACTIVAS ESTE MES",
+    "ai_title": "Notas para IA", "ai_eyebrow": "AYUDA REFLEXIVA OPCIONAL  /  TÚ CONTROLAS LO QUE COMPARTES",
+    "privacy_first": "PRIVACIDAD ANTE TODO",
+    "privacy_body": "No pegues nombres, direcciones, identificadores médicos ni datos privados de terceros. La IA puede equivocarse. Úsala para ordenar observaciones, no para decisiones médicas, legales, financieras o de seguridad.",
+    "copyable_prompt": "PROMPT DE REFLEXIÓN PARA COPIAR",
+    "ai_prompt_text": (
+        "Estoy revisando una entrada de diario personal junto con una lista de tránsitos astrológicos. "
+        "Separa las observaciones de las interpretaciones. Resume lo ocurrido, identifica temas repetidos, "
+        "señala evidencias que no encajen con la descripción del tránsito y propone tres preguntas neutrales "
+        "para futuras observaciones. No predigas acontecimientos ni trates la astrología como causalidad demostrada.\n\n"
+        "TRÁNSITOS:\n[Pega solo las líneas de tránsitos que quieras comentar.]\n\n"
+        "NOTAS DEL DIARIO:\n[Pega un resumen sin datos privados.]"
+    ),
+    "questions_ask": "PREGUNTAS QUE QUIERO HACER", "notes_title": "Notas",
+    "notes_eyebrow": "ESPACIO DE OBSERVACIÓN LIBRE", "date_topic": "Fecha / tema:",
+}
+
+STR["de"] = {
+    **STR["en"],
+    "planner_title": "Astrologischer Transitplaner",
+    "tagline": "Beobachte den Himmel, halte dein Leben fest",
+    "cover_kicker": "NANAMI-ASTRO  /  JÄHRLICHER TRANSITPLANER",
+    "cover_format": "DIGITALER PLANER IM HOCHFORMAT",
+    "cover_edition_common": "Allgemeine Ausgabe + fiktives Beispiel der persönlichen Ausgabe",
+    "cover_edition_personal": "Persönliche Ausgabe  /  {name}",
+    "cover_note": "Berechnete Himmelsdaten in {tz}  |  PDF mit Hyperlinks",
+    "eyebrow_default": "BEOBACHTE DEN HIMMEL. HALTE DEIN LEBEN FEST.",
+    "footer": "ASTROLOGISCHER TRANSITPLANER {period}  |  {tz}  |  {edition}",
+    "edition_prototype": "PROTOTYP", "edition_full": "VOLLAUSGABE", "edition_personal": "PERSÖNLICHE AUSGABE",
+    "nav_index": "INHALT", "nav_year": "JAHR", "nav_personal": "PERSÖNLICH",
+    "guide_title": "So verwendest du diesen Planer",
+    "guide_intro": "Dies ist ein Beobachtungsprotokoll, kein Drehbuch für deinen Tag. Beobachte den Himmel, notiere deine tatsächlichen Erfahrungen und vergleiche beides neugierig.",
+    "guide_1_head": "1  BEOBACHTEN", "guide_1_body": "Lies die berechneten Transite und notiere, was dir auffällt.",
+    "guide_2_head": "2  FESTHALTEN", "guide_2_body": "Halte Ereignisse, Stimmung, Körpersignale, Entscheidungen und Kontext in deinen eigenen Worten fest.",
+    "guide_3_head": "3  REFLEKTIEREN", "guide_3_body": "Frage, was passte, was nicht und welche Muster deine Notizen tatsächlich stützen.",
+    "calc_standard": "BERECHNUNGSGRUNDLAGE",
+    "calc_items": [
+        "Tropischer Tierkreis; geozentrische Planetenpositionen",
+        "Swiss Ephemeris mit integrierten Moshier-Planetenberechnungen",
+        "Tägliche Positionen um 12:00 {tz}; exakte Ereignisse mit {tz}-Uhrzeit",
+        "Kalenderdaten folgen der Zeitzone {tz}",
+        "Die Verkaufsversion muss mit der nanami-astro-Engine abgeglichen werden",
+    ],
+    "personal_boundary_head": "GRENZEN DER PERSÖNLICHEN AUSGABE",
+    "personal_boundary_body": "Die Seiten der Persönlichen Ausgabe in diesem Prototyp verwenden fiktive Geburtsdaten. Ein kommerzielles personalisiertes Produkt benötigt ausdrückliche Einwilligung, einen sicheren Bestellprozess, eine Korrekturrichtlinie und einen festgelegten Löschplan.",
+    "your_data_head": "ÜBER DEINE DATEN",
+    "your_data_body": "Dieser Planer wurde aus den Geburtsdaten auf der Profilseite erstellt. Prüfe sie, bevor du weiterliest, und bitte bei Fehlern um eine Korrektur. Die Berechnung erfolgte einmalig; das PDF funktioniert offline und übermittelt keine Daten.",
+    "index_title": "Inhalt",
+    "idx_year": "JAHRESÜBERSICHT", "idx_aspects": "WICHTIGE TRANSITE", "idx_retro": "RÜCKLÄUFIGKEITEN",
+    "idx_phases": "MONDPHASEN", "idx_personal": "PERSÖNLICH", "idx_personal_sample": "PERSÖNLICHES BEISPIEL",
+    "idx_ai": "NOTIZEN FÜR KI", "idx_daily_full": "TAGESSEITEN", "idx_daily_sample": "TAGESBEISPIEL (1.–7. JAN)",
+    "idx_reflection": "MONATSRÜCKBLICK", "idx_notes": "NOTIZEN",
+    "idx_months": "MONATE", "idx_month_sub": "ÜBERSICHT + KALENDER",
+    "scope_head_full": "UMFANG DER AUSGABE",
+    "scope_full": "Enthalten sind Übersichten, Kalender, datierte Tagesseiten, Monatsrückblicke und Notizseiten für alle {count} Monate. Jede Tagesseite verlinkt zum vorherigen und nächsten Tag sowie zum Monatskalender.",
+    "scope_head_proto": "UMFANG DES PROTOTYPS",
+    "scope_proto": "Enthalten sind Übersichten und Kalender für zwölf Monate. Der 1.–7. Januar zeigt beispielhafte Tagesseiten. Die Vollversion erzeugt alle 365 Tagesseiten und Monatsrückblicke.",
+    "scope_head_personal": "DEINE AUSGABE",
+    "scope_personal": "Aus deinen Geburtsdaten berechnet: zwölf Monate ab {start}, alle Tagesseiten, Monatsrückblicke, deine Transitphasen und persönliche Schwerpunkttage.",
+    "year_title": "Jahresübersicht",
+    "weekday_letters": ["M", "D", "M", "D", "F", "S", "S"],
+    "new_short": "Neu", "full_short": "Voll",
+    "aspects_title": "Ausgewählte wichtige Transite",
+    "aspects_eyebrow": "HIMMELSÜBERBLICK  /  EXAKTE ZEITEN IN {tz}",
+    "aspects_intro": "Ausgewählte exakte Hauptaspekte zwischen Jupiter, Saturn, Uranus, Neptun und Pluto. Nutze sie als Beobachtungsmarken, nicht als garantierte Ergebnisse.",
+    "exact": "EXAKT", "what_observe": "WAS WIRST DU BEOBACHTEN?",
+    "retro_title": "Übersicht der Rückläufigkeiten",
+    "retro_eyebrow": "STATIONEN UND RÜCKLÄUFIGE PHASEN  /  {tz}",
+    "retro_intro": "Jeder Zeitraum liegt zwischen berechneten Stationen. „Vor {start}“ bedeutet, dass der Zyklus beim Beginn dieses Planers bereits lief.",
+    "retro_planet": "PLANET", "retro_begins": "BEGINN RÜCKLÄUFIG", "retro_ends": "DIREKT / ENDE",
+    "before_start": "Vor {start}", "into_next": "Weiter in {year}", "beyond_end": "Nach {date}",
+    "station_notes": "BEOBACHTUNGSNOTIZEN",
+    "phases_title_1": "Mondphasen I", "phases_title_2": "Mondphasen II",
+    "phases_eyebrow": "MONDZYKLUS  /  EXAKTE ZEITEN IN {tz}",
+    "moon_in": "Mond in {sign}  /  {tz}",
+    "month_eyebrow": "MONATLICHE TRANSITÜBERSICHT  /  {tz}",
+    "key_sky_dates": "WICHTIGE HIMMELSDATEN",
+    "monthly_intention": "MONATSINTENTION", "what_to_observe": "WAS BEOBACHTEN?",
+    "body_energy": "KÖRPER + ENERGIEBASIS",
+    "baseline_items": ["Schlaf", "Energie", "Fokus", "Anspannung"],
+    "questions_month": "FRAGEN FÜR DIESEN MONAT",
+    "month_questions": ["Was hat sich tatsächlich verändert?", "Was hat sich wiederholt?", "Was konnte die Prognose nicht erklären?"],
+    "calendar_title": "Kalender für {month}",
+    "calendar_eyebrow": "MONAT AUF EINEN BLICK  /  DATIERTE SEITE ANTIPPEN",
+    "weekday_heads": ["MO", "DI", "MI", "DO", "FR", "SA", "SO"],
+    "linked_daily": "Verlinkte Tagesseite vorhanden", "back_overview": "ZURÜCK ZUR ÜBERSICHT",
+    "personal_peak_legend": "Persönlicher Schwerpunkttag",
+    "daily_eyebrow": "{weekday}  /  TÄGLICHES TRANSITPROTOKOLL  /  12:00-{tz}-MOMENTAUFNAHME",
+    "moon_head": "MOND", "major_aspects": "WICHTIGE ASPEKTE",
+    "no_major_aspect": "Kein Hauptaspekt innerhalb des angezeigten Orbis", "orb_deg": "Orbis {orb}°",
+    "long_term": "LANGFRISTIGE TRANSITE", "your_transits": "DEINE AKTIVEN TRANSITE",
+    "no_long_term": "Kein Außenplanetenaspekt innerhalb des angezeigten Orbis",
+    "no_personal_active": "Heute ist kein langfristiger Transit aktiv", "peak": "Höhepunkt {date}",
+    "mood": "STIMMUNG", "low": "NIEDRIG", "high": "HOCH",
+    "body_health": "KÖRPER + GESUNDHEIT", "health_items": ["Kopfschmerz", "Erschöpfung", "Schlechter Schlaf"],
+    "what_happened": "WAS IST HEUTE PASSIERT?", "transit_reflection": "TRANSITREFLEXION",
+    "reflection_hint": "Was passte? Was nicht? Was erklärt den Tag noch?",
+    "notes_head": "NOTIZEN", "ai_guide_link": "LEITFADEN FÜR KI-PROMPTS", "daily_ai_button": "DIESEN TAG MIT KI DEUTEN", "day_calendar_link": "{month}-KALENDER",
+    "reflection_title": "{month}-Rückblick",
+    "reflection_eyebrow": "AUFZEICHNUNGEN PRÜFEN  /  BEHALTE, WAS DEINE NOTIZEN STÜTZEN",
+    "reflection_prompts": [
+        "Welche Ereignisse oder Gefühle haben sich wiederholt?",
+        "Welche Transitbeschreibungen wirkten relevant?",
+        "Welche Beschreibungen passten nicht zur Erfahrung?",
+        "Welche nichtastrologischen Faktoren waren am wichtigsten?",
+        "Was möchtest du nächsten Monat beobachten?",
+    ],
+    "personal_title_sample": "Beispiel der Persönlichen Ausgabe", "personal_title": "Deine Persönliche Ausgabe",
+    "personal_eyebrow_sample": "FIKTIVES PROFIL  /  DEMO PERSÖNLICHER TRANSITE",
+    "personal_eyebrow": "PERSÖNLICHE AUSGABE  /  FÜR DEIN GEBURTSHOROSKOP BERECHNET",
+    "profile_head_sample": "BEISPIELPROFIL A", "profile_head": "DEIN PROFIL",
+    "birth_label": "Geburt: {value}", "place_label": "Ort: {value}",
+    "zodiac_label": "Tierkreis: {zodiac}  |  Häuser: {houses}", "tz_line": "Zeitzone des Planers: {tz}",
+    "layer_personal_head": "PERSÖNLICHE EBENE",
+    "layer_personal_body": "Radixpositionen, Achsen, langfristige Transitphasen zu deinem Horoskop, persönliche Schwerpunkttage und Häuserkontext.",
+    "layer_common_head": "ALLGEMEINE EBENE",
+    "layer_common_body": "Mondphasen, Zeichenwechsel, Stationen, kollektive Aspekte und dieselbe reflektierende Tagebuchstruktur.",
+    "safeguards_head": "DATENSCHUTZ BEI DER ERSTELLUNG",
+    "safeguards": [
+        "Nur die für die Berechnung nötigen Geburtsdaten erfassen.",
+        "Kundinnen und Kunden vor der Erstellung die verwendete Zeitzone zeigen.",
+        "Eine Korrektur erlauben, wenn gelieferte Geburtsdaten falsch sind.",
+        "Bestelldaten und Arbeitsdateien nach einem veröffentlichten Zeitplan löschen.",
+        "Das fertige PDF ohne den nanami-astro-Server nutzbar halten.",
+    ],
+    "natal_title": "Radix-Momentaufnahme", "natal_eyebrow": "PERSÖNLICHE AUSGABE  /  {suffix}",
+    "natal_fictional": "FIKTIVE BEISPIELDATEN", "natal_yours": "DEIN GEBURTSHOROSKOP",
+    "placements": "POSITIONEN", "outer_angles": "ÄUSSERE PLANETEN + ACHSEN",
+    "reading_boundary": "VOR DER DEUTUNG",
+    "reading_boundary_body_sample": "Diese Positionen wurden aus einem fiktiven Beispielprofil berechnet. Eine Kundenausgabe sollte die genauen Geburtsdaten und Berechnungsgrundlagen zeigen, damit Fehler vor der Deutung erkannt werden.",
+    "reading_boundary_body": "Diese Positionen wurden aus den Geburtsdaten der vorherigen Seite berechnet. Sind Zeit oder Ort falsch, ändern sich alle persönlichen Seiten: bitte vor der Deutung prüfen.",
+    "natal_themes": "RADIXTHEMEN ZUM BEOBACHTEN",
+    "seasons_title": "Deine Transitphasen", "seasons_title_2": "Deine Transitphasen II",
+    "seasons_eyebrow": "PERSÖNLICHE AUSGABE  /  LANGFRISTIGE TRANSITE ZU DEINEM HOROSKOP",
+    "seasons_intro": "Jeder Balken zeigt einen Zeitraum, in dem ein langsam laufender Planet einen exakten Aspekt zu deinem Geburtshoroskop bildet. Die Raute markiert den Höhepunkt; dunklere Balken haben höhere Priorität.",
+    "seasons_importance_high": "HOCH", "seasons_importance_medium": "MITTEL",
+    "timeline_title_1": "Persönliche Transit-Zeitleiste I", "timeline_title_2": "Persönliche Transit-Zeitleiste II",
+    "timeline_eyebrow": "PERSÖNLICHE AUSGABE  /  EXAKTE TRANSIT-RADIX-ASPEKTE",
+    "timeline_intro": "Ausgewählte exakte Aspekte von laufendem Jupiter bis Pluto zu Radix-Sonne, Mond, Merkur, Venus, Mars, Aszendent und Medium Coeli.",
+    "observation_notes": "BEOBACHTUNGSNOTIZEN", "continue_timeline": "ZEITLEISTE FORTSETZEN",
+    "personal_month_title": "Persönlicher Fokus im {month}", "personal_month_eyebrow": "PERSÖNLICHE AUSGABE  /  {name}",
+    "personal_dates": "PERSÖNLICHE SCHWERPUNKTTAGE", "month_dashboard": "{month}-ÜBERSICHT",
+    "no_personal_month": "In diesem Monat gibt es keine persönlichen Schwerpunkttage.",
+    "pm_q1": "WAS HAT SICH UM DIESE TERMINE VERÄNDERT?", "pm_q2": "WO HATTE ICH MEHR WAHLFREIHEIT?",
+    "pm_q3": "WELCHER ANDERE KONTEXT WAR WICHTIG?", "active_seasons": "IN DIESEM MONAT AKTIV",
+    "ai_title": "Notizen für KI", "ai_eyebrow": "OPTIONALE REFLEXIONSHILFE  /  DU BESTIMMST, WAS DU TEILST",
+    "privacy_first": "DATENSCHUTZ ZUERST",
+    "privacy_body": "Füge keine Namen, Adressen, medizinischen Kennungen oder privaten Angaben Dritter ein. KI kann Fehler machen. Nutze sie zum Ordnen von Beobachtungen, nicht für medizinische, rechtliche, finanzielle oder sicherheitskritische Entscheidungen.",
+    "copyable_prompt": "KOPIERBARER REFLEXIONSPROMPT",
+    "ai_prompt_text": (
+        "Ich betrachte einen persönlichen Tagebucheintrag zusammen mit einer Liste astrologischer Transite. "
+        "Trenne Beobachtungen von Interpretationen. Fasse das Geschehen zusammen, erkenne wiederkehrende Themen, "
+        "nenne Hinweise, die nicht zur Transitbeschreibung passen, und schlage drei neutrale Fragen für künftige "
+        "Beobachtungen vor. Sage keine Ereignisse voraus und behandle Astrologie nicht als bewiesene Ursache.\n\n"
+        "TRANSITE:\n[Füge nur die Transitzeilen ein, die du besprechen möchtest.]\n\n"
+        "TAGEBUCHNOTIZEN:\n[Füge eine um private Angaben bereinigte Zusammenfassung ein.]"
+    ),
+    "questions_ask": "FRAGEN, DIE ICH STELLEN MÖCHTE", "notes_title": "Notizen",
+    "notes_eyebrow": "FREIER BEOBACHTUNGSRAUM", "date_topic": "Datum / Thema:",
 }
 
 

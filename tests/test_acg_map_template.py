@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from services.acg_locales import ACG_UI
+
 
 def _template() -> str:
     return Path("templates/acg_map.html").read_text(encoding="utf-8")
@@ -34,12 +36,12 @@ def test_acg_lines_render_above_tile_map() -> None:
     assert 'switchBaseLayer("osm");' in template
     assert 'switchBaseLayer("gsi");' in template
     assert '<div class="map-legend" aria-hidden="true">' in template
-    assert "MC: 実線" in template
-    assert "IC: 破線" in template
-    assert "ASC: 点線" in template
-    assert "DSC: 点線" in template
-    assert "太陽 MC" in template
-    assert "水星 IC" in template
+    assert ACG_UI["ja"]["mc_solid"] == "MC 実線"
+    assert ACG_UI["ja"]["ic_dashed"] == "IC 破線"
+    assert ACG_UI["ja"]["asc_dotted"] == "ASC 点線"
+    assert ACG_UI["ja"]["dsc_dotted"] == "DSC 点線"
+    assert ACG_UI["ja"]["sun_mc"] == "太陽 MC"
+    assert ACG_UI["ja"]["mercury_ic"] == "水星 IC"
 
 
 def test_acg_map_no_longer_fetches_natural_earth_as_base_map() -> None:
@@ -65,11 +67,11 @@ def test_acg_map_has_japan_orientation_guides() -> None:
 def test_acg_personal_input_explains_prompt_and_code_fence_support() -> None:
     template = _template()
 
-    assert "コピーした占術データを貼り付け" in template
-    assert "プロンプト＋YAMLをそのまま貼り付けてください" in template
-    assert "鑑定ページでコピーした「プロンプト＋YAML」全文" in template
-    assert "ACGが占術YAMLを自動で見つけ" in template
-    assert "必要なデータだけを読み込みます。" in template
+    assert ACG_UI["ja"]["paste_title"] == "コピーした占術データを貼り付け"
+    assert ACG_UI["ja"]["paste_placeholder"] == "プロンプト＋YAMLをそのまま貼り付けてください"
+    assert "鑑定ページでコピーした「プロンプト＋YAML」全文" in ACG_UI["ja"]["paste_note"]
+    assert "ACGが占術YAMLを自動で見つけ" in ACG_UI["ja"]["paste_note"]
+    assert "必要なデータだけを読み込みます。" in ACG_UI["ja"]["paste_note"]
 
 
 def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
@@ -105,19 +107,19 @@ def test_acg_export_yaml_supports_combined_personal_and_mundane_lines() -> None:
     assert "出生図の関連配置と組み合わせて読む。" in template
     assert "function yamlString(value)" in template
     assert "function appendFoldedScalar(lines, indent, key, text)" in template
-    assert "この場所の星のメッセージをAIに聞く" in template
+    assert ACG_UI["ja"]["ask_ai"] == "この場所の星のメッセージをAIに聞く"
     assert 'id="btn-copy-yaml" type="button" disabled' in template
-    assert "場所を選ぶと、お好きなAIに貼り付ける内容をコピーできます。" in template
+    assert ACG_UI["ja"]["ask_ai_note"] == "場所を選ぶと、お好きなAIに貼り付ける内容をコピーできます。"
     assert 'document.getElementById("btn-copy-yaml").disabled = false;' in template
-    assert "AIに貼り付ける内容をコピーしました。" in template
+    assert "AIに貼り付ける内容をコピーしました。" in ACG_UI["ja"]["copy_done"]
 
 
 def test_acg_map_uses_shared_planet_labels_line_styles_and_globe_link() -> None:
     template = _template()
 
-    assert "var NAME_JA = EN ? {" in template
-    assert 'Sun: "太陽"' in template
-    assert '"North Node": "ドラゴンヘッド"' in template
+    assert "var NAME_JA = UI.planet_names || {};" in template
+    assert ACG_UI["ja"]["planet_names"]["Sun"] == "太陽"
+    assert ACG_UI["ja"]["planet_names"]["North Node"] == "ドラゴンヘッド"
     assert 'MC:  { weight: 2.8, dashArray: null }' in template
     assert 'IC:  { weight: 2.6, dashArray: "8 5" }' in template
     assert 'ASC: { weight: 2.2, dashArray: "1 5" }' in template

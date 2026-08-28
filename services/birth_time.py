@@ -4,6 +4,8 @@ from typing import Any
 
 import yaml
 
+from services.buyer_input_locales import buyer_error
+
 BIRTH_TIME_ACCURACY_NOTE = (
     "出生時刻が不明または推定のため、ハウス・ASC・MC・Vertexは参考値として扱ってください。"
     "これらを性格や仕事傾向の中心根拠にせず、サイン配置・天体同士の主要アスペクト・エレメント・モードを中心に解釈してください。"
@@ -32,7 +34,9 @@ APPROXIMATE_TIME_RANGES = {
 }
 
 
-def resolve_birth_time_accuracy(*, selected_accuracy: str | None, birth_time: str | None) -> dict[str, Any]:
+def resolve_birth_time_accuracy(
+    *, selected_accuracy: str | None, birth_time: str | None, lang: str = "ja"
+) -> dict[str, Any]:
     selected = (selected_accuracy or "auto").strip()
     raw_time = (birth_time or "").strip()
     if selected == "auto":
@@ -40,13 +44,13 @@ def resolve_birth_time_accuracy(*, selected_accuracy: str | None, birth_time: st
 
     if selected == "exact":
         if not raw_time:
-            raise ValueError("正確な出生時刻ありを選んだ場合は、出生時刻を入力してください。")
+            raise ValueError(buyer_error(lang, "exact_time_required"))
         return {
             "accuracy": "exact",
             "calculation_time": raw_time,
             "birth_time": raw_time,
             "range": None,
-            "note": "出生時刻あり。ハウス・ASC・MCを通常通り使用できます。",
+            "note": buyer_error(lang, "exact_time_note"),
         }
 
     if selected == "unknown":
@@ -55,7 +59,7 @@ def resolve_birth_time_accuracy(*, selected_accuracy: str | None, birth_time: st
             "calculation_time": "12:00",
             "birth_time": None,
             "range": None,
-            "note": "出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。",
+            "note": buyer_error(lang, "unknown_time_note"),
         }
 
     if selected in APPROXIMATE_TIME_RANGES:
@@ -68,10 +72,14 @@ def resolve_birth_time_accuracy(*, selected_accuracy: str | None, birth_time: st
                 "label": item["label"],
                 "estimated_range": item["estimated_range"],
             },
-            "note": f"出生時刻は{item['display']}の推定レンジです。ハウス・ASC・MCは参考値です。",
+            "note": buyer_error(
+                lang,
+                "approximate_time_note",
+                period=buyer_error(lang, str(item["label"])),
+            ),
         }
 
-    raise ValueError("出生時刻の選択肢が不正です。")
+    raise ValueError(buyer_error(lang, "time_choice_invalid"))
 
 
 def extract_birth_time_notice(yaml_text: str, *, doc: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -35,8 +35,10 @@ from reportlab.platypus import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_ROOT = ROOT / "output" / "guides"
-FONT_PATH = Path(r"C:\Windows\Fonts\NotoSansJP-VF.ttf")
+# Buyer-facing marketplace PDFs belong under one clearly named distribution
+# tree. Keep QA samples and marketplace-specific sales assets elsewhere.
+OUTPUT_ROOT = ROOT / "output" / "pdf" / "distribution"
+FONT_PATH = ROOT / "static" / "fonts" / "NotoSansJP-VF.ttf"
 BASE_URL = "https://chart.nanami-astro.com"
 
 PAGE_W, PAGE_H = A4

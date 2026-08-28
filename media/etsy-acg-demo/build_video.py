@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent
 FRAMES = ROOT / "frames"
+ENGLISH_FRAMES = ROOT / "frames-en"
 OUTPUT = ROOT / "etsy_acg_demo_15s.mp4"
 WIDTH, HEIGHT, FPS, DURATION = 1080, 2160, 30, 15
 
@@ -44,6 +45,11 @@ def english_ui(image: Image.Image, filename: str) -> Image.Image:
     border = (45, 57, 89, 255)
     white = (239, 242, 249, 255)
 
+    # Keep the sales video language-pure while the live product retains its
+    # locale switcher.  The original captures remain untouched.
+    draw.rounded_rectangle((816, 18, 1058, 84), radius=18, fill=navy, outline=border, width=2)
+    draw.text((937, 51), "ENGLISH", font=font(25, bold=True), fill=(224, 181, 45, 255), anchor="mm")
+
     if filename in {"03_lines_map.png", "07_london_map.png"}:
         draw.rounded_rectangle((992, 104, 1068, 178), radius=16, fill=navy, outline=border, width=2)
         draw.text((1030, 141), "Map", font=font(25, bold=True), fill=(224, 181, 45, 255), anchor="mm")
@@ -56,17 +62,21 @@ def english_ui(image: Image.Image, filename: str) -> Image.Image:
             "London, Madison County, Ohio, 43140, USA",
             "London, Pope County, Arkansas, USA",
         ]
-        draw.rectangle((20, 1060, 1060, 1540), fill=(11, 24, 66, 255))
+        # Cover the complete original results stack, including the final
+        # Japanese geocoder row at the bottom of the capture.
+        draw.rectangle((20, 1058, 1060, 1605), fill=(11, 24, 66, 255))
         draw.text((26, 1080), "Results (click to select a point)", font=font(25), fill=(180, 189, 211, 255), anchor="lm")
-        rows = [(1100, 1170), (1180, 1250), (1260, 1330), (1340, 1410), (1420, 1490)]
+        rows = [(1100, 1180), (1190, 1270), (1280, 1360), (1370, 1450), (1460, 1540)]
         row_font = font(27)
         for label, (top, bottom) in zip(labels, rows):
             draw.rounded_rectangle((24, top, 1056, bottom), radius=10, fill=navy, outline=border, width=2)
             draw.text((48, (top + bottom) // 2), label, font=row_font, fill=white, anchor="lm")
 
     if filename == "06_london_explanation.png":
-        draw.rounded_rectangle((24, 864, 1056, 982), radius=10, fill=navy, outline=border, width=2)
-        draw.text((48, 923), "Greater London, England, United Kingdom", font=font(29), fill=white, anchor="lm")
+        # The source has both a Latin and Japanese place-name row. Replace the
+        # full two-row block so no lower row remains visible in English media.
+        draw.rounded_rectangle((24, 860, 1056, 1046), radius=10, fill=navy, outline=border, width=2)
+        draw.text((48, 953), "Greater London, England, United Kingdom", font=font(29), fill=white, anchor="lm")
 
     return image
 
@@ -128,7 +138,10 @@ def final_card(background: Image.Image, progress: float) -> Image.Image:
 
 def render(ffmpeg: Path, output: Path) -> None:
     sources = {name: english_ui(cover(FRAMES / name), name) for _, _, name, _, _ in SCENES}
-    final_bg = cover(FRAMES / "03_lines_map.png")
+    ENGLISH_FRAMES.mkdir(parents=True, exist_ok=True)
+    for name, source in sources.items():
+        source.save(ENGLISH_FRAMES / name, optimize=True)
+    final_bg = sources["03_lines_map.png"]
     command = [
         str(ffmpeg), "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{WIDTH}x{HEIGHT}",
         "-r", str(FPS), "-i", "-", "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "22",

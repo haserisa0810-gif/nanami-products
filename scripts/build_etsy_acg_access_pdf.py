@@ -133,10 +133,10 @@ def build():
     )
     y = section(pdf, PAGE_H - 82 * mm, "YOUR ACG BUNDLE")
     bullet(pdf, y, "Personal astrocartography map", "Explore planetary angular lines on an interactive world map.")
-    bullet(pdf, y - 18 * mm, "Birth Chart Museum", "View your natal chart through the visual Personal Edition experience.")
+    bullet(pdf, y - 18 * mm, "Personalized Western birth chart", "Review your natal chart, current transits, and asteroid data.")
     bullet(pdf, y - 36 * mm, "Precalculated astrology YAML", "Use reliable calculated data with ChatGPT, Claude, Gemini, or another AI.")
     bullet(pdf, y - 54 * mm, "Private chart page", "Return to your private page to download your Personal Edition ZIP again.")
-    bullet(pdf, y - 72 * mm, "Personal Planner PDF", "A printable companion planner is included in the downloaded package.")
+    bullet(pdf, y - 72 * mm, "1-year personalized astrology planner PDF", "A printable 12-month planner is included in your ACG bundle.")
 
     y = section(pdf, PAGE_H - 182 * mm, "PLEASE SAVE")
     wrapped(

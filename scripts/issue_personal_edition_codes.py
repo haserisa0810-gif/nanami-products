@@ -12,8 +12,28 @@ from services import pg_store  # noqa: E402
 
 
 def _delivery_text(code: str, lang: str) -> str:
+    if lang == "es":
+        return f"""NANAMI ASTRO — EDICIÓN PERSONAL FULL
+
+Código de acceso: {code}
+
+Abre esta página e introduce el código y tus datos de nacimiento:
+https://chart.nanami-astro.com/personal-edition/activate?lang=es
+
+El código puede utilizarse una sola vez. Se marca como usado únicamente después de crear correctamente tu ZIP personalizado.
+"""
+    if lang == "de":
+        return f"""NANAMI ASTRO — PERSONAL EDITION FULL
+
+Zugangscode: {code}
+
+Öffne diese Seite und gib deinen Code und deine Geburtsdaten ein:
+https://chart.nanami-astro.com/personal-edition/activate?lang=de
+
+Der Code kann einmal verwendet werden. Er gilt erst nach erfolgreicher Erstellung deiner persönlichen ZIP-Datei als verwendet.
+"""
     if lang == "en":
-        return f"""BIRTH CHART MUSEUM — PERSONAL EDITION
+        return f"""NANAMI ASTRO — PERSONAL EDITION FULL
 
 Access code: {code}
 
@@ -22,7 +42,7 @@ https://chart.nanami-astro.com/personal-edition/activate?lang=en
 
 The code can be used once. It is consumed only after your personalized ZIP is created.
 """
-    return f"""BIRTH CHART MUSEUM — PERSONAL EDITION
+    return f"""NANAMI ASTRO — PERSONAL EDITION FULL
 
 引換コード: {code}
 
@@ -36,8 +56,8 @@ https://chart.nanami-astro.com/personal-edition/activate?lang=ja
 def main() -> None:
     parser = argparse.ArgumentParser(description="Issue Personal Edition FULL access codes")
     parser.add_argument("--count", type=int, default=1)
-    parser.add_argument("--provider", choices=("etsy", "coconala", "manual"), default="coconala")
-    parser.add_argument("--lang", choices=("ja", "en"), default="ja")
+    parser.add_argument("--provider", choices=("etsy", "coconala", "manual"), required=True)
+    parser.add_argument("--lang", choices=("ja", "en", "es", "de"), default="ja")
     parser.add_argument("--expiration-days", type=int, default=30)
     parser.add_argument("--delivery-dir", type=Path)
     args = parser.parse_args()

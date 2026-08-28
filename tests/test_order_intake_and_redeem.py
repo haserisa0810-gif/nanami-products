@@ -960,7 +960,7 @@ class PayhipMetadataFormTest(unittest.TestCase):
         }
         with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
             routes.stores_mail_sync,
-            "verify_order_no",
+            "verify_order_entitlement",
             return_value=("already_used", order_row),
         ):
             order_code, resolved_row, error, code = routes._resolve_payhip_order_from_metadata(metadata)

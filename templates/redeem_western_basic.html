@@ -17,6 +17,8 @@
         <span>{{ t.lang_label }}</span>
         <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
         <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+        <a href="{{ lang_urls.es }}" class="{% if lang == 'es' %}is-active{% endif %}">{{ t.lang_es }}</a>
+        <a href="{{ lang_urls.de }}" class="{% if lang == 'de' %}is-active{% endif %}">{{ t.lang_de }}</a>
       </div>
       <p class="eyebrow">nanami-products</p>
       <div class="product-pill">{{ product.label }}</div>
@@ -32,6 +34,7 @@
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
       <form method="post" action="{{ redeem_url }}?lang={{ lang }}{% if provider_locked %}&provider={{ form.order_provider }}{% endif %}" class="form" id="redeem-form" onsubmit="return openSubmitConfirm(event)">
+        {% if form and form.issue_next %}<input type="hidden" name="issue_next" value="1">{% endif %}
         <input type="hidden" name="product_type" value="{{ product_type }}">
         <input type="hidden" name="gender" value="unknown">
 

@@ -8,6 +8,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 ROOT = Path("tmp/etsy-acg-neko-video")
 OUTPUT = Path("output/video/etsy-acg/neko-chart-companion-demo-15s.mp4")
+ENGLISH_SOURCES = Path("output/video/etsy-acg/source-en")
 FFMPEG = Path(r"C:\tmp\youtube-video-deps\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v7.1.exe")
 
 W, H = 720, 1280
@@ -31,6 +32,28 @@ def centered(draw: ImageDraw.ImageDraw, y: int, text: str,
              fnt: ImageFont.FreeTypeFont, fill: str) -> None:
     box = draw.textbbox((0, 0), text, font=fnt)
     draw.text(((W - (box[2] - box[0])) / 2, y), text, font=fnt, fill=fill)
+
+
+def english_source(image: Image.Image, filename: str) -> Image.Image:
+    """Remove locale-switch and Japanese sample metadata from sales captures."""
+    image = image.copy().convert("RGBA")
+    draw = ImageDraw.Draw(image, "RGBA")
+    paper, ink, gold = (255, 251, 243, 255), (68, 56, 44, 255), (173, 119, 54, 255)
+    if filename == "01-reading.png":
+        draw.rectangle((28, 0, W - 28, 106), fill=paper)
+        draw.text((56, 24), "Chief Editor Neko · Yokohama, Japan", font=font(21, True), fill=ink)
+        draw.text((56, 62), "Fixed fictional sample · English interface", font=font(18), fill=gold)
+    elif filename == "02-consultation.png":
+        draw.rounded_rectangle((28, 38, W - 28, 430), radius=26, fill=paper)
+        draw.text((56, 70), "AI-READABLE ASTROLOGY DATA", font=font(18, True), fill=gold)
+        draw.rounded_rectangle((550, 60, 664, 100), radius=18, fill=(173, 119, 54, 255))
+        draw.text((607, 80), "ENGLISH", font=font(15, True), fill="#FFFFFF", anchor="mm")
+        draw.text((56, 146), "Chief Editor Neko's", font=font(39), fill=ink)
+        draw.text((56, 198), "sample astrology data", font=font(39), fill=ink)
+        draw.text((56, 286), "February 22, 2022 · 10:22 PM", font=font(19), fill=ink)
+        draw.text((56, 328), "Yokohama, Japan · Fictional sample", font=font(19), fill=ink)
+        draw.text((56, 380), "Read-only permanent demo", font=font(18), fill=gold)
+    return image.convert("RGB")
 
 
 def scene_frame(source: Image.Image, headline: str, subtitle: str,
@@ -66,9 +89,12 @@ def scene_frame(source: Image.Image, headline: str, subtitle: str,
 
 
 def main() -> None:
-    sources = [Image.open(path).convert("RGB").resize((W, H), Image.Resampling.LANCZOS)
+    sources = [english_source(Image.open(path).convert("RGB").resize((W, H), Image.Resampling.LANCZOS), path.name)
                for path, *_ in SCENES]
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    ENGLISH_SOURCES.mkdir(parents=True, exist_ok=True)
+    for source, (path, *_rest) in zip(sources, SCENES):
+        source.save(ENGLISH_SOURCES / path.name, optimize=True)
 
     command = [
         str(FFMPEG), "-y",

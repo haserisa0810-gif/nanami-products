@@ -189,6 +189,7 @@ def init_db() -> None:
                 )
             """)
             _ensure_chart_columns(cur)
+            _ensure_order_entitlements_table(cur)
             cur.execute(f"""
                 UPDATE {SCHEMA}.charts
                 SET share_yaml_text = yaml_text
@@ -218,6 +219,31 @@ def _ensure_chart_columns(cur) -> None:
     cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS horoscope_svg TEXT")
     cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS shichusuimei_svg TEXT")
     cur.execute(f"ALTER TABLE {SCHEMA}.charts ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ")
+
+
+def _ensure_order_entitlements_table(cur) -> None:
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS {SCHEMA}.order_entitlements (
+            id              BIGSERIAL   PRIMARY KEY,
+            provider        TEXT        NOT NULL,
+            order_code      TEXT        NOT NULL,
+            line_item_key   TEXT        NOT NULL,
+            sku             TEXT,
+            product_type    TEXT,
+            unit_index      INTEGER     NOT NULL CHECK (unit_index >= 1),
+            status          TEXT        NOT NULL DEFAULT 'available'
+                            CHECK (status IN ('available', 'redeemed', 'revoked')),
+            chart_token     TEXT        UNIQUE,
+            redeemed_at     TIMESTAMPTZ,
+            created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (provider, order_code, line_item_key, unit_index)
+        )
+    """)
+    cur.execute(f"""
+        CREATE INDEX IF NOT EXISTS idx_order_entitlements_lookup
+        ON {SCHEMA}.order_entitlements (order_code, provider, product_type, status)
+    """)
 
 
 def _ensure_addon_redemptions_table(cur) -> None:
@@ -1082,76 +1108,170 @@ def delete_expired_charts(*, grace_days: int = 0) -> dict[str, Any]:
     }
 
 
-def get_redemption_by_order_code(order_code: str) -> dict[str, Any] | None:
+def get_redemption_by_order_code(
+    order_code: str, *, provider: str | None = None
+) -> dict[str, Any] | None:
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT order_code, email, buyer_name, token, used_at, created_at
-                FROM {SCHEMA}.redemptions
-                WHERE order_code = %s
-                """,
-                (order_code,),
-            )
+            provider_clean = (provider or "").strip().lower()
+            if provider_clean:
+                cur.execute(
+                    f"""
+                    SELECT r.order_code, r.email, r.buyer_name, r.token,
+                           r.used_at, r.created_at
+                    FROM {SCHEMA}.redemptions r
+                    JOIN {SCHEMA}.charts c ON c.token = r.token
+                    WHERE r.order_code = %s
+                      AND (
+                        c.options->>'order_provider' = %s
+                        OR (%s = 'stores' AND COALESCE(c.options->>'order_provider', '') = '')
+                      )
+                    """,
+                    (order_code, provider_clean, provider_clean),
+                )
+            else:
+                cur.execute(
+                    f"""
+                    SELECT order_code, email, buyer_name, token, used_at, created_at
+                    FROM {SCHEMA}.redemptions
+                    WHERE order_code = %s
+                    """,
+                    (order_code,),
+                )
             row = cur.fetchone()
     return dict(row) if row else None
 
 
-def get_addon_chart_by_order_code(*, order_code: str, addon_type: str) -> dict[str, Any] | None:
+def get_addon_chart_by_order_code(
+    *, order_code: str, addon_type: str, provider: str | None = None
+) -> dict[str, Any] | None:
     with _conn() as con:
         with con.cursor() as cur:
+            provider_clean = (provider or "").strip().lower()
+            provider_sql = ""
+            params: list[Any] = [order_code, addon_type]
+            if provider_clean:
+                provider_sql = """
+                  AND (
+                    options->>'order_provider' = %s
+                    OR (%s = 'stores' AND COALESCE(options->>'order_provider', '') = '')
+                  )
+                """
+                params.extend((provider_clean, provider_clean))
             cur.execute(
                 f"""
                 SELECT token, order_code, options, expires_at, created_at
                 FROM {SCHEMA}.charts
                 WHERE order_code = %s
                   AND options->>'product_type' = %s
+                  {provider_sql}
                 ORDER BY created_at DESC
                 LIMIT 1
                 """,
-                (order_code, addon_type),
+                tuple(params),
             )
             row = cur.fetchone()
     return dict(row) if row else None
 
 
-def _is_compatible_addon_purchase(purchased_type: str | None, addon_type: str) -> bool:
-    """
-    追加部品の消込では、購入元の商品タイプと1対1一致だけでなく互換を許容する。
+def _claim_direct_addon_entitlement(
+    cur,
+    *,
+    order: dict[str, Any],
+    addon_type: str,
+    chart_token: str | None,
+) -> tuple[bool, dict[str, Any] | None]:
+    """直接購入されたaddonの数量枠を1件消費する。"""
+    provider = str(order.get("provider") or "").strip().lower()
+    order_code = str(order.get("stores_order_no") or "").strip()
+    if provider not in {"stores", "payhip", "etsy"} or not order_code:
+        return False, None
+    cur.execute("SELECT to_regclass(%s) AS table_name", (f"{SCHEMA}.order_entitlements",))
+    table_row = cur.fetchone()
+    if not table_row or not table_row.get("table_name"):
+        return False, None
+    cur.execute(
+        f"""
+        SELECT id, provider, order_code, line_item_key, sku, product_type, unit_index
+        FROM {SCHEMA}.order_entitlements
+        WHERE provider = %s
+          AND order_code = %s
+          AND product_type = %s
+          AND status = 'available'
+        ORDER BY id
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+        """,
+        (provider, order_code, addon_type),
+    )
+    entitlement = cur.fetchone()
+    if entitlement:
+        cur.execute(
+            f"""
+            UPDATE {SCHEMA}.order_entitlements
+            SET status = 'redeemed', chart_token = %s,
+                redeemed_at = NOW(), updated_at = NOW()
+            WHERE id = %s AND status = 'available'
+            RETURNING id
+            """,
+            (chart_token, entitlement["id"]),
+        )
+        if cur.fetchone():
+            return True, dict(entitlement)
+        return True, None
+    cur.execute(
+        f"""
+        SELECT id FROM {SCHEMA}.order_entitlements
+        WHERE provider = %s AND order_code = %s AND product_type = %s
+        LIMIT 1
+        """,
+        (provider, order_code, addon_type),
+    )
+    # 同じaddon商品の発行権行がある場合だけ新方式。発行権のない旧注文は、
+    # 下流で保存済みの商品種別とaddon種別を完全一致させる。
+    return (cur.fetchone() is not None), None
 
-    既存の運用上「この注文で追加YAML生成が可能か」を反映し、明らかに不正な
-    例（例: トランジットYAML版→トランジット追加）を拒否するための判定。
-    """
-    if not purchased_type:
-        return True
 
-    purchased = str(purchased_type)
-    if purchased == addon_type:
-        return True
+def _select_marketplace_order_for_update(
+    cur, *, order_code: str, provider: str | None
+) -> dict[str, Any] | None:
+    """Lock the provider-scoped order, with a legacy STORES fallback."""
+    provider_clean = (provider or "stores").strip().lower()
+    cur.execute(
+        "SELECT to_regclass(%s) AS table_name",
+        (f"{SCHEMA}.marketplace_orders",),
+    )
+    table_row = cur.fetchone()
+    if table_row and table_row.get("table_name"):
+        cur.execute(
+            f"""
+            SELECT order_code AS stores_order_no, provider, product_type,
+                   amount, payment_status, mail_subject, raw_message_id,
+                   buyer_reference, mail_received_at, created_at, updated_at
+            FROM {SCHEMA}.marketplace_orders
+            WHERE provider = %s AND order_code = %s
+            FOR UPDATE
+            """,
+            (provider_clean, order_code),
+        )
+    else:
+        cur.execute(
+            f"""
+            SELECT *
+            FROM {SCHEMA}.stores_orders
+            WHERE stores_order_no = %s
+              AND (LOWER(provider) = %s OR (provider IS NULL AND %s = 'stores'))
+            FOR UPDATE
+            """,
+            (order_code, provider_clean, provider_clean),
+        )
+    row = cur.fetchone()
+    return dict(row) if row else None
 
-    compatibility = {
-        "western_asteroids_addon": {
-            "western_basic",
-            "western_full",
-            "western_asteroids",
-            "western_transit",
-        },
-        "western_31days_transit_addon": {
-            "western_full",
-            "western_transit",
-            "acg_bundle",
-        },
-        "western_long_term_transits_addon": {
-            "western_full",
-            "western_transit",
-            "acg_bundle",
-        },
-        "shichu_fortune_cycles_addon": {"shichu"},
-    }
-    return purchased in compatibility.get(addon_type, set())
 
-
-def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[str, Any] | None]:
+def redeem_addon_order(
+    *, order_code: str, addon_type: str, provider: str = "stores"
+) -> tuple[str, dict[str, Any] | None]:
     """
     addon生成用に STORES注文番号 + addon種別 を一回だけ消し込む。
 
@@ -1159,28 +1279,25 @@ def redeem_addon_order(*, order_code: str, addon_type: str) -> tuple[str, dict[s
     """
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT *
-                FROM {SCHEMA}.stores_orders
-                WHERE stores_order_no = %s
-                FOR UPDATE
-                """,
-                (order_code,),
+            order = _select_marketplace_order_for_update(
+                cur, order_code=order_code, provider=provider
             )
-            row = cur.fetchone()
-            if not row:
+            if not order:
                 return "not_found", None
-
-            order = dict(row)
             payment_status = str(order.get("payment_status") or "").lower()
-
-            purchased_type = order.get("product_type")
-            if not _is_compatible_addon_purchase(purchased_type, addon_type):
-                return "product_mismatch", order
 
             if payment_status in {"reusable", "test", "permanent"}:
                 return "ok", order
+
+            entitlement_mode, entitlement = _claim_direct_addon_entitlement(
+                cur, order=order, addon_type=addon_type, chart_token=None
+            )
+            if entitlement_mode:
+                return ("ok", order) if entitlement else ("already_used", order)
+
+            purchased_type = order.get("product_type")
+            if purchased_type and str(purchased_type) != addon_type:
+                return "product_mismatch", order
 
             cur.execute(
                 f"""
@@ -1205,46 +1322,48 @@ def redeem_addon_order_and_save_chart(
     token: str,
     expires_at: datetime,
     chart_payload: dict[str, Any],
+    provider: str = "stores",
 ) -> tuple[str, dict[str, Any] | None]:
     """
     addon注文の消込と生成済みチャートの保存を同一トランザクションで行う。
     """
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT *
-                FROM {SCHEMA}.stores_orders
-                WHERE stores_order_no = %s
-                FOR UPDATE
-                """,
-                (order_code,),
+            order = _select_marketplace_order_for_update(
+                cur, order_code=order_code, provider=provider
             )
-            row = cur.fetchone()
-            if not row:
+            if not order:
                 return "not_found", None
-
-            order = dict(row)
             payment_status = str(order.get("payment_status") or "").lower()
 
-            purchased_type = order.get("product_type")
-            if not _is_compatible_addon_purchase(purchased_type, addon_type):
-                return "product_mismatch", order
-
             if payment_status not in {"reusable", "test", "permanent"}:
-                cur.execute(
-                    f"""
-                    INSERT INTO {SCHEMA}.addon_redemptions
-                        (order_code, addon_type, used_at)
-                    VALUES (%s, %s, NOW())
-                    ON CONFLICT (order_code, addon_type) DO NOTHING
-                    RETURNING order_code, addon_type, used_at
-                    """,
-                    (order_code, addon_type),
+                entitlement_mode, entitlement = _claim_direct_addon_entitlement(
+                    cur, order=order, addon_type=addon_type, chart_token=token
                 )
-                if cur.fetchone() is None:
+                if entitlement_mode and not entitlement:
                     return "already_used", order
-
+                if not entitlement_mode:
+                    purchased_type = order.get("product_type")
+                    if purchased_type and str(purchased_type) != addon_type:
+                        return "product_mismatch", order
+                    cur.execute(
+                        f"""
+                        INSERT INTO {SCHEMA}.addon_redemptions
+                            (order_code, addon_type, used_at)
+                        VALUES (%s, %s, NOW())
+                        ON CONFLICT (order_code, addon_type) DO NOTHING
+                        RETURNING order_code, addon_type, used_at
+                        """,
+                        (order_code, addon_type),
+                    )
+                    if cur.fetchone() is None:
+                        return "already_used", order
+                elif chart_payload:
+                    chart_payload = dict(chart_payload)
+                    chart_payload["options"] = {
+                        **dict(chart_payload["options"]),
+                        "order_entitlement": entitlement,
+                    }
             _insert_chart(
                 cur,
                 token=token,
@@ -1273,46 +1392,48 @@ def redeem_addon_order_and_save_transit_link(
     yaml_text: str,
     expires_at: datetime,
     chart_payload: dict[str, Any] | None = None,
+    provider: str = "stores",
 ) -> tuple[str, dict[str, Any] | None]:
     """
     31日トランジットaddon用に、注文消込と期限付きYAML保存を同一トランザクションで行う。
     """
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT *
-                FROM {SCHEMA}.stores_orders
-                WHERE stores_order_no = %s
-                FOR UPDATE
-                """,
-                (order_code,),
+            order = _select_marketplace_order_for_update(
+                cur, order_code=order_code, provider=provider
             )
-            row = cur.fetchone()
-            if not row:
+            if not order:
                 return "not_found", None
-
-            order = dict(row)
             payment_status = str(order.get("payment_status") or "").lower()
 
-            purchased_type = order.get("product_type")
-            if not _is_compatible_addon_purchase(purchased_type, addon_type):
-                return "product_mismatch", order
-
             if payment_status not in {"reusable", "test", "permanent"}:
-                cur.execute(
-                    f"""
-                    INSERT INTO {SCHEMA}.addon_redemptions
-                        (order_code, addon_type, used_at)
-                    VALUES (%s, %s, NOW())
-                    ON CONFLICT (order_code, addon_type) DO NOTHING
-                    RETURNING order_code, addon_type, used_at
-                    """,
-                    (order_code, addon_type),
+                entitlement_mode, entitlement = _claim_direct_addon_entitlement(
+                    cur, order=order, addon_type=addon_type, chart_token=token
                 )
-                if cur.fetchone() is None:
+                if entitlement_mode and not entitlement:
                     return "already_used", order
-
+                if not entitlement_mode:
+                    purchased_type = order.get("product_type")
+                    if purchased_type and str(purchased_type) != addon_type:
+                        return "product_mismatch", order
+                    cur.execute(
+                        f"""
+                        INSERT INTO {SCHEMA}.addon_redemptions
+                            (order_code, addon_type, used_at)
+                        VALUES (%s, %s, NOW())
+                        ON CONFLICT (order_code, addon_type) DO NOTHING
+                        RETURNING order_code, addon_type, used_at
+                        """,
+                        (order_code, addon_type),
+                    )
+                    if cur.fetchone() is None:
+                        return "already_used", order
+                elif chart_payload:
+                    chart_payload = dict(chart_payload)
+                    chart_payload["options"] = {
+                        **dict(chart_payload["options"]),
+                        "order_entitlement": entitlement,
+                    }
             _insert_transit_addon_result(
                 cur,
                 token=token,
@@ -1409,55 +1530,157 @@ def get_transit_addon_link(token: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
-def get_redemption_reset_by_order_code(order_code: str) -> dict[str, Any] | None:
+def get_redemption_reset_by_order_code(
+    order_code: str,
+    *,
+    provider: str | None = None,
+) -> dict[str, Any] | None:
+    provider_clean = (provider or "").strip().lower()
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT stores_order_no AS order_code, payment_status, updated_at
-                FROM {SCHEMA}.stores_orders
-                WHERE stores_order_no = %s
-                  AND payment_status = 'reset_once'
-                """,
-                (order_code,),
-            )
+            marketplace_table = False
+            if provider_clean:
+                cur.execute(
+                    "SELECT to_regclass(%s) AS table_name",
+                    (f"{SCHEMA}.marketplace_orders",),
+                )
+                table_row = cur.fetchone()
+                marketplace_table = bool(table_row and table_row.get("table_name"))
+            if marketplace_table:
+                cur.execute(
+                    f"""
+                    SELECT order_code, provider, payment_status, updated_at
+                    FROM {SCHEMA}.marketplace_orders
+                    WHERE provider = %s
+                      AND order_code = %s
+                      AND payment_status = 'reset_once'
+                    """,
+                    (provider_clean, order_code),
+                )
+            else:
+                provider_filter = ""
+                params: tuple[Any, ...] = (order_code,)
+                if provider_clean:
+                    provider_filter = (
+                        "AND (LOWER(provider) = %s OR "
+                        "(provider IS NULL AND %s = 'stores'))"
+                    )
+                    params = (order_code, provider_clean, provider_clean)
+                cur.execute(
+                    f"""
+                    SELECT stores_order_no AS order_code, provider, payment_status, updated_at
+                    FROM {SCHEMA}.stores_orders
+                    WHERE stores_order_no = %s
+                      {provider_filter}
+                      AND payment_status = 'reset_once'
+                    """,
+                    params,
+                )
             row = cur.fetchone()
     return dict(row) if row else None
 
 
-def list_charts_by_order_code(order_code: str) -> list[dict[str, Any]]:
+def list_charts_by_order_code(
+    order_code: str,
+    *,
+    provider: str | None = None,
+    product_type: str | None = None,
+) -> list[dict[str, Any]]:
     with _conn() as con:
         with con.cursor() as cur:
+            filters = ["order_code = %s"]
+            params: list[Any] = [order_code]
+            provider_clean = (provider or "").strip().lower()
+            if provider_clean:
+                filters.append(
+                    "(options->>'order_provider' = %s OR "
+                    "(%s = 'stores' AND COALESCE(options->>'order_provider', '') = ''))"
+                )
+                params.extend((provider_clean, provider_clean))
+            if product_type:
+                filters.append("options->>'product_type' = %s")
+                params.append(product_type)
             cur.execute(
                 f"""
                 SELECT token, order_code, buyer_name, birth_date, birth_time, birth_place, options, created_at
                 FROM {SCHEMA}.charts
-                WHERE order_code = %s
+                WHERE {' AND '.join(filters)}
                 ORDER BY created_at DESC
-                LIMIT 10
+                LIMIT 100
                 """,
-                (order_code,),
+                tuple(params),
             )
             rows = cur.fetchall()
     return [dict(row) for row in rows]
 
 
-def reset_redemption_by_order_code(order_code: str) -> dict[str, Any]:
+def reset_redemption_by_order_code(
+    order_code: str,
+    *,
+    provider: str | None = None,
+) -> dict[str, Any]:
+    provider_clean = (provider or "").strip().lower()
     with _conn() as con:
         with con.cursor() as cur:
-            cur.execute(
-                f"""
-                UPDATE {SCHEMA}.stores_orders
-                SET payment_status = 'reset_once',
-                    updated_at = NOW()
-                WHERE stores_order_no = %s
-                RETURNING stores_order_no AS order_code, payment_status, updated_at
-                """,
-                (order_code,),
-            )
-            reset_row = cur.fetchone()
+            marketplace_table = False
+            if provider_clean:
+                cur.execute(
+                    "SELECT to_regclass(%s) AS table_name",
+                    (f"{SCHEMA}.marketplace_orders",),
+                )
+                table_row = cur.fetchone()
+                marketplace_table = bool(table_row and table_row.get("table_name"))
+            if marketplace_table:
+                cur.execute(
+                    f"""
+                    UPDATE {SCHEMA}.marketplace_orders
+                    SET payment_status = 'reset_once',
+                        updated_at = NOW()
+                    WHERE provider = %s
+                      AND order_code = %s
+                    RETURNING order_code, provider, payment_status, updated_at
+                    """,
+                    (provider_clean, order_code),
+                )
+                reset_row = cur.fetchone()
+                if reset_row:
+                    # Legacy table remains a compatibility mirror. Never reset a
+                    # same-number order owned by another marketplace.
+                    cur.execute(
+                        f"""
+                        UPDATE {SCHEMA}.stores_orders
+                        SET payment_status = 'reset_once',
+                            updated_at = NOW()
+                        WHERE stores_order_no = %s
+                          AND (LOWER(provider) = %s
+                               OR (provider IS NULL AND %s = 'stores'))
+                        """,
+                        (order_code, provider_clean, provider_clean),
+                    )
+            else:
+                provider_filter = ""
+                params: tuple[Any, ...] = (order_code,)
+                if provider_clean:
+                    provider_filter = (
+                        "AND (LOWER(provider) = %s OR "
+                        "(provider IS NULL AND %s = 'stores'))"
+                    )
+                    params = (order_code, provider_clean, provider_clean)
+                cur.execute(
+                    f"""
+                    UPDATE {SCHEMA}.stores_orders
+                    SET payment_status = 'reset_once',
+                        updated_at = NOW()
+                    WHERE stores_order_no = %s
+                      {provider_filter}
+                    RETURNING stores_order_no AS order_code, provider,
+                              payment_status, updated_at
+                    """,
+                    params,
+                )
+                reset_row = cur.fetchone()
     try:
-        charts = list_charts_by_order_code(order_code)
+        charts = list_charts_by_order_code(order_code, provider=provider_clean or None)
     except Exception as exc:
         charts = []
         charts_error = str(exc)
@@ -1470,6 +1693,107 @@ def reset_redemption_by_order_code(order_code: str) -> dict[str, Any]:
         "charts": charts,
         "charts_error": charts_error,
     }
+
+
+def _claim_order_entitlement(
+    cur,
+    *,
+    order_code: str,
+    provider: str | None,
+    product_type: str | None,
+    chart_token: str,
+) -> tuple[bool, dict[str, Any] | None]:
+    """対象注文に発行権があれば1枠を原子的に消し込む。
+
+    戻り値の第1要素は、その注文が新しい発行権方式かどうか。テーブル未作成、
+    または旧注文で発行権行がない場合は ``(False, None)`` とし、従来方式へ戻す。
+    """
+    provider_clean = (provider or "").strip().lower()
+    if provider_clean not in {"stores", "payhip", "etsy"} or not product_type:
+        return False, None
+    cur.execute(
+        "SELECT to_regclass(%s) AS entitlement_table, "
+        "to_regclass(%s) AS marketplace_table",
+        (f"{SCHEMA}.order_entitlements", f"{SCHEMA}.marketplace_orders"),
+    )
+    table_row = cur.fetchone()
+    if not table_row or not table_row.get("entitlement_table"):
+        return False, None
+    if table_row.get("marketplace_table"):
+        order_join = (
+            f"JOIN {SCHEMA}.marketplace_orders o "
+            "ON o.order_code = e.order_code AND o.provider = e.provider"
+        )
+        reset_lookup = (
+            f"SELECT 1 FROM {SCHEMA}.marketplace_orders o "
+            f"WHERE o.order_code = {SCHEMA}.order_entitlements.order_code "
+            f"AND o.provider = {SCHEMA}.order_entitlements.provider "
+            "AND o.payment_status = 'reset_once'"
+        )
+    else:
+        order_join = (
+            f"JOIN {SCHEMA}.stores_orders o ON o.stores_order_no = e.order_code "
+            "AND (LOWER(o.provider) = e.provider "
+            "OR (o.provider IS NULL AND e.provider = 'stores'))"
+        )
+        reset_lookup = (
+            f"SELECT 1 FROM {SCHEMA}.stores_orders o "
+            f"WHERE o.stores_order_no = {SCHEMA}.order_entitlements.order_code "
+            f"AND (LOWER(o.provider) = {SCHEMA}.order_entitlements.provider "
+            f"OR (o.provider IS NULL AND {SCHEMA}.order_entitlements.provider = 'stores')) "
+            "AND o.payment_status = 'reset_once'"
+        )
+    cur.execute(
+        f"""
+        SELECT e.id, e.provider, e.order_code, e.line_item_key, e.sku,
+               e.product_type, e.unit_index, o.payment_status
+        FROM {SCHEMA}.order_entitlements e
+        {order_join}
+        WHERE e.order_code = %s
+          AND e.provider = %s
+          AND e.product_type = %s
+          AND (
+              e.status = 'available'
+              OR (o.payment_status = 'reset_once' AND e.status = 'redeemed')
+          )
+        ORDER BY
+          CASE WHEN o.payment_status = 'reset_once' AND e.status = 'redeemed' THEN 0 ELSE 1 END,
+          e.id
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+        """,
+        (order_code, provider_clean, product_type),
+    )
+    entitlement = cur.fetchone()
+    if entitlement:
+        cur.execute(
+            f"""
+            UPDATE {SCHEMA}.order_entitlements
+            SET status = 'redeemed', chart_token = %s,
+                redeemed_at = NOW(), updated_at = NOW()
+            WHERE id = %s
+              AND (
+                  status = 'available'
+                  OR (
+                      status = 'redeemed'
+                      AND EXISTS (
+                          {reset_lookup}
+                      )
+                  )
+              )
+            RETURNING id
+            """,
+            (chart_token, entitlement["id"]),
+        )
+        if cur.fetchone():
+            return True, dict(entitlement)
+        return True, None
+    cur.execute(
+        f"""SELECT id FROM {SCHEMA}.order_entitlements
+            WHERE provider = %s AND order_code = %s LIMIT 1""",
+        (provider_clean, order_code),
+    )
+    return (cur.fetchone() is not None), None
 
 
 def redeem_and_save(
@@ -1499,6 +1823,23 @@ def redeem_and_save(
             chart_options = dict(options)
             if redemption_metadata:
                 chart_options["redemption_metadata"] = redemption_metadata
+            entitlement_mode, entitlement = _claim_order_entitlement(
+                cur,
+                order_code=order_code,
+                provider=str(chart_options.get("order_provider") or "") or None,
+                product_type=str(chart_options.get("product_type") or "") or None,
+                chart_token=token,
+            )
+            if entitlement_mode and not entitlement:
+                return False
+            if entitlement:
+                chart_options["order_entitlement"] = {
+                    "id": entitlement["id"],
+                    "provider": entitlement["provider"],
+                    "line_item_key": entitlement["line_item_key"],
+                    "sku": entitlement.get("sku"),
+                    "unit_index": entitlement["unit_index"],
+                }
             cur.execute(
                 f"""
                 INSERT INTO {SCHEMA}.redemptions
@@ -1509,7 +1850,50 @@ def redeem_and_save(
                 """,
                 (order_code, email, buyer_name, token),
             )
-            if cur.fetchone() is None:
+            redemption_inserted = cur.fetchone()
+            if (
+                redemption_inserted is None
+                and entitlement_mode
+                and entitlement
+                and str(entitlement.get("payment_status") or "").lower() == "reset_once"
+            ):
+                cur.execute(
+                    "SELECT to_regclass(%s) AS table_name",
+                    (f"{SCHEMA}.marketplace_orders",),
+                )
+                marketplace_row = cur.fetchone()
+                if marketplace_row and marketplace_row.get("table_name"):
+                    cur.execute(
+                        f"""
+                        UPDATE {SCHEMA}.marketplace_orders
+                        SET payment_status = 'paid', updated_at = NOW()
+                        WHERE provider = %s AND order_code = %s
+                          AND payment_status = 'reset_once'
+                        """,
+                        (str(entitlement.get("provider") or ""), order_code),
+                    )
+                cur.execute(
+                    f"""
+                    UPDATE {SCHEMA}.stores_orders
+                    SET payment_status = 'paid', updated_at = NOW()
+                    WHERE stores_order_no = %s AND payment_status = 'reset_once'
+                      AND (LOWER(provider) = %s OR (provider IS NULL AND %s = 'stores'))
+                    """,
+                    (
+                        order_code,
+                        str(entitlement.get("provider") or ""),
+                        str(entitlement.get("provider") or ""),
+                    ),
+                )
+                cur.execute(
+                    f"""
+                    UPDATE {SCHEMA}.redemptions
+                    SET email = %s, buyer_name = %s, token = %s, used_at = NOW()
+                    WHERE order_code = %s
+                    """,
+                    (email, buyer_name, token, order_code),
+                )
+            elif redemption_inserted is None and not entitlement_mode:
                 cur.execute(
                     f"""
                     UPDATE {SCHEMA}.stores_orders

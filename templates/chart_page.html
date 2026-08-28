@@ -770,6 +770,8 @@
         <span>{{ t.lang_label }}</span>
         <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
         <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+        <a href="{{ lang_urls.es }}" class="{% if lang == 'es' %}is-active{% endif %}">{{ t.lang_es }}</a>
+        <a href="{{ lang_urls.de }}" class="{% if lang == 'de' %}is-active{% endif %}">{{ t.lang_de }}</a>
       </div>
       <p class="eyebrow">{% if is_transit_yaml %}{{ t.analysis_eyebrow }}{% else %}{{ t.chart_eyebrow }}{% endif %}</p>
       <div class="page-title-block">
@@ -787,14 +789,7 @@
         <section class="notice-box soft time-accuracy-card">
           <p class="mini-label">{{ t["time_accuracy_label"] }}</p>
           <strong>{{ birth_time_notice.short }}</strong>
-          <p>
-            {% if lang == "en" %}
-            If your birth time becomes known later, the houses and ASC/MC must be recalculated accurately. Please contact us about correcting and reissuing the chart (birth time changes only).
-            {% else %}
-            出生時刻が後から判明した場合、ハウス・ASC/MCを含む正確な再計算が必要です。時刻の修正・再発行（時刻のみ変更可）は
-            {% if birth_time_reissue_url %}<a href="{{ birth_time_reissue_url }}" target="_blank" rel="noopener">公式LINEからお問い合わせください</a>。{% else %}公式LINEからお問い合わせください。{% endif %}
-            {% endif %}
-          </p>
+          <p>{{ t.birth_time_reissue }}{% if birth_time_reissue_url %} <a href="{{ birth_time_reissue_url }}" target="_blank" rel="noopener">{{ t.birth_time_reissue_link }}</a>{% endif %}</p>
         </section>
         {% endif %}
         <p class="hint">{% if chart_has_no_expiry %}{{ t.page_no_expiry }}{% else %}{{ t.page_expiry.format(expires_label=expires_label) }}{% endif %}</p>
@@ -947,11 +942,11 @@
         <div class="detail-body">
           <p class="detail-intro">
             {% if is_personal_edition %}
-              {% if lang == 'ja' %}全部入りZIP、またはPersonal Editionだけを選んで保存できます。{% else %}Save the complete ZIP, or download only Personal Edition.{% endif %}
+              {{ t.personal_download_hint }}
             {% else %}{{ t.save_data_hint }}{% endif %}
           </p>
           <div class="page-url-panel">
-            <h2>{% if is_transit_yaml %}{{ t.event_url }}{% else %}{% if lang == 'ja' %}保存用URL{% else %}Saved URL{% endif %}{% endif %}</h2>
+            <h2>{% if is_transit_yaml %}{{ t.event_url }}{% else %}{{ t.saved_url }}{% endif %}</h2>
             <div class="copyline">
               <input id="chart-url" value="{{ chart_url }}" readonly>
               <button onclick="copyFrom('chart-url')">{{ t["copy_label"] }}</button>
@@ -961,44 +956,47 @@
           <div class="save-data-panel">
             {% if hoshiyomi_app_url %}
             <a class="download-primary" id="hoshiyomi-app-button" href="{{ hoshiyomi_app_url }}" target="_blank" rel="noopener">
-              {% if lang == 'ja' %}星読みの暦アプリで開く（自動読み込み）{% else %}Open in Hoshiyomi app (auto-load){% endif %}
+              {{ t.open_hoshiyomi }}
             </a>
             {% endif %}
             {% if transit_flight_url %}
             <a class="download-primary" id="transit-flight-button" href="{{ transit_flight_url }}" target="_blank" rel="noopener">
-              {% if lang == 'ja' %}Transit Flight で体験する（自動読み込み）{% else %}Open in Transit Flight (auto-load){% endif %}
+              {{ t.open_transit_flight }}
             </a>
             {% endif %}
             {% if is_personal_edition %}
             <a class="download-primary" id="personal-edition-download-button" href="{{ personal_edition_zip_url }}" download>
-              {% if lang == 'ja' %}Personal Editionだけを保存{% else %}Download only Personal Edition{% endif %}
+              {{ t.download_personal_only }}
             </a>
             {% if personal_edition_acg %}
             <a class="download-primary" id="personal-acg-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
-              {% if lang == 'ja' %}あなたのACGアプリを開く{% else %}Open your Personal ACG app{% endif %}
+              {{ t.open_personal_acg }}
             </a>
             <p class="hint" id="personal-acg-app-hint">
-              {% if lang == 'ja' %}iPad・iPhoneでは、開いた画面の「ホーム画面に追加」からアプリとして保存できます。{% else %}On iPad or iPhone, open it and choose Add to Home Screen to save it as an app.{% endif %}
+              {{ t.acg_home_hint }}
             </p>
             {% endif %}
-            <a class="download-primary" id="free-museum-download-button" href="/downloads/birth-chart-museum-free.zip?lang={{ lang }}" download>
-              {% if lang == 'ja' %}無料ミュージアム＋Dream Skyを別で保存{% else %}Download the free Museum + Dream Sky separately{% endif %}
-            </a>
-            <p class="hint" id="free-museum-download-hint">
-              {% if lang == 'ja' %}ACGとは別の無料体験版です。必要な方だけダウンロードしてください。{% else %}This is a separate free experience from ACG. Download it only if you want it.{% endif %}
-            </p>
             {% endif %}
             {% if acg_enabled and not is_personal_edition %}
             <a class="download-primary" id="acg-bundle-button" href="{{ personal_acg_url }}" target="_blank" rel="noopener">
-              {% if lang == 'ja' %}あなたのACG地図を見る{% else %}View your ACG map{% endif %}
+              {{ t.view_acg_map }}
             </a>
             {% endif %}
             {% if planner_pdf_url %}
+            {% if planner_holiday_countries %}
+            <label for="planner-holiday-country"><strong>{{ t.planner_holiday_country }}</strong></label>
+            <select id="planner-holiday-country" style="width:100%;max-width:360px;margin:8px 0 10px;padding:10px;border-radius:8px">
+              {% for country in planner_holiday_countries %}
+              <option value="{{ country.code }}">{{ country.name }}</option>
+              {% endfor %}
+            </select>
+            <p class="hint">{{ t.planner_holiday_country_hint }}</p>
+            {% endif %}
             <a class="download-primary" id="personal-planner-button" href="{{ planner_pdf_url }}" download>
-              {% if lang == 'ja' %}あなたの1年トランジット手帳（PDF）を作成・保存{% else %}Create your 1-Year Transit Planner (PDF){% endif %}
+              {{ t.create_planner }}
             </a>
             <p class="hint" id="personal-planner-hint">
-              {% if lang == 'ja' %}出生図と長期トランジットに基づく1年間の個人手帳です。作成に20〜30秒ほどかかります。{% else %}A one-year personal planner based on your birth chart and long-term transits. It takes 20-30 seconds to build.{% endif %}
+              {{ t.planner_hint }}
             </p>
             <script>
               // Building the planner takes ~13s of server CPU. Without feedback
@@ -1007,12 +1005,24 @@
               (() => {
                 const button = document.getElementById('personal-planner-button');
                 const hint = document.getElementById('personal-planner-hint');
+                const country = document.getElementById('planner-holiday-country');
                 if (!button || !hint) return;
+                const baseUrl = button.href;
+                const updateCountry = () => {
+                  if (!country) return;
+                  const url = new URL(baseUrl, window.location.href);
+                  url.searchParams.set('holiday_country', country.value);
+                  button.href = url.toString();
+                };
+                if (country) {
+                  country.addEventListener('change', updateCountry);
+                  updateCountry();
+                }
                 const idleLabel = button.textContent.trim();
                 const idleHint = hint.textContent.trim();
                 const text = {
-                  building: {% if lang == 'ja' %}'作成中…そのままお待ちください'{% else %}'Building your planner…'{% endif %},
-                  buildingHint: {% if lang == 'ja' %}'20〜30秒ほどかかります。ボタンをもう一度押す必要はありません。ダウンロードは自動で始まります。'{% else %}'This takes 20-30 seconds. There is no need to press the button again; the download starts on its own.'{% endif %}
+                  building: {{ t.planner_building | tojson }},
+                  buildingHint: {{ t.planner_building_hint | tojson }}
                 };
                 let building = false;
                 const release = () => {
@@ -1046,15 +1056,15 @@
             </script>
             {% endif %}
             <a class="download-primary" id="zip-download-button" href="{{ download_zip_url }}" download>
-              {% if is_personal_edition %}{% if lang == 'ja' %}すべてまとめてZIP保存{% else %}Download complete ZIP{% endif %}{% else %}{{ t.save_zip }}{% endif %}
+              {% if is_personal_edition %}{{ t.download_complete_zip }}{% else %}{{ t.save_zip }}{% endif %}
             </a>
             {% if auto_download_chart_zip %}
             <iframe id="chart-auto-download-frame" data-src="{{ download_zip_url }}" title="Chart data ZIP download" hidden></iframe>
             <p class="hint" id="chart-zip-download-notice">
               {% if is_personal_edition %}
-                {% if lang == 'ja' %}鑑定ページを発行しました。Personal Editionを含む全部入りZIPのダウンロードを開始します。開始しない場合は「すべてまとめてZIP保存」を押してください。{% else %}Your chart page is ready. The complete ZIP, including Personal Edition, is starting. If it does not start, use “Download complete ZIP”.{% endif %}
+                {{ t.download_ready_personal }}
               {% else %}
-                {% if lang == 'ja' %}鑑定ページを発行しました。保存用ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。{% else %}Your chart page is ready. Your data ZIP download is starting. If it does not start, use the button above.{% endif %}
+                {{ t.download_ready }}
               {% endif %}
             </p>
             <script>
@@ -1081,7 +1091,7 @@
                 if (shouldStart && frame) {
                   frame.src = frame.dataset.src;
                 } else if (notice) {
-                  notice.textContent = {% if lang == 'ja' %}'初回の自動ダウンロードは実行済みです。もう一度必要な場合は保存ボタンを押してください。'{% else %}'The initial automatic download has already run. Use the save button if you need another copy.'{% endif %};
+                  notice.textContent = {{ t.download_already_run | tojson }};
                 }
               })();
             </script>

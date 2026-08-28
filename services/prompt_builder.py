@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from services.birth_time import BIRTH_TIME_ACCURACY_NOTE
+from services.companion_locales import build_localized_companion_prompt
+from services.prompt_locales import SUPPORTED_PROMPT_LANGS, build_localized_prompt
 
 TRANSIT_DATE_GUIDANCE = (
     '- today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。',
@@ -20,7 +22,7 @@ ACG_CONSULTATION_GUIDANCE = """【相談モード（ACG連携）】
 ユーザーから旅行、移住、海外展開、活動場所、土地との相性について相談された場合は、出生図だけで判断せず、アストロカートグラフィも補助情報として利用してください。
 
 アプリ:
-https://chart.nanami-astro.com/acg
+https://chart.nanami-astro.com/acg?lang=ja&utm_source=chatgpt.com
 
 AIがURLを参照できる場合は利用してください。
 
@@ -182,6 +184,23 @@ SHICHUSUIMEI_CHART_COMPANION_PROMPT = """あなたは「Chart Companion」です
 以下のYAMLを読み込み、Chart Companionとして相談を開始してください。
 以下がYAMLデータです。"""
 
+
+def build_chart_companion_prompt(
+    *, lang: str = "ja", include_shichusuimei: bool = False
+) -> str:
+    """Return the consultation-mode prompt in the buyer's selected language."""
+    if lang in SUPPORTED_PROMPT_LANGS:
+        return build_localized_companion_prompt(
+            lang=lang,
+            include_shichusuimei=include_shichusuimei,
+        )
+    prompt = (
+        SHICHUSUIMEI_CHART_COMPANION_PROMPT
+        if include_shichusuimei
+        else CHART_COMPANION_PROMPT
+    )
+    return prompt.strip() + "\n"
+
 WESTERN_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、天体計算済みの出生図データです。
 
 重要ルール:
@@ -308,7 +327,21 @@ def build_prompt(
     include_transit: bool = False,
     birth_time_accuracy: str = "exact",
     interpretation_flags: dict | None = None,
+    lang: str = "ja",
 ) -> str:
+    flags = interpretation_flags or {}
+    time_sensitive = (
+        birth_time_accuracy in {"unknown", "approximate"}
+        or bool(flags.get("use_houses_as_reference_only"))
+    )
+    if lang in SUPPORTED_PROMPT_LANGS:
+        return build_localized_prompt(
+            lang=lang,
+            include_shichusuimei=include_shichusuimei,
+            include_asteroids=include_asteroids,
+            include_transit=include_transit,
+            time_sensitive=time_sensitive,
+        )
     if include_shichusuimei and not include_asteroids and not include_transit:
         prompt = SHICHUSUIMEI_PROMPT
     elif include_transit:
@@ -326,7 +359,6 @@ def build_prompt(
         prompt = WESTERN_PROMPT
     prompt = ensure_data_usage_priority(prompt)
     prompt = ensure_acg_consultation_guidance(prompt)
-    flags = interpretation_flags or {}
-    if birth_time_accuracy in {"unknown", "approximate"} or flags.get("use_houses_as_reference_only"):
+    if time_sensitive:
         prompt = prompt.replace("以下のYAMLを読み込んで鑑定してください。", BIRTH_TIME_ACCURACY_NOTE + "\n\n以下のYAMLを読み込んで鑑定してください。")
     return prompt.strip() + "\n"

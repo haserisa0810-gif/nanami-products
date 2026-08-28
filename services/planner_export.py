@@ -18,7 +18,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Reuse the planner's own hint dictionaries so callers can check compatibility.
-SUPPORTED_LANGS = ("en", "ja")
+SUPPORTED_LANGS = ("en", "es", "de", "ja")
 
 
 class PlannerGenerationError(RuntimeError):
@@ -32,6 +32,7 @@ def render_personal_planner(
     months: int = 12,
     out_path: Path | None = None,
     chart_url: str | None = None,
+    holiday_country: str | None = None,
     timeout: int = 900,
 ) -> Path:
     """Render a personal planner PDF from a nanami-products YAML string.
@@ -66,6 +67,8 @@ def render_personal_planner(
     ]
     if chart_url:
         cmd.extend(["--chart-url", chart_url])
+    if holiday_country:
+        cmd.extend(["--holiday-country", holiday_country.upper()])
     try:
         result = subprocess.run(
             cmd,

@@ -21,9 +21,21 @@ def _json(response) -> dict:
 
 
 def _stub_redemption_details(monkeypatch) -> None:
-    monkeypatch.setattr(routes.pg_store, "get_redemption_by_order_code", lambda _code: None)
-    monkeypatch.setattr(routes.pg_store, "get_redemption_reset_by_order_code", lambda _code: None)
-    monkeypatch.setattr(routes.pg_store, "list_charts_by_order_code", lambda _code: [])
+    monkeypatch.setattr(
+        routes.pg_store,
+        "get_redemption_by_order_code",
+        lambda _code, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        routes.pg_store,
+        "get_redemption_reset_by_order_code",
+        lambda _code, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        routes.pg_store,
+        "list_charts_by_order_code",
+        lambda _code, **_kwargs: [],
+    )
 
 
 def test_etsy_order_number_can_be_looked_up(monkeypatch) -> None:
@@ -34,7 +46,11 @@ def test_etsy_order_number_can_be_looked_up(monkeypatch) -> None:
         "product_type": "western_full",
         "payment_status": "paid",
     }
-    monkeypatch.setattr(routes.stores_mail_sync, "verify_order_no", lambda _code: ("ok", row))
+    monkeypatch.setattr(
+        routes.stores_mail_sync,
+        "verify_order_no",
+        lambda _code, **_kwargs: ("ok", row),
+    )
     _stub_redemption_details(monkeypatch)
 
     response = routes.internal_lookup_redemption(
@@ -50,22 +66,73 @@ def test_etsy_order_number_can_be_looked_up(monkeypatch) -> None:
     assert body["stores_order"]["provider"] == "etsy"
 
 
-def test_etsy_lookup_rejects_a_stores_order(monkeypatch) -> None:
+def test_payhip_lookup_scopes_order_and_saved_results_to_payhip(monkeypatch) -> None:
+    monkeypatch.setenv("API_KEY_ADMIN_TOKEN", "admin-secret")
+    row = {
+        "stores_order_no": "PAYHIP-SAME-ORDER",
+        "provider": "payhip",
+        "product_type": "western_full",
+        "payment_status": "paid",
+    }
+    calls: list[tuple[str, str, str]] = []
+
+    def verify_order(code: str, *, provider: str | None = None):
+        calls.append(("verify", code, str(provider)))
+        return "ok", row
+
+    monkeypatch.setattr(routes.stores_mail_sync, "verify_order_no", verify_order)
+    monkeypatch.setattr(
+        routes.pg_store,
+        "get_redemption_by_order_code",
+        lambda code, *, provider=None: calls.append(("redemption", code, str(provider))) or None,
+    )
+    monkeypatch.setattr(
+        routes.pg_store,
+        "get_redemption_reset_by_order_code",
+        lambda code, *, provider=None: calls.append(("reset", code, str(provider))) or None,
+    )
+    monkeypatch.setattr(
+        routes.pg_store,
+        "list_charts_by_order_code",
+        lambda code, *, provider=None, **_kwargs: calls.append(("charts", code, str(provider))) or [],
+    )
+
+    response = routes.internal_lookup_redemption(
+        _request(),
+        {"provider": "payhip", "order_reference": "PAYHIP-SAME-ORDER"},
+    )
+
+    assert response.status_code == 200
+    assert calls == [
+        ("verify", "PAYHIP-SAME-ORDER", "payhip"),
+        ("redemption", "PAYHIP-SAME-ORDER", "payhip"),
+        ("reset", "PAYHIP-SAME-ORDER", "payhip"),
+        ("charts", "PAYHIP-SAME-ORDER", "payhip"),
+    ]
+
+
+def test_etsy_lookup_does_not_match_a_stores_order(monkeypatch) -> None:
     monkeypatch.setenv("API_KEY_ADMIN_TOKEN", "admin-secret")
     row = {
         "stores_order_no": "4125350780",
         "provider": "stores",
         "product_type": "western_full",
     }
-    monkeypatch.setattr(routes.stores_mail_sync, "verify_order_no", lambda _code: ("ok", row))
+    def verify_order(_code: str, *, provider: str | None = None):
+        if provider == "etsy":
+            return "not_found", None
+        return "ok", row
+
+    monkeypatch.setattr(routes.stores_mail_sync, "verify_order_no", verify_order)
+    monkeypatch.setattr(routes, "_sync_stores_orders_for_lookup", lambda: {"ok": True})
 
     response = routes.internal_lookup_redemption(
         _request(),
         {"provider": "etsy", "order_reference": "4125350780"},
     )
 
-    assert response.status_code == 409
-    assert _json(response)["error"]["code"] == "PROVIDER_MISMATCH"
+    assert response.status_code == 404
+    assert _json(response)["error"]["code"] == "ORDER_NOT_FOUND"
 
 
 def test_coconala_username_and_product_resolve_to_internal_order(monkeypatch) -> None:
@@ -122,12 +189,13 @@ def test_coconala_reset_confirms_username_and_resets_internal_order(monkeypatch)
     monkeypatch.setattr(
         routes.pg_store,
         "reset_redemption_by_order_code",
-        lambda code: reset_codes.append(code) or {"reset": True},
+        lambda code, **kwargs: reset_codes.append(f"{kwargs.get('provider')}:{code}")
+        or {"reset": True},
     )
     monkeypatch.setattr(
         routes.stores_mail_sync,
         "verify_order_no",
-        lambda _code: ("ok", {**row, "payment_status": "reset_once"}),
+        lambda _code, **_kwargs: ("ok", {**row, "payment_status": "reset_once"}),
     )
 
     response = routes.internal_reset_redemption(
@@ -142,7 +210,7 @@ def test_coconala_reset_confirms_username_and_resets_internal_order(monkeypatch)
 
     assert response.status_code == 200
     body = _json(response)
-    assert reset_codes == [internal_code]
+    assert reset_codes == [f"coconala:{internal_code}"]
     assert body["provider"] == "coconala"
     assert body["order_reference"] == "nanami_user"
     assert body["order_code"] == internal_code
@@ -191,5 +259,6 @@ def test_admin_page_has_marketplace_controls() -> None:
 
     assert 'id="redemptionProviderInput"' in html
     assert '<option value="etsy">Etsy</option>' in html
+    assert '<option value="payhip">Payhip</option>' in html
     assert '<option value="coconala">ココナラ</option>' in html
     assert 'id="redemptionProductTypeInput"' in html
