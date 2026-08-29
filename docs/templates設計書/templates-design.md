@@ -13,6 +13,11 @@
 
 実装の正本は `routes.py` と各テンプレートである。本書は 2026-07-18 時点の実装を記述する。
 
+> 購入者向け画面の現行UI/UX、JA / EN / ES / DE、商品構成、受入テストは
+> `docs/ui-ux/README.md` と同ディレクトリの機能別仕様書を正とする。
+> 本書はテンプレート／ルート対応を調べるための技術資料であり、2026-07-18以降の
+> 商品・言語仕様を上書きしない。
+
 ## 2. テンプレート基盤
 
 ### 2.1 初期化と配置
@@ -87,7 +92,7 @@ flowchart LR
 
 | キー | 内容 |
 |---|---|
-| `lang` | `ja` または `en`。未指定は `ja` |
+| `lang` | `ja` / `en` / `es` / `de`。通常画面の未指定は `ja` |
 | `t` | `routes.py` の `I18N[lang]` |
 | `lang_urls` | 現在URLの日本語・英語切替先 |
 | `product_type` | 内部商品種別 |
@@ -198,7 +203,7 @@ flowchart LR
 
 | テンプレート | URL | データ源・特徴 |
 |---|---|---|
-| `acg_map.html` | `/acg` | `/api/acg/mundane`, `/api/acg/personal`; Leaflet/Turf; 日英対応 |
+| `acg_map.html` | `/acg` | `/api/acg/mundane`, `/api/acg/personal`; Leaflet/Turf; JA / EN / ES / DE対応 |
 | `acg_globe_demo.html` | `/acg/globe-demo` | 3D ACG仕組みデモ |
 | `astro_earth.html` | `/astro-earth` | `/api/acg/personal`, `/api/astro-earth/point`; 3D地球儀 |
 | `transit_flight.html` | `/transit-flight` | 固定サンプルまたはYAML/URL変換API |
@@ -265,7 +270,7 @@ Jinja2は表示層であり、管理者認証やトークン期限の判定を�
 3. POSTフォームなら `name` とFastAPIの `Form(...)` 引数を同時に確認する。
 4. 静的資産は `static/` に置き、`asset_url()` で参照する。
 5. エラー再表示で入力値が保持されることを確認する。
-6. 日英対応画面は両言語を確認する。
+6. 多言語対応画面はJA / EN / ES / DEを確認する。
 7. 商品別画面は類似テンプレートへの反映要否を確認する。
 
 ### 新しい画面を追加する

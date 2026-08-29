@@ -601,7 +601,7 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "すべてまとめてZIP保存", "download_ready_personal": "鑑定ページを発行しました。Personal Editionを含む全部入りZIPのダウンロードを開始します。開始しない場合は保存ボタンを押してください。",
         "download_ready": "鑑定ページを発行しました。保存用ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。",
         "download_already_run": "初回の自動ダウンロードは実行済みです。もう一度必要な場合は保存ボタンを押してください。",
-        "consultation_acg_guide": "旅行・移住・活動場所や土地との相性は、ACG（アストロカートグラフィ）も使って相談できます。保存済みのYAMLは自動で読み込まれます。",
+        "consultation_acg_guide": "旅行・移住・活動場所や土地との相性は、ACG（アストロカートグラフィ）も使って相談できます。元のYAMLは自動で読み込まれるため、AIにYAMLを再表示させる必要はありません。",
         "open_acg_with_data": "あなたのデータでACGを開く",
     },
     "en": {
@@ -618,7 +618,7 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "Download complete ZIP", "download_ready_personal": "Your chart page is ready. The complete ZIP, including Personal Edition, is starting. If it does not start, use the save button.",
         "download_ready": "Your chart page is ready. Your data ZIP download is starting. If it does not start, use the button above.",
         "download_already_run": "The initial automatic download has already run. Use the save button if you need another copy.",
-        "consultation_acg_guide": "For travel, relocation, activity locations, or your connection with a place, you can also use ACG (astrocartography). Your saved YAML loads automatically.",
+        "consultation_acg_guide": "For travel, relocation, activity locations, or your connection with a place, you can also use ACG (astrocartography). Your saved YAML loads automatically, so you do not need to ask the AI to reproduce it.",
         "open_acg_with_data": "Open ACG with your data",
     },
     "es": {
@@ -635,7 +635,7 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "Descargar ZIP completo", "download_ready_personal": "Tu página ya está lista. La descarga del ZIP completo, incluida la Edición Personal, está comenzando. Si no empieza, usa el botón de descarga.",
         "download_ready": "Tu página ya está lista y la descarga del ZIP está comenzando. Si no empieza, usa el botón superior.",
         "download_already_run": "La descarga automática inicial ya se ejecutó. Usa el botón de descarga si necesitas otra copia.",
-        "consultation_acg_guide": "Para consultas sobre viajes, mudanzas, lugares de actividad o afinidad con un lugar, también puedes usar ACG (astrocartografía). El YAML guardado se carga automáticamente.",
+        "consultation_acg_guide": "Para consultas sobre viajes, mudanzas, lugares de actividad o afinidad con un lugar, también puedes usar ACG (astrocartografía). Tu YAML guardado se carga automáticamente, por lo que no necesitas pedirle a la IA que lo vuelva a mostrar.",
         "open_acg_with_data": "Abrir ACG con tus datos",
     },
     "de": {
@@ -652,7 +652,7 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "Vollständiges ZIP herunterladen", "download_ready_personal": "Deine Horoskopseite ist bereit. Das vollständige ZIP einschließlich Personal Edition wird heruntergeladen. Falls es nicht startet, nutze die Download-Schaltfläche.",
         "download_ready": "Deine Horoskopseite ist bereit und der ZIP-Download beginnt. Falls er nicht startet, nutze die Schaltfläche oben.",
         "download_already_run": "Der erste automatische Download wurde bereits ausgeführt. Nutze die Download-Schaltfläche, wenn du eine weitere Kopie brauchst.",
-        "consultation_acg_guide": "Bei Fragen zu Reisen, Umzug, Tätigkeitsorten oder der Verbindung zu einem Ort kannst du auch ACG (Astrokartografie) nutzen. Deine gespeicherte YAML wird automatisch geladen.",
+        "consultation_acg_guide": "Bei Fragen zu Reisen, Umzug, Tätigkeitsorten oder der Verbindung zu einem Ort kannst du auch ACG (Astrokartografie) nutzen. Deine gespeicherte YAML wird automatisch geladen, sodass du die KI nicht bitten musst, sie erneut anzuzeigen.",
         "open_acg_with_data": "ACG mit deinen Daten öffnen",
     },
 }

@@ -159,6 +159,14 @@ class ChartYamlCopyTest(unittest.TestCase):
             with self.subTest(lang=lang):
                 self.assertEqual(I18N[lang]["open_acg_with_data"], label)
 
+    def test_consultation_acg_guide_keeps_the_prominent_previous_design(self) -> None:
+        style = self.template.split('.companion-acg-guide {', 1)[1].split('}', 1)[0]
+        self.assertIn("border: 1px solid rgba(31, 123, 144, .28);", style)
+        self.assertIn("background: rgba(31, 123, 144, .08);", style)
+        self.assertIn(".companion-acg-guide a { font-weight: 700; }", self.template)
+        self.assertNotIn('class="download-primary" href="{{ personal_acg_url }}"', self.template)
+        self.assertIn("AIにYAMLを再表示させる必要はありません", I18N["ja"]["consultation_acg_guide"])
+
     def test_all_ai_actions_use_shared_mode_aware_payload_builder(self) -> None:
         builder = self.template.split("function buildAiTextFromYaml", 1)[1].split(
             "function splitText", 1

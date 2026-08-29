@@ -198,14 +198,14 @@
     .companion-selected-mode { margin: 0 0 4px; font-weight: 700; }
     .companion-mode-description { margin: 0 0 14px; }
     .companion-acg-guide {
-      margin: 0 0 14px;
+      margin: 0 0 16px;
       padding: 12px 14px;
-      border: 1px solid var(--border2);
+      border: 1px solid rgba(31, 123, 144, .28);
       border-radius: 12px;
-      background: var(--gold-bg);
+      background: rgba(31, 123, 144, .08);
     }
-    .companion-acg-guide p { margin: 0 0 10px; }
-    .companion-acg-guide .download-primary { background: var(--card); }
+    .companion-acg-guide p { margin: 0 0 9px; }
+    .companion-acg-guide a { font-weight: 700; }
     .ai-data-box .mode-help {
       margin: 0 0 12px;
       color: var(--dim);
@@ -816,7 +816,7 @@
         {% if has_horoscope_svg and not birth_time_notice.show %}
         <div class="companion-acg-guide" id="companion-acg-guide" hidden>
           <p>{{ t["consultation_acg_guide"] }}</p>
-          <a class="download-primary" href="{{ personal_acg_url }}" target="_blank" rel="noopener">{{ t["open_acg_with_data"] }}</a>
+          <a href="{{ personal_acg_url }}" target="_blank" rel="noopener">{{ t["open_acg_with_data"] }}</a>
         </div>
         {% endif %}
         <div class="key-actions">
