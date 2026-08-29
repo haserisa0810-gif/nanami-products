@@ -601,6 +601,8 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "すべてまとめてZIP保存", "download_ready_personal": "鑑定ページを発行しました。Personal Editionを含む全部入りZIPのダウンロードを開始します。開始しない場合は保存ボタンを押してください。",
         "download_ready": "鑑定ページを発行しました。保存用ZIPのダウンロードを開始します。開始しない場合は上のボタンを押してください。",
         "download_already_run": "初回の自動ダウンロードは実行済みです。もう一度必要な場合は保存ボタンを押してください。",
+        "consultation_acg_guide": "旅行・移住・活動場所や土地との相性は、ACG（アストロカートグラフィ）も使って相談できます。保存済みのYAMLは自動で読み込まれます。",
+        "open_acg_with_data": "あなたのデータでACGを開く",
     },
     "en": {
         "birth_time_reissue": "If your birth time becomes known later, houses and ASC/MC must be recalculated. Please contact us to correct and reissue the chart.", "birth_time_reissue_link": "Contact us",
@@ -616,6 +618,8 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "Download complete ZIP", "download_ready_personal": "Your chart page is ready. The complete ZIP, including Personal Edition, is starting. If it does not start, use the save button.",
         "download_ready": "Your chart page is ready. Your data ZIP download is starting. If it does not start, use the button above.",
         "download_already_run": "The initial automatic download has already run. Use the save button if you need another copy.",
+        "consultation_acg_guide": "For travel, relocation, activity locations, or your connection with a place, you can also use ACG (astrocartography). Your saved YAML loads automatically.",
+        "open_acg_with_data": "Open ACG with your data",
     },
     "es": {
         "birth_time_reissue": "Si más adelante conoces la hora de nacimiento, será necesario recalcular las casas y el ASC/MC. Contacta con nosotros para corregir y volver a emitir la carta.", "birth_time_reissue_link": "Contactar",
@@ -631,6 +635,8 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "Descargar ZIP completo", "download_ready_personal": "Tu página ya está lista. La descarga del ZIP completo, incluida la Edición Personal, está comenzando. Si no empieza, usa el botón de descarga.",
         "download_ready": "Tu página ya está lista y la descarga del ZIP está comenzando. Si no empieza, usa el botón superior.",
         "download_already_run": "La descarga automática inicial ya se ejecutó. Usa el botón de descarga si necesitas otra copia.",
+        "consultation_acg_guide": "Para consultas sobre viajes, mudanzas, lugares de actividad o afinidad con un lugar, también puedes usar ACG (astrocartografía). El YAML guardado se carga automáticamente.",
+        "open_acg_with_data": "Abrir ACG con tus datos",
     },
     "de": {
         "birth_time_reissue": "Falls deine Geburtszeit später bekannt wird, müssen Häuser und AC/MC neu berechnet werden. Kontaktiere uns für eine Korrektur und Neuausgabe.", "birth_time_reissue_link": "Kontakt aufnehmen",
@@ -646,5 +652,7 @@ CHART_EXTRA_UI = {
         "download_complete_zip": "Vollständiges ZIP herunterladen", "download_ready_personal": "Deine Horoskopseite ist bereit. Das vollständige ZIP einschließlich Personal Edition wird heruntergeladen. Falls es nicht startet, nutze die Download-Schaltfläche.",
         "download_ready": "Deine Horoskopseite ist bereit und der ZIP-Download beginnt. Falls er nicht startet, nutze die Schaltfläche oben.",
         "download_already_run": "Der erste automatische Download wurde bereits ausgeführt. Nutze die Download-Schaltfläche, wenn du eine weitere Kopie brauchst.",
+        "consultation_acg_guide": "Bei Fragen zu Reisen, Umzug, Tätigkeitsorten oder der Verbindung zu einem Ort kannst du auch ACG (Astrokartografie) nutzen. Deine gespeicherte YAML wird automatisch geladen.",
+        "open_acg_with_data": "ACG mit deinen Daten öffnen",
     },
 }

@@ -197,6 +197,15 @@
     }
     .companion-selected-mode { margin: 0 0 4px; font-weight: 700; }
     .companion-mode-description { margin: 0 0 14px; }
+    .companion-acg-guide {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      background: var(--gold-bg);
+    }
+    .companion-acg-guide p { margin: 0 0 10px; }
+    .companion-acg-guide .download-primary { background: var(--card); }
     .ai-data-box .mode-help {
       margin: 0 0 12px;
       color: var(--dim);
@@ -804,6 +813,12 @@
         </div>
         <p class="companion-selected-mode"><span>{{ t["selected_mode"] }}</span><span id="companion-selected-label">{{ t["reading_mode"] }}</span></p>
         <p class="companion-mode-description" id="companion-mode-description">{{ t["reading_mode_desc"] }}</p>
+        {% if has_horoscope_svg and not birth_time_notice.show %}
+        <div class="companion-acg-guide" id="companion-acg-guide" hidden>
+          <p>{{ t["consultation_acg_guide"] }}</p>
+          <a class="download-primary" href="{{ personal_acg_url }}" target="_blank" rel="noopener">{{ t["open_acg_with_data"] }}</a>
+        </div>
+        {% endif %}
         <div class="key-actions">
           <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
           <p class="helper-note-inline">{{ t.helper_note }}</p>
@@ -1155,6 +1170,8 @@
     const COMBINED_PROMPT = {{ chart.prompt_text | tojson }};
     const SHARE_PROMPT = {{ share_prompt_text | tojson }};
     const CHART_COMPANION_PROMPT = {{ chart_companion_prompt | tojson }};
+    const PERSONAL_ACG_URL = new URL({{ personal_acg_url | tojson }}, window.location.href).href;
+    const GENERIC_ACG_URL_PATTERN = /https:\/\/chart\.nanami-astro\.com\/acg(?:\?[^\s]*)?/;
     const SHARE_YAML = {{ share_yaml_text | tojson }};
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
@@ -1256,7 +1273,9 @@
     }
 
     function getCompanionPrompt(outputMode = getSelectedAiMode()) {
-      if (companionMode === 'consultation') return CHART_COMPANION_PROMPT;
+      if (companionMode === 'consultation') {
+        return CHART_COMPANION_PROMPT.replace(GENERIC_ACG_URL_PATTERN, PERSONAL_ACG_URL);
+      }
       return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;
     }
 
@@ -1265,10 +1284,12 @@
       const isConsultation = companionMode === 'consultation';
       const readingButton = document.getElementById('companion-reading-mode');
       const consultationButton = document.getElementById('companion-consultation-mode');
+      const acgGuide = document.getElementById('companion-acg-guide');
       if (readingButton) readingButton.setAttribute('aria-pressed', isConsultation ? 'false' : 'true');
       if (consultationButton) consultationButton.setAttribute('aria-pressed', isConsultation ? 'true' : 'false');
       setText('companion-selected-label', isConsultation ? UI_TEXT.consultationMode : UI_TEXT.readingMode);
       setText('companion-mode-description', isConsultation ? UI_TEXT.consultationModeDesc : UI_TEXT.readingModeDesc);
+      if (acgGuide) acgGuide.hidden = !isConsultation;
       preparedAiTextFiles.paste = null;
       preparedAiTextFiles.asteroids = null;
       preparedAiTextFiles.full = null;

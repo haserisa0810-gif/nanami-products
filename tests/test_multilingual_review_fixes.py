@@ -293,6 +293,39 @@ def test_chart_page_keeps_language_in_download_links_and_referrer_header(monkeyp
     assert prompt.headers["referrer-policy"] == "no-referrer"
 
 
+@pytest.mark.parametrize(
+    ("lang", "label"),
+    [
+        ("ja", "あなたのデータでACGを開く"),
+        ("en", "Open ACG with your data"),
+        ("es", "Abrir ACG con tus datos"),
+        ("de", "ACG mit deinen Daten öffnen"),
+    ],
+)
+def test_full_chart_consultation_mode_links_to_acg_with_saved_yaml(
+    monkeypatch, lang: str, label: str,
+):
+    yaml_text = Path("tests/fixtures/yaml_v1_base.yaml").read_text(encoding="utf-8")
+    chart = {
+        "yaml_text": yaml_text,
+        "prompt_text": "prompt",
+        "options": {
+            "product_type": "western_full",
+            "product_locale": lang,
+            "western_natal": True,
+            "transit_31days_summary": True,
+        },
+    }
+    monkeypatch.setattr(routes, "_load_chart_or_404", lambda token, include_svgs=True: chart)
+
+    response = client.get(f"/chart/full-token?lang={lang}")
+
+    assert response.status_code == 200
+    assert label in response.text
+    assert f'href="/acg?lang={lang}&amp;load=%2Fchart%2Ffull-token.yaml"' in response.text
+    assert 'id="companion-acg-guide" hidden' in response.text
+
+
 def test_planner_holiday_selector_is_hidden_until_all_locales_are_ready(monkeypatch):
     chart = {
         "yaml_text": yaml.safe_dump({

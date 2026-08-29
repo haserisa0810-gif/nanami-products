@@ -196,5 +196,7 @@ def test_chart_page_shows_reissue_guidance_only_for_uncertain_time():
     assert "出生時刻が後から判明した場合" in unknown_response.text
     assert "時刻の修正・再発行" in unknown_response.text
     assert line_url in unknown_response.text
+    assert "あなたのデータでACGを開く" not in unknown_response.text
     assert exact_response.status_code == 200
     assert "出生時刻が後から判明した場合" not in exact_response.text
+    assert "あなたのデータでACGを開く" in exact_response.text
