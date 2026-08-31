@@ -127,6 +127,8 @@ class McpChartServiceTest(unittest.TestCase):
         self.assertIn("生年月日から再計算しないでください。", result["prompt"])
         self.assertIn("moon_timepoints", result["prompt"])
         self.assertIn("today.selected_date", result["prompt"])
+        self.assertIn("実データが存在する場合だけ", result["prompt"])
+        self.assertIn("不足の指摘や断り書きをせず", result["prompt"])
         self.assertIn("get_astrology_prompt", "\n".join(result["usage_order"]))
 
 
