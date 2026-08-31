@@ -798,7 +798,13 @@
         <section class="notice-box soft time-accuracy-card">
           <p class="mini-label">{{ t["time_accuracy_label"] }}</p>
           <strong>{{ birth_time_notice.short }}</strong>
+          {% if lang == "ja" %}
+          <p>
+            出生時刻が後から判明した場合、ハウス・ASC/MCを含む正確な再計算が必要です。時刻の修正・再発行（時刻のみ変更可）は、購入したショップからお問い合わせください。
+          </p>
+          {% else %}
           <p>{{ t.birth_time_reissue }}{% if birth_time_reissue_url %} <a href="{{ birth_time_reissue_url }}" target="_blank" rel="noopener">{{ t.birth_time_reissue_link }}</a>{% endif %}</p>
+          {% endif %}
         </section>
         {% endif %}
         <p class="hint">{% if chart_has_no_expiry %}{{ t.page_no_expiry }}{% else %}{{ t.page_expiry.format(expires_label=expires_label) }}{% endif %}</p>

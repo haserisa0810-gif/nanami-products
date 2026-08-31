@@ -98,6 +98,7 @@ class LongTermTransitAddonFormTest(unittest.TestCase):
         load_previous_chart.assert_called_once_with(
             "https://chart.nanami-astro.com/chart/abcdefghijklmnopqrstuvwxyz",
             "western_long_term_transits_addon",
+            "ja",
         )
 
 

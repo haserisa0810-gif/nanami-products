@@ -149,6 +149,11 @@ def _public_error_message(exc: Exception, *, fallback: str = "処理に失敗し
     return fallback
 
 
+def _buyer_save_error(exc: Exception, lang: str) -> str:
+    message = redeem_error(lang, "save_failed")
+    return _public_error_message(exc, fallback=message) if lang == "ja" else message
+
+
 def _mark_no_store(response: Response) -> Response:
     response.headers["Cache-Control"] = "no-store, max-age=0, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -1517,9 +1522,19 @@ def _product_label_for_lang(product_type: object, lang: str) -> str:
     product_key = str(product_type or "").strip()
     if lang == "ja":
         return _product_label(product_key or None)
+    addon_label = next(
+        (item["label"] for item in _localized_addon_options(lang) if item["value"] == product_key),
+        None,
+    )
+    if addon_label:
+        return addon_label
     if product_key in PRODUCT_CONFIG:
         return str(_localized_product(product_key, lang)["label"])
-    return product_key or "product"
+    return {
+        "en": "purchased product",
+        "es": "producto comprado",
+        "de": "gekauftes Produkt",
+    }.get(lang, "purchased product")
 
 
 def _provider_label_for_lang(provider: str | None, lang: str) -> str:
@@ -2561,6 +2576,8 @@ def _build_birth_location(
     pref_name = prefecture.strip()
     if not pref_name:
         raise ValueError(buyer_error(lang, "prefecture_required"))
+    if pref_name not in PREFECTURE_OPTIONS:
+        raise ValueError(buyer_error(lang, "prefecture_invalid"))
     if birth_place_overseas.strip() or birth_timezone.strip():
         raise ValueError(buyer_error(lang, "domestic_overseas_fields"))
     lat = _parse_optional_float(birth_lat, buyer_error(lang, "latitude"), lang)
@@ -3802,6 +3819,22 @@ def _museum_demo_context(request: Request) -> dict:
         "demo": True,
         "demo_default_lang": "en",
     }
+
+
+def _validate_exact_birth_time(value: str, lang: str = "ja") -> None:
+    """Validate only values the existing YAML calculation cannot consume.
+
+    Keep the historical acceptance of one-digit hours/minutes and additional
+    colon-separated fields because the calculation has always used the first
+    two components.
+    """
+    try:
+        parts = value.strip().split(":")
+        hour, minute = int(parts[0]), int(parts[1])
+    except (IndexError, TypeError, ValueError) as exc:
+        raise ValueError(buyer_error(lang, "exact_time_invalid")) from exc
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        raise ValueError(buyer_error(lang, "exact_time_invalid"))
 
 
 @app.get("/birth-chart-museum/demo", response_class=HTMLResponse)
@@ -5405,7 +5438,7 @@ def redeem_post(
             )
             if existing:
                 return existing
-            return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
+            return _form_err(_buyer_save_error(e, lang), status=503)
 
         if not ok:
             existing = _existing_chart_response(
@@ -5446,6 +5479,8 @@ def redeem_post(
             birth_time=birth_time,
             lang=lang,
         )
+        if str(birth_time_info["accuracy"]) == "exact":
+            _validate_exact_birth_time(str(birth_time_info["birth_time"]), lang)
     except Exception as e:
         return _form_err(str(e))
     if product_type == "acg_bundle" and str(birth_time_info["accuracy"]) != "exact":
@@ -5604,7 +5639,7 @@ def redeem_post(
         )
         if existing:
             return existing
-        return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
+        return _form_err(_buyer_save_error(e, lang), status=503)
 
     if not ok:
         existing = _existing_chart_response(
@@ -7323,7 +7358,7 @@ def _auto_resolve_addon_purchase(
     return "", "", redeem_error(lang, "addon_reference_not_found"), 400, []
 
 
-def _load_addon_base_yaml(base_yaml: str) -> dict:
+def _load_addon_base_yaml(base_yaml: str, lang: str = "ja") -> dict:
     raw_yaml = base_yaml.strip()
     fenced = re.search(r"```(?:yaml|yml)?\s*(.*?)```", raw_yaml, flags=re.I | re.S)
     if fenced:
@@ -7335,12 +7370,9 @@ def _load_addon_base_yaml(base_yaml: str) -> dict:
     try:
         doc = yaml.safe_load(raw_yaml) or {}
     except yaml.YAMLError as exc:
-        raise ValueError(
-            "YAMLとして読み込めません。"
-            "プロンプト文ではなく、version: から始まるYAML本文だけを貼り付けてください。"
-        ) from exc
+        raise ValueError(redeem_error(lang, "addon_yaml_unreadable")) from exc
     if not isinstance(doc, dict):
-        raise ValueError("YAMLの最上位はオブジェクト形式である必要があります。")
+        raise ValueError(redeem_error(lang, "addon_yaml_root_invalid"))
     return doc
 
 
@@ -7353,14 +7385,14 @@ def _float_or_none(value: object) -> float | None:
         return None
 
 
-def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
+def _addon_args_from_base_doc(doc: dict, lang: str = "ja") -> dict[str, object]:
     input_block = doc.get("input") or {}
     if not isinstance(input_block, dict):
-        raise ValueError("YAML内の input 情報が不正です。")
+        raise ValueError(redeem_error(lang, "addon_yaml_input_invalid"))
 
     birth_date = str(input_block.get("birth_date") or "").strip()
     if not birth_date:
-        raise ValueError("YAML内に input.birth_date がありません。")
+        raise ValueError(redeem_error(lang, "addon_yaml_birth_date_missing"))
 
     calculation_time = str(input_block.get("calculation_time") or "").strip()
     birth_time_value = input_block.get("birth_time")
@@ -7376,7 +7408,7 @@ def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
     if birth_place_kind == "overseas":
         prefecture = ""
     if not prefecture and (lat is None or lng is None):
-        raise ValueError("海外出生または都道府県なしのYAMLでは input.birth_lat / input.birth_lng が必要です。")
+        raise ValueError(redeem_error(lang, "addon_yaml_coordinates_missing"))
 
     birth_time_block = doc.get("birth_time") or {}
     if not isinstance(birth_time_block, dict):
@@ -7398,24 +7430,24 @@ def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
     }
 
 
-def _validate_addon_base_doc(doc: dict, addon_type: str) -> None:
+def _validate_addon_base_doc(doc: dict, addon_type: str, lang: str = "ja") -> None:
     systems = doc.get("systems") or {}
     if not isinstance(systems, dict):
-        raise ValueError("YAML内の systems 情報が不正です。")
+        raise ValueError(redeem_error(lang, "addon_yaml_systems_invalid"))
     western = systems.get("western") or {}
     shichu = systems.get("shichusuimei") or {}
 
     if addon_type in {"western_asteroids_addon", "western_31days_transit_addon", "western_long_term_transits_addon"}:
         if not isinstance(western, dict) or not isinstance(western.get("natal"), dict):
-            raise ValueError("western addon には western の基本版YAMLが必要です。")
+            raise ValueError(redeem_error(lang, "addon_yaml_western_required"))
         return
 
     if addon_type == "shichu_fortune_cycles_addon":
         if not isinstance(shichu, dict) or not isinstance(shichu.get("normalized_data"), dict):
-            raise ValueError("shichu addon には shichusuimei の基本版YAMLが必要です。")
+            raise ValueError(redeem_error(lang, "addon_yaml_shichu_required"))
         return
 
-    raise ValueError("未対応のaddon種別です。")
+    raise ValueError(redeem_error(lang, "addon_unsupported"))
 
 
 def _build_addon_yaml_from_base(
@@ -7423,9 +7455,10 @@ def _build_addon_yaml_from_base(
     addon_type: str,
     *,
     transit_start_date: datetime | None = None,
+    lang: str = "ja",
 ) -> str:
-    _validate_addon_base_doc(doc, addon_type)
-    args = _addon_args_from_base_doc(doc)
+    _validate_addon_base_doc(doc, addon_type, lang)
+    args = _addon_args_from_base_doc(doc, lang)
     if addon_type == "western_asteroids_addon":
         yaml_text, _prompt_text, _addon_doc = build_asteroid_addon_yaml(**args)
         return yaml_text
@@ -7455,9 +7488,9 @@ ASTEROID_ADDON_CHART_PROMPT = """あなたは西洋占星術の鑑定者です�
 """
 
 
-def _build_asteroid_addon_from_base(doc: dict) -> tuple[str, str, dict, str, str, dict]:
-    _validate_addon_base_doc(doc, "western_asteroids_addon")
-    args = _addon_args_from_base_doc(doc)
+def _build_asteroid_addon_from_base(doc: dict, lang: str = "ja") -> tuple[str, str, dict, str, str, dict]:
+    _validate_addon_base_doc(doc, "western_asteroids_addon", lang)
+    args = _addon_args_from_base_doc(doc, lang)
     addon_yaml_text, addon_prompt_text, addon_doc = build_asteroid_addon_yaml(**args)
 
     chart_doc = copy.deepcopy(doc)
@@ -7504,9 +7537,10 @@ def _build_transit_addon_from_base(
     extra_meta: dict[str, object] | None = None,
     extra_options: dict[str, object] | None = None,
     extra_root: dict[str, object] | None = None,
+    lang: str = "ja",
 ) -> tuple[str, str, dict, str, str, dict]:
-    _validate_addon_base_doc(doc, "western_31days_transit_addon")
-    args = _addon_args_from_base_doc(doc)
+    _validate_addon_base_doc(doc, "western_31days_transit_addon", lang)
+    args = _addon_args_from_base_doc(doc, lang)
     addon_yaml_text, addon_prompt_text, addon_doc = build_31days_transit_addon_yaml(
         **args,
         transit_start_date=transit_start_date,
@@ -7588,9 +7622,10 @@ def _build_long_term_transits_addon_from_base(
     doc: dict,
     *,
     transit_start_date: datetime,
+    lang: str = "ja",
 ) -> tuple[str, str, dict, str, str, dict]:
-    _validate_addon_base_doc(doc, "western_long_term_transits_addon")
-    args = _addon_args_from_base_doc(doc)
+    _validate_addon_base_doc(doc, "western_long_term_transits_addon", lang)
+    args = _addon_args_from_base_doc(doc, lang)
     _full_yaml_text, _prompt_text, full_doc = build_product_yaml(
         **args,
         include_asteroids=False,
@@ -7759,54 +7794,60 @@ def _shift_years(value: date, years: int) -> date:
         return value.replace(month=2, day=28, year=value.year + years)
 
 
-def _parse_transit_start_date(value: str) -> datetime:
+def _parse_transit_start_date(value: str, lang: str = "ja") -> datetime:
     raw = (value or "").strip()
     if not raw:
-        raise ValueError("開始日を入力してください。現在日から前後5年以内の日付を指定できます。")
+        raise ValueError(redeem_error(lang, "addon_start_date_required"))
     try:
         selected = date.fromisoformat(raw)
     except ValueError as exc:
-        raise ValueError("開始日の形式が不正です。YYYY-MM-DD で入力してください。") from exc
+        raise ValueError(redeem_error(lang, "addon_start_date_format")) from exc
 
     today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     min_date = _shift_years(today_jst, -5)
     max_date = _shift_years(today_jst, 5)
     if not (min_date <= selected <= max_date):
-        raise ValueError(
-            f"開始日は現在日から前後5年以内で指定してください。"
-            f"{min_date.isoformat()}〜{max_date.isoformat()} の範囲で選び直してください。"
-        )
+        raise ValueError(redeem_error(
+            lang,
+            "addon_start_date_range",
+            min_date=min_date.isoformat(),
+            max_date=max_date.isoformat(),
+        ))
     return datetime(selected.year, selected.month, selected.day, tzinfo=ZoneInfo("Asia/Tokyo"))
 
 
-def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str, addon_type: str = "western_31days_transit_addon") -> dict:
+def _load_addon_base_doc_from_previous_chart_url(
+    previous_chart_url: str,
+    addon_type: str = "western_31days_transit_addon",
+    lang: str = "ja",
+) -> dict:
     raw_url = (previous_chart_url or "").strip()
     try:
         parsed = urlparse(raw_url)
     except ValueError as exc:
-        raise ValueError("前回鑑定URLを読み取れません。鑑定結果ページのURLをそのまま貼り付けてください。") from exc
+        raise ValueError(redeem_error(lang, "addon_url_unreadable")) from exc
 
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("前回鑑定URLが不正です。https:// から始まる鑑定結果ページのURLを貼り付けてください。")
+        raise ValueError(redeem_error(lang, "addon_url_invalid"))
 
     token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\.yaml)?/?", parsed.path or "")
     if not token_match:
-        raise ValueError("前回鑑定URLが不正です。鑑定結果ページのURLをそのまま貼り付けてください。")
+        raise ValueError(redeem_error(lang, "addon_url_path_invalid"))
 
     token = token_match.group(1)
     chart = pg_store.get_chart(token, include_svgs=False)
     if not chart:
-        raise ValueError("前回鑑定URLが見つかりません。90日以内の有効な鑑定結果URLを入力してください。")
+        raise ValueError(redeem_error(lang, "addon_url_not_found"))
 
     expires_at = _chart_expiry(chart)
     if expires_at and datetime.now(timezone.utc) >= expires_at:
-        raise ValueError("前回鑑定URLの有効期限が切れています。基本版YAMLを貼り付けるか、90日以内の鑑定結果URLを入力してください。")
+        raise ValueError(redeem_error(lang, "addon_url_expired"))
 
-    doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""))
+    doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""), lang)
     try:
-        _validate_addon_base_doc(doc, addon_type)
+        _validate_addon_base_doc(doc, addon_type, lang)
     except ValueError as exc:
-        raise ValueError("このURLにはaddonに使えるネイタル情報がありません。基本版ホロスコープのYAMLまたはURLを入力してください。") from exc
+        raise ValueError(redeem_error(lang, "addon_url_incompatible")) from exc
     return doc
 
 
@@ -8537,7 +8578,9 @@ def addon_generate(
         "transit_start_date": transit_start_date,
     }
     if addon_type not in {item["value"] for item in ADDON_FORM_OPTIONS}:
-        return _addon_form_response(request, form=form, error="addon種別が不正です。", status_code=400)
+        return _addon_form_response(
+            request, form=form, error=redeem_error(lang, "addon_type_invalid"), status_code=400
+        )
     requested_provider = (order_provider or "").strip().lower()
     payhip_metadata: dict[str, str] = {}
     order_code_for_redeem = order_code
@@ -8606,13 +8649,13 @@ def addon_generate(
                 return _addon_form_response(
                     request,
                     form=form,
-                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    error=redeem_error(lang, "addon_base_required"),
                     status_code=400,
                 )
             doc = (
-                _load_addon_base_yaml(base_yaml)
+                _load_addon_base_yaml(base_yaml, lang)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
             )
             (
                 _addon_yaml_text,
@@ -8621,7 +8664,7 @@ def addon_generate(
                 chart_yaml_text,
                 chart_prompt_text,
                 chart_doc,
-            ) = _build_asteroid_addon_from_base(doc)
+            ) = _build_asteroid_addon_from_base(doc, lang)
             chart_payload = _asteroid_addon_chart_payload(
                 yaml_text=chart_yaml_text,
                 prompt_text=chart_prompt_text,
@@ -8647,15 +8690,15 @@ def addon_generate(
                 return _addon_form_response(
                     request,
                     form=form,
-                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    error=redeem_error(lang, "addon_base_required"),
                     status_code=400,
                 )
             doc = (
-                _load_addon_base_yaml(base_yaml)
+                _load_addon_base_yaml(base_yaml, lang)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
             )
-            start_dt = _parse_transit_start_date(transit_start_date)
+            start_dt = _parse_transit_start_date(transit_start_date, lang)
             (
                 result_yaml,
                 _addon_prompt_text,
@@ -8666,6 +8709,7 @@ def addon_generate(
             ) = _build_transit_addon_from_base(
                 doc,
                 transit_start_date=start_dt,
+                lang=lang,
             )
             chart_payload = _transit_addon_chart_payload(
                 yaml_text=chart_yaml_text,
@@ -8693,15 +8737,15 @@ def addon_generate(
                 return _addon_form_response(
                     request,
                     form=form,
-                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    error=redeem_error(lang, "addon_base_required"),
                     status_code=400,
                 )
             doc = (
-                _load_addon_base_yaml(base_yaml)
+                _load_addon_base_yaml(base_yaml, lang)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
             )
-            start_dt = _parse_transit_start_date(transit_start_date)
+            start_dt = _parse_transit_start_date(transit_start_date, lang)
             (
                 result_yaml,
                 _addon_prompt_text,
@@ -8712,6 +8756,7 @@ def addon_generate(
             ) = _build_long_term_transits_addon_from_base(
                 doc,
                 transit_start_date=start_dt,
+                lang=lang,
             )
             chart_payload = _long_term_transits_addon_chart_payload(
                 yaml_text=chart_yaml_text,
@@ -8735,9 +8780,11 @@ def addon_generate(
             )
             return RedirectResponse(_chart_redirect_url(token, lang=lang), status_code=303)
         if not base_yaml.strip():
-            return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
-        doc = _load_addon_base_yaml(base_yaml)
-        result_yaml = _build_addon_yaml_from_base(doc, addon_type)
+            return _addon_form_response(
+                request, form=form, error=redeem_error(lang, "addon_yaml_required"), status_code=400
+            )
+        doc = _load_addon_base_yaml(base_yaml, lang)
+        result_yaml = _build_addon_yaml_from_base(doc, addon_type, lang=lang)
         _redeem_addon_order_or_raise(
             order_code_for_redeem,
             order_provider_for_redeem,
