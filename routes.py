@@ -30,6 +30,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from services import pg_store, stores_mail_sync
+from services.chart_policy import CHART_EXPIRES_DAYS
 from services.personal_edition_delivery import (
     build_free_museum_zip,
     build_personal_acg_html,
@@ -582,7 +583,6 @@ PRODUCT_SLUGS = {
     "transit_yaml": "transit-yaml",
 }
 PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
-CHART_EXPIRES_DAYS = 90
 NO_EXPIRY_CHART_POLICY = "no_expiry"
 SUPPORTED_LANGS = {"ja", "en", "es", "de"}
 
@@ -753,7 +753,7 @@ I18N = {
         "place": "場所",
         "birth_place": "出生地",
         "unknown": "不明",
-        "page_expiry": "このページはURLを知っている人が開けます。有効期限は{expires_label}（発行から90日間）です。",
+        "page_expiry": "このページはURLを知っている人が開けます。有効期限は{expires_label}（通常は発行から365日間）です。",
         "page_no_expiry": "このページはURLを知っている人が開けます。有効期限はありません。",
         "steps_title": "3ステップで鑑定をはじめる",
         "step1_title": "データをAIに渡す",
@@ -923,7 +923,7 @@ I18N = {
         "addon_usage_items": [
             "STORESの購入確認メールに記載された注文番号を入力してください。",
             "小惑星追加は、基本版の出生データを土台に生成します。",
-            "基本版YAML または 90日以内の前回鑑定URLを入力してください。",
+            "基本版YAML または 有効な前回鑑定URLを入力してください。",
             "生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。",
             "YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。",
             "貼り付けたYAMLは保存しません。",
@@ -941,7 +941,7 @@ I18N = {
         "base_data_title": "基本データ入力",
         "base_data_hint_transit": "38日トランジット追加は、基本版の出生データを土台に生成します。",
         "base_data_hint_standard": "基本版YAMLまたは前回鑑定URLから出生情報を読み取り、追加部品YAMLだけを生成します。",
-        "previous_chart_url_label": "90日以内の前回鑑定URL",
+        "previous_chart_url_label": "有効な前回鑑定URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
         "previous_chart_url_hint": "前回の鑑定結果ページURLから、ネイタル情報を引き継げます。",
         "base_yaml_label": "YAML貼り付け欄",
@@ -1138,7 +1138,7 @@ I18N = {
         "place": "Place",
         "birth_place": "Place of birth",
         "unknown": "Unknown",
-        "page_expiry": "Anyone with this URL can open the page. It expires on {expires_label} (90 days after issue).",
+        "page_expiry": "Anyone with this URL can open the page. It expires on {expires_label} (normally 365 days after issue).",
         "page_no_expiry": "Anyone with this URL can open the page. It does not expire.",
         "steps_title": "Start in 3 steps",
         "step1_title": "Send the data to AI",
@@ -1308,7 +1308,7 @@ I18N = {
         "addon_usage_items": [
             "Enter the order number shown in the STORES purchase confirmation email.",
             "The asteroid add-on is generated on top of the basic birth data.",
-            "Enter either the basic YAML or a previous chart URL from the last 90 days.",
+            "Enter either the basic YAML or a valid previous chart URL.",
             "The generated add-on YAML is used together with the basic YAML when sending it to AI.",
             "You can use the YAML on its own or append it to a full AI-reading prompt.",
             "The pasted YAML is not saved.",
@@ -1326,7 +1326,7 @@ I18N = {
         "base_data_title": "Base data input",
         "base_data_hint_transit": "Transit add-ons are generated on top of the basic birth data.",
         "base_data_hint_standard": "The basic YAML or previous chart URL is used to read the birth data and generate only the add-on YAML.",
-        "previous_chart_url_label": "Previous chart URL within 90 days",
+        "previous_chart_url_label": "Valid previous chart URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
         "previous_chart_url_hint": "You can carry over natal information from the previous chart page URL.",
         "base_yaml_label": "Paste YAML here",
@@ -5815,15 +5815,22 @@ def _build_personal_planner_pdf(
     seconds). This is intentionally separate from Personal Edition ZIP creation
     so saving the ZIP never waits for the large planner PDF to render.
     """
-    # Only reuse the stored chart when it actually carries long-term transits;
-    # most charts store `transit_long_term: null`, which would render a planner
-    # with an empty personal layer instead of falling through to a fresh
-    # calculation from the birth inputs below.
+    # Refresh the transit period even when the chart already has long-term data.
+    # Reusing that stored period would freeze the annual update benefit at the
+    # first download. Keep the natal positions, and calculate this month's layer.
     try:
         detail_yaml = build_detail_astrology_yaml(chart["yaml_text"])
         if has_long_term_transits(yaml_text=detail_yaml):
+            planner_yaml = build_planner_yaml_from_natal_yaml(
+                chart_yaml=chart["yaml_text"],
+                lang=lang,
+                months=12,
+                transit_start_date=datetime.now(timezone.utc).replace(
+                    day=1, hour=0, minute=0, second=0, microsecond=0
+                ),
+            )
             return build_planner_pdf_from_yaml(
-                yaml_text=detail_yaml,
+                yaml_text=planner_yaml,
                 lang=lang,
                 months=12,
                 chart_url=chart_url,
@@ -6120,6 +6127,20 @@ def chart_download_zip(request: Request, token: str):
                 "es": ("URL privada de tu carta", "Esta URL tiene fecha de caducidad. Ábrela antes de que caduque.", "Los datos de este ZIP seguirán disponibles después de que caduque la URL."),
                 "de": ("Private Horoskop-URL", "Diese URL hat ein Ablaufdatum. Öffne sie bitte rechtzeitig.", "Die Horoskopdaten in dieser ZIP bleiben nach Ablauf der URL verfügbar."),
             }[lang]
+            if _chart_has_no_expiry(chart):
+                no_expiry_copy = {
+                    "ja": "この鑑定ページURLに有効期限はありません。",
+                    "en": "This private chart URL does not expire.",
+                    "es": "Esta URL privada de la carta no caduca.",
+                    "de": "Diese private Horoskop-URL läuft nicht ab.",
+                }[lang]
+                local_copy = {
+                    "ja": "このZIP内の鑑定データは、端末に保存して利用できます。",
+                    "en": "Save the chart files in this ZIP to your device for local use.",
+                    "es": "Guarda los datos de este ZIP en tu dispositivo para utilizarlos localmente.",
+                    "de": "Speichere die Horoskopdaten dieser ZIP zur lokalen Nutzung auf deinem Gerät.",
+                }[lang]
+                chart_url_copy = (chart_url_copy[0], no_expiry_copy, local_copy)
             zf.writestr(
                 "CHART-PAGE-URL.txt",
                 f"{chart_url_copy[0]}\n"
@@ -8955,7 +8976,7 @@ def _chart_expiry(chart: dict) -> datetime | None:
 
 def _chart_expiry_label(expires_at: datetime | None) -> str:
     if not expires_at:
-        return "発行から90日間"
+        return "発行から365日間"
     dt = expires_at.astimezone(ZoneInfo("Asia/Tokyo"))
     return f"{dt.year}年{dt.month}月{dt.day}日 {dt.hour:02d}:{dt.minute:02d}まで"
 
@@ -9091,7 +9112,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
                 "title": "nanami-products chart data archive",
                 "intro": "This ZIP keeps a local copy of your chart data.",
                 "expiry_none": "The private chart URL does not expire.",
-                "expiry": "The private chart URL is available for 90 days after issuance. The files in this ZIP remain usable afterwards.",
+                "expiry": "The private chart URL is normally available for 365 days after issuance. Check the page for its expiration date. The files in this ZIP remain usable afterwards.",
                 "files": "Main files",
                 "items": ["ai_paste.txt — recommended text to paste into an AI", "detail.yaml — compact chart data for ordinary readings", "full.yaml — complete data for storage and verification", "prompt.txt — instructions for interpreting the YAML"],
                 "tip": "For a quick reading, use ai_paste.txt. Use full.yaml when you need every calculated detail.",
@@ -9101,7 +9122,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
                 "title": "Archivo de datos de la carta de nanami-products",
                 "intro": "Este ZIP guarda una copia local de los datos de tu carta.",
                 "expiry_none": "La URL privada de la carta no caduca.",
-                "expiry": "La URL privada de la carta está disponible durante 90 días desde su emisión. Los archivos del ZIP seguirán siendo utilizables después.",
+                "expiry": "La URL privada de la carta suele estar disponible durante 365 días desde su emisión. Consulta la fecha de caducidad en la página. Los archivos del ZIP seguirán siendo utilizables después.",
                 "files": "Archivos principales",
                 "items": ["ai_paste.txt — texto recomendado para pegar en una IA", "detail.yaml — datos compactos para una lectura habitual", "full.yaml — datos completos para guardar y verificar", "prompt.txt — instrucciones para interpretar el YAML"],
                 "tip": "Para una lectura rápida, usa ai_paste.txt. Usa full.yaml cuando necesites todos los detalles calculados.",
@@ -9111,7 +9132,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
                 "title": "nanami-products – Archiv deiner Horoskopdaten",
                 "intro": "Diese ZIP-Datei enthält eine lokale Kopie deiner Horoskopdaten.",
                 "expiry_none": "Die private Horoskop-URL läuft nicht ab.",
-                "expiry": "Die private Horoskop-URL ist 90 Tage ab Ausstellung verfügbar. Die Dateien in dieser ZIP bleiben danach nutzbar.",
+                "expiry": "Die private Horoskop-URL ist normalerweise 365 Tage ab Ausstellung verfügbar. Das Ablaufdatum steht auf der Seite. Die Dateien in dieser ZIP bleiben danach nutzbar.",
                 "files": "Wichtige Dateien",
                 "items": ["ai_paste.txt — empfohlener Text zum Einfügen in eine KI", "detail.yaml — kompakte Daten für gewöhnliche Deutungen", "full.yaml — vollständige Daten zur Aufbewahrung und Prüfung", "prompt.txt — Anweisungen zur Deutung der YAML-Daten"],
                 "tip": "Für eine schnelle Deutung verwende ai_paste.txt. Nutze full.yaml, wenn du alle berechneten Details brauchst.",
@@ -9125,7 +9146,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
     expiry_line = (
         "共有URLに有効期限はありません。"
         if no_expiry
-        else f"共有URLの有効期限は発行から90日間です。{expires_label} を過ぎると、このデータページは開けなくなります。"
+        else f"共有URLの有効期限は通常、発行から365日間です。{expires_label} を過ぎると、このデータページは開けなくなります。"
     )
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)

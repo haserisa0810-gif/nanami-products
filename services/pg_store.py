@@ -12,6 +12,7 @@ from typing import Any, Generator
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 from psycopg2.pool import ThreadedConnectionPool
+from services.chart_policy import CHART_EXPIRES_DAYS
 
 SCHEMA = "nanami_products"
 _pool: ThreadedConnectionPool | None = None
@@ -197,7 +198,7 @@ def init_db() -> None:
             """)
             cur.execute(f"""
                 UPDATE {SCHEMA}.charts
-                SET expires_at = created_at + INTERVAL '90 days'
+                SET expires_at = created_at + INTERVAL '{CHART_EXPIRES_DAYS} days'
                 WHERE expires_at IS NULL
                   AND COALESCE(options->>'expires_policy', '') <> 'no_expiry'
             """)
@@ -472,7 +473,7 @@ def _insert_chart(
         if isinstance(options, dict) and options.get("expires_policy") == "no_expiry":
             placeholders.append("%s")
         else:
-            placeholders.append("COALESCE(%s, NOW() + INTERVAL '90 days')")
+            placeholders.append(f"COALESCE(%s, NOW() + INTERVAL '{CHART_EXPIRES_DAYS} days')")
         values.append(expires_at)
 
     conflict_clause = " ON CONFLICT (token) DO NOTHING" if on_conflict_do_nothing else ""

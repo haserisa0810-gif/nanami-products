@@ -6,6 +6,11 @@
 
 正規ファイルの配置は `docs/DISTRIBUTION_PDF_INDEX.md`、ACG成果物は `docs/ACG_DISTRIBUTION_ARTIFACTS.md` を参照する。
 
+2026-09-13のRETENTION-01 / PLANNER-01により、通常URLは元の発行日時から365日とする。
+発行済みの通常URLも対象とし、無期限と既存の長い明示期限は維持する。ローカル実装・対象検証済み、
+本番反映・既存DBの期限移行・配布PDFの再生成/外部差替えは未実施。
+[移行・復旧手順](../URL_EXPIRY_365_MIGRATION.md)を参照する。
+
 ## 2. 成果物の区別
 
 | 成果物 | 役割 |
@@ -29,6 +34,9 @@
   - ACG bundle: ACGと1年Plannerを含む。Museumを含まない。
 - 旧Activationコード方式を現行注文方式として案内しない。
 - 顧客情報、実注文番号、秘密情報を埋め込まない。
+- 通常の鑑定URLは発行から365日、無期限対象は期限なしと案内する。有効化コードの期限とは分ける。
+- Planner付き商品は、URL有効期間中は何度でも最新版を作れ、毎回作成月から12か月分を生成する。
+  保存したPDFは期間終了後も利用できる。PDF内のWebリンクはリンク先URLの期限に従う。
 
 ## 4. ZIPとREADME
 
@@ -72,6 +80,7 @@
 - Museum、休止中商品、旧方式の誤案内がない。
 - YAMLとプロンプトの文字コードがUTF-8で、OS間で文字化けしない。
 - 鑑定URLと自動読込URLが対象トークンを指す。
+- 通常URLの案内は365日。既存の長い期限は画面の具体的な日時を優先する。無期限URLではREADMEと`CHART-PAGE-URL.txt`の両方が期限なしと案内する。
 
 主なテスト: `tests/test_etsy_full_access_guides.py`, `tests/test_chart_download_zip.py`, `tests/test_personal_edition_activation.py`, `tests/test_personal_edition_macos_ci.py`, `tests/test_planner_delivery.py`。
 
