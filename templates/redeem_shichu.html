@@ -40,7 +40,6 @@
             {% else %}
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>STORES</option>
-              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>ココナラ（販売終了・過去購入のみ）</option>
             </select>
             {% endif %}
           </label>
@@ -90,8 +89,8 @@
             <select name="prefecture" required>
               <option value="">選択してください</option>
               {% for pref in prefectures %}
-                <option value="{{ pref }}"
-                  {% if form and form.prefecture == pref %}selected{% endif %}>{{ pref }}</option>
+                <option value="{{ pref.value }}"
+                  {% if form and form.prefecture == pref.value %}selected{% endif %}>{{ pref.label }}</option>
               {% endfor %}
             </select>
           </label>
