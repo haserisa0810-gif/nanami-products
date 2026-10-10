@@ -1,0 +1,25 @@
+﻿case,saved_annual_years,purpose,requested_years,bytes_utf8,characters,tokens_o200k_base,tokens_with_usage,whole_full_plus_annual_tokens,sending_scope_reduction_vs_whole_percent,expanded_saved_years_equal,is_purchase_authorization_check
+spring_exact,5,single_2027,[2027],104724,97394,23709,24023,43614,45.64,True,False
+spring_exact,5,four_2027_2030,"[2027, 2028, 2029, 2030]",123978,114800,29818,30132,43614,31.63,True,False
+spring_exact,10,single_2027,[2027],104835,97505,23773,24087,48341,50.82,True,False
+spring_exact,10,four_2027_2030,"[2027, 2028, 2029, 2030]",124089,114911,29882,30196,48341,38.18,True,False
+spring_exact,20,single_2027,[2027],105055,97725,23886,24200,56657,57.84,True,False
+spring_exact,20,four_2027_2030,"[2027, 2028, 2029, 2030]",124309,115131,29995,30309,56657,47.06,True,False
+spring_exact,20,cross_base_range,"[2034, 2035, 2036, 2037]",122866,113808,29555,29869,56657,47.84,True,False
+spring_exact,20,single_outside_base,[2036],105287,97943,23963,24277,56657,57.71,True,False
+winter_exact,5,single_2027,[2027],105716,98342,23987,24301,43507,44.87,True,False
+winter_exact,5,four_2027_2030,"[2027, 2028, 2029, 2030]",123938,114848,29865,30179,43507,31.36,True,False
+winter_exact,10,single_2027,[2027],105827,98453,24045,24359,47221,49.08,True,False
+winter_exact,10,four_2027_2030,"[2027, 2028, 2029, 2030]",124049,114959,29923,30237,47221,36.63,True,False
+winter_exact,20,single_2027,[2027],106047,98673,24163,24477,56177,56.99,True,False
+winter_exact,20,four_2027_2030,"[2027, 2028, 2029, 2030]",124269,115179,30041,30355,56177,46.52,True,False
+winter_exact,20,cross_base_range,"[2034, 2035, 2036, 2037]",124859,115691,30173,30487,56177,46.29,True,False
+winter_exact,20,single_outside_base,[2036],106022,98664,24176,24490,56177,56.96,True,False
+summer_unknown,5,single_2027,[2027],91203,84293,20858,21172,40064,47.94,True,False
+summer_unknown,5,four_2027_2030,"[2027, 2028, 2029, 2030]",108895,100297,26567,26881,40064,33.69,True,False
+summer_unknown,10,single_2027,[2027],91314,84404,20906,21220,43758,52.22,True,False
+summer_unknown,10,four_2027_2030,"[2027, 2028, 2029, 2030]",109006,100408,26615,26929,43758,39.18,True,False
+summer_unknown,20,single_2027,[2027],91534,84624,21033,21347,51626,59.26,True,False
+summer_unknown,20,four_2027_2030,"[2027, 2028, 2029, 2030]",109226,100628,26742,27056,51626,48.2,True,False
+summer_unknown,20,cross_base_range,"[2034, 2035, 2036, 2037]",107389,98923,26125,26439,51626,49.4,True,False
+summer_unknown,20,single_outside_base,[2036],92427,85439,21315,21629,51626,58.71,True,False

@@ -845,6 +845,9 @@
         <summary>{{ t.details }}</summary>
         <div class="detail-body">
           <div class="detail-section" id="full-version-details">
+            {% if has_shichusuimei_svg %}
+            <p><a class="download-link" href="/chart/{{ token | urlencode }}/year-selection?lang={{ lang }}">{% if lang == "en" %}Choose years for AI reading{% else %}鑑定したい年を選んでYAMLを取り出す{% endif %}</a></p>
+            {% endif %}
             <h3>{% if has_western_asteroids %}{{ t["full_details_title_asteroids"] }}{% else %}{{ t["full_details_title_transit"] }}{% endif %}</h3>
             <p class="hint">{{ t.details_intro }}</p>
             <div class="ai-mode-list" style="margin-top:12px">

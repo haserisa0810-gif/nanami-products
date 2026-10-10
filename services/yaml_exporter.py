@@ -10,7 +10,7 @@ import yaml
 
 from services.location import resolve_prefecture
 from services.western_calc import calc_western_from_payload, house_of
-from services.prompt_builder import build_prompt
+from services.prompt_builder import build_prompt, ensure_shichusuimei_structure_guidance
 
 SIGN_JA = {
     "Ari": "牡羊座", "Tau": "牡牛座", "Gem": "双子座", "Can": "蟹座", "Leo": "獅子座", "Vir": "乙女座",
@@ -643,7 +643,8 @@ def build_product_yaml(
     if include_shichusuimei:
         from services.shichusuimei_calc import calc_shichusuimei_from_payload
         systems["shichusuimei"] = calc_shichusuimei_from_payload(
-            {"year": y, "month": m, "day": d, "hour": hour, "minute": minute, "gender": gender},
+            {"year": y, "month": m, "day": d, "hour": hour if birth_time else None, "minute": minute, "gender": gender,
+             "birth_time_accuracy": birth_time_accuracy},
             tz_name=tz_name,
             day_change_at_23=day_change_at_23,
         )
@@ -1047,6 +1048,9 @@ SHICHU_FORTUNE_CYCLES_ADDON_PROMPT = """あなたは四柱推命の鑑定者で�
 """
 
 
+SHICHU_FORTUNE_CYCLES_ADDON_PROMPT = ensure_shichusuimei_structure_guidance(SHICHU_FORTUNE_CYCLES_ADDON_PROMPT)
+
+
 def build_shichu_fortune_cycles_addon_yaml(
     *,
     title: str | None,
@@ -1087,6 +1091,7 @@ def build_shichu_fortune_cycles_addon_yaml(
     normalized = shichu.get("normalized_data") or {}
     daiun = normalized.get("daiun") or {}
     annual_fortune = normalized.get("annual_fortune") or {}
+    annual_forecasts = normalized.get("annual_forecasts") or {}
     shichu_input = shichu.get("input") or {}
     assumptions = shichu_input.get("assumptions") or {}
     doc = {
@@ -1138,7 +1143,7 @@ def build_shichu_fortune_cycles_addon_yaml(
         "input": full_doc.get("input") or {},
         "usage_note": {
             "for_ai": "これは追加部品データです。四柱推命基本版YAMLと一緒にAIへ貼り付けて使ってください。",
-            "merge_instruction": "systems.shichusuimei.normalized_data.daiun と annual_fortune を、同じ出生情報で作成済みの四柱推命基本版YAMLへ追加する想定です。",
+            "merge_instruction": "systems.shichusuimei.normalized_data.daiun、annual_fortune、annual_forecasts を、同じ出生情報で作成済みの四柱推命基本版YAMLへ追加する想定です。",
             "not_included": "基本命式全体・通変星一覧・十二運一覧・神殺・五行バランス・鑑定本文は含みません。大運・流年追加用の計算済みデータです。",
             "reference_scope": "流年の十神・十二運を読むため、日主と計算前提だけを最小参照情報として含めています。",
         },
@@ -1148,6 +1153,7 @@ def build_shichu_fortune_cycles_addon_yaml(
                 "normalized_data": {
                     "daiun": daiun,
                     "annual_fortune": annual_fortune,
+                    "annual_forecasts": annual_forecasts,
                 },
                 "reference": {
                     "day_master": shichu.get("day_master"),

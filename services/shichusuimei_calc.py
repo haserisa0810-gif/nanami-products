@@ -19,6 +19,7 @@ from __future__ import annotations
 """
 
 from dataclasses import dataclass, asdict
+import calendar
 from datetime import datetime, timezone, timedelta
 import os
 from zoneinfo import ZoneInfo
@@ -151,6 +152,13 @@ BRANCH_HARMS = {
     frozenset(("卯", "辰")),
     frozenset(("申", "亥")),
     frozenset(("酉", "戌")),
+}
+
+# 六破（刑冲合害と独立して併記する）。巳申・寅亥は六合とも重なる。
+BRANCH_DESTRUCTIONS = {
+    frozenset(("子", "酉")), frozenset(("卯", "午")),
+    frozenset(("辰", "丑")), frozenset(("未", "戌")),
+    frozenset(("寅", "亥")), frozenset(("巳", "申")),
 }
 
 BRANCH_PUNISHMENTS = {
@@ -937,6 +945,24 @@ def kubo_for_pillars(p4: Pillars4) -> dict[str, Any]:
     }
 
 
+def _add_calendar_months(dt: datetime, months: int) -> datetime:
+    """Add calendar months directly to birth; clamp leap/end-of-month dates."""
+    year, month0 = divmod(dt.year * 12 + dt.month - 1 + months, 12)
+    month = month0 + 1
+    return dt.replace(year=year, month=month, day=min(dt.day, calendar.monthrange(year, month)[1]))
+
+
+def _calendar_age(birth: datetime, reference: datetime) -> float:
+    reference = reference.astimezone(birth.tzinfo)
+    years = reference.year - birth.year
+    anniversary = _add_calendar_months(birth, years * 12)
+    if reference < anniversary:
+        years -= 1
+        anniversary = _add_calendar_months(birth, years * 12)
+    next_anniversary = _add_calendar_months(birth, (years + 1) * 12)
+    return years + (reference - anniversary) / (next_anniversary - anniversary)
+
+
 def _calc_daiun(
     birth_dt: datetime,
     p4: Pillars4,
@@ -992,19 +1018,23 @@ def _calc_daiun(
 
     items = []
     age0 = years + months / 12.0
-    start_year = local_birth.year + years + (1 if months > 0 else 0)
     for i in range(10):
         k = KANSHI_60[(luck0 + step * i) % 60]
+        start = _add_calendar_months(local_birth, years * 12 + months + 120 * i)
+        end = _add_calendar_months(local_birth, years * 12 + months + 120 * (i + 1))
         items.append({
             "index": i + 1,
             "kanshi": k,
             "age_from": round(age0 + 10 * i, 2),
             "age_to": round(age0 + 10 * (i + 1), 2),
-            "approx_start_year": start_year + 10 * i,
+            "approx_start_year": start.year,
+            "approx_start_at": start.isoformat(),
+            "approx_end_at": end.isoformat(),
         })
 
     debug = {
         "gender": gender_norm,
+        "birth_local": local_birth.isoformat(),
         "year_stem": year_stem,
         "year_stem_yang": _is_yang_stem(year_stem),
         "direction_rule": "year_stem_yinyang_x_birth_gender",
@@ -1018,6 +1048,7 @@ def _calc_daiun(
         "start_age": start_age,
         "start_age_text": start_age_text,
         "items": items,
+        "timing_method": "birth_plus_approx_start_age_calendar_months",
         "debug": debug,
     }
 
@@ -1079,6 +1110,8 @@ def _branch_pair_relations(left: dict[str, str], right: dict[str, str]) -> list[
             "type_ja": "害",
             "detail": f"{b1}{b2}害",
         })
+    if pair in BRANCH_DESTRUCTIONS:
+        relations.append({"type": "destruction", "type_ja": "破", "detail": f"{b1}{b2}破"})
     return relations
 
 
@@ -1167,9 +1200,17 @@ def _interactions_for_items(items: list[dict[str, str]]) -> dict[str, Any]:
     }
 
 
-def _current_daiun_item(daiun: dict[str, Any], *, birth_year: int, current_year: int) -> dict[str, Any] | None:
+def _current_daiun_item(
+    daiun: dict[str, Any], *, birth_year: int, current_year: int, current_dt: datetime | None = None,
+) -> dict[str, Any] | None:
     age = current_year - birth_year
+    if current_dt is not None and daiun.get("debug", {}).get("birth_local"):
+        age = round(_calendar_age(datetime.fromisoformat(daiun["debug"]["birth_local"]), current_dt), 4)
     for item in daiun.get("items", []) or []:
+        if current_dt is not None and item.get("approx_start_at") and item.get("approx_end_at"):
+            if datetime.fromisoformat(item["approx_start_at"]) <= current_dt < datetime.fromisoformat(item["approx_end_at"]):
+                return {**item, "current_age_approx": age, "selection_basis": "approx_calendar_interval"}
+            continue
         if item.get("age_from") is None or item.get("age_to") is None:
             continue
         if float(item["age_from"]) <= age < float(item["age_to"]):
@@ -1184,6 +1225,7 @@ def _annual_fortune(
     birth_year: int,
     current_dt: datetime,
     tz_name: str,
+    include_hour: bool = True,
 ) -> dict[str, Any]:
     tz = ZoneInfo(tz_name)
     local_dt = current_dt.astimezone(tz)
@@ -1197,8 +1239,8 @@ def _annual_fortune(
         "stem": kanshi[0],
         "branch": kanshi[1],
     }
-    natal_items = _pillar_items(p4)
-    daiun_item = _current_daiun_item(daiun, birth_year=birth_year, current_year=current_year)
+    natal_items = [p for p in _pillar_items(p4) if include_hour or p["name"] != "hour"]
+    daiun_item = _current_daiun_item(daiun, birth_year=birth_year, current_year=current_year, current_dt=local_dt)
 
     relation_targets = natal_items[:]
     if daiun_item and daiun_item.get("kanshi"):
@@ -1222,6 +1264,7 @@ def _annual_fortune(
         "ten_god_to_day_master": ten_god(p4.day[0], kanshi[0]),
         "twelve_fortune_to_day_master": twelve_fortune(p4.day[0], kanshi[1]),
         "current_daiun": daiun_item,
+        "natal_time_basis": "four_pillars" if include_hour else "three_pillars_hour_excluded",
         "relations": {
             "branch_relations": branch_relations,
             "stem_relations": stem_relations,
@@ -1443,16 +1486,30 @@ def calc_shichusuimei_from_payload(
     *,
     tz_name: str = "Asia/Tokyo",
     day_change_at_23: bool = False,
+    as_of: datetime | None = None,
+    annual_years: int = 10,
 ) -> dict[str, Any]:
     """routes.py の payload から四柱推命結果を作る。
 
     返却は従来互換キーを残しつつ、StructurePayload 寄りの
     input / unknowns / normalized_data / structure_report を含める。
     """
-    raw_hour = payload.get("hour", 12)
+    if not isinstance(annual_years, int) or isinstance(annual_years, bool) or not 1 <= annual_years <= 20:
+        raise ValueError("annual_years must be an integer between 1 and 20")
+    current_dt = as_of or datetime.now(ZoneInfo(tz_name))
+    if current_dt.tzinfo is None:
+        raise ValueError("as_of must be timezone-aware")
+    current_dt = current_dt.astimezone(ZoneInfo(tz_name))
+    raw_hour = payload.get("hour")
     raw_minute = payload.get("minute", 0)
     hour = 12 if raw_hour in (None, "") else int(raw_hour)
     minute = 0 if raw_minute in (None, "") else int(raw_minute)
+    time_accuracy = payload.get("birth_time_accuracy") or ("exact" if raw_hour not in (None, "") else "unknown")
+    if raw_hour in (None, ""):
+        time_accuracy = "unknown"
+    elif time_accuracy == "auto":
+        time_accuracy = "exact"
+    time_reliable = time_accuracy == "exact" and raw_hour not in (None, "")
     dt = datetime(
         int(payload["year"]),
         int(payload["month"]),
@@ -1471,14 +1528,16 @@ def calc_shichusuimei_from_payload(
     strength = _calc_strength_score(p4)
     daiun = _calc_daiun(dt, p4, tz_name=tz_name, gender=payload.get("gender"))
     kubo = kubo_for_pillars(p4)
-    interactions = _interactions_for_items(_pillar_items(p4))
+    interactions = _interactions_for_items([p for p in _pillar_items(p4) if time_reliable or p["name"] != "hour"])
+    interactions["time_basis"] = "four_pillars" if time_reliable else "three_pillars_hour_excluded"
     shinsatsu = _shinsatsu_for_pillars(p4)
     annual_fortune = _annual_fortune(
         p4,
         daiun,
         birth_year=int(payload["year"]),
-        current_dt=datetime.now(ZoneInfo(tz_name)),
+        current_dt=current_dt,
         tz_name=tz_name,
+        include_hour=time_reliable,
     )
 
     hidden_all = {
@@ -1490,6 +1549,59 @@ def calc_shichusuimei_from_payload(
     hidden_main = {k: (v[0] if v else None) for k, v in hidden_all.items()}
     gender_norm = _parse_gender(payload.get("gender"))
     unknowns = _build_unknowns(payload, day_change_at_23=day_change_at_23)
+
+    from services.shichusuimei_structure import analyze_structure, analyze_luck, concurrent_luck_analysis
+    if not time_reliable:
+        unknowns.append("構造分析は時柱を除外。従来キーの時柱・五行・身強スコアは仮置き／推定時刻の参考値")
+    structural_analysis = analyze_structure(p4, time_reliable=time_reliable)
+    for item in daiun.get("items", []):
+        item["structural_analysis"] = analyze_luck(
+            p4, item["kanshi"], time_reliable=time_reliable, structural_analysis=structural_analysis,
+        )
+    current_daiun = annual_fortune.get("current_daiun") or {}
+    annual_fortune["structural_analysis"] = analyze_luck(
+        p4, annual_fortune["kanshi"], time_reliable=time_reliable,
+        other_luck=current_daiun.get("kanshi"), structural_analysis=structural_analysis,
+    )
+    forecasts = []
+    first_year = annual_fortune["effective_year"]
+    boundaries = {year: _lichun_utc_for_year(year, tz_name).astimezone(ZoneInfo(tz_name))
+                  for year in range(first_year, first_year + annual_years + 1)}
+    for year in range(first_year, first_year + annual_years):
+        annual_kanshi = _year_kanshi_from_effective_year(year)
+        year_start, year_end = boundaries[year], boundaries[year + 1]
+        # Intersect actual calendar periods; a rounded integer year-age shifts late births.
+        contexts = [item for item in daiun.get("items", [])
+                    if datetime.fromisoformat(item["approx_start_at"]) < year_end
+                    and datetime.fromisoformat(item["approx_end_at"]) > year_start]
+        forecasts.append({
+            "effective_year": year, "kanshi": annual_kanshi,
+            "year_boundary_rule": "lichun(315deg)",
+            "period_start": year_start.isoformat(), "period_end": year_end.isoformat(),
+            "daiun_selection_method": "approx_calendar_intervals_intersect_lichun_year",
+            "daiun_boundary_in_window": any(
+                year_start <= datetime.fromisoformat(item["approx_start_at"]) < year_end
+                or year_start < datetime.fromisoformat(item["approx_end_at"]) <= year_end for item in contexts
+            ),
+            "natal_analysis": analyze_luck(
+                p4, annual_kanshi, time_reliable=time_reliable, structural_analysis=structural_analysis,
+            ),
+            "daiun_contexts": [{
+                "index": item["index"], "kanshi": item["kanshi"],
+                "age_from": item["age_from"], "age_to": item["age_to"],
+                "overlap_start_approx": max(year_start, datetime.fromisoformat(item["approx_start_at"])).isoformat(),
+                "overlap_end_approx": min(year_end, datetime.fromisoformat(item["approx_end_at"])).isoformat(),
+                "analysis": concurrent_luck_analysis(analyze_luck(
+                    p4, annual_kanshi, time_reliable=time_reliable,
+                    other_luck=item["kanshi"], structural_analysis=structural_analysis,
+                )),
+            } for item in contexts],
+        })
+    annual_forecasts = {
+        "start_effective_year": annual_fortune["effective_year"], "years": annual_years,
+        "items": forecasts,
+        "note": "流年は立春から翌立春まで。大運は出生日時に近似起運年齢の年月を加えた期間で対応付け。交運日時は近似であり確定しない",
+    }
 
     normalized_data = {
         "pillars": {
@@ -1514,7 +1626,17 @@ def calc_shichusuimei_from_payload(
         "interactions": interactions,
         "annual_fortune": annual_fortune,
         "shinsatsu": shinsatsu,
+        "structural_analysis": structural_analysis,
+        "annual_forecasts": annual_forecasts,
     }
+    if not time_reliable:
+        normalized_data["time_sensitive_reference"] = {
+            "birth_time_accuracy": time_accuracy, "assumed_time": f"{hour:02d}:{minute:02d}",
+            "valid_for_assertive_interpretation": False,
+            "reference_only_metrics": ["five_elements", "features.strength", "structure_report.strength_index", "structure_report.support_signals"],
+            "hour_reference_only_sections": ["pillars.hour", "hidden_stems.hour", "ten_gods.hidden_stems.hour", "ten_gods.pillars.hour", "twelve_fortune.hour", "kubo", "shinsatsu"],
+            "note": "時柱を含む旧集計は参考値。原局・流年の関係と新しい構造分析は時柱を除外",
+        }
 
     structure_report = _build_structure_report(
         p4=p4,
@@ -1529,8 +1651,8 @@ def calc_shichusuimei_from_payload(
         "module": "shichusuimei",
         "system": "shichusuimei",
         "ephemeris": ephemeris_debug_info(),
-        "engine_version": "0.3.0",
-        "generated_at": datetime.now(ZoneInfo(tz_name)).isoformat(),
+        "engine_version": "0.4.0",
+        "generated_at": current_dt.isoformat(),
         "input": {
             "raw": {
                 "year": int(payload["year"]),
@@ -1550,6 +1672,8 @@ def calc_shichusuimei_from_payload(
                 "year_boundary_rule": "lichun(315deg)",
                 "month_boundary_rule": "solar_terms(315deg+30deg_step)",
                 "daiun_start_mode": "approx_days_to_years",
+                "birth_time_accuracy": time_accuracy,
+                "structural_time_basis": structural_analysis["methodology"]["time_basis"],
             },
         },
         "unknowns": unknowns,

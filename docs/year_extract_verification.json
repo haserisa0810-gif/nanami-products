@@ -1,0 +1,16 @@
+{
+  "existing_files_checked": 2687,
+  "changed_existing_files": [],
+  "missing_existing_files": [],
+  "branch": "codex/neko-permanent-demo",
+  "tests_passed": 72,
+  "new_extraction_tests_passed": 35,
+  "test_seconds": 108.51,
+  "warnings": 123,
+  "only_new_files_added": true,
+  "extraction_comparison_measurement_engine_calls": false,
+  "external_ai_calls": false,
+  "production_access": false,
+  "committed": false,
+  "deployed": false
+}

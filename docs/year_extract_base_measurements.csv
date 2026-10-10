@@ -1,0 +1,33 @@
+﻿case,purpose,requested_years,bytes_utf8,characters,tokens_o200k_base,tokens_with_usage,sending_scope_token_reduction_percent
+spring_exact,complete,[],169154,158594,38000,38057,0.0
+spring_exact,basic,[],105801,98653,23277,23591,38.74
+spring_exact,single_2027,[2027],103148,96060,23016,23330,39.43
+spring_exact,four_2027_2030,"[2027, 2028, 2029, 2030]",120707,112477,27971,28285,26.39
+spring_exact,nonconsecutive,"[2027, 2030, 2033]",115890,107962,26637,26951,29.9
+spring_exact,transition_year,[2033],105787,98631,23724,24038,37.57
+winter_exact,complete,[],166035,155707,37447,37504,0.0
+winter_exact,basic,[],106888,99696,23562,23876,37.08
+winter_exact,single_2027,[2027],105387,98217,23608,23922,36.96
+winter_exact,four_2027_2030,"[2027, 2028, 2029, 2030]",122202,113946,28403,28717,24.15
+winter_exact,nonconsecutive,"[2027, 2030, 2033]",117191,109263,26991,27305,27.92
+winter_exact,transition_year,[2030],105025,97917,23573,23887,37.05
+summer_unknown,complete,[],152645,142627,34599,34656,0.0
+summer_unknown,basic,[],93878,87004,20902,21216,39.59
+summer_unknown,single_2027,[2027],89975,83273,20351,20665,41.18
+summer_unknown,four_2027_2030,"[2027, 2028, 2029, 2030]",108146,100282,25434,25748,26.49
+summer_unknown,nonconsecutive,"[2027, 2030, 2033]",100996,93502,23549,23863,31.94
+summer_unknown,transition_year,[2030],93253,86367,21205,21519,38.71
+daiun_boundary,complete,[],165633,155177,37329,37386,0.0
+daiun_boundary,basic,[],104844,97718,23105,23419,38.1
+daiun_boundary,single_2027,[2027],103120,96034,23001,23315,38.38
+daiun_boundary,transition_year,[2023],103917,96825,23253,23567,37.71
+lichun_before,complete,[],171862,161276,38524,38581,0.0
+lichun_before,basic,[],108638,101422,23798,24112,38.23
+lichun_before,single_2027,[2027],103154,96068,23007,23321,40.28
+lichun_before,transition_year,[2033],105793,98639,23715,24029,38.44
+lichun_after,complete,[],169159,158601,38000,38057,0.0
+lichun_after,basic,[],105806,98660,23271,23585,38.76
+lichun_after,single_2027,[2027],103153,96067,23010,23324,39.45
+lichun_after,transition_year,[2033],105792,98638,23718,24032,37.58
+old_saved_format,complete,[],14433,13161,4255,4312,0.0
+old_saved_format,basic,[],17978,16446,4914,5228,-15.49

@@ -2,6 +2,25 @@ from __future__ import annotations
 
 from services.birth_time import BIRTH_TIME_ACCURACY_NOTE
 
+SHICHUSUIMEI_STRUCTURE_GUIDANCE = """【四柱推命構造分析の優先規則】
+- systems.shichusuimei.normalized_data.structural_analysis があれば、通根・透干・十神の配置と重みを単純個数より優先してください。日干自身は十神強度に含まれません。
+- pattern_analysis と useful_god_analysis は試験的な方式別候補です。confidence、reasons、conflicting_rules、methodology.limitations を参照し、格局・用神・喜忌を確定しないでください。五行の不足だけで用神を決めないでください。
+- ten_god_flow と element_flow の both_present は配置の併存です。食神・財星の個数や接続だけで、生財・制殺・金運の成立を断定しないでください。日主が財を扱う材料は day_master_support と財星の通根・透干を合わせて読んでください。
+- 合・三合の存在だけで合化したと扱わず、combination_screening の条件材料を参照してください。
+- annual_forecasts があれば対象年の natal_analysis と daiun_contexts を参照してください。流年は立春から翌立春まで、大運の期間は近似起運年齢を出生日時へ加えた近似です。daiun_boundary_in_window の年は各候補の overlap_start_approx / overlap_end_approx を参照し、正確な交運日時を断定しないでください。
+- 出生時刻不明・推定時は time_basis に従い三柱の構造分析を優先してください。仮置き時柱から構造を補完しないでください。旧五行集計・身強スコア・structure_report の全柱集計は参考値です。時柱に基づく蔵干・十二運・空亡・神殺の作用を確定根拠にしないでください。
+- 旧YAMLの normalized_data.interactions や annual_fortune.relations に仮置き時柱が関わる合・冲・三合等が残っていても、時刻不明・推定時は確定根拠にしないでください。
+- evidence_id が基本版に存在しない、または解決できない場合、その根拠を推測で補完しないでください。未収録の分析項目は自然に省略してください。"""
+
+
+def ensure_shichusuimei_structure_guidance(prompt: str) -> str:
+    if SHICHUSUIMEI_STRUCTURE_GUIDANCE in prompt:
+        return prompt
+    for marker in ("\n重要ルール:", "\n## 最重要ルール"):
+        if marker in prompt:
+            return prompt.replace(marker, f"\n\n{SHICHUSUIMEI_STRUCTURE_GUIDANCE}\n{marker}", 1)
+    return SHICHUSUIMEI_STRUCTURE_GUIDANCE + "\n\n" + prompt
+
 TRANSIT_DATE_GUIDANCE = (
     '- today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。',
     '- 「動きやすい日」「注意したい日」には、today.selected_date 以降の日付を優先して出力してください。',
@@ -182,6 +201,8 @@ SHICHUSUIMEI_CHART_COMPANION_PROMPT = """あなたは「Chart Companion」です
 以下のYAMLを読み込み、Chart Companionとして相談を開始してください。
 以下がYAMLデータです。"""
 
+SHICHUSUIMEI_CHART_COMPANION_PROMPT = ensure_shichusuimei_structure_guidance(SHICHUSUIMEI_CHART_COMPANION_PROMPT)
+
 WESTERN_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、天体計算済みの出生図データです。
 
 重要ルール:
@@ -252,7 +273,7 @@ SHICHUSUIMEI_PROMPT = """あなたは四柱推命の鑑定者です。以下のY
 - YAML内の計算結果を唯一の根拠として解釈してください。
 - systems.western が null の場合、西洋占星術の解釈はしないでください。
 - 断定しすぎず、傾向・使い方・活かし方として表現してください。
-- 日干、月令、五行、十神、十二運、身強身弱スコア、空亡（旬空）、大運、流年、刑冲合害、神殺のつながりから具体的に読んでください。
+- 出生時刻と time_sensitive_reference の前提を守り、日干、月令、信頼できる五行・十神・十二運・身強材料、空亡（旬空）、大運、流年、刑冲合害、神殺のつながりから具体的に読んでください。
 - 神殺は補助情報として扱い、命式全体・大運・流年より優先しすぎないでください。
 - 神殺データがYAMLにない場合は、神殺の項目は無理に作らずスキップしてください。
 - 流年は今年の時事性として扱い、命式・大運との関係を優先して読んでください。
@@ -271,6 +292,9 @@ SHICHUSUIMEI_PROMPT = """あなたは四柱推命の鑑定者です。以下のY
 
 以下のYAMLを読み込んで鑑定してください。
 """
+
+
+SHICHUSUIMEI_PROMPT = ensure_shichusuimei_structure_guidance(SHICHUSUIMEI_PROMPT)
 
 
 def ensure_transit_date_guidance(prompt: str) -> str:
@@ -324,6 +348,8 @@ def build_prompt(
         )
     else:
         prompt = WESTERN_PROMPT
+    if include_shichusuimei:
+        prompt = ensure_shichusuimei_structure_guidance(prompt)
     prompt = ensure_data_usage_priority(prompt)
     prompt = ensure_acg_consultation_guidance(prompt)
     flags = interpretation_flags or {}

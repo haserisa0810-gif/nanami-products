@@ -1,0 +1,2600 @@
+version: nanami-shichu-annual-prototype-v1
+meta:
+  schema_version: 0.1-prototype
+  product_type: shichu_annual_details_addon_prototype
+  data_role: addon
+  production_ready: false
+product:
+  type: shichu_annual_details_addon_prototype
+  price: null
+  sales_duration_decided: false
+systems:
+  shichusuimei:
+    annual_details:
+      period:
+        start_effective_year: 2026
+        end_effective_year: 2045
+        years: 20
+        period_start: '2026-02-04T05:02:09.089356+09:00'
+        period_end: '2046-02-04T01:31:06.906739+09:00'
+        period_end_exclusive: true
+      base_reference:
+        chart_id: chart_5e8e6148d49ddad7
+        full_yaml_required: true
+        day_master: 庚
+        pillars:
+          year: 庚午
+          month: 辛巳
+          day: 庚辰
+          hour: 庚辰
+      calculation:
+        engine: nanami-shichusuimei-annual-v1
+        base_engine_version: 0.4.0
+        year_boundary_rule: lichun(315deg)
+        daiun_calc_mode: approx_days_to_years
+        daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+        timezone: Asia/Tokyo
+        supported_years:
+          min: 1800
+          max: 2399
+        natal_time_basis: four_pillars
+      interpretation_flags:
+        calculation_only: true
+        automatic_good_bad_judgment: false
+        automatic_element_transformation: false
+      ai_usage:
+      - 同じ基本命式のFull YAMLと併用し、YAMLの計算結果を優先する。生年月日から再計算しない。
+      - systems.shichusuimei.annual_details.yearsから指定された年を正確に選ぶ。複数年比較では各年の根拠を示す。
+      - 対象期間外の流年データは推測で生成しない。必要な場合は追加期間のデータを求める。
+      - 出生の基本命式・大運・流年を区別する。共有の大運はdaiun_refでcatalogを参照する。
+      - 刑冲合害・空亡だけで吉凶を一律に決めず、合化や五行の強弱を個数から確定しない。
+      - 好ましい傾向に加え、注意点・リスク・複数の解釈を説明する。計算事実と占術的解釈を区別する。
+      - 交運日時は概算。年途中の複数大運と適用期間を参照し、境界付近を確定値にしない。
+      layout: shared
+      shared:
+        kubo_empty_branches:
+        - 申
+        - 酉
+        kubo_natal_hits: []
+        kubo_method: membership_in_natal_day_jun_empty_branches
+        five_elements_natal:
+          visible:
+            木: 0
+            火: 2
+            土: 2
+            金: 4
+            水: 0
+          with_hidden_stems:
+            木: 2
+            火: 4
+            土: 6
+            金: 5
+            水: 2
+          display_policy: visible
+        five_elements_natal_reference_only: false
+        five_elements_included_natal_reference:
+          visible:
+            木: 0
+            火: 2
+            土: 2
+            金: 4
+            水: 0
+          with_hidden_stems:
+            木: 2
+            火: 4
+            土: 6
+            金: 5
+            水: 2
+        five_elements_method: existing_visible_stem_plus_branch_and_additive_hidden_stem_counts
+        five_elements_note: 合算は参考個数。強弱・吉凶・合化の成立を示さない。時刻不明・推定の場合、合算から時柱を除外。
+        daiun_note: 起運・交運日時は既存の簡易換算による概算。境界付近の大運を確定値として扱わない。
+      daiun_catalog:
+        daiun_4:
+          index: 4
+          kanshi: 丁丑
+          age_from: 33.08
+          age_to: 43.08
+          approx_start_year: 2023
+          approx_start_at: '2023-06-15T08:30:00+09:00'
+          approx_end_at: '2033-06-15T08:30:00+09:00'
+          stem: 丁
+          branch: 丑
+          ten_god_to_day_master: 正官
+          twelve_fortune_to_day_master: 墓
+          boundary_provisional: true
+          natal_interactions:
+          - daiun_index: 4
+            left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            type: harm
+            type_ja: 害
+            detail: 午丑害
+          - daiun_index: 4
+            left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            type: destruction
+            type_ja: 破
+            detail: 辰丑破
+          - daiun_index: 4
+            left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            type: destruction
+            type_ja: 破
+            detail: 辰丑破
+          - daiun_index: 4
+            type: triad
+            type_ja: 半会
+            level: partial
+            group: 金局
+            branches:
+            - 丑
+            - 巳
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: daiun
+                stem: 丁
+                branch: 丑
+                kanshi: 丁丑
+            element_change_applied: false
+          five_elements:
+            daiun_index: 4
+            visible:
+              木: 0
+              火: 1
+              土: 1
+              金: 0
+              水: 0
+            with_hidden_stems:
+              木: 0
+              火: 1
+              土: 2
+              金: 1
+              水: 1
+          kubo_hit: false
+        daiun_5:
+          index: 5
+          kanshi: 丙子
+          age_from: 43.08
+          age_to: 53.08
+          approx_start_year: 2033
+          approx_start_at: '2033-06-15T08:30:00+09:00'
+          approx_end_at: '2043-06-15T08:30:00+09:00'
+          stem: 丙
+          branch: 子
+          ten_god_to_day_master: 偏官
+          twelve_fortune_to_day_master: 死
+          boundary_provisional: true
+          natal_interactions:
+          - daiun_index: 5
+            left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            type: clash
+            type_ja: 冲
+            detail: 午子冲
+          - daiun_index: 5
+            left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            type: stem_combination
+            type_ja: 干合
+            element: 水
+            detail: 辛丙合
+            element_change_applied: false
+          - daiun_index: 5
+            type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 子
+            - 辰
+            participant_sets:
+            - - name: day
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: daiun
+                stem: 丙
+                branch: 子
+                kanshi: 丙子
+            - - name: hour
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: daiun
+                stem: 丙
+                branch: 子
+                kanshi: 丙子
+            element_change_applied: false
+          five_elements:
+            daiun_index: 5
+            visible:
+              木: 0
+              火: 1
+              土: 0
+              金: 0
+              水: 1
+            with_hidden_stems:
+              木: 0
+              火: 1
+              土: 0
+              金: 0
+              水: 2
+          kubo_hit: false
+        daiun_6:
+          index: 6
+          kanshi: 乙亥
+          age_from: 53.08
+          age_to: 63.08
+          approx_start_year: 2043
+          approx_start_at: '2043-06-15T08:30:00+09:00'
+          approx_end_at: '2053-06-15T08:30:00+09:00'
+          stem: 乙
+          branch: 亥
+          ten_god_to_day_master: 正財
+          twelve_fortune_to_day_master: 病
+          boundary_provisional: true
+          natal_interactions:
+          - daiun_index: 6
+            left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: daiun
+              stem: 乙
+              branch: 亥
+              kanshi: 乙亥
+            type: clash
+            type_ja: 冲
+            detail: 巳亥冲
+          - daiun_index: 6
+            left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: daiun
+              stem: 乙
+              branch: 亥
+              kanshi: 乙亥
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - daiun_index: 6
+            left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: daiun
+              stem: 乙
+              branch: 亥
+              kanshi: 乙亥
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - daiun_index: 6
+            left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: daiun
+              stem: 乙
+              branch: 亥
+              kanshi: 乙亥
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          five_elements:
+            daiun_index: 6
+            visible:
+              木: 1
+              火: 0
+              土: 0
+              金: 0
+              水: 1
+            with_hidden_stems:
+              木: 2
+              火: 0
+              土: 0
+              金: 0
+              水: 2
+          kubo_hit: false
+      years:
+      - selected_year: 2026
+        annual:
+          effective_year: 2026
+          stem: 丙
+          branch: 午
+          kanshi: 丙午
+          period_start: '2026-02-04T05:02:09.089356+09:00'
+          period_end: '2027-02-04T10:46:19.211426+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 偏官
+          twelve_fortune_to_day_master: 沐浴
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2026-02-04T05:02:09.089356+09:00'
+            overlap_end_approx: '2027-02-04T10:46:19.211426+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 丙
+              branch: 午
+              kanshi: 丙午
+            type: self_punishment
+            type_ja: 自刑
+            detail: 午午
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 丙
+              branch: 午
+              kanshi: 丙午
+            type: stem_combination
+            type_ja: 干合
+            element: 水
+            detail: 辛丙合
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual:
+          - daiun_index: 4
+            left:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            right:
+              name: annual
+              stem: 丙
+              branch: 午
+              kanshi: 丙午
+            type: harm
+            type_ja: 害
+            detail: 丑午害
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 2
+            土: 0
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 3
+            土: 1
+            金: 0
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 5
+            土: 3
+            金: 4
+            水: 0
+          with_hidden_stems:
+            木: 2
+            火: 8
+            土: 9
+            金: 6
+            水: 3
+      - selected_year: 2027
+        annual:
+          effective_year: 2027
+          stem: 丁
+          branch: 未
+          kanshi: 丁未
+          period_start: '2027-02-04T10:46:19.211426+09:00'
+          period_end: '2028-02-04T16:31:14.816895+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 正官
+          twelve_fortune_to_day_master: 冠帯
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2027-02-04T10:46:19.211426+09:00'
+            overlap_end_approx: '2028-02-04T16:31:14.816895+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 丁
+              branch: 未
+              kanshi: 丁未
+            type: six_harmony
+            type_ja: 六合
+            element: 火
+            detail: 午未合
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual:
+          - daiun_index: 4
+            left:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            right:
+              name: annual
+              stem: 丁
+              branch: 未
+              kanshi: 丁未
+            type: clash
+            type_ja: 冲
+            detail: 丑未冲
+          - daiun_index: 4
+            type: three_punishment
+            type_ja: 三刑
+            level: partial
+            detail: 持勢の刑
+            branches:
+            - 丑
+            - 未
+            participant_sets:
+            - - name: daiun
+                stem: 丁
+                branch: 丑
+                kanshi: 丁丑
+              - name: annual
+                stem: 丁
+                branch: 未
+                kanshi: 丁未
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 1
+            土: 1
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 1
+            火: 2
+            土: 2
+            金: 0
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 4
+            土: 4
+            金: 4
+            水: 0
+          with_hidden_stems:
+            木: 3
+            火: 7
+            土: 10
+            金: 6
+            水: 3
+      - selected_year: 2028
+        annual:
+          effective_year: 2028
+          stem: 戊
+          branch: 申
+          kanshi: 戊申
+          period_start: '2028-02-04T16:31:14.816895+09:00'
+          period_end: '2029-02-03T22:20:47.277833+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 偏印
+          twelve_fortune_to_day_master: 建禄
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2028-02-04T16:31:14.816895+09:00'
+            overlap_end_approx: '2029-02-03T22:20:47.277833+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 戊
+              branch: 申
+              kanshi: 戊申
+            type: six_harmony
+            type_ja: 六合
+            element: 水
+            detail: 巳申合
+            element_change_applied: false
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 戊
+              branch: 申
+              kanshi: 戊申
+            type: destruction
+            type_ja: 破
+            detail: 巳申破
+          - type: three_punishment
+            type_ja: 三刑
+            level: partial
+            detail: 無恩の刑
+            branches:
+            - 巳
+            - 申
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 戊
+                branch: 申
+                kanshi: 戊申
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 辰
+            - 申
+            participant_sets:
+            - - name: day
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 戊
+                branch: 申
+                kanshi: 戊申
+            - - name: hour
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 戊
+                branch: 申
+                kanshi: 戊申
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: true
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 1
+            金: 1
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 0
+            土: 2
+            金: 2
+            水: 1
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 3
+            土: 4
+            金: 5
+            水: 0
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 10
+            金: 8
+            水: 4
+      - selected_year: 2029
+        annual:
+          effective_year: 2029
+          stem: 己
+          branch: 酉
+          kanshi: 己酉
+          period_start: '2029-02-03T22:20:47.277833+09:00'
+          period_end: '2030-02-04T04:08:28.996583+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 印綬
+          twelve_fortune_to_day_master: 帝旺
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2029-02-03T22:20:47.277833+09:00'
+            overlap_end_approx: '2030-02-04T04:08:28.996583+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 己
+              branch: 酉
+              kanshi: 己酉
+            type: six_harmony
+            type_ja: 六合
+            element: 金
+            detail: 辰酉合
+            element_change_applied: false
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 己
+              branch: 酉
+              kanshi: 己酉
+            type: six_harmony
+            type_ja: 六合
+            element: 金
+            detail: 辰酉合
+            element_change_applied: false
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 金局
+            branches:
+            - 巳
+            - 酉
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 己
+                branch: 酉
+                kanshi: 己酉
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual:
+          - daiun_index: 4
+            type: triad
+            type_ja: 半会
+            level: partial
+            group: 金局
+            branches:
+            - 丑
+            - 酉
+            participant_sets:
+            - - name: daiun
+                stem: 丁
+                branch: 丑
+                kanshi: 丁丑
+              - name: annual
+                stem: 己
+                branch: 酉
+                kanshi: 己酉
+            element_change_applied: false
+          combined:
+          - daiun_index: 4
+            type: triad
+            type_ja: 三合
+            level: full
+            group: 金局
+            branches:
+            - 丑
+            - 巳
+            - 酉
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: daiun
+                stem: 丁
+                branch: 丑
+                kanshi: 丁丑
+              - name: annual
+                stem: 己
+                branch: 酉
+                kanshi: 己酉
+            element_change_applied: false
+        kubo_annual_hit: true
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 1
+            金: 1
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 0
+            土: 1
+            金: 2
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 3
+            土: 4
+            金: 5
+            水: 0
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 9
+            金: 8
+            水: 3
+      - selected_year: 2030
+        annual:
+          effective_year: 2030
+          stem: 庚
+          branch: 戌
+          kanshi: 庚戌
+          period_start: '2030-02-04T04:08:28.996583+09:00'
+          period_end: '2031-02-04T09:58:17.937012+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 比肩
+          twelve_fortune_to_day_master: 衰
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2030-02-04T04:08:28.996583+09:00'
+            overlap_end_approx: '2031-02-04T09:58:17.937012+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 庚
+              branch: 戌
+              kanshi: 庚戌
+            type: clash
+            type_ja: 冲
+            detail: 辰戌冲
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 庚
+              branch: 戌
+              kanshi: 庚戌
+            type: clash
+            type_ja: 冲
+            detail: 辰戌冲
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 火局
+            branches:
+            - 午
+            - 戌
+            participant_sets:
+            - - name: year
+                stem: 庚
+                branch: 午
+                kanshi: 庚午
+              - name: annual
+                stem: 庚
+                branch: 戌
+                kanshi: 庚戌
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual:
+          - daiun_index: 4
+            type: three_punishment
+            type_ja: 三刑
+            level: partial
+            detail: 持勢の刑
+            branches:
+            - 丑
+            - 戌
+            participant_sets:
+            - - name: daiun
+                stem: 丁
+                branch: 丑
+                kanshi: 丁丑
+              - name: annual
+                stem: 庚
+                branch: 戌
+                kanshi: 庚戌
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 1
+            金: 1
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 1
+            土: 2
+            金: 2
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 3
+            土: 4
+            金: 5
+            水: 0
+          with_hidden_stems:
+            木: 2
+            火: 6
+            土: 10
+            金: 8
+            水: 3
+      - selected_year: 2031
+        annual:
+          effective_year: 2031
+          stem: 辛
+          branch: 亥
+          kanshi: 辛亥
+          period_start: '2031-02-04T09:58:17.937012+09:00'
+          period_end: '2032-02-04T15:48:56.975099+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 劫財
+          twelve_fortune_to_day_master: 病
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2031-02-04T09:58:17.937012+09:00'
+            overlap_end_approx: '2032-02-04T15:48:56.975099+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 辛
+              branch: 亥
+              kanshi: 辛亥
+            type: clash
+            type_ja: 冲
+            detail: 巳亥冲
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 0
+            金: 1
+            水: 1
+          with_hidden_stems:
+            木: 1
+            火: 0
+            土: 0
+            金: 1
+            水: 2
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 3
+            土: 3
+            金: 5
+            水: 1
+          with_hidden_stems:
+            木: 3
+            火: 5
+            土: 8
+            金: 7
+            水: 5
+      - selected_year: 2032
+        annual:
+          effective_year: 2032
+          stem: 壬
+          branch: 子
+          kanshi: 壬子
+          period_start: '2032-02-04T15:48:56.975099+09:00'
+          period_end: '2033-02-03T21:41:35.324708+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 食神
+          twelve_fortune_to_day_master: 死
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2032-02-04T15:48:56.975099+09:00'
+            overlap_end_approx: '2033-02-03T21:41:35.324708+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 壬
+              branch: 子
+              kanshi: 壬子
+            type: clash
+            type_ja: 冲
+            detail: 午子冲
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 子
+            - 辰
+            participant_sets:
+            - - name: day
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 壬
+                branch: 子
+                kanshi: 壬子
+            - - name: hour
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 壬
+                branch: 子
+                kanshi: 壬子
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          daiun_annual:
+          - daiun_index: 4
+            left:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            right:
+              name: annual
+              stem: 壬
+              branch: 子
+              kanshi: 壬子
+            type: six_harmony
+            type_ja: 六合
+            element: 土
+            detail: 丑子合
+            element_change_applied: false
+          - daiun_index: 4
+            left:
+              name: daiun
+              stem: 丁
+              branch: 丑
+              kanshi: 丁丑
+            right:
+              name: annual
+              stem: 壬
+              branch: 子
+              kanshi: 壬子
+            type: stem_combination
+            type_ja: 干合
+            element: 木
+            detail: 丁壬合
+            element_change_applied: false
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 0
+            金: 0
+            水: 2
+          with_hidden_stems:
+            木: 0
+            火: 0
+            土: 0
+            金: 0
+            水: 3
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 3
+            土: 3
+            金: 4
+            水: 2
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 8
+            金: 6
+            水: 6
+      - selected_year: 2033
+        annual:
+          effective_year: 2033
+          stem: 癸
+          branch: 丑
+          kanshi: 癸丑
+          period_start: '2033-02-03T21:41:35.324708+09:00'
+          period_end: '2034-02-04T03:41:10.275880+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 傷官
+          twelve_fortune_to_day_master: 墓
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_4
+            overlap_start_approx: '2033-02-03T21:41:35.324708+09:00'
+            overlap_end_approx: '2033-06-15T08:30:00+09:00'
+            boundary_in_selected_year: true
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2033-06-15T08:30:00+09:00'
+            overlap_end_approx: '2034-02-04T03:41:10.275880+09:00'
+            boundary_in_selected_year: true
+          boundary_in_selected_year: true
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 癸
+              branch: 丑
+              kanshi: 癸丑
+            type: harm
+            type_ja: 害
+            detail: 午丑害
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 癸
+              branch: 丑
+              kanshi: 癸丑
+            type: destruction
+            type_ja: 破
+            detail: 辰丑破
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 癸
+              branch: 丑
+              kanshi: 癸丑
+            type: destruction
+            type_ja: 破
+            detail: 辰丑破
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 金局
+            branches:
+            - 丑
+            - 巳
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 癸
+                branch: 丑
+                kanshi: 癸丑
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_4
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            left:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            right:
+              name: annual
+              stem: 癸
+              branch: 丑
+              kanshi: 癸丑
+            type: six_harmony
+            type_ja: 六合
+            element: 土
+            detail: 子丑合
+            element_change_applied: false
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 1
+            金: 0
+            水: 1
+          with_hidden_stems:
+            木: 0
+            火: 0
+            土: 2
+            金: 1
+            水: 2
+        five_elements_combined_reference:
+        - daiun_index: 4
+          visible:
+            木: 0
+            火: 3
+            土: 4
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 10
+            金: 7
+            水: 5
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 3
+            土: 3
+            金: 4
+            水: 2
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 8
+            金: 6
+            水: 6
+      - selected_year: 2034
+        annual:
+          effective_year: 2034
+          stem: 甲
+          branch: 寅
+          kanshi: 甲寅
+          period_start: '2034-02-04T03:41:10.275880+09:00'
+          period_end: '2035-02-04T09:31:34.152833+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 偏財
+          twelve_fortune_to_day_master: 絶
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2034-02-04T03:41:10.275880+09:00'
+            overlap_end_approx: '2035-02-04T09:31:34.152833+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 甲
+              branch: 寅
+              kanshi: 甲寅
+            type: harm
+            type_ja: 害
+            detail: 巳寅害
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 火局
+            branches:
+            - 寅
+            - 午
+            participant_sets:
+            - - name: year
+                stem: 庚
+                branch: 午
+                kanshi: 庚午
+              - name: annual
+                stem: 甲
+                branch: 寅
+                kanshi: 甲寅
+            element_change_applied: false
+          - type: three_punishment
+            type_ja: 三刑
+            level: partial
+            detail: 無恩の刑
+            branches:
+            - 寅
+            - 巳
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 甲
+                branch: 寅
+                kanshi: 甲寅
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 2
+            火: 0
+            土: 0
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 3
+            火: 1
+            土: 1
+            金: 0
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 2
+            火: 3
+            土: 2
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 5
+            火: 6
+            土: 7
+            金: 5
+            水: 4
+      - selected_year: 2035
+        annual:
+          effective_year: 2035
+          stem: 乙
+          branch: 卯
+          kanshi: 乙卯
+          period_start: '2035-02-04T09:31:34.152833+09:00'
+          period_end: '2036-02-04T15:19:54.763184+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 正財
+          twelve_fortune_to_day_master: 胎
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2035-02-04T09:31:34.152833+09:00'
+            overlap_end_approx: '2036-02-04T15:19:54.763184+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: destruction
+            type_ja: 破
+            detail: 午卯破
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: harm
+            type_ja: 害
+            detail: 辰卯害
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: harm
+            type_ja: 害
+            detail: 辰卯害
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            left:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            right:
+              name: annual
+              stem: 乙
+              branch: 卯
+              kanshi: 乙卯
+            type: punishment
+            type_ja: 刑
+            detail: 無礼の刑
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 2
+            火: 0
+            土: 0
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 3
+            火: 0
+            土: 0
+            金: 0
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 2
+            火: 3
+            土: 2
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 5
+            火: 5
+            土: 6
+            金: 5
+            水: 4
+      - selected_year: 2036
+        annual:
+          effective_year: 2036
+          stem: 丙
+          branch: 辰
+          kanshi: 丙辰
+          period_start: '2036-02-04T15:19:54.763184+09:00'
+          period_end: '2037-02-03T21:11:37.082520+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 偏官
+          twelve_fortune_to_day_master: 養
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2036-02-04T15:19:54.763184+09:00'
+            overlap_end_approx: '2037-02-03T21:11:37.082520+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 丙
+              branch: 辰
+              kanshi: 丙辰
+            type: self_punishment
+            type_ja: 自刑
+            detail: 辰辰
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 丙
+              branch: 辰
+              kanshi: 丙辰
+            type: self_punishment
+            type_ja: 自刑
+            detail: 辰辰
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 丙
+              branch: 辰
+              kanshi: 丙辰
+            type: stem_combination
+            type_ja: 干合
+            element: 水
+            detail: 辛丙合
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 子
+            - 辰
+            participant_sets:
+            - - name: daiun
+                stem: 丙
+                branch: 子
+                kanshi: 丙子
+              - name: annual
+                stem: 丙
+                branch: 辰
+                kanshi: 丙辰
+            element_change_applied: false
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 1
+            土: 1
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 1
+            火: 1
+            土: 2
+            金: 0
+            水: 1
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 4
+            土: 3
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 3
+            火: 6
+            土: 8
+            金: 5
+            水: 5
+      - selected_year: 2037
+        annual:
+          effective_year: 2037
+          stem: 丁
+          branch: 巳
+          kanshi: 丁巳
+          period_start: '2037-02-03T21:11:37.082520+09:00'
+          period_end: '2038-02-04T03:03:47.746583+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 正官
+          twelve_fortune_to_day_master: 長生
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2037-02-03T21:11:37.082520+09:00'
+            overlap_end_approx: '2038-02-04T03:03:47.746583+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual: []
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 2
+            土: 0
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 3
+            土: 1
+            金: 1
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 5
+            土: 2
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 2
+            火: 8
+            土: 7
+            金: 6
+            水: 4
+      - selected_year: 2038
+        annual:
+          effective_year: 2038
+          stem: 戊
+          branch: 午
+          kanshi: 戊午
+          period_start: '2038-02-04T03:03:47.746583+09:00'
+          period_end: '2039-02-04T08:52:55.158692+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 偏印
+          twelve_fortune_to_day_master: 沐浴
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2038-02-04T03:03:47.746583+09:00'
+            overlap_end_approx: '2039-02-04T08:52:55.158692+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 戊
+              branch: 午
+              kanshi: 戊午
+            type: self_punishment
+            type_ja: 自刑
+            detail: 午午
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            left:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            right:
+              name: annual
+              stem: 戊
+              branch: 午
+              kanshi: 戊午
+            type: clash
+            type_ja: 冲
+            detail: 子午冲
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 1
+            土: 1
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 2
+            土: 2
+            金: 0
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 4
+            土: 3
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 2
+            火: 7
+            土: 8
+            金: 5
+            水: 4
+      - selected_year: 2039
+        annual:
+          effective_year: 2039
+          stem: 己
+          branch: 未
+          kanshi: 己未
+          period_start: '2039-02-04T08:52:55.158692+09:00'
+          period_end: '2040-02-04T14:39:52.712403+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 印綬
+          twelve_fortune_to_day_master: 冠帯
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2039-02-04T08:52:55.158692+09:00'
+            overlap_end_approx: '2040-02-04T14:39:52.712403+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 己
+              branch: 未
+              kanshi: 己未
+            type: six_harmony
+            type_ja: 六合
+            element: 火
+            detail: 午未合
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            left:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            right:
+              name: annual
+              stem: 己
+              branch: 未
+              kanshi: 己未
+            type: harm
+            type_ja: 害
+            detail: 子未害
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 2
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 1
+            火: 1
+            土: 3
+            金: 0
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 3
+            土: 4
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 3
+            火: 6
+            土: 9
+            金: 5
+            水: 4
+      - selected_year: 2040
+        annual:
+          effective_year: 2040
+          stem: 庚
+          branch: 申
+          kanshi: 庚申
+          period_start: '2040-02-04T14:39:52.712403+09:00'
+          period_end: '2041-02-03T20:25:08.752442+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 比肩
+          twelve_fortune_to_day_master: 建禄
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2040-02-04T14:39:52.712403+09:00'
+            overlap_end_approx: '2041-02-03T20:25:08.752442+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 庚
+              branch: 申
+              kanshi: 庚申
+            type: six_harmony
+            type_ja: 六合
+            element: 水
+            detail: 巳申合
+            element_change_applied: false
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 庚
+              branch: 申
+              kanshi: 庚申
+            type: destruction
+            type_ja: 破
+            detail: 巳申破
+          - type: three_punishment
+            type_ja: 三刑
+            level: partial
+            detail: 無恩の刑
+            branches:
+            - 巳
+            - 申
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 庚
+                branch: 申
+                kanshi: 庚申
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 辰
+            - 申
+            participant_sets:
+            - - name: day
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 庚
+                branch: 申
+                kanshi: 庚申
+            - - name: hour
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 庚
+                branch: 申
+                kanshi: 庚申
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 子
+            - 申
+            participant_sets:
+            - - name: daiun
+                stem: 丙
+                branch: 子
+                kanshi: 丙子
+              - name: annual
+                stem: 庚
+                branch: 申
+                kanshi: 庚申
+            element_change_applied: false
+          combined:
+          - daiun_index: 5
+            type: triad
+            type_ja: 三合
+            level: full
+            group: 水局
+            branches:
+            - 子
+            - 辰
+            - 申
+            participant_sets:
+            - - name: day
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: daiun
+                stem: 丙
+                branch: 子
+                kanshi: 丙子
+              - name: annual
+                stem: 庚
+                branch: 申
+                kanshi: 庚申
+            - - name: hour
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: daiun
+                stem: 丙
+                branch: 子
+                kanshi: 丙子
+              - name: annual
+                stem: 庚
+                branch: 申
+                kanshi: 庚申
+            element_change_applied: false
+        kubo_annual_hit: true
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 0
+            金: 2
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 0
+            土: 1
+            金: 3
+            水: 1
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 3
+            土: 2
+            金: 6
+            水: 1
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 7
+            金: 8
+            水: 5
+      - selected_year: 2041
+        annual:
+          effective_year: 2041
+          stem: 辛
+          branch: 酉
+          kanshi: 辛酉
+          period_start: '2041-02-03T20:25:08.752442+09:00'
+          period_end: '2042-02-04T02:12:51.130371+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 劫財
+          twelve_fortune_to_day_master: 帝旺
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2041-02-03T20:25:08.752442+09:00'
+            overlap_end_approx: '2042-02-04T02:12:51.130371+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 辛
+              branch: 酉
+              kanshi: 辛酉
+            type: six_harmony
+            type_ja: 六合
+            element: 金
+            detail: 辰酉合
+            element_change_applied: false
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 辛
+              branch: 酉
+              kanshi: 辛酉
+            type: six_harmony
+            type_ja: 六合
+            element: 金
+            detail: 辰酉合
+            element_change_applied: false
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 金局
+            branches:
+            - 巳
+            - 酉
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 辛
+                branch: 酉
+                kanshi: 辛酉
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual:
+          - daiun_index: 5
+            left:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            right:
+              name: annual
+              stem: 辛
+              branch: 酉
+              kanshi: 辛酉
+            type: destruction
+            type_ja: 破
+            detail: 子酉破
+          - daiun_index: 5
+            left:
+              name: daiun
+              stem: 丙
+              branch: 子
+              kanshi: 丙子
+            right:
+              name: annual
+              stem: 辛
+              branch: 酉
+              kanshi: 辛酉
+            type: stem_combination
+            type_ja: 干合
+            element: 水
+            detail: 丙辛合
+            element_change_applied: false
+          combined: []
+        kubo_annual_hit: true
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 0
+            金: 2
+            水: 0
+          with_hidden_stems:
+            木: 0
+            火: 0
+            土: 0
+            金: 3
+            水: 0
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 3
+            土: 2
+            金: 6
+            水: 1
+          with_hidden_stems:
+            木: 2
+            火: 5
+            土: 6
+            金: 8
+            水: 4
+      - selected_year: 2042
+        annual:
+          effective_year: 2042
+          stem: 壬
+          branch: 戌
+          kanshi: 壬戌
+          period_start: '2042-02-04T02:12:51.130371+09:00'
+          period_end: '2043-02-04T07:58:46.721192+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 食神
+          twelve_fortune_to_day_master: 衰
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2042-02-04T02:12:51.130371+09:00'
+            overlap_end_approx: '2043-02-04T07:58:46.721192+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 壬
+              branch: 戌
+              kanshi: 壬戌
+            type: clash
+            type_ja: 冲
+            detail: 辰戌冲
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 壬
+              branch: 戌
+              kanshi: 壬戌
+            type: clash
+            type_ja: 冲
+            detail: 辰戌冲
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 火局
+            branches:
+            - 午
+            - 戌
+            participant_sets:
+            - - name: year
+                stem: 庚
+                branch: 午
+                kanshi: 庚午
+              - name: annual
+                stem: 壬
+                branch: 戌
+                kanshi: 壬戌
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_5
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 1
+            金: 0
+            水: 1
+          with_hidden_stems:
+            木: 0
+            火: 1
+            土: 2
+            金: 1
+            水: 1
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 3
+            土: 3
+            金: 4
+            水: 2
+          with_hidden_stems:
+            木: 2
+            火: 6
+            土: 8
+            金: 6
+            水: 5
+      - selected_year: 2043
+        annual:
+          effective_year: 2043
+          stem: 癸
+          branch: 亥
+          kanshi: 癸亥
+          period_start: '2043-02-04T07:58:46.721192+09:00'
+          period_end: '2044-02-04T13:44:17.922364+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 傷官
+          twelve_fortune_to_day_master: 病
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_5
+            overlap_start_approx: '2043-02-04T07:58:46.721192+09:00'
+            overlap_end_approx: '2043-06-15T08:30:00+09:00'
+            boundary_in_selected_year: true
+          - daiun_ref: daiun_6
+            overlap_start_approx: '2043-06-15T08:30:00+09:00'
+            overlap_end_approx: '2044-02-04T13:44:17.922364+09:00'
+            boundary_in_selected_year: true
+          boundary_in_selected_year: true
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: month
+              stem: 辛
+              branch: 巳
+              kanshi: 辛巳
+            right:
+              name: annual
+              stem: 癸
+              branch: 亥
+              kanshi: 癸亥
+            type: clash
+            type_ja: 冲
+            detail: 巳亥冲
+          natal_daiun_refs:
+          - daiun_5
+          - daiun_6
+          daiun_annual:
+          - daiun_index: 6
+            left:
+              name: daiun
+              stem: 乙
+              branch: 亥
+              kanshi: 乙亥
+            right:
+              name: annual
+              stem: 癸
+              branch: 亥
+              kanshi: 癸亥
+            type: self_punishment
+            type_ja: 自刑
+            detail: 亥亥
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 0
+            火: 0
+            土: 0
+            金: 0
+            水: 2
+          with_hidden_stems:
+            木: 1
+            火: 0
+            土: 0
+            金: 0
+            水: 3
+        five_elements_combined_reference:
+        - daiun_index: 5
+          visible:
+            木: 0
+            火: 3
+            土: 2
+            金: 4
+            水: 3
+          with_hidden_stems:
+            木: 3
+            火: 5
+            土: 6
+            金: 5
+            水: 7
+        - daiun_index: 6
+          visible:
+            木: 1
+            火: 2
+            土: 2
+            金: 4
+            水: 3
+          with_hidden_stems:
+            木: 5
+            火: 4
+            土: 6
+            金: 5
+            水: 7
+      - selected_year: 2044
+        annual:
+          effective_year: 2044
+          stem: 甲
+          branch: 子
+          kanshi: 甲子
+          period_start: '2044-02-04T13:44:17.922364+09:00'
+          period_end: '2045-02-03T19:36:18.698731+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 偏財
+          twelve_fortune_to_day_master: 死
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_6
+            overlap_start_approx: '2044-02-04T13:44:17.922364+09:00'
+            overlap_end_approx: '2045-02-03T19:36:18.698731+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 甲
+              branch: 子
+              kanshi: 甲子
+            type: clash
+            type_ja: 冲
+            detail: 午子冲
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 水局
+            branches:
+            - 子
+            - 辰
+            participant_sets:
+            - - name: day
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 甲
+                branch: 子
+                kanshi: 甲子
+            - - name: hour
+                stem: 庚
+                branch: 辰
+                kanshi: 庚辰
+              - name: annual
+                stem: 甲
+                branch: 子
+                kanshi: 甲子
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_6
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 1
+            火: 0
+            土: 0
+            金: 0
+            水: 1
+          with_hidden_stems:
+            木: 1
+            火: 0
+            土: 0
+            金: 0
+            水: 2
+        five_elements_combined_reference:
+        - daiun_index: 6
+          visible:
+            木: 2
+            火: 2
+            土: 2
+            金: 4
+            水: 2
+          with_hidden_stems:
+            木: 5
+            火: 4
+            土: 6
+            金: 5
+            水: 6
+      - selected_year: 2045
+        annual:
+          effective_year: 2045
+          stem: 乙
+          branch: 丑
+          kanshi: 乙丑
+          period_start: '2045-02-03T19:36:18.698731+09:00'
+          period_end: '2046-02-04T01:31:06.906739+09:00'
+          period_end_exclusive: true
+          ten_god_to_day_master: 正財
+          twelve_fortune_to_day_master: 墓
+        daiun:
+          status: overlapping_periods
+          contexts:
+          - daiun_ref: daiun_6
+            overlap_start_approx: '2045-02-03T19:36:18.698731+09:00'
+            overlap_end_approx: '2046-02-04T01:31:06.906739+09:00'
+            boundary_in_selected_year: false
+          boundary_in_selected_year: false
+          uncovered_before_first_daiun: null
+        interactions:
+          natal_annual:
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 乙
+              branch: 丑
+              kanshi: 乙丑
+            type: harm
+            type_ja: 害
+            detail: 午丑害
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 丑
+              kanshi: 乙丑
+            type: destruction
+            type_ja: 破
+            detail: 辰丑破
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 丑
+              kanshi: 乙丑
+            type: destruction
+            type_ja: 破
+            detail: 辰丑破
+          - left:
+              name: year
+              stem: 庚
+              branch: 午
+              kanshi: 庚午
+            right:
+              name: annual
+              stem: 乙
+              branch: 丑
+              kanshi: 乙丑
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - left:
+              name: day
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 丑
+              kanshi: 乙丑
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - left:
+              name: hour
+              stem: 庚
+              branch: 辰
+              kanshi: 庚辰
+            right:
+              name: annual
+              stem: 乙
+              branch: 丑
+              kanshi: 乙丑
+            type: stem_combination
+            type_ja: 干合
+            element: 金
+            detail: 庚乙合
+            element_change_applied: false
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 金局
+            branches:
+            - 丑
+            - 巳
+            participant_sets:
+            - - name: month
+                stem: 辛
+                branch: 巳
+                kanshi: 辛巳
+              - name: annual
+                stem: 乙
+                branch: 丑
+                kanshi: 乙丑
+            element_change_applied: false
+          natal_daiun_refs:
+          - daiun_6
+          daiun_annual: []
+          combined: []
+        kubo_annual_hit: false
+        five_elements_annual:
+          visible:
+            木: 1
+            火: 0
+            土: 1
+            金: 0
+            水: 0
+          with_hidden_stems:
+            木: 1
+            火: 0
+            土: 2
+            金: 1
+            水: 1
+        five_elements_combined_reference:
+        - daiun_index: 6
+          visible:
+            木: 2
+            火: 2
+            土: 3
+            金: 4
+            水: 1
+          with_hidden_stems:
+            木: 5
+            火: 4
+            土: 8
+            金: 6
+            水: 5

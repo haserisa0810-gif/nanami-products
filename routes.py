@@ -86,6 +86,9 @@ from services.shichu_chart import (
     render_shichusuimei_png_from_svg,
 )
 from services.svg_optimize import optimize_svg
+from services.shichusuimei_year_selection import (
+    YearSelectionError, build_year_selection, selection_info,
+)
 from services.transit_yaml import build_transit_only_yaml
 from services.yaml_exporter import (
     build_31days_transit_addon_yaml,
@@ -5187,6 +5190,43 @@ def redeem_post(
 
 
 # ─── チャートページ（ルート順に注意） ──────────────────────────────
+
+def _shichu_selection_chart(token: str) -> dict:
+    chart = _load_chart_or_404(token, include_svgs=False)
+    if _chart_product_type(chart.get("options") or {}) != "shichu":
+        raise HTTPException(status_code=404, detail="four pillars base chart required")
+    return chart
+
+
+@app.get("/chart/{token}/year-selection", response_class=HTMLResponse)
+def chart_year_selection(request: Request, token: str):
+    chart = _shichu_selection_chart(token)
+    try:
+        info = selection_info(chart["yaml_text"])
+    except YearSelectionError:
+        raise HTTPException(status_code=422, detail="四柱推命Fullの保存データを確認できません。")
+    lang = _resolve_lang(request)
+    response = templates.TemplateResponse("shichusuimei_year_selection.html", {
+        "request": request, "lang": lang, **info,
+        "chart_url": f"/chart/{quote(token, safe='')}?lang={lang}",
+        "extract_url": f"/chart/{quote(token, safe='')}/year-selection",
+        "original_url": f"/chart/{quote(token, safe='')}.yaml",
+    })
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return _mark_no_store(response)
+
+
+@app.post("/chart/{token}/year-selection")
+def chart_extract_years(token: str, payload: dict = Body(...)):
+    chart = _shichu_selection_chart(token)
+    try:
+        result = build_year_selection(chart["yaml_text"], payload)
+        response = JSONResponse(result)
+    except YearSelectionError as exc:
+        response = JSONResponse({"error": {"code": exc.code, "message": str(exc)}}, status_code=422)
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return _mark_no_store(response)
+
 
 @app.get("/chart/{token}.yaml", response_class=PlainTextResponse)
 def chart_yaml(token: str):
