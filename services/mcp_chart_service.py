@@ -11,11 +11,11 @@ from zoneinfo import ZoneInfo
 import yaml
 
 from services import pg_store
+from services.chart_policy import CHART_EXPIRES_DAYS
 from services.long_term_transit_yaml import has_long_term_transits
 
 ALLOWED_CHART_HOST = "chart.nanami-astro.com"
 CHART_ID_RE = re.compile(r"^[A-Za-z0-9_-]{5,128}$")
-CHART_EXPIRES_DAYS = 90
 SUPPORTED_SECTIONS = ("natal", "transit_31days", "long_term", "asteroid", "shichu", "indian")
 DEFAULT_MAX_YAML_BYTES = 4_000_000
 SUPPORTED_PROMPT_PURPOSES = ("today_fortune", "natal_with_transit")

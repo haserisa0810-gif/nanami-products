@@ -70,12 +70,12 @@ def _fake_cleanup_conn(rows: list[dict], now: datetime):
 
 
 class ChartExpiryTests(unittest.TestCase):
-    def test_chart_expiry_falls_back_to_created_at_plus_90_days(self) -> None:
+    def test_chart_expiry_falls_back_to_created_at_plus_365_days(self) -> None:
         created_at = datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc)
 
         expires_at = routes._chart_expiry({"created_at": created_at})
 
-        self.assertEqual(expires_at, created_at + timedelta(days=90))
+        self.assertEqual(expires_at, created_at + timedelta(days=365))
 
     def test_chart_expiry_allows_explicit_no_expiry_policy(self) -> None:
         created_at = datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc)

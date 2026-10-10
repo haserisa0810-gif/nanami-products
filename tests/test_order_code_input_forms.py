@@ -98,6 +98,54 @@ class AddonFormProviderLabelTest(unittest.TestCase):
         self.assertNotIn("STORES order number", body)
 
 
+class RedeemProviderOptionsTest(unittest.TestCase):
+    """販売終了のココナラを通常選択肢から外し、過去購入者の専用URLは維持する。"""
+
+    PATHS = ("/redeem/shichu", "/redeem/western-basic", "/redeem/western-full")
+
+    def test_default_provider_menu_excludes_coconala(self) -> None:
+        for path in self.PATHS:
+            with self.subTest(path=path):
+                response = client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertNotIn('<option value="coconala"', response.text)
+                self.assertIn('<option value="stores"', response.text)
+
+    def test_existing_coconala_link_stays_usable(self) -> None:
+        for path in self.PATHS:
+            with self.subTest(path=path):
+                response = client.get(f"{path}?provider=coconala")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('name="order_provider" id="order-provider" value="coconala"', response.text)
+
+
+class RedeemUiSmokeTest(unittest.TestCase):
+    """既定のpytest/CIで、購入者向け3画面の描画結果を確認する。"""
+
+    def test_prefecture_options_show_labels_not_internal_dicts(self) -> None:
+        cases = (
+            ("/redeem/shichu?lang=ja", "北海道"),
+            ("/redeem/western-basic?lang=ja", "北海道"),
+            ("/redeem/western-full?lang=ja", "北海道"),
+            ("/redeem/western-basic?lang=en", "Hokkaido"),
+            ("/redeem/western-full?lang=en", "Hokkaido"),
+        )
+        for url, label in cases:
+            with self.subTest(url=url):
+                response = client.get(url)
+                self.assertEqual(response.status_code, 200)
+                prefecture_select = re.search(
+                    r'<select[^>]*name="prefecture"[^>]*>(.*?)</select>',
+                    response.text,
+                    re.S,
+                )
+                self.assertIsNotNone(prefecture_select)
+                self.assertRegex(
+                    prefecture_select.group(1),
+                    rf'<option value="北海道"[^>]*>\s*{label}\s*</option>',
+                )
+
+
 # 購入者ガイドPDF（scripts/build_marketplace_product_guides.py）がEtsy購入者に
 # 案内しているURL。ここに "STORES" が表示されると、購入元と食い違った指示になる。
 ETSY_BUYER_URLS = [

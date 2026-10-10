@@ -1,6 +1,6 @@
-# Personal Edition 引換コード運用（FULL版）
+# 旧Personal Edition 引換コード運用（Legacy／手動発行）
 
-既存のSTORES・Payhip・`/redeem/western-full` とは独立した、Etsy／ココナラ向けの手動納品フローです。
+既存のSTORES・Payhip・Etsy注文番号による通常引換とは独立した、Etsy／ココナラ等の旧・サポート用手動納品フローです。ココナラでの新規販売は終了しています。既存発行済みコードとURLの互換維持、および過去購入者のサポートのため機能は残しますが、新規商品には使用しません。
 
 ## 初回セットアップ
 
@@ -14,7 +14,7 @@ Personal Editionのビルド材料をCloud Runへ含める必要があります�
 
 環境変数 `DATABASE_URL` を設定した端末で実行します。
 
-ココナラ用・日本語・10件:
+ココナラ過去購入者への例外的な再発行・サポート用（通常運用では使用しない）:
 
 ```powershell
 .venv\Scripts\python scripts\issue_personal_edition_codes.py --count 10 --provider coconala --lang ja --delivery-dir deliveries\coconala
@@ -47,12 +47,12 @@ Content-Type: application/json
 購入者は引換コードと出生情報を入力します。FULL版YAMLと本人用ZIPの両方が正常に生成された後だけ、
 コードが `used` になります。入力エラーや計算・ZIP生成エラーではコードを消費しません。
 
-ダウンロードZIPには `app/birth-chart.yaml` が追加され、Personal Edition起動時に入口と各ミュージアムへ
-自動的に読み込まれます。起動後の利用は従来どおりローカルです。
+FULL版のダウンロードZIPには、計算済みYAML、AI相談文、言語別README、専用鑑定ページURLを含めます。Birth Chart Museumは含めません。ACG用コードでは、これらに加えて現行の `START-ACG.html` 方式を使用します。無料Museumアプリは別機能・別配布物として既存URLを維持します。
 
 ## 対応状況
 
 - `western_full`: 対応済み
+- `acg_bundle`: 対応済み（現行ACG注文も無期限Personal Editionの配布方式を内部利用）
 - `western_basic`: 将来追加
 - `shichu`: 将来追加
 
@@ -60,6 +60,6 @@ Content-Type: application/json
 
 ## 注意
 
-- EtsyのInstant Downloadでは全購入者へ同じファイルが渡るため、個別コードZIPにはMade-to-order納品を使用します。
-- 平文コード、出生情報、生成YAMLはDBへ保存しません。
+- EtsyのInstant Downloadでは全購入者へ同じファイルが渡るため、個別コードZIPを再利用する場合はMade-to-order納品に限定します。
+- 平文アクセスコードはDBへ保存せず、SHA-256ハッシュだけを保存します。生成後の無期限鑑定URLを提供するため、出生情報と生成YAMLは通常のチャート保存先へ保存します。
 - コード入力からZIP生成まではオンライン接続が必要です。ダウンロード後のPersonal Editionはオフライン利用できます。

@@ -62,14 +62,14 @@
 <div class="ht-demo-ribbon" id="ht-demo-ribbon" role="note">
   <span class="ht-demo-dot" aria-hidden="true"></span>
   <span id="ht-demo-ribbon-text">Preview — Chief Editor Neko</span>
-  <button type="button" id="ht-demo-cta">Personal Edition</button>
+  <button type="button" id="ht-demo-cta">Free app</button>
 </div>
 
 <div id="ht-demo-overlay" class="ht-overlay-panel" hidden>
   <div class="ht-overlay-card">
-    <h3 id="ht-demo-title">Walk through your own chart</h3>
+    <h3 id="ht-demo-title">Use the free app with your chart</h3>
     <p id="ht-demo-copy1">You're exploring Chief Editor Neko's sample birth chart.</p>
-    <p id="ht-demo-copy2">The Personal Edition lets you walk through your own birth chart — offline, on your computer. Windows &amp; macOS. One-time purchase, no account, nothing sent anywhere.</p>
+    <p id="ht-demo-copy2">Download the separate free app, then paste your astrology YAML at the entrance. Windows &amp; macOS; no purchase or account is required.</p>
     <div class="ht-menu-actions" id="ht-demo-actions"></div>
     <p class="ht-overlay-note" id="ht-demo-note">This demo never asks for your birth data.</p>
   </div>
@@ -78,31 +78,26 @@
 <script>
 (function () {
   "use strict";
-  var SHOP = { en: "{{ shop_url_en }}", ja: "{{ shop_url_ja }}" };
   var STR = {
     en: {
       ribbon: "Preview — Chief Editor Neko",
-      cta: "Personal Edition",
-      title: "Walk through your own chart",
+      cta: "Free app",
+      title: "Use the free app with your chart",
       copy1: "You’re exploring Chief Editor Neko’s sample birth chart.",
-      copy2: "The Personal Edition lets you walk through your own birth chart — offline, on your computer. Windows & macOS. One-time purchase, no account, nothing sent anywhere.",
-      buy_en: "Get the Personal Edition (Etsy)",
-      buy_ja: "Get it on STORES (Japan)",
-      soon: "Personal Edition — coming soon",
+      copy2: "Download the separate free app, then paste your astrology YAML at the entrance. Windows & macOS; no purchase or account is required.",
+      download: "Download the free Museum + Dream Sky",
       close: "Back to the demo",
-      note: "This demo never asks for your birth data."
+      note: "This demo never asks for your birth data. Keep any YAML you use in the downloaded app private."
     },
     ja: {
       ribbon: "サンプル出生図（無料デモ）",
-      cta: "Personal Edition",
-      title: "自分の出生図の中を歩く",
+      cta: "無料版アプリ",
+      title: "無料版アプリで自分の出生図を見る",
       copy1: "いま表示されているのはサンプル出生図（ねこ編集長）です。",
-      copy2: "Personal Edition なら、あなた自身の出生図でこのミュージアムを歩けます。Windows / macOS 対応・買い切り・完全ローカル動作（データはどこにも送信されません）。",
-      buy_en: "Etsy で購入（海外向け）",
-      buy_ja: "STORES で購入",
-      soon: "Personal Edition — 近日発売",
+      copy2: "別配布の無料版アプリをダウンロードし、入口で占術データYAMLを貼り付けると、自分の出生図で体験できます。Windows / macOS対応で、購入やアカウント登録は不要です。",
+      download: "無料Museum＋Dream Skyをダウンロード",
       close: "デモに戻る",
-      note: "このデモがあなたの出生データを求めることはありません。"
+      note: "このデモがあなたの出生データを求めることはありません。無料版アプリで使うYAMLは他人へ共有しないでください。"
     }
   };
 
@@ -129,7 +124,6 @@
     var box = document.getElementById("ht-demo-actions");
     if (!box) return;
     box.innerHTML = "";
-    var any = false;
     var mk = function (href, label, primary) {
       var a = document.createElement("a");
       a.className = primary ? "ht-btn" : "ht-btn ht-btn-secondary";
@@ -139,20 +133,7 @@
       a.textContent = label;
       box.appendChild(a);
     };
-    // 現在の言語のストアを先頭に
-    var order = lang() === "ja" ? ["ja", "en"] : ["en", "ja"];
-    order.forEach(function (k, i) {
-      if (SHOP[k]) {
-        mk(SHOP[k], k === "en" ? s.buy_en : s.buy_ja, i === 0);
-        any = true;
-      }
-    });
-    if (!any) {
-      var p = document.createElement("p");
-      p.className = "ht-overlay-note";
-      p.textContent = s.soon;
-      box.appendChild(p);
-    }
+    mk("/downloads/birth-chart-museum-free.zip?lang=" + lang(), s.download, true);
     var close = document.createElement("button");
     close.type = "button";
     close.className = "ht-btn ht-btn-secondary";

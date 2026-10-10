@@ -1,10 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Chief Editor Neko's Sample Chart | nanamiastro</title>
-  <meta name="description" content="Try Chief Editor Neko's sample birth chart, permanent planner, AI reading, astrocartography map, and Birth Chart Museum preview.">
+  <title>{{ ui.title }}</title>
+  <meta name="description" content="{{ ui.description }}">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ ui.title }}">
+  <meta property="og:description" content="{{ ui.description }}">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ og_image_url }}">
   <style>
     :root{--navy:#081127;--panel:#101b3b;--gold:#d6ad28;--paper:#f2efe6;--muted:#aab2c8}
     *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 80% 0,#182959 0,var(--navy) 45%);color:var(--paper);font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;line-height:1.6}
@@ -14,72 +20,71 @@
     .product-section{margin-top:42px}.section-head{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;align-items:center;margin-bottom:17px}.section-number{grid-row:1/3;display:grid;width:46px;height:46px;place-items:center;border:1px solid rgba(214,173,40,.55);border-radius:50%;color:var(--gold);font-size:.78rem;font-weight:800}.section-head h2{margin:0;font-family:Georgia,serif;font-size:clamp(1.45rem,3vw,2rem)}.section-head p{margin:0;color:var(--muted);font-size:.92rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid.is-featured{grid-template-columns:repeat(3,minmax(0,1fr))}.card{display:block;text-decoration:none;background:rgba(16,27,59,.9);border:1px solid rgba(214,173,40,.24);border-radius:18px;padding:24px;transition:.2s}.card:hover{transform:translateY(-2px);border-color:var(--gold)}.card h2{margin:0 0 8px;font-size:1.35rem}.card p{margin:0;color:var(--muted)}.tag{display:inline-block;color:var(--gold);font-weight:700;margin-bottom:13px}.card-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}.card-action{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(214,173,40,.6);border-radius:999px;padding:9px 14px;color:var(--paper);font-size:.9rem;font-weight:750;text-decoration:none}.card-action.is-primary{background:var(--gold);color:#071025}.card-note{display:block;margin-top:12px;color:#8993ad;font-size:.8rem}
     .chart{margin-top:26px;background:linear-gradient(145deg,#fffdf8,#eee4d2);border:1px solid rgba(214,173,40,.42);border-radius:24px;padding:clamp(12px,3vw,30px);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.28)}.chart-head{margin:0 auto 18px;color:#332817}.chart-head .tag{margin-bottom:4px}.chart-head h2{margin:0;font-family:Georgia,serif;font-size:clamp(1.5rem,4vw,2.3rem)}.chart-head p{margin:4px 0 0;color:#75664f}.chart-frame{width:min(760px,100%);margin:auto;overflow:hidden;border-radius:16px;background:#f7f3e9;box-shadow:0 8px 30px rgba(66,46,16,.12)}.chart img{display:block;width:100%;height:auto}.reading{margin-top:26px;padding:28px;background:rgba(16,27,59,.9);border-radius:18px;border:1px solid rgba(214,173,40,.24)}.reading h2{margin-top:0}.reading-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.reading h3{color:#ead37c}.reading p{color:var(--muted)}
     .locked{margin-top:24px;padding:18px;border:1px dashed rgba(170,178,200,.5);border-radius:14px;color:var(--muted)}.cta{display:inline-block;margin-top:18px;padding:12px 20px;border-radius:999px;background:var(--gold);color:#071025;text-decoration:none;font-weight:800}
+    .language-switcher{display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px}.language-switcher a{border:1px solid rgba(214,173,40,.45);border-radius:999px;padding:4px 10px;text-decoration:none;color:var(--muted)}.language-switcher a.active{color:#071025;background:var(--gold)}
     @media(max-width:900px){.grid.is-featured{grid-template-columns:1fr 1fr}.grid.is-featured .card:first-child{grid-column:1/-1}}
     @media(max-width:720px){.grid,.grid.is-featured,.reading-grid{grid-template-columns:1fr}.grid.is-featured .card:first-child{grid-column:auto}.hero h1{font-size:2.7rem}.section-head{grid-template-columns:auto 1fr}.section-head p{grid-column:1/-1;margin-top:4px}}
   </style>
 </head>
 <body>
   <header class="demo-banner">
-    <strong>⭐ Demo Version</strong>
-    <p>This is a sample using<br><b>Chief Editor Neko.</b><br>Purchase your own Personal Edition<br>to generate your personalized chart.</p>
+    <strong>⭐ {{ ui.banner }}</strong>
+    <p>{{ ui.banner_body }}</p>
   </header>
   <main>
+    <nav class="language-switcher" aria-label="Language"><a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}active{% endif %}">JA</a><a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}active{% endif %}">EN</a><a href="{{ lang_urls.es }}" class="{% if lang == 'es' %}active{% endif %}">ES</a><a href="{{ lang_urls.de }}" class="{% if lang == 'de' %}active{% endif %}">DE</a></nav>
     <section class="hero">
-      <div class="eyebrow">🐱 Neko's Sample Chart</div>
-      <h1>Chief Editor Neko</h1>
-      <p>Explore a complete nanamiastro experience using fixed sample data. Nothing you do here creates, downloads, or changes a Personal Edition.</p>
-      <div class="facts"><span class="pill">February 22, 2022 · 10:22 PM</span><span class="pill">Yokohama, Japan</span><span class="pill">Fictional sample data</span></div>
+      <div class="eyebrow">🐱 {{ ui.eyebrow }}</div>
+      <h1>{{ ui.name }}</h1>
+      <p>{{ ui.hero }}</p>
+      <div class="facts"><span class="pill">{{ ui.date }}</span><span class="pill">{{ ui.place }}</span><span class="pill">{{ ui.fictional }}</span></div>
+      <p class="locked"><b>{{ ui.locked_title }}</b> {{ ui.sample_role }}</p>
     </section>
 
     <section class="product-section" aria-labelledby="acg-product-title">
-      <header class="section-head"><span class="section-number">01</span><h2 id="acg-product-title">ACG Personal Edition</h2><p>Explore Neko's map first, then download the same lightweight package a customer receives.</p></header>
+      <header class="section-head"><span class="section-number">01</span><h2 id="acg-product-title">{{ ui.acg_title }}</h2><p>{{ ui.acg_lead }}</p></header>
       <div class="grid is-featured">
-        <a class="card" href="/acg?lang=en&amp;demo=neko"><span class="tag">TRY IT ONLINE</span><h2>✅ Explore Neko's ACG</h2><p>Move around the world map and freely explore Neko's sample lines before downloading.</p></a>
-        <a class="card" href="/demo/neko/personal-edition.zip?lang=en"><span class="tag">SAMPLE ZIP · EN</span><h2>✅ English ACG ZIP</h2><p>Download the English Personal Edition sample and check its files and README.</p></a>
-        <a class="card" href="/demo/neko/personal-edition.zip?lang=ja"><span class="tag">サンプルZIP · 日本語</span><h2>✅ 日本語ACG ZIP</h2><p>購入者が受け取る軽量Personal Editionの中身と使い方を確認できます。</p></a>
+        <a class="card" href="/acg?lang={{ lang }}&amp;demo=neko"><span class="tag">{{ ui.try_online }}</span><h2>✅ {{ ui.explore_acg }}</h2><p>{{ ui.explore_acg_desc }}</p></a>
+        <a class="card" href="/demo/neko/personal-edition.zip?lang={{ lang }}"><span class="tag">{{ ui.sample_zip }} · {{ lang | upper }}</span><h2>✅ {{ ui.zip_title }}</h2><p>{{ ui.zip_desc }}</p></a>
       </div>
     </section>
 
     <section class="product-section" aria-labelledby="planner-product-title">
-      <header class="section-head"><span class="section-number">02</span><h2 id="planner-product-title">Digital Planner</h2><p>Preview or save the 12-month planner, then try one of its daily AI prompts.</p></header>
+      <header class="section-head"><span class="section-number">02</span><h2 id="planner-product-title">{{ ui.planner_title }}</h2><p>{{ ui.planner_lead }}</p></header>
       <div class="grid">
-        <article class="card"><span class="tag">PERMANENT DEMO · EN</span><h2>✅ English Planner</h2><p>English 12-month sample. Every daily AI button and QR code uses Neko's fixed demo URL.</p><div class="card-actions"><a class="card-action is-primary" href="/demo/neko/planner.pdf?lang=en" target="_blank" rel="noopener">Open PDF in a new tab</a><a class="card-action" href="/demo/neko/planner.pdf?lang=en&amp;download=1">Save PDF</a></div><small class="card-note">About 5 MB. The 432-page preview may take a moment to appear.</small></article>
-        <article class="card"><span class="tag">無期限デモ · 日本語</span><h2>✅ 日本語プランナー</h2><p>日本語版の12か月サンプル。毎日のAIボタンとQRコードは、ねこ編集長専用の固定デモURLにつながります。</p><div class="card-actions"><a class="card-action is-primary" href="/demo/neko/planner.pdf?lang=ja" target="_blank" rel="noopener">新しいタブでPDFを見る</a><a class="card-action" href="/demo/neko/planner.pdf?lang=ja&amp;download=1">PDFを保存</a></div><small class="card-note">約5MB・432ページです。表示まで少し時間がかかる場合があります。</small></article>
-        <a class="card" href="/demo/neko/planner-ai?lang=en&amp;date=2026-08-01"><span class="tag">DAILY AI SAMPLE · EN</span><h2>✅ Ask AI for This Day</h2><p>Try the read-only daily prompt connected from the English planner.</p></a>
-        <a class="card" href="/demo/neko/planner-ai?lang=ja&amp;date=2026-08-01"><span class="tag">日別AIサンプル · 日本語</span><h2>✅ この日をAIに聞く</h2><p>日本語プランナーからつながる日別プロンプトを固定サンプルで確認できます。</p></a>
+        <article class="card"><span class="tag">{{ ui.permanent_demo }} · {{ lang | upper }}</span><h2>✅ {{ ui.planner_card }}</h2><p>{{ ui.planner_desc }}</p><div class="card-actions"><a class="card-action is-primary" href="/demo/neko/planner.pdf?lang={{ lang }}" target="_blank" rel="noopener">{{ ui.open_pdf }}</a><a class="card-action" href="/demo/neko/planner.pdf?lang={{ lang }}&amp;download=1">{{ ui.save_pdf }}</a></div><small class="card-note">{{ ui.planner_note }}</small></article>
+        <a class="card" href="/demo/neko/planner-ai?lang={{ lang }}&amp;date=2026-08-01"><span class="tag">{{ ui.daily_tag }} · {{ lang | upper }}</span><h2>✅ {{ ui.daily_title }}</h2><p>{{ ui.daily_desc }}</p></a>
       </div>
     </section>
 
     <section class="product-section" aria-labelledby="free-preview-title">
-      <header class="section-head"><span class="section-number">03</span><h2 id="free-preview-title">Free Previews</h2><p>Additional free ways to meet Chief Editor Neko and explore the project.</p></header>
-      <div class="grid is-featured">
-        <a class="card" href="#birth-chart"><span class="tag">AVAILABLE</span><h2>✅ Birth Chart</h2><p>View Neko's sample horoscope wheel.</p></a>
-        <a class="card" href="#ai-page"><span class="tag">AVAILABLE</span><h2>✅ AI Page</h2><p>Read a short example of the experience an AI interpretation can create.</p></a>
-        <a class="card" href="/birth-chart-museum/demo?lang=en"><span class="tag">PREVIEW</span><h2>✅ Museum</h2><p>Walk through the experimental Birth Chart Museum preview.</p></a>
+      <header class="section-head"><span class="section-number">03</span><h2 id="free-preview-title">{{ ui.previews_title }}</h2><p>{{ ui.previews_lead }}</p></header>
+      <div class="grid">
+        <a class="card" href="#birth-chart"><span class="tag">{{ ui.available }}</span><h2>✅ {{ ui.birth_chart }}</h2><p>{{ ui.birth_chart_desc }}</p></a>
+        <a class="card" href="#ai-page"><span class="tag">{{ ui.available }}</span><h2>✅ {{ ui.ai_page }}</h2><p>{{ ui.ai_page_desc }}</p></a>
       </div>
     </section>
 
     <section class="chart" id="birth-chart">
       <header class="chart-head">
-        <span class="tag">SAMPLE BIRTH CHART</span>
-        <h2>Chief Editor Neko's Horoscope</h2>
-        <p>A complete natal wheel generated from the sample astrology data.</p>
+        <span class="tag">{{ ui.chart_tag }}</span>
+        <h2>{{ ui.chart_title }}</h2>
+        <p>{{ ui.chart_desc }}</p>
       </header>
-      <div class="chart-frame"><img src="/demo/neko/horoscope.svg?v=20260722-2" alt="Chief Editor Neko sample birth chart"></div>
+      <div class="chart-frame"><img src="/demo/neko/horoscope.svg?v=20260722-2" alt="{{ ui.chart_alt }}"></div>
     </section>
 
     <section class="reading" id="ai-page">
-      <span class="tag">SAMPLE AI PAGE</span><h2>A curious editor with a wide-angle view</h2>
+      <span class="tag">{{ ui.reading_tag }}</span><h2>{{ ui.reading_title }}</h2>
       <div class="reading-grid">
-        <div><h3>Core voice</h3><p>Neko notices patterns, follows unusual questions, and turns complex ideas into an inviting story.</p></div>
-        <div><h3>Creative rhythm</h3><p>Independent exploration works best when it is balanced with moments of quiet observation and play.</p></div>
-        <div><h3>Growth theme</h3><p>The sample suggests learning through connection: meeting new places, perspectives, and creative tools.</p></div>
+        <div><h3>{{ ui.core }}</h3><p>{{ ui.core_body }}</p></div>
+        <div><h3>{{ ui.rhythm }}</h3><p>{{ ui.rhythm_body }}</p></div>
+        <div><h3>{{ ui.growth }}</h3><p>{{ ui.growth_body }}</p></div>
       </div>
-      <p><small>This is sample editorial copy, not personal advice or a factual reading about a real animal or person.</small></p>
+      <p><small>{{ ui.sample_disclaimer }}</small></p>
     </section>
 
-    <aside class="locked"><b>Sample only:</b> the downloadable Personal Edition ZIP contains Chief Editor Neko's fictional sample ACG. Customer chart data, order codes, and raw YAML downloads remain unavailable. The Planner and its daily AI prompt are read-only sample experiences.<br>
-      {% if etsy_shop_url %}<a class="cta" href="{{ etsy_shop_url }}" target="_blank" rel="noopener">Shop ACG &amp; Digital Planner on Etsy</a>{% endif %}
+    <aside class="locked"><b>{{ ui.locked_title }}</b> {{ ui.locked }}<br>
+      {% if shop_url %}<a class="cta" href="{{ shop_url }}" target="_blank" rel="noopener">{{ ui.shop }}</a>{% endif %}
     </aside>
   </main>
 </body>

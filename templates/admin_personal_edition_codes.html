@@ -25,7 +25,7 @@
       {% set provider = form.provider or 'etsy' %}
       <label>Marketplace<select name="provider"><option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>Etsy</option><option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>Coconala</option><option value="manual" {% if provider == 'manual' %}selected{% endif %}>Manual</option></select></label>
       {% set lang = form.lang or 'en' %}
-      <label>Language<select name="lang"><option value="en" {% if lang == 'en' %}selected{% endif %}>English</option><option value="ja" {% if lang == 'ja' %}selected{% endif %}>Japanese</option></select></label>
+      <label>Language<select name="lang"><option value="en" {% if lang == 'en' %}selected{% endif %}>English</option><option value="es" {% if lang == 'es' %}selected{% endif %}>Español</option><option value="de" {% if lang == 'de' %}selected{% endif %}>Deutsch</option><option value="ja" {% if lang == 'ja' %}selected{% endif %}>Japanese</option></select></label>
       <label>Quantity<input name="count" type="number" min="1" max="100" required value="{{ form.count or 1 }}"></label>
       <label>Valid days<input name="expiration_days" type="number" min="1" max="365" required value="{{ form.expiration_days or 30 }}"></label>
       <label>Etsy order ID (optional)<input name="marketplace_order_id" value="{{ form.marketplace_order_id or '' }}"></label>
@@ -57,6 +57,5 @@
 </div></main>
 <script>
 document.querySelectorAll('[data-copy-target]').forEach(button=>button.addEventListener('click',async()=>{const field=document.getElementById(button.dataset.copyTarget);await navigator.clipboard.writeText(field.value);document.getElementById('copy-status').textContent='Copied';setTimeout(()=>document.getElementById('copy-status').textContent='',1600);}));
-const provider=document.querySelector('[name="provider"]'),lang=document.querySelector('[name="lang"]');provider?.addEventListener('change',()=>{if(provider.value==='etsy')lang.value='en';if(provider.value==='coconala')lang.value='ja';});
 </script>
 </body></html>

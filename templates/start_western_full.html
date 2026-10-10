@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
@@ -16,6 +16,8 @@
       <div class="language-switcher" aria-label="{{ t.lang_label }}">
         <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
         <a href="{{ lang_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">{{ t.lang_en }}</a>
+        <a href="{{ lang_urls.es }}" class="{% if lang == 'es' %}is-active{% endif %}">{{ t.lang_es }}</a>
+        <a href="{{ lang_urls.de }}" class="{% if lang == 'de' %}is-active{% endif %}">{{ t.lang_de }}</a>
       </div>
       <div class="product-pill">{{ product.label }}</div>
       <h1>{{ product.label }}<br>{{ t.start_title_suffix }}</h1>

@@ -47,6 +47,40 @@ TRANSIT_ONLY_PROMPT = """あなたは占星術と歴史解釈を扱う分析者�
 以下のYAMLを読み込んで分析してください。
 """
 
+TRANSIT_ONLY_PROMPTS = {
+    "ja": TRANSIT_ONLY_PROMPT,
+    "en": """You are an analyst working with astrology and historical interpretation. The following YAML contains pre-calculated planetary data for one event, time and place.
+
+Rules:
+- Do not change or recalculate planetary positions, lunar phase or aspects.
+- Treat the YAML as the sole source for astronomical values.
+- This is not a birth chart; do not read it as a personality profile.
+- Historical dates may be disputed, so frame conclusions as symbolic interpretation rather than certainty.
+- If house is null, do not interpret houses.
+
+Cover the overall pattern, personal and social planets, lunar phase, the tightest aspects, and appropriate cautions for historical interpretation. Analyze the YAML below.""",
+    "es": """Eres especialista en astrología e interpretación histórica. El siguiente YAML contiene datos planetarios ya calculados para un evento, una hora y un lugar concretos.
+
+Reglas:
+- No cambies ni recalcules las posiciones, la fase lunar ni los aspectos.
+- Usa el YAML como única fuente de los valores astronómicos.
+- No es una carta natal; no lo interpretes como un perfil de personalidad.
+- Las fechas históricas pueden ser discutidas, así que presenta las conclusiones como una lectura simbólica y no como certezas.
+- Si house es null, no interpretes las casas.
+
+Explica el patrón general, los planetas personales y sociales, la fase lunar, los aspectos más cerrados y las cautelas necesarias para una interpretación histórica. Analiza el YAML que aparece a continuación.""",
+    "de": """Du analysierst Astrologie im historischen Kontext. Die folgende YAML-Datei enthält bereits berechnete Planetendaten für ein bestimmtes Ereignis an einem bestimmten Ort und Zeitpunkt.
+
+Regeln:
+- Verändere oder berechne Planetenpositionen, Mondphase und Aspekte nicht neu.
+- Verwende die YAML-Daten als einzige Quelle für astronomische Werte.
+- Dies ist kein Geburtshoroskop; deute es nicht als Persönlichkeitsprofil.
+- Historische Datierungen können umstritten sein. Formuliere Ergebnisse daher als symbolische Deutung, nicht als Gewissheit.
+- Wenn house null ist, deute keine Häuser.
+
+Beschreibe das Gesamtbild, persönliche und gesellschaftliche Planeten, die Mondphase, die engsten Aspekte und notwendige Hinweise zur historischen Einordnung. Analysiere die folgende YAML-Datei.""",
+}
+
 
 def _parse_timezone(value: str) -> timezone | ZoneInfo:
     raw = (value or "Asia/Tokyo").strip()
@@ -131,6 +165,7 @@ def build_transit_only_yaml(
     timezone_name: str,
     input_calendar: str = "gregorian",
     calendar_note: str = "歴史日付は諸説あり。必要に応じて検証してください。",
+    lang: str = "ja",
 ) -> tuple[str, str, dict[str, Any]]:
     calendar = (input_calendar or "gregorian").strip().lower()
     if calendar not in {"gregorian", "julian"}:
@@ -221,4 +256,5 @@ def build_transit_only_yaml(
         },
     }
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
-    return yaml_text, TRANSIT_ONLY_PROMPT.strip() + "\n", doc
+    prompt = TRANSIT_ONLY_PROMPTS.get(lang, TRANSIT_ONLY_PROMPTS["en"])
+    return yaml_text, prompt.strip() + "\n", doc

@@ -139,8 +139,33 @@ class ChartYamlCopyTest(unittest.TestCase):
     def test_chart_companion_switches_description_and_prompt(self) -> None:
         self.assertIn("function selectCompanionMode(mode)", self.template)
         self.assertIn("UI_TEXT.consultationModeDesc", self.template)
-        self.assertIn("if (companionMode === 'consultation') return CHART_COMPANION_PROMPT;", self.template)
+        self.assertIn("CHART_COMPANION_PROMPT.replace(GENERIC_ACG_URL_PATTERN, PERSONAL_ACG_URL)", self.template)
         self.assertIn("return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;", self.template)
+
+    def test_consultation_mode_exposes_direct_acg_link_with_yaml_autoload(self) -> None:
+        self.assertIn('{% if has_horoscope_svg and not birth_time_notice.show %}', self.template)
+        self.assertIn('id="companion-acg-guide" hidden', self.template)
+        self.assertIn('href="{{ personal_acg_url }}"', self.template)
+        self.assertIn("const PERSONAL_ACG_URL = new URL", self.template)
+        self.assertIn("const GENERIC_ACG_URL_PATTERN", self.template)
+        self.assertIn("if (acgGuide) acgGuide.hidden = !isConsultation;", self.template)
+        labels = {
+            "ja": "あなたのデータでACGを開く",
+            "en": "Open ACG with your data",
+            "es": "Abrir ACG con tus datos",
+            "de": "ACG mit deinen Daten öffnen",
+        }
+        for lang, label in labels.items():
+            with self.subTest(lang=lang):
+                self.assertEqual(I18N[lang]["open_acg_with_data"], label)
+
+    def test_consultation_acg_guide_keeps_the_prominent_previous_design(self) -> None:
+        style = self.template.split('.companion-acg-guide {', 1)[1].split('}', 1)[0]
+        self.assertIn("border: 1px solid rgba(31, 123, 144, .28);", style)
+        self.assertIn("background: rgba(31, 123, 144, .08);", style)
+        self.assertIn(".companion-acg-guide a { font-weight: 700; }", self.template)
+        self.assertNotIn('class="download-primary" href="{{ personal_acg_url }}"', self.template)
+        self.assertIn("AIにYAMLを再表示させる必要はありません", I18N["ja"]["consultation_acg_guide"])
 
     def test_all_ai_actions_use_shared_mode_aware_payload_builder(self) -> None:
         builder = self.template.split("function buildAiTextFromYaml", 1)[1].split(

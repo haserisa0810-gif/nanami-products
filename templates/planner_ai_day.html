@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% if lang == "ja" %}この日の星をAIで読む{% else %}Read this day with AI{% endif %}</title>
+  <meta name="description" content="{{ ui.lead }}">
+  <title>{{ ui.title }}</title>
   <style>
     :root{--navy:#0b1633;--gold:#c6a46b;--ivory:#fcfaf7;--ink:#252b3d}
     *{box-sizing:border-box}body{margin:0;background:var(--navy);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
@@ -20,23 +21,23 @@
 </head>
 <body><main>
   <div class="eyebrow">Nanami Astro · {{ target_date }}</div>
-  <h1>{% if lang == "ja" %}この日の星をAIで読む{% else %}Read this day with AI{% endif %}</h1>
-  <p class="lead">{% if lang == "ja" %}この日専用の計算済みデータと依頼文です。コピーして、普段お使いのAIへ貼り付けてください。{% else %}Copy this calculated, date-specific prompt into the AI service you normally use.{% endif %}</p>
+  <h1>{{ ui.title }}</h1>
+  <p class="lead">{{ ui.lead }}</p>
   <div class="actions">
-    <button type="button" id="copy">{% if lang == "ja" %}AI用プロンプトをコピー{% else %}Copy AI prompt{% endif %}</button>
+    <button type="button" id="copy">{{ ui.copy_button }}</button>
     <a class="button" href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a>
     <a class="button" href="https://claude.ai/new" target="_blank" rel="noopener">Claude</a>
     <a class="button" href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini</a>
   </div>
   <div id="status" aria-live="polite"></div>
   <textarea id="prompt" readonly>{{ prompt_text }}</textarea>
-  <p class="note">{% if lang == "ja" %}個人データをAIへ自動送信することはありません。コピー後に、利用者ご自身の判断でAIへ貼り付けます。AIの回答は誤ることがあります。医療・法律・金銭・安全に関わる判断には使用しないでください。{% else %}Nothing is sent to an AI automatically. You decide whether to paste the copied text. AI can be wrong; do not use it for medical, legal, financial, or safety-critical decisions.{% endif %}</p>
+  <p class="note">{{ ui.safety_note }}</p>
 </main>
 <script>
 document.getElementById('copy').addEventListener('click', async () => {
   const text = document.getElementById('prompt').value;
   try { await navigator.clipboard.writeText(text); }
   catch (_) { const el=document.getElementById('prompt'); el.select(); document.execCommand('copy'); }
-  document.getElementById('status').textContent = {{ ("コピーしました。お好きなAIを開いて貼り付けてください。" if lang == "ja" else "Copied. Open your preferred AI and paste it.") | tojson }};
+  document.getElementById('status').textContent = {{ ui.copied | tojson }};
 });
 </script></body></html>

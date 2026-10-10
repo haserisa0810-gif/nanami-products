@@ -1,4 +1,6 @@
-"""Offline Full-YAML variants. Never called by product routes or storage.
+"""Full-YAML variant builders and saved-document validation.
+
+Product year selection reuses load_saved_full; variant builders remain offline.
 
 Recommended preserves every source value and occurrence. Only equal values
 within the same target scope, and long shared wording, may use named YAML

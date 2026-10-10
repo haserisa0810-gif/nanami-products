@@ -11,6 +11,7 @@ LocationIQ などへ差し替える場合は `_provider` を置き換えるだ�
 from __future__ import annotations
 
 import json
+import inspect
 import os
 import urllib.parse
 import urllib.request
@@ -18,7 +19,12 @@ from collections import OrderedDict
 from typing import Any, Callable
 
 SOURCE = "manual_search"
-SOURCE_LABEL = "検索・手入力した地点"
+SOURCE_LABELS = {
+    "ja": "検索・手入力した地点",
+    "en": "Searched or manually entered place",
+    "es": "Lugar buscado o introducido manualmente",
+    "de": "Gesuchter oder manuell eingegebener Ort",
+}
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 USER_AGENT = os.getenv(
@@ -36,13 +42,13 @@ class GeocodingError(RuntimeError):
     """ジオコーディングの外部通信・応答エラー（HTTP 502 相当）。"""
 
 
-def _nominatim_provider(query: str, limit: int) -> list[dict[str, Any]]:
+def _nominatim_provider(query: str, limit: int, lang: str) -> list[dict[str, Any]]:
     """Nominatim を叩いて生の結果（name/lat/lon/display_name）を返す。"""
     params = urllib.parse.urlencode({
         "q": query,
         "format": "jsonv2",
         "limit": str(limit),
-        "accept-language": "ja",
+        "accept-language": lang,
     })
     req = urllib.request.Request(
         f"{NOMINATIM_URL}?{params}",
@@ -71,10 +77,10 @@ def _nominatim_provider(query: str, limit: int) -> list[dict[str, Any]]:
 
 
 # 差し替えポイント。テストやプロバイダ変更ではここを置き換える。
-_provider: Callable[[str, int], list[dict[str, Any]]] = _nominatim_provider
+_provider: Callable[[str, int, str], list[dict[str, Any]]] = _nominatim_provider
 
 
-def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
+def _normalize(raw: dict[str, Any], *, lang: str) -> dict[str, Any]:
     name = (raw.get("name") or raw.get("display_name") or "").strip() or None
     display_name = (raw.get("display_name") or raw.get("name") or "").strip() or (name or "")
     return {
@@ -83,23 +89,29 @@ def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
         "longitude": round(float(raw["longitude"]), 6),
         "display_name": display_name,
         "source": SOURCE,
-        "source_label": SOURCE_LABEL,
+        "source_label": SOURCE_LABELS.get(lang, SOURCE_LABELS["en"]),
     }
 
 
-def search(query: str, *, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
+def search(query: str, *, limit: int = DEFAULT_LIMIT, lang: str = "ja") -> list[dict[str, Any]]:
     """地名を検索して内部共通形式のリストを返す。空クエリは空リスト。"""
     q = (query or "").strip()
     if not q:
         return []
-    key = q.lower()
+    safe_lang = lang if lang in SOURCE_LABELS else "en"
+    key = f"{safe_lang}:{q.lower()}"
     cached = _cache.get(key)
     if cached is not None:
         _cache.move_to_end(key)
         return [dict(item) for item in cached]
 
-    raw_results = _provider(q, limit)
-    results = [_normalize(item) for item in raw_results]
+    # Keep compatibility with existing two-argument provider adapters while the
+    # built-in provider receives the requested language.
+    if len(inspect.signature(_provider).parameters) >= 3:
+        raw_results = _provider(q, limit, safe_lang)
+    else:
+        raw_results = _provider(q, limit)  # type: ignore[call-arg]
+    results = [_normalize(item, lang=safe_lang) for item in raw_results]
 
     _cache[key] = [dict(item) for item in results]
     _cache.move_to_end(key)

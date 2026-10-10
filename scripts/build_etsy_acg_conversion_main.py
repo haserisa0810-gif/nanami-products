@@ -7,6 +7,24 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 im = Image.new("RGB", (2000, 2000), "#07172f")
 screen = Image.open(SRC).convert("RGB")
+
+# Normalize the embedded screenshot for the English Etsy listing while
+# preserving the original capture as source material.
+sd = ImageDraw.Draw(screen, "RGBA")
+navy, border, gold, white = (5, 14, 43, 255), (45, 57, 89, 255), (224, 181, 45, 255), (239, 242, 249, 255)
+sd.rounded_rectangle((1760, 8, 1905, 49), radius=18, fill=navy, outline=border, width=2)
+sd.text((1832, 29), "EN", font=ImageFont.truetype(r"C:\Windows\Fonts\arialbd.ttf", 18), fill=gold, anchor="mm")
+sd.rounded_rectangle((1864, 88, 1914, 135), radius=10, fill=navy, outline=border, width=2)
+sd.text((1889, 111), "Map", font=ImageFont.truetype(r"C:\Windows\Fonts\arialbd.ttf", 14), fill=gold, anchor="mm")
+sd.rectangle((16, 195, 364, 356), fill=navy)
+sample_lines = [
+    "version: nanami-products-yaml-v1", "product: acg_bundle", "input:",
+    "  birth_place: Yokohama, Japan", "  birth_time_accuracy: exact",
+    "systems:", "  western:", "    natal: calculated",
+]
+mono = ImageFont.truetype(r"C:\Windows\Fonts\consola.ttf", 14)
+for index, line in enumerate(sample_lines):
+    sd.text((28, 204 + index * 18), line, font=mono, fill=white)
 screen.thumbnail((1780, 1050), Image.Resampling.LANCZOS)
 
 shadow = Image.new("RGBA", (screen.width + 80, screen.height + 80), (0, 0, 0, 0))

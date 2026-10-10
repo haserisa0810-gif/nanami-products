@@ -331,7 +331,7 @@ def common_notice_jp() -> list[Flowable]:
         *section(
             "共有URLと保存",
             [
-                "生成された共有URLは発行から90日間利用できます。",
+                "生成された共有URLは発行から365日間利用できます。",
                 "期限後も利用できるよう、発行後に保存用ZIPを端末へダウンロードしてください。",
             ],
         ),
@@ -440,7 +440,7 @@ def guide_pages(product: dict) -> list[Flowable]:
             ),
             Spacer(1, 2 * mm),
             p(
-                "The chart page is available for 90 days. Download the ZIP archive for permanent local storage. "
+                "The chart page is available for 365 days. Download the ZIP archive for permanent local storage. "
                 "For support, use the inquiry option on the Coconala product page.",
                 "Small",
             ),

@@ -755,7 +755,7 @@ class OrderProviderResolutionTest(unittest.TestCase):
             response = client.get(url)
             self.assertEqual(response.status_code, 200)
             self.assertIn('<select name="order_provider"', response.text)
-            self.assertIn('<option value="coconala"', response.text)
+            self.assertNotIn('<option value="coconala"', response.text)
 
     def test_shichu_coconala_link_uses_username_instead_of_stores_order(self) -> None:
         client = TestClient(routes.app)
@@ -770,14 +770,14 @@ class OrderProviderResolutionTest(unittest.TestCase):
         self.assertIn('placeholder="例：nanami_user"', response.text)
         self.assertNotIn('pattern="[0-9]{10}"', response.text)
 
-    def test_shichu_without_provider_keeps_stores_coconala_selector(self) -> None:
+    def test_shichu_without_provider_keeps_stores_selector(self) -> None:
         client = TestClient(routes.app)
         response = client.get("/redeem/shichu?lang=ja")
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('<select name="order_provider" id="order-provider">', response.text)
         self.assertIn('<option value="stores"', response.text)
-        self.assertIn('<option value="coconala"', response.text)
+        self.assertNotIn('<option value="coconala"', response.text)
 
     def test_name_example_matches_selected_language(self) -> None:
         client = TestClient(routes.app)
@@ -960,7 +960,7 @@ class PayhipMetadataFormTest(unittest.TestCase):
         }
         with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test"}), patch.object(
             routes.stores_mail_sync,
-            "verify_order_no",
+            "verify_order_entitlement",
             return_value=("already_used", order_row),
         ):
             order_code, resolved_row, error, code = routes._resolve_payhip_order_from_metadata(metadata)

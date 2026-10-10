@@ -1,5 +1,7 @@
 *.pyc
 __pycache__/
+/.venv/
+/.pytest_cache/
 .env
 .env.*
 deploy.env.yaml
