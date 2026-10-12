@@ -212,6 +212,30 @@
       font-size: .8rem;
       line-height: 1.7;
     }
+    .shichu-year-picker { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin: 14px 0; min-width: 0; }
+    .shichu-year-picker legend { font-weight: 600; padding: 0 4px; }
+    .shichu-year-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; margin: 10px 0; }
+    .shichu-year-grid label { display: flex; align-items: center; gap: 6px; padding: 8px 6px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+    .shichu-year-grid input { appearance: auto; -webkit-appearance: auto; width: 18px; height: 18px; min-height: 18px; padding: 0; margin: 0; flex: none; }
+    .shichu-year-grid label:has(input:checked) { border-color: var(--gold); background: var(--gold-bg); }
+    .shichu-year-quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0 8px; }
+    .shichu-year-chip { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 4px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; text-align: center; }
+    .shichu-year-chip { position: relative; }
+    .shichu-year-chip input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+    .shichu-year-chip span { display: flex; flex-direction: column; line-height: 1.3; }
+    .shichu-year-chip small { font-size: 12px; color: var(--muted, #8a7a66); }
+    .shichu-year-chip strong { font-size: 15px; }
+    .shichu-year-chip:has(input:checked) { border-color: var(--gold); background: var(--gold-bg); box-shadow: inset 0 0 0 1px var(--gold); }
+    .shichu-year-chip:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .shichu-year-more { margin: 4px 0 8px; }
+    .shichu-year-more summary { cursor: pointer; font-size: 14px; padding: 6px 0; }
+    .shichu-year-handoff { display: grid; gap: 6px; margin: 8px 0 4px; }
+    .shichu-year-handoff label { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; cursor: pointer; }
+    .shichu-year-handoff input { appearance: auto; -webkit-appearance: auto; width: 18px; height: 18px; min-height: 18px; padding: 0; margin: 2px 0 0; flex: none; }
+    .shichu-year-handoff[hidden] { display: none; }
+    .shichu-year-selected { font-weight: 600; margin: 8px 0 4px; }
+    .shichu-year-warning[data-strong="true"] { color: var(--danger); }
+    .shichu-all-data { margin-bottom: 18px; }
     .ai-mode-list {
       display: grid;
       gap: 8px;
@@ -798,7 +822,13 @@
         <section class="notice-box soft time-accuracy-card">
           <p class="mini-label">{{ t["time_accuracy_label"] }}</p>
           <strong>{{ birth_time_notice.short }}</strong>
+          {% if lang == "ja" %}
+          <p>
+            出生時刻が後から判明した場合、ハウス・ASC/MCを含む正確な再計算が必要です。時刻の修正・再発行（時刻のみ変更可）は、購入したショップからお問い合わせください。
+          </p>
+          {% else %}
           <p>{{ t.birth_time_reissue }}{% if birth_time_reissue_url %} <a href="{{ birth_time_reissue_url }}" target="_blank" rel="noopener">{{ t.birth_time_reissue_link }}</a>{% endif %}</p>
+          {% endif %}
         </section>
         {% endif %}
         <p class="hint">{% if chart_has_no_expiry %}{{ t.page_no_expiry }}{% else %}{{ t.page_expiry.format(expires_label=expires_label) }}{% endif %}</p>
@@ -818,6 +848,41 @@
           <p>{{ t["consultation_acg_guide"] }}</p>
           <a href="{{ personal_acg_url }}" target="_blank" rel="noopener">{{ t["open_acg_with_data"] }}</a>
         </div>
+        {% endif %}
+        {% if has_shichu_year_selection %}
+        <fieldset class="shichu-year-picker" id="shichu-year-picker">
+          {% if lang == "ja" %}
+          <legend>鑑定したい年を選ぶ（複数選択できます）</legend>
+          <p class="hint">年を選ばない場合は、命式と大運をもとにした基本鑑定になります（年ごとの年運は含みません）。</p>
+          {% else %}
+          <legend>Choose the years to read (multiple choice)</legend>
+          <p class="hint">If you choose no year, you get a basic reading based on your natal chart and major luck cycles (without the year-by-year forecasts).</p>
+          {% endif %}
+          {% if lang == "ja" %}{% set year_labels = {"this_year": "今年", "next_year": "来年", "year_after_next": "再来年"} %}
+          {% else %}{% set year_labels = {"this_year": "This year", "next_year": "Next year", "year_after_next": "In 2 years"} %}{% endif %}
+          <div class="shichu-year-quick">
+            {% for item in shichu_quick_years %}
+            <label class="shichu-year-chip"><input type="checkbox" name="shichu-year" value="{{ item.year }}" onchange="refreshShichuSelection()"><span>{% if item.label %}<small>{{ year_labels[item.label] }}</small>{% endif %}<strong>{{ item.year }}{% if lang == "ja" %}年{% endif %}</strong></span></label>
+            {% endfor %}
+          </div>
+          {% if shichu_other_years %}
+          <details class="shichu-year-more" id="shichu-year-more">
+            <summary>{% if lang == "ja" %}ほかの年を選ぶ（{{ shichu_other_years[0] }}〜{{ shichu_other_years[-1] }}年）{% else %}Choose other years ({{ shichu_other_years[0] }}–{{ shichu_other_years[-1] }}){% endif %}</summary>
+            <div class="shichu-year-grid">
+              {% for year in shichu_other_years %}
+              <label><input type="checkbox" name="shichu-year" value="{{ year }}" onchange="refreshShichuSelection()"><span>{{ year }}{% if lang == "ja" %}年{% endif %}</span></label>
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
+          <div class="shichu-year-handoff" id="shichu-year-handoff" hidden role="radiogroup" aria-label="{% if lang == 'ja' %}AIへの渡し方{% else %}How to hand over{% endif %}">
+            <label><input type="radio" name="shichu-year-handoff" value="selected" checked onchange="refreshShichuSelection()"><span>{% if lang == "ja" %}新しい会話で使う（命式・大運つき）{% else %}For a new conversation (with natal chart and luck cycles){% endif %}</span></label>
+            <label><input type="radio" name="shichu-year-handoff" value="years_only" onchange="refreshShichuSelection()"><span>{% if lang == "ja" %}この会話に続けて渡す（選んだ年のデータだけ・軽量）{% else %}Continue the same conversation (chosen years only, lighter){% endif %}</span></label>
+          </div>
+          <p class="shichu-year-selected" id="shichu-year-selected">{% if lang == "ja" %}選択中：なし（命式と大運の基本鑑定）{% else %}Selected: none (basic reading){% endif %}</p>
+          <p class="hint shichu-year-warning" id="shichu-year-selection-warning">{% if lang == "ja" %}<strong>ご注意：</strong>一度にたくさんの年をAIに読ませると、読み落としや年の取り違えが起きやすくなり、鑑定の精度が下がります。1回の相談では1〜3年を目安に選んでください。別の年を同じ会話で聞くときは「この会話に続けて渡す」を選ぶと、命式を重ねて送らずに年のデータだけを追加できます。{% else %}<strong>Note:</strong> Giving the AI many years at once makes missed details and mixed-up years more likely, so the reading becomes less accurate. We recommend 1–3 years at a time. To ask about more years in the same conversation, choose “Continue the same conversation” to add only those years without resending the natal chart.{% endif %}</p>
+          <p class="hint" id="shichu-year-picker-status" aria-live="polite"></p>
+        </fieldset>
         {% endif %}
         <div class="key-actions">
           <button class="primary-action" id="primary-ai-action" onclick="shareDefaultAiText()">{{ t.send_ai_button }}</button>
@@ -855,6 +920,24 @@
         <summary>{{ t.details }}</summary>
         <div class="detail-body">
           <div class="detail-section" id="full-version-details">
+            {% if has_shichu_year_selection %}
+            <section class="shichu-all-data" id="shichu-all-data">
+              {% if lang == "ja" %}
+              <h3>すべての年を含む全データ</h3>
+              <p class="hint">収録されているすべての年と分析をまとめてAIへ渡します。情報量が多いため、AIによっては読み落としや年の取り違えが起きやすく、精度が下がることがあります。通常は上の「鑑定したい年を選ぶ」をお使いください。</p>
+              {% else %}
+              <h3>All data including every year</h3>
+              <p class="hint">Sends every included year and all analysis at once. Because it is large, some AIs may miss details or mix up years, which can lower accuracy. Normally use “Choose the years to read” above.</p>
+              {% endif %}
+              <div class="detail-actions">
+                <button class="secondary-action" onclick="copyShichuAllData()">{% if lang == "ja" %}全データをコピー{% else %}Copy all data{% endif %}</button>
+                <button class="secondary-action" onclick="downloadShichuAllData()">{% if lang == "ja" %}全データを保存（TXT）{% else %}Save all data (TXT){% endif %}</button>
+              </div>
+              <p><a class="download-link" href="/chart/{{ token | urlencode }}/year-selection?lang={{ lang }}">{% if lang == "en" %}More options: basic reading, chosen years or the complete original{% else %}詳しい取り出し方（基本鑑定・選択年・完全原本）{% endif %}</a></p>
+            </section>
+            {% endif %}
+            {# 四柱推命FULL系は上の年選択と下の全データで足りるため、重複する「データ種別」欄は出さない。 #}
+            {% if not has_shichu_year_selection %}
             <h3>{% if has_western_asteroids %}{{ t["full_details_title_asteroids"] }}{% else %}{{ t["full_details_title_transit"] }}{% endif %}</h3>
             <p class="hint">{{ t.details_intro }}</p>
             <div class="ai-mode-list" style="margin-top:12px">
@@ -894,6 +977,7 @@
               <button class="secondary-action" onclick="shareSelectedAiText()">{{ t["send_selected_to_ai"] }}</button>
               <button class="secondary-action" onclick="copySelectedAiText()">{{ t["copy_selected"] }}</button>
             </div>
+            {% endif %}
             <section class="yaml-only-panel" aria-labelledby="yaml-only-title">
               <h3 id="yaml-only-title">{% if has_long_term_transits %}{{ t["yaml_only_title_long_term"] }}{% else %}{{ t.yaml_only_title }}{% endif %}</h3>
               <p class="hint">{% if has_long_term_transits %}{{ t["copy_yaml_only_hint_long_term"] }}{% else %}{{ t.copy_yaml_only_hint }}{% endif %}</p>
@@ -1173,6 +1257,13 @@
     const PERSONAL_ACG_URL = new URL({{ personal_acg_url | tojson }}, window.location.href).href;
     const GENERIC_ACG_URL_PATTERN = /https:\/\/chart\.nanami-astro\.com\/acg(?:\?[^\s]*)?/;
     const SHARE_YAML = {{ share_yaml_text | tojson }};
+    // 四柱推命FULL系：上の「鑑定したい年」で選んだ範囲を、メインの送信・コピーに使う。
+    // 未選択時は命式と大運の基本鑑定。全データは下の「すべての年を含む全データ」から。
+    const SHICHU_YEAR_PICKER = {{ has_shichu_year_selection | tojson }};
+    const SHICHU_YEAR_SELECTION_URL = {{ (year_selection_url or "") | tojson }};
+    const SHICHU_RECOMMENDED_MAX_YEARS = 3;
+    let shichuSelection = null;
+    let shichuSelectionRevision = 0;
     const ASTEROID_YAML = {{ asteroid_yaml_text | tojson }};
     const HAS_YAML_MODE_SELECTOR = {{ has_yaml_mode_selector | tojson }};
     const HAS_WESTERN_ASTEROIDS = {{ has_western_asteroids | tojson }};
@@ -1276,6 +1367,7 @@
       if (companionMode === 'consultation') {
         return CHART_COMPANION_PROMPT.replace(GENERIC_ACG_URL_PATTERN, PERSONAL_ACG_URL);
       }
+      if (outputMode === 'paste' && shichuSelection) return shichuSelection.prompt;
       return outputMode === 'paste' ? SHARE_PROMPT : COMBINED_PROMPT;
     }
 
@@ -1415,7 +1507,91 @@
     async function getSelectedYaml(mode = getSelectedAiMode()) {
       if (mode === 'full') return await getFullYaml();
       if (mode === 'asteroids') return await getAsteroidYaml();
-      return SHARE_YAML;
+      return getPasteYaml();
+    }
+
+    function getPasteYaml() {
+      return shichuSelection ? shichuSelection.yaml : SHARE_YAML;
+    }
+
+    function selectedShichuYears() {
+      return Array.from(document.querySelectorAll('#shichu-year-picker input[name="shichu-year"]:checked'), el => Number(el.value))
+        .sort((a, b) => a - b);
+    }
+
+    function updateShichuYearWarning(count) {
+      const warning = document.getElementById('shichu-year-selection-warning');
+      if (warning) warning.dataset.strong = String(count > SHICHU_RECOMMENDED_MAX_YEARS);
+    }
+
+    async function refreshShichuSelection() {
+      if (!SHICHU_YEAR_PICKER || !SHICHU_YEAR_SELECTION_URL) return;
+      const en = document.documentElement.lang === 'en';
+      const years = selectedShichuYears();
+      const revision = ++shichuSelectionRevision;
+      const button = document.getElementById('primary-ai-action');
+      const handoff = document.getElementById('shichu-year-handoff');
+      const continuation = years.length > 0
+        && document.querySelector('#shichu-year-picker input[name="shichu-year-handoff"]:checked')?.value === 'years_only';
+      if (handoff) handoff.hidden = !years.length;
+      updateShichuYearWarning(years.length);
+      setText('shichu-year-selected', years.length
+        ? (en ? `Selected: ${years.join(', ')}${continuation ? ' (years only)' : ''}`
+              : `選択中：${years.join('・')}年${continuation ? '（年のデータだけ）' : ''}`)
+        : (en ? 'Selected: none (basic reading)' : '選択中：なし（命式と大運の基本鑑定）'));
+      if (button) button.disabled = true;
+      setText('shichu-year-picker-status', en ? 'Preparing the data for your AI…' : 'AI用データを準備しています…');
+      try {
+        const response = await fetch(SHICHU_YEAR_SELECTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(years.length ? { mode: continuation ? 'years_only' : 'selected', years } : { mode: 'basic' }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.yaml_text) throw new Error('selection_failed');
+        if (revision !== shichuSelectionRevision) return;
+        shichuSelection = { yaml: data.yaml_text, prompt: data.prompt_text };
+        preparedAiTextFiles.paste = null;
+        prepareAiTextFile('paste');
+        let message = continuation
+          ? (en ? `Ready: ${years.join(', ')} only. Paste it into the conversation where you already sent the chart data.`
+                : `${years.join('・')}年のデータだけを準備しました。命式つきのデータを渡した会話に貼り付けてください。`)
+          : years.length
+          ? (en ? `Ready: ${years.join(', ')}.` : `${years.join('・')}年を鑑定するデータを準備しました。`)
+          : (en ? 'Ready: basic reading (natal chart and major luck cycles).' : '命式と大運の基本鑑定データを準備しました。');
+        if (years.length > SHICHU_RECOMMENDED_MAX_YEARS) {
+          message += en
+            ? ` ${years.length} years selected — 1–${SHICHU_RECOMMENDED_MAX_YEARS} years per conversation reads more accurately.`
+            : `（${years.length}年を選択中：1回の相談では1〜${SHICHU_RECOMMENDED_MAX_YEARS}年の方が精度よく読めます）`;
+        }
+        setText('shichu-year-picker-status', message);
+      } catch (e) {
+        if (revision !== shichuSelectionRevision) return;
+        shichuSelection = null;
+        preparedAiTextFiles.paste = null;
+        prepareAiTextFile('paste');
+        setText('shichu-year-picker-status', en
+          ? 'Could not prepare the chosen years. The button will send all data instead.'
+          : '選んだ年のデータを準備できませんでした。このままボタンを押すと全データを送ります。');
+      } finally {
+        if (revision === shichuSelectionRevision && button) button.disabled = false;
+      }
+    }
+
+    function buildShichuAllDataText() {
+      const prompt = companionMode === 'consultation'
+        ? CHART_COMPANION_PROMPT.replace(GENERIC_ACG_URL_PATTERN, PERSONAL_ACG_URL)
+        : SHARE_PROMPT;
+      return [prompt, '', '---', '', UI_TEXT.yamlDataIntro, '', '```yaml', SHARE_YAML, '```'].join('\n') + '\n';
+    }
+
+    async function copyShichuAllData() {
+      await writeClipboard(buildShichuAllDataText(), UI_TEXT.copied, { kind: 'ai-copy:shichu-all' });
+    }
+
+    function downloadShichuAllData() {
+      downloadText('nanami-shichusuimei-all-data.txt', buildShichuAllDataText(), 'text/plain;charset=utf-8');
     }
 
     function buildAiTextFromYaml(yaml, mode = getSelectedAiMode()) {
@@ -1583,7 +1759,7 @@
     }
 
     function buildPreparedAiTextFile(mode = getSelectedAiMode()) {
-      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : SHARE_YAML);
+      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : getPasteYaml());
       if (!TXT_SHARE_TEST_MODE && !yaml) return null;
       const text = TXT_SHARE_TEST_MODE ? buildSmallTxtShareTest() : buildAiTextFromYaml(yaml, mode);
       return new File([text], buildAiTextFileName(mode), { type: 'text/plain' });
@@ -1601,7 +1777,7 @@
 
     function getPreparedAiTextShareText(mode = getSelectedAiMode()) {
       if (TXT_SHARE_TEST_MODE) return buildSmallTxtShareTest();
-      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : SHARE_YAML);
+      const yaml = mode === 'full' ? fullYamlCache : (mode === 'asteroids' ? asteroidYamlCache : getPasteYaml());
       return yaml ? buildAiTextFromYaml(yaml, mode) : '';
     }
 
@@ -1900,6 +2076,7 @@
     }
 
     initCopyHelpers();
+    refreshShichuSelection();
     initLazyFullYaml();
     initLazyCharts();
     selectAiMode(HAS_YAML_MODE_SELECTOR ? (HAS_WESTERN_ASTEROIDS ? 'asteroids' : 'full') : 'paste');

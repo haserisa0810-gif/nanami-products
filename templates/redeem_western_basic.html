@@ -53,7 +53,6 @@
             {% else %}
             <select name="order_provider" id="order-provider">
               <option value="stores" {% if provider == 'stores' %}selected{% endif %}>{{ t.provider_stores }}</option>
-              <option value="coconala" {% if provider == 'coconala' %}selected{% endif %}>{{ t.provider_coconala }}</option>
               <option value="payhip" {% if provider == 'payhip' %}selected{% endif %}>{{ t.provider_payhip }}</option>
               <option value="etsy" {% if provider == 'etsy' %}selected{% endif %}>{{ t.provider_etsy }}</option>
             </select>
@@ -147,8 +146,8 @@
               <select name="prefecture" id="prefecture-select" required>
                 <option value="">{{ t.select_placeholder }}</option>
                 {% for pref in prefectures %}
-                  <option value="{{ pref }}"
-                    {% if form and form.prefecture == pref %}selected{% endif %}>{{ pref }}</option>
+                  <option value="{{ pref.value }}"
+                    {% if form and form.prefecture == pref.value %}selected{% endif %}>{{ pref.label }}</option>
                 {% endfor %}
               </select>
             </label>

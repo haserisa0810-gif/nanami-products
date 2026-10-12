@@ -1,6 +1,7 @@
 """Localized Chart Companion prompts used by the consultation mode."""
 
 from __future__ import annotations
+from services.shichusuimei_prompt_rules import localized_shichusuimei_rules
 
 from typing import Any
 
@@ -14,7 +15,7 @@ _COPY: dict[str, dict[str, Any]] = {
         "rules": [
             "Treat the YAML as the only astrological source. Never recalculate, correct, or replace its values.",
             "Follow interpretation_flags and time_sensitive_provisional first. Mark time-sensitive values as provisional when the birth time is uncertain.",
-            "Do not invent missing placements, houses, aspects, transits, pillars, cycles, or life events.",
+            "Do not invent missing placements, houses, aspects, transits, or life events.",
             "Separate astrological tendencies, facts the client has shared, and your practical suggestions.",
             "Do not use astrology alone for medical, legal, financial, safety, pregnancy, death, or accident decisions.",
             "Avoid guarantees, fear-based language, and generic encouragement.",
@@ -44,7 +45,7 @@ _COPY: dict[str, dict[str, Any]] = {
         "rules": [
             "Usa el YAML como única fuente astrológica. No recalcules, corrijas ni sustituyas sus valores.",
             "Prioriza interpretation_flags y time_sensitive_provisional. Si la hora de nacimiento es incierta, presenta los valores sensibles a la hora como provisionales.",
-            "No inventes posiciones, casas, aspectos, tránsitos, pilares, ciclos ni hechos vitales que no estén en los datos.",
+            "No inventes posiciones, casas, aspectos, tránsitos ni hechos vitales que no estén en los datos.",
             "Distingue las tendencias astrológicas, los hechos contados por la persona y tus sugerencias prácticas.",
             "No utilices solo la astrología para decisiones médicas, legales, financieras o de seguridad, ni para embarazo, muerte o accidentes.",
             "Evita garantías, lenguaje alarmista y consejos genéricos.",
@@ -74,7 +75,7 @@ _COPY: dict[str, dict[str, Any]] = {
         "rules": [
             "Nutze das YAML als einzige astrologische Grundlage. Berechne, korrigiere oder ersetze seine Werte nicht.",
             "Priorisiere interpretation_flags und time_sensitive_provisional. Kennzeichne zeitabhängige Werte bei unsicherer Geburtszeit als vorläufig.",
-            "Erfinde keine fehlenden Stellungen, Häuser, Aspekte, Transite, Säulen, Zyklen oder Lebensereignisse.",
+            "Erfinde keine fehlenden Stellungen, Häuser, Aspekte, Transite oder Lebensereignisse.",
             "Trenne astrologische Tendenzen, Angaben der Person und deine praktischen Vorschläge klar voneinander.",
             "Nutze Astrologie nicht allein für medizinische, rechtliche, finanzielle oder sicherheitsrelevante Entscheidungen sowie Aussagen zu Schwangerschaft, Tod oder Unfällen.",
             "Vermeide Garantien, angstmachende Sprache und allgemeine Aufmunterungen.",
@@ -102,8 +103,17 @@ _COPY: dict[str, dict[str, Any]] = {
 def build_localized_companion_prompt(*, lang: str, include_shichusuimei: bool) -> str:
     copy = _COPY[lang]
     role = copy["role_four"] if include_shichusuimei else copy["role_western"]
-    lines = [role, "", copy["data"], "", f"## {copy['rules_title']}"]
-    lines.extend(f"- {item}" for item in copy["rules"])
+    data = {
+        "en": "The following YAML contains the calculated Four Pillars chart and the included luck-cycle and annual data.",
+        "es": "El siguiente YAML contiene la carta calculada de Cuatro Pilares y los ciclos y años incluidos.",
+        "de": "Das folgende YAML enthält die berechneten Vier Säulen und die enthaltenen Zyklus- und Jahresdaten.",
+    }[lang] if include_shichusuimei else copy["data"]
+    lines = [role, "", data, "", f"## {copy['rules_title']}"]
+    if include_shichusuimei:
+        lines.append(localized_shichusuimei_rules(lang))
+        lines.extend(f"- {item}" for item in copy["rules"][3:])
+    else:
+        lines.extend(f"- {item}" for item in copy["rules"])
     lines.extend(["", f"## {copy['flow_title']}"])
     lines.extend(f"- {item}" for item in copy["opening"])
     if not include_shichusuimei:

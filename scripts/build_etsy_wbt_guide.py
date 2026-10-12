@@ -217,7 +217,7 @@ def build() -> None:
             "Please save your generated files and shared URL as needed.",
         ]),
         ("Shared URL", [
-            "The shared URL is valid for 90 days from the date of issue.",
+            "The shared URL is valid for 365 days from the date of issue.",
             "To continue using the data after expiry, download the ZIP archive to your device.",
         ]),
         ("AI Usage", [
@@ -271,7 +271,7 @@ def build() -> None:
         "If the issue continues, contact support through Etsy Messages.",
     ], y)
     y = faq(c, "Can I use this data more than once?", [
-        "Yes. The shared URL is valid for 90 days.",
+        "Yes. The shared URL is valid for 365 days.",
         "Download the ZIP archive and planner early for long-term access.",
     ], y)
     y = faq(c, "Does this product include asteroid data?", [

@@ -12,11 +12,8 @@ import routes
 
 class UnverifiedProductTypeWarningTest(unittest.TestCase):
     """
-    商品種別を判定できない注文は、発行を止めずに warning を残す。
-
-    product_type が NULL の注文は商品種別チェックを素通りするので
-    （安い注文番号で高い商品を発行できてしまう）、運用で気づけるように
-    ログに出す。商品コードの判定漏れが主因。
+    商品種別を判定できない通常注文は発行前に停止する。
+    明示的な再利用テスト注文の既存方針は維持する。
     """
 
     def _redeem_check(self, order_row, status="ok", provider="stores"):
@@ -33,19 +30,13 @@ class UnverifiedProductTypeWarningTest(unittest.TestCase):
                 )
         return result, captured.output
 
-    def test_warns_when_product_type_is_missing(self) -> None:
+    def test_blocks_when_product_type_is_missing(self) -> None:
         row = {"stores_order_no": "9123456789", "provider": "stores", "product_type": None,
                "payment_status": "paid"}
         (status, _row, error, code), logs = self._redeem_check(row)
-        # 発行は止めない
-        self.assertEqual(status, "ok")
-        self.assertIsNone(error)
-        self.assertEqual(code, 200)
-        warnings = [line for line in logs if "order_product_unverified" in line]
-        self.assertEqual(len(warnings), 1, logs)
-        self.assertIn("WARNING", warnings[0])
-        self.assertIn("issued_as=western_full", warnings[0])
-        self.assertIn("_PRODUCT_CODE_PATTERNS", warnings[0])
+        self.assertEqual(status, "product_unverified")
+        self.assertIn("商品コード", error)
+        self.assertEqual(code, 409)
 
     def test_no_warning_when_product_type_is_known(self) -> None:
         row = {"stores_order_no": "9123456789", "provider": "stores",
@@ -64,18 +55,15 @@ class UnverifiedProductTypeWarningTest(unittest.TestCase):
 
 
 class AddonUnverifiedProductWarningTest(unittest.TestCase):
-    def test_addon_path_warns_but_still_issues(self) -> None:
+    def test_addon_path_blocks_unverified_identity(self) -> None:
         row = {"stores_order_no": "9123456789", "provider": "stores", "product_type": None,
                "payment_status": "paid"}
         with patch("routes.pg_store.redeem_addon_order", return_value=("ok", row)):
             with self.assertLogs("nanami.chart", level="INFO") as captured:
-                result = routes._redeem_addon_order_or_raise(
-                    "9123456789", "stores", "western_long_term_transits_addon",
-                )
-        self.assertEqual(result, "9123456789")
-        warnings = [line for line in captured.output if "order_product_unverified" in line]
-        self.assertEqual(len(warnings), 1, captured.output)
-        self.assertIn("context=addon", warnings[0])
+                with self.assertRaisesRegex(ValueError, "商品コード"):
+                    routes._redeem_addon_order_or_raise(
+                        "9123456789", "stores", "western_long_term_transits_addon",
+                    )
 
     def test_addon_path_stays_quiet_for_permanent_key(self) -> None:
         # 9700000007 は product_type 未設定の常設テストキー。毎回警告すると邪魔になる。

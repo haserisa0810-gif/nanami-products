@@ -42,6 +42,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy_candidate.ps1
 
 管理用の試験画面は、`/test-site` ではなく `ADMIN_TEST_SITE_PATH` で設定した非推測パスを使います。未設定時は管理トークンのハッシュから自動生成されます。
 
+購入者向けUIも候補版URLで毎回確認します。`/redeem/shichu`、`/redeem/western-basic`、
+`/redeem/western-full` をスマートフォン幅とPC幅で開き、購入元の選択肢、都道府県名と送信値、
+入力欄・最終確認画面の折り返しや重なりを確認してください。都道府県に辞書形式の文字列が
+表示されないこと、通常の購入元選択肢に販売終了のココナラがないことも確認します。
+実注文番号での送信は、この表示確認に含めません。
+これらの表示内容の自動回帰テストは `tests/test_order_code_input_forms.py` と
+`tests/test_redeem_prefecture_options.py` にあり、既定の `pytest tests` に含まれます。
+
 ## STORESメール同期
 
 STORESのコンテンツ販売には、商品ごとの入口URLを設定します。
@@ -153,7 +161,8 @@ VALUES
   ('9000000001', 'western_basic', 0, 'reusable', 'reusable [NP-WB] order', NOW()),
   ('9000000002', 'western_full',  0, 'reusable', 'reusable [NP-WF] order', NOW()),
   ('9000000003', 'shichu',        0, 'reusable', 'reusable [NP-SC] order', NOW()),
-  ('9000000004', 'transit_yaml',  0, 'reusable', 'reusable [NP-TY] transit yaml order', NOW())
+  ('9000000004', 'transit_yaml',  0, 'reusable', 'reusable [NP-TY] transit yaml order', NOW()),
+  ('9000000005', 'shichu_full',   0, 'reusable', 'reusable [NP-SCF] order', NOW())
 ON CONFLICT (stores_order_no) DO UPDATE SET
   product_type = EXCLUDED.product_type,
   amount = EXCLUDED.amount,

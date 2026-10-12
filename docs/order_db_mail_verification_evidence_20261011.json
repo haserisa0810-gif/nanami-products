@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-11",
+  "scope": "local verification only",
+  "test_run": {
+    "passed": 87,
+    "skipped": 7,
+    "xfailed": 1,
+    "warnings": 137,
+    "seconds": 1.16,
+    "full_suite_rerun": false
+  },
+  "postgres": {
+    "status": "not_executed",
+    "case_count": 7,
+    "reason": "No explicitly configured isolated PostgreSQL"
+  },
+  "operator_email": {
+    "gmail_send": "SENT confirmed by message readback",
+    "recipient_receipt": "PASS: user explicitly confirmed receipt; mailbox classification and headers not inspected",
+    "smtp_application_path": "not_executed",
+    "fixture_order": "TEST-20261011-HOLD-01",
+    "customer_data_used": false,
+    "operator_addresses_saved": false
+  },
+  "manual_only_release": {
+    "status": "FAIL",
+    "evidence": "Parser and sync calls with mocked DB; no actual PostgreSQL state transition claimed",
+    "production_code_changed": false
+  },
+  "source_sha256": {
+    "services/order_holds.py": "cf0120217a5d1abfc49c277bbbd32cd521815309d348c48396ac393be20aaf21",
+    "services/stores_mail_sync.py": "cf3304eaec7641a92afd27057a47f4d1d0f05fdbb9c28e8d4322163e088a8f27",
+    "services/pg_store.py": "bdbc2738be90beae9719e211355f6a353117d93c712445ad9c6a3e27dc46d1bf",
+    "tests/test_order_hold_retry_audit.py": "989db0daed51e78c30a15fd1bf7a1324fd4c9d7392303a403ca2064362979b2f",
+    "tests/test_purchase_notifications_postgres.py": "449ec8801c85b02c989a34401fe555035597b2d5b33be7e4cbc4efbcf182b1e1"
+  }
+}

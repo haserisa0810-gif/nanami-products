@@ -50,7 +50,7 @@ class StoresOrderUpsertStatusTest(unittest.TestCase):
                 },
             )
 
-        normalized_sql = connection.cursor_instance.executed[0][0]
+        normalized_sql = next(sql for sql, _ in connection.cursor_instance.executed if "INSERT INTO nanami_products.marketplace_orders" in sql)
         protected_status_clause = (
             "WHEN nanami_products.marketplace_orders.payment_status "
             "IN ('reset_once', 'reusable', 'test', 'permanent') "
@@ -65,7 +65,7 @@ class StoresOrderUpsertStatusTest(unittest.TestCase):
             normalized_sql.index(paid_clause),
         )
 
-        legacy_sql = connection.cursor_instance.executed[1][0]
+        legacy_sql = next(sql for sql, _ in connection.cursor_instance.executed if "INSERT INTO nanami_products.stores_orders" in sql)
         self.assertIn(
             "ON CONFLICT (stores_order_no) DO UPDATE SET",
             legacy_sql,
@@ -88,7 +88,7 @@ class StoresOrderUpsertStatusTest(unittest.TestCase):
                 },
             )
 
-        sql, params = connection.cursor_instance.executed[0]
+        sql, params = next(row for row in connection.cursor_instance.executed if "INSERT INTO nanami_products.marketplace_orders" in row[0])
         self.assertIn("INSERT INTO nanami_products.marketplace_orders", sql)
         self.assertIn("ON CONFLICT (provider, order_code)", sql)
         self.assertEqual(params[:2], ("etsy", "SAME-ORDER"))

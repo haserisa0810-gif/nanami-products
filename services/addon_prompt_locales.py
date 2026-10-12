@@ -5,6 +5,12 @@ from __future__ import annotations
 
 def build_addon_prompt(product_type: str, lang: str, *, stored_prompt: str = "") -> str:
     if lang == "ja":
+        from services.shichusuimei_years_addon import YEARS_ADDON_PROMPT, YEARS_ADDON_TYPES
+        if product_type in YEARS_ADDON_TYPES:
+            return YEARS_ADDON_PROMPT.strip() + "\n"
+        if product_type.startswith("shichu_"):
+            from services.yaml_exporter import SHICHU_FORTUNE_CYCLES_ADDON_PROMPT
+            return SHICHU_FORTUNE_CYCLES_ADDON_PROMPT.strip() + "\n"
         return stored_prompt
     kind = (
         "asteroids" if "asteroid" in product_type
@@ -43,4 +49,12 @@ def build_addon_prompt(product_type: str, lang: str, *, stored_prompt: str = "")
         "de": "Verwende die folgende berechnete YAML-Datei als Quelle und gib eine strukturierte, praktische Deutung.",
     }
     safe_lang = lang if lang in intros else "en"
+    if kind == "four_pillars":
+        from services.shichusuimei_prompt_rules import localized_shichusuimei_rules
+        rules = {
+            "en": "Read this add-on together with the base Four Pillars YAML; request the base YAML if it is missing. Keep natal information, major luck cycles and included annual periods distinct.",
+            "es": "Lee este complemento junto con el YAML base de Cuatro Pilares; solicita el YAML base si falta. Distingue información natal, ciclos de suerte y periodos anuales incluidos.",
+            "de": "Lies dieses Add-on zusammen mit der Vier-Säulen-Basis-YAML; bitte darum, falls sie fehlt. Trenne Geburtssäulen, große Glückszyklen und enthaltene Jahresperioden.",
+        }
+        return f"{intros[safe_lang][kind]}\n\n{rules[safe_lang]}\n\n{localized_shichusuimei_rules(safe_lang)}\n\n{closing[safe_lang]}\n"
     return f"{intros[safe_lang][kind]}\n\n{rules[safe_lang]}\n\n{closing[safe_lang]}\n"

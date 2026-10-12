@@ -1,0 +1,33 @@
+{
+  "full_suite": {
+    "passed": 2135,
+    "skipped": 7,
+    "subtests_passed": 161,
+    "seconds": 152.9,
+    "skip_reason": "Real PostgreSQL unavailable; Windows Device Guard blocked local binaries"
+  },
+  "original_mail": {
+    "checked": 15,
+    "passed": 15,
+    "purchase_notices_payhip": 7,
+    "download_notices_payhip_held": 1,
+    "stores": 6,
+    "etsy_unclassified_held": 1
+  },
+  "email_delivery": {
+    "implemented": true,
+    "real_send": false,
+    "configuration": "pending"
+  },
+  "production_database_access": false,
+  "push": false,
+  "deployment": false,
+  "files_sha256": {
+    "routes.py": "93b5ed0d9f6becf3d8b96e94cd90a7b994a50e08113fd38663bf198e18ee75ca",
+    "services/stores_mail_sync.py": "cf3304eaec7641a92afd27057a47f4d1d0f05fdbb9c28e8d4322163e088a8f27",
+    "services/pg_store.py": "bdbc2738be90beae9719e211355f6a353117d93c712445ad9c6a3e27dc46d1bf",
+    "services/order_holds.py": "cf0120217a5d1abfc49c277bbbd32cd521815309d348c48396ac393be20aaf21",
+    "services/purchase_mail_items.py": "b8840afc569e2b300c0d19a087369558d422a3ad8e3784aa91a8e5e07d23774a",
+    "templates/test_site.html": "5dd253bb927b58e936accd4c12c502884445c4542e8fb21627399195ec24cf32"
+  }
+}

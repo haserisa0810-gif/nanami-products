@@ -22,6 +22,9 @@
       </div>
       <h1>{{ t.addon_title }}</h1>
       <p class="lead">{{ t.addon_lead }}</p>
+      {% if lang == 'ja' %}
+      <p class="note">四柱推命の大運・流年追加：基本命式の性別が「指定なし」の場合、大運・起運は未確定です。原局と流年のみを計算します。大運が必要な場合は、性別が指定された基本命式を使用してください。旧原本の女性補完を確定値として引き継ぎません。</p>
+      {% endif %}
       <section class="notice-box">
         <h2>{{ t.addon_usage_title }}</h2>
         <ul class="plain-list">
@@ -131,6 +134,23 @@
           </label>
         </div>
 
+        <div class="form-section" id="annual-years-section" hidden>
+          {% if lang == 'ja' %}
+          <h2>年運の開始年</h2>
+          <p class="hint">四柱推命FULL版の鑑定ページURL、またはFULL版のYAMLを上で指定してください。FULL版には購入時の年から10年分の年運が入っています。開始年を空欄にすると、FULL版に入っている最後の年の翌年から作成します。過去の年も選べます。</p>
+          {% else %}
+          <h2>Start year</h2>
+          <p class="hint">Provide the URL or YAML of your Four Pillars FULL data above. FULL already includes 10 years from the year of purchase. Leave the start year empty to continue from the year after the last year included in FULL. Past years can also be chosen.</p>
+          {% endif %}
+          <label>{% if lang == 'ja' %}開始年（西暦）{% else %}Start year{% endif %}
+            <input type="text" name="annual_start_year" id="annual-start-year" inputmode="numeric"
+                   pattern="[0-9]{4}" maxlength="4" autocomplete="off"
+                   value="{{ form.annual_start_year if form and form.annual_start_year else '' }}"
+                   placeholder="{% if lang == 'ja' %}例：2036{% else %}e.g. 2036{% endif %}">
+            <small>{% if lang == 'ja' %}各年は立春（2月4日ごろ）から翌年の立春までです。{% else %}Each year runs from Lichun (around February 4) to the next Lichun.{% endif %}</small>
+          </label>
+        </div>
+
         <button type="submit" class="submit-button">{{ t.generate_button }}</button>
       </form>
 
@@ -174,6 +194,7 @@
     const previousChartUrl = document.getElementById('previous-chart-url');
     const previousChartUrlWrap = document.getElementById('previous-chart-url-wrap');
     const transitPeriodSection = document.getElementById('transit-period-section');
+    const annualYearsSection = document.getElementById('annual-years-section');
     const baseDataHint = document.getElementById('base-data-hint');
 
     function setStatus(text) {
@@ -223,8 +244,10 @@
         'western_31days_transit_addon',
         'western_long_term_transits_addon',
       ].includes(addonType.value);
+      const isAnnualYears = addonType && addonType.value.startsWith('shichu_annual_');
       if (previousChartUrlWrap) previousChartUrlWrap.hidden = false;
       if (transitPeriodSection) transitPeriodSection.hidden = !isTransit;
+      if (annualYearsSection) annualYearsSection.hidden = !isAnnualYears;
       if (baseYaml) baseYaml.required = false;
       if (previousChartUrl) previousChartUrl.disabled = false;
       if (baseDataHint) {

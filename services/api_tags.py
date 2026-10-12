@@ -263,7 +263,8 @@ def shichu_tags(shichu: dict[str, Any] | None) -> list[dict[str, Any]]:
                 + ([f"start_age={daiun.get('start_age_text')}"] if isinstance(daiun, dict) and daiun.get("start_age_text") else [])
                 + ([f"current={current_daiun.get('kanshi')}"] if isinstance(current_daiun, dict) and current_daiun.get("kanshi") else [])
             ) if current_daiun or daiun else [],
-            writing_hint="今の10年運がどこに向いているかを読む",
+            writing_hint=("性別未指定のため大運順逆は未確定。命式と原局×流年のみを読む"
+                          if daiun.get("status") == "undetermined_gender" else "今の10年運がどこに向いているかを読む"),
         ),
         _tag(
             "annual_theme",

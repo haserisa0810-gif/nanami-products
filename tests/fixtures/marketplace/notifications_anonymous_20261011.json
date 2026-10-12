@@ -1,0 +1,169 @@
+[
+  {
+    "provider": "payhip",
+    "sample": 1,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture1\nFixture product [NP-WB]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-WB"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 2,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture2\nFixture product [NP-WB]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-WB"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 3,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture3\nFixture product [NP-WF]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-WF"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 4,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture4\nFixture product [NP-AA]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-AA"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 5,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture5\nFixture product [NP-AA]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-AA"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 6,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture6\nFixture product [NP-WF]\n&nbsp;\n&#36;1.00\nFixture product [NP-WB]\n&nbsp;\n&#36;1.00\nFixture product [NP-AA]\n&nbsp;\n&#36;1.00\nFixture product [NP-TA]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-WF",
+      "NP-WB",
+      "NP-AA",
+      "NP-TA"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 7,
+    "subject": "You've Sold An Item!",
+    "body": "The following\nitems have been purchased:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture7\nFixture product [NP-WF]\n&nbsp;\n&#36;1.00\nFixture product [NP-WB]\n&nbsp;\n&#36;1.00\nFixture product [NP-WA]\n&nbsp;\n&#36;1.00\nFixture product [NP-WT]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [
+      "NP-WF",
+      "NP-WB",
+      "NP-WA",
+      "NP-WT"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "payhip",
+    "sample": 8,
+    "subject": "Someone Requested a Download!",
+    "body": "The following\nitems have been downloaded:\nBuyer: fixture@example.invalid\nDate: 1 January 2000\nOrder ID: Fixture8\nFixture product [NP-WF]\n&nbsp;\n&#36;1.00\nFixture product [NP-WB]\n&nbsp;\n&#36;1.00\nFixture product [NP-WA]\n&nbsp;\n&#36;1.00\nFixture product [NP-WT]\n&nbsp;\n&#36;1.00\nTotal\n&#36;1.00\nView order details\n",
+    "expected_codes": [],
+    "expected_hold": "non_purchase_notification",
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "stores",
+    "sample": 1,
+    "subject": "【STORES】アイテムが購入されました（オーダー番号：9123456789）",
+    "body": "アイテムが購入されました\n--------------------\n1. [NP-WF] Fixture\nhttps://fixture.stores.jp/items/fixture\n￥100 x 1 = ￥100\n小計：￥100\n合計：￥100\n--------------------\n",
+    "expected_codes": [
+      "NP-WF"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "stores",
+    "sample": 2,
+    "subject": "【STORES】アイテムが購入されました（オーダー番号：9123456789）",
+    "body": "アイテムが購入されました\n--------------------\n1. [NP-WB] Fixture\nhttps://fixture.stores.jp/items/fixture\n￥100 x 1 = ￥100\n小計：￥100\n合計：￥100\n--------------------\n",
+    "expected_codes": [
+      "NP-WB"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "stores",
+    "sample": 3,
+    "subject": "【STORES】アイテムが購入されました（オーダー番号：9123456789）",
+    "body": "アイテムが購入されました\n--------------------\n1. [NP-WB] Fixture\nhttps://fixture.stores.jp/items/fixture\n￥100 x 1 = ￥100\n小計：￥100\n合計：￥100\n--------------------\n",
+    "expected_codes": [
+      "NP-WB"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "stores",
+    "sample": 4,
+    "subject": "【STORES】アイテムが購入されました（オーダー番号：9123456789）",
+    "body": "アイテムが購入されました\n--------------------\n1. [NP-SC] Fixture\nhttps://fixture.stores.jp/items/fixture\n￥100 x 1 = ￥100\n小計：￥100\n合計：￥100\n--------------------\n",
+    "expected_codes": [
+      "NP-SC"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "stores",
+    "sample": 5,
+    "subject": "【STORES】アイテムが購入されました（オーダー番号：9123456789）",
+    "body": "アイテムが購入されました\n--------------------\n1. [NP-SC] Fixture\nhttps://fixture.stores.jp/items/fixture\n￥100 x 1 = ￥100\n小計：￥100\n合計：￥100\n--------------------\n",
+    "expected_codes": [
+      "NP-SC"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "stores",
+    "sample": 6,
+    "subject": "【STORES】アイテムが購入されました（オーダー番号：9123456789）",
+    "body": "お問い合わせは購入後にお願いします。\n注文番号：9123456789\n注文商品：\n・[NP-SC] Fixture\nお問い合わせ：\nFixture\n",
+    "expected_codes": [
+      "NP-SC"
+    ],
+    "expected_hold": null,
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  },
+  {
+    "provider": "etsy",
+    "sample": 1,
+    "subject": "Etsy order details",
+    "body": "注文の詳細\n注文番号：9123456789\n商品：Fixture\n個数：1\n合計：US$1.00\n",
+    "expected_codes": [],
+    "expected_hold": "product_code_missing",
+    "provenance": "anonymized minimal fields from original mail; identifiers and prices replaced"
+  }
+]

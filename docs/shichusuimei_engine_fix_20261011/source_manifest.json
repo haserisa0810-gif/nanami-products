@@ -1,0 +1,92 @@
+{
+  "protected_before_snapshots_match": true,
+  "application_baseline_files": 190,
+  "baseline_files_changed": 12,
+  "new_application_files": 1,
+  "changed_application_files": [
+    {
+      "file": "routes.py",
+      "before_sha256": "1e41cd09006068923831dfe3c1ff53c011e1886ababa6bef6298c33befceccec",
+      "after_sha256": "1420b30306ba152f31b7e31423017f5709593a49a5af7ca7d6cd5e1a612a4861"
+    },
+    {
+      "file": "services/api_calc.py",
+      "before_sha256": "8f42afbd4c3db2fed10be35e40650c005a35805f8a2c5351785b09c47cb1c73f",
+      "after_sha256": "e5c2589b346078f751f5685002037514234ee5d5bf677d69f680af878f2ba756"
+    },
+    {
+      "file": "services/api_tags.py",
+      "before_sha256": "275b9b2d981dc6fbc49dfe8c2f0ac18443b7e603b0fdc9c316158fc3383050c4",
+      "after_sha256": "d22b95366455444673b4d41193bc5b4b20702684307e35c48fd70a2567b8ad4e"
+    },
+    {
+      "file": "services/prompt_builder.py",
+      "before_sha256": "c377ec3fbb9a478a99d4504d2a23b437b1854ee0ef260b145048eb51e0ff4129",
+      "after_sha256": "cc74cf8fdb16084d882cfccfb020ba99a55375f045e2948509467a5f49ac8997"
+    },
+    {
+      "file": "services/shichusuimei_annual_report.py",
+      "before_sha256": "9564595b44ebf19745c8192a334b71eb456862b79d035d660bca14aecdc16e2a",
+      "after_sha256": "dfeeafeff2b7fdc1ccb2abe63fb4f8dfb9a2d0eedf48d6f8ab844f256d0eb830"
+    },
+    {
+      "file": "services/shichusuimei_calc.py",
+      "before_sha256": "bdcf3e6deff03327fe64e4e1af3c763cf25ac5aa9f1ad294fe7824ae59e4645b",
+      "after_sha256": "856f9319d6c471b47af1e99d49d9037377320bedaf7e8315a654ada15caa51e6"
+    },
+    {
+      "file": "services/shichu_chart.py",
+      "before_sha256": "7e5f867dfad0c2096496345ab5f9b72d7d44dd59685e7f1812eef88af41f950a",
+      "after_sha256": "59618379285f607fcb72b85a66aa7b7051971e16dfd0723debb070eeeb1da270"
+    },
+    {
+      "file": "services/yaml_exporter.py",
+      "before_sha256": "47f9b140cf4d55660b099cc2c5cbd894ade733ba1b66a6ad05767b5f3e0717ab",
+      "after_sha256": "4d72e3e0eae899e00c75f45066abbedc3992f5290b66db9bd33e340c1c6be29b"
+    },
+    {
+      "file": "templates/addon_form.html",
+      "before_sha256": "4535f4b73f3bf3d40c5b217281fccd2bddfa7e1ccaa41cd8e4cc4c5f462d133e",
+      "after_sha256": "98b9eff062dc3f2f46e86c37c80f7e7aeed298c885f63095cd01ef2b660f0d73"
+    },
+    {
+      "file": "templates/nanami_api_spec.html",
+      "before_sha256": "280246ee67b237eef0973780378324713ee875729e45a498ba88a525224479d6",
+      "after_sha256": "b523b51fd32b780943f15a73dbd5c9587c3875a84df8c6eec798edb3711536f6"
+    },
+    {
+      "file": "templates/redeem.html",
+      "before_sha256": "5310ed79dfbd1c50bc2134bbe7f7d02e43fbac6e912ffd22163bf5e17c050f46",
+      "after_sha256": "bdc0a0c25dc371cf24bf93983549f556c7cab085618e012f55cafa188c54b0d3"
+    },
+    {
+      "file": "templates/redeem_shichu.html",
+      "before_sha256": "5e8b23f406bfa90a688e571cbde4126cb0364b5ce505b0adb2e6e734aead77bf",
+      "after_sha256": "8c0b85d11945dda929ba132350d1311c190fcc53b39b9c6d80288af37deb900b"
+    },
+    {
+      "file": "services/birth_datetime.py",
+      "before_sha256": null,
+      "after_sha256": "9c2862d4bad7de82626bf67afdc18631fa8f19860d94a232b58a2ac2b7627aca"
+    }
+  ],
+  "root_engine_checks": [
+    {
+      "file": "services/shichusuimei_calc.py",
+      "root_unchanged_since_audit": true
+    },
+    {
+      "file": "services/shichusuimei_structure.py",
+      "root_unchanged_since_audit": true
+    },
+    {
+      "file": "services/western_core.py",
+      "root_unchanged_since_audit": true
+    },
+    {
+      "file": "services/western_calc.py",
+      "root_unchanged_since_audit": true
+    }
+  ],
+  "western_and_structure_sources_unchanged": true
+}

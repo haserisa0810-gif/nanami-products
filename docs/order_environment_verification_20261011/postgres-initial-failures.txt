@@ -1,0 +1,90 @@
+.......FF.FFF                                                            [100%]
+=================================== FAILURES ===================================
+________ test_real_valid_resync_of_held_order_requires_manual_approval _________
+tests/test_purchase_notifications_postgres.py:178: in test_real_valid_resync_of_held_order_requires_manual_approval
+    assert approve(database, "Review", version)["ok"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_purchase_notifications_postgres.py:161: in approve
+    return order_review.approve(con, provider="payhip", order_code=order, expected_version=version)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:69: in approve
+    items = validate_candidate(review.get("candidate"))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:38: in validate_candidate
+    raise ReviewError("PURCHASE_EVIDENCE_REQUIRED")
+E   services.order_review.ReviewError: PURCHASE_EVIDENCE_REQUIRED
+___________ test_real_parallel_approvals_create_only_confirmed_units ___________
+tests/test_purchase_notifications_postgres.py:192: in test_real_parallel_approvals_create_only_confirmed_units
+    results = list(executor.map(worker, range(6)))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/concurrent/futures/_base.py:619: in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/concurrent/futures/_base.py:317: in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/lib/python3.12/concurrent/futures/thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_purchase_notifications_postgres.py:190: in worker
+    return approve(database, "ReviewRace", version)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_purchase_notifications_postgres.py:161: in approve
+    return order_review.approve(con, provider="payhip", order_code=order, expected_version=version)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:69: in approve
+    items = validate_candidate(review.get("candidate"))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:38: in validate_candidate
+    raise ReviewError("PURCHASE_EVIDENCE_REQUIRED")
+E   services.order_review.ReviewError: PURCHASE_EVIDENCE_REQUIRED
+_____________ test_real_approval_failure_rolls_back_granted_units ______________
+tests/test_purchase_notifications_postgres.py:213: in test_real_approval_failure_rolls_back_granted_units
+    approve(database, "ReviewRollback", review_version(database, "ReviewRollback"))
+tests/test_purchase_notifications_postgres.py:161: in approve
+    return order_review.approve(con, provider="payhip", order_code=order, expected_version=version)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:69: in approve
+    items = validate_candidate(review.get("candidate"))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:38: in validate_candidate
+    raise ReviewError("PURCHASE_EVIDENCE_REQUIRED")
+E   services.order_review.ReviewError: PURCHASE_EVIDENCE_REQUIRED
+_____ test_real_existing_chart_preserved_and_rights_frozen_until_approved ______
+tests/test_purchase_notifications_postgres.py:223: in test_real_existing_chart_preserved_and_rights_frozen_until_approved
+    assert approve(database, "ReviewPrior", review_version(database, "ReviewPrior"))["ok"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_purchase_notifications_postgres.py:161: in approve
+    return order_review.approve(con, provider="payhip", order_code=order, expected_version=version)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:69: in approve
+    items = validate_candidate(review.get("candidate"))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:38: in validate_candidate
+    raise ReviewError("PURCHASE_EVIDENCE_REQUIRED")
+E   services.order_review.ReviewError: PURCHASE_EVIDENCE_REQUIRED
+_______ test_real_old_source_notifications_do_not_reopen_approved_order ________
+tests/test_purchase_notifications_postgres.py:237: in test_real_old_source_notifications_do_not_reopen_approved_order
+    assert approve(database, "OldSource", review_version(database, "OldSource"))["ok"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_purchase_notifications_postgres.py:161: in approve
+    return order_review.approve(con, provider="payhip", order_code=order, expected_version=version)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:69: in approve
+    items = validate_candidate(review.get("candidate"))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/order_review.py:38: in validate_candidate
+    raise ReviewError("PURCHASE_EVIDENCE_REQUIRED")
+E   services.order_review.ReviewError: PURCHASE_EVIDENCE_REQUIRED
+=========================== short test summary info ============================
+FAILED tests/test_purchase_notifications_postgres.py::test_real_valid_resync_of_held_order_requires_manual_approval
+FAILED tests/test_purchase_notifications_postgres.py::test_real_parallel_approvals_create_only_confirmed_units
+FAILED tests/test_purchase_notifications_postgres.py::test_real_approval_failure_rolls_back_granted_units
+FAILED tests/test_purchase_notifications_postgres.py::test_real_existing_chart_preserved_and_rights_frozen_until_approved
+FAILED tests/test_purchase_notifications_postgres.py::test_real_old_source_notifications_do_not_reopen_approved_order
+5 failed, 8 passed in 3.27s

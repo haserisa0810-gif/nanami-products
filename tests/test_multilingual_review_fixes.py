@@ -30,6 +30,67 @@ def test_redeem_error_catalogues_have_identical_keys():
         assert set(REDEEM_ERROR_MESSAGES[lang]) == expected_keys
 
 
+def test_redeem_save_failure_uses_selected_language_without_exposing_exception():
+    exc = RuntimeError("database detail must stay private")
+    for lang in ("en", "es", "de"):
+        message = routes._buyer_save_error(exc, lang)
+        assert message == redeem_error(lang, "save_failed")
+        assert "database detail" not in message
+    assert routes._buyer_save_error(exc, "ja") == redeem_error("ja", "save_failed")
+
+
+def test_invalid_prefecture_and_unusable_exact_time_are_localized_without_narrowing_legacy_time():
+    for lang in ("ja", "en", "es", "de"):
+        with pytest.raises(ValueError) as prefecture_error:
+            routes._build_birth_location(
+                prefecture="Not-A-Prefecture",
+                birth_place_kind="domestic",
+                birth_place_overseas="",
+                birth_place_city="",
+                birth_lat="",
+                birth_lng="",
+                birth_timezone="",
+                lang=lang,
+            )
+        assert str(prefecture_error.value) == routes.buyer_error(lang, "prefecture_invalid")
+
+        with pytest.raises(ValueError) as time_error:
+            routes._validate_exact_birth_time("25:00", lang)
+        assert str(time_error.value) == routes.buyer_error(lang, "exact_time_invalid")
+
+        # The existing calculation uses the first two colon-separated fields;
+        # keep accepting its historical one-digit and extra-component forms.
+        routes._validate_exact_birth_time("7:5", lang)
+        routes._validate_exact_birth_time("07:05:30", lang)
+
+
+def test_addon_product_labels_and_input_errors_never_expose_internal_slugs():
+    for lang in ("en", "es", "de"):
+        label = routes._product_label_for_lang("western_31days_transit_addon", lang)
+        assert label != "western_31days_transit_addon"
+        unknown_label = routes._product_label_for_lang("private_internal_slug", lang)
+        assert "private_internal_slug" not in unknown_label
+
+        with pytest.raises(ValueError) as yaml_error:
+            routes._load_addon_base_yaml("[not: valid", lang)
+        assert str(yaml_error.value) == redeem_error(lang, "addon_yaml_unreadable")
+
+        with pytest.raises(ValueError) as url_error:
+            routes._load_addon_base_doc_from_previous_chart_url("not-a-url", lang=lang)
+        assert str(url_error.value) == redeem_error(lang, "addon_url_invalid")
+
+        with pytest.raises(ValueError) as date_error:
+            routes._parse_transit_start_date("", lang)
+        assert str(date_error.value) == redeem_error(lang, "addon_start_date_required")
+
+
+def test_japanese_chart_keeps_time_only_and_purchase_shop_reissue_copy():
+    template = Path("templates/chart_page.html").read_text(encoding="utf-8")
+    assert "時刻のみ変更可" in template
+    assert "購入したショップからお問い合わせください" in template
+    assert "公式LINEからお問い合わせください" not in template
+
+
 def test_redeem_common_validation_errors_follow_selected_language():
     expected = {
         "ja": (

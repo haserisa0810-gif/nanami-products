@@ -245,6 +245,10 @@ def build_shichusuimei_svg_from_yaml(yaml_text: str, *, compact: bool = False, d
                 kanshi = _label(item.get("kanshi"), "")
                 chips.append(f"{age}歳 {kanshi}".strip())
         parts.append(_text(bar_x, daiun_y + 34, " / ".join(chips) or "不明", fill="#705235", class_="small"))
+    elif str(_nested(normalized, "daiun", "status") or "").startswith("undetermined"):
+        _daiun_status = str(_nested(normalized, "daiun", "status") or "")
+        _daiun_label = "大運：未確定（性別未指定）" if _daiun_status == "undetermined_gender" else "大運：未確定（出生時刻により変動）"
+        parts.append(_text(bar_x, element_y + 5 * 45 + 40, _daiun_label, fill="#705235", class_="small"))
 
     if not compact:
         parts.append(_text(width / 2, height - 122, "nanami astro", fill="#8a6c45", text_anchor="middle", class_="meta"))

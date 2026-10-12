@@ -1,0 +1,28 @@
+{
+  "counts": {
+    "new_verification_results.json": {
+      "PASS": 442,
+      "FAIL": 21
+    },
+    "followup_probe_results.json": {
+      "PASS": 436,
+      "未実施": 2,
+      "FAIL": 9
+    },
+    "final_checks.json": {
+      "PASS": 16
+    }
+  },
+  "git_final": {
+    "audited_worktree": {
+      "branch": "codex/astrology-prompt-separation",
+      "head": "cb92cfffa2dc8889bc9be7f789589bea91d8d8c8",
+      "status": "M routes.py\n M services/addon_prompt_locales.py\n M services/api_calc.py\n M services/api_demo.py\n M services/api_yaml.py\n M services/companion_locales.py\n M services/mcp_chart_service.py\n M services/prompt_builder.py\n M services/prompt_locales.py\n M services/shichusuimei_year_selection.py\n M services/yaml_exporter.py\n M tests/test_shichusuimei_year_selection.py\n M tests/test_yaml_integrity.py\n?? docs/astrology_prompt_separation_20261010.md\n?? docs/quality_audit_20261010/\n?? scripts/quality_ai_readings.py\n?? scripts/quality_claude_audit.py\n?? scripts/quality_evidence_index.py\n?? scripts/quality_final_checks.py\n?? scripts/quality_followup_probes.py\n?? scripts/quality_verify_astrology.py\n?? services/output_metadata.py\n?? services/shichusuimei_prompt_rules.py\n?? tests/test_astrology_prompt_separation.py"
+    },
+    "main_checkout": {
+      "branch": "codex/neko-permanent-demo",
+      "head": "fb2ee9a6b498caf5337f629641f89c95cfbc8936",
+      "status": "M AGENTS.md\n M routes.py\n M scripts/deploy_candidate.ps1\n M services/planner/build_personal_planner.py\n M services/planner/generate_planner.py\n M services/planner/planner_i18n.py\n M services/planner_delivery.py\n M services/planner_export.py\n M services/prompt_builder.py\n M services/shichusuimei_calc.py\n M services/yaml_exporter.py\n M templates/chart_page.html\n?? docs/annual_option_measurements.csv\n?? docs/annual_option_measurements.json\n?? docs/claude_shichusuimei_review_20261007_224031.md\n?? docs/claude_shichusuimei_review_request.md\n?? docs/claude_shichusuimei_review_resolution.md\n?? docs/etsy_spanish_planner_fulfillment.md\n?? docs/examples/\n?? docs/full_ab_combinations.csv\n?? docs/full_ab_measurements.json\n?? docs/full_ab_repeated_structures.csv\n?? docs/full_ab_sections.csv\n?? docs/full_ab_variants.csv\n?? docs/full_ab_verification.json\n?? docs/images/\n?? docs/shichusuimei_annual_option_phase1.md\n?? docs/shichusuimei_annual_report.md\n?? docs/shichusuimei_full_ab_report.md\n?? docs/shichusuimei_structure_v1.md\n?? docs/shichusuimei_year_extract_report.md\n?? docs/shichusuimei_year_selection_implementation.md\n?? docs/year_extract_annual_measurements.csv\n?? docs/year_extract_base_measurements.csv\n?? docs/year_extract_measurements.json\n?? docs/year_extract_verification.json\n?? scripts/measure_shichusuimei_annual_prototype.py\n?? scripts/measure_shichusuimei_full_prototype.py\n?? scripts/measure_shichusuimei_year_extract.py\n?? services/planner/planner_holidays.py\n?? services/planner/planner_i18n_es.py\n?? services/shichusuimei_annual_prototype.py\n?? services/shichusuimei_annual_report.py\n?? services/shichusuimei_full_prototype.py\n?? services/shichusuimei_structure.py\n?? services/shichusuimei_year_compare_prototype.py\n?? services/shichusuimei_year_extract_prototype.py\n?? services/shichusuimei_year_selection.py\n?? static/shichusuimei_year_selection.js\n?? templates/shichusuimei_year_selection.html\n?? tests/test_planner_spanish.py\n?? tests/test_shichusuimei_annual_prototype.py\n?? tests/test_shichusuimei_annual_report.py\n?? tests/test_shichusuimei_full_prototype.py\n?? tests/test_shichusuimei_full_routes_audit.py\n?? tests/test_shichusuimei_structure.py\n?? tests/test_shichusuimei_timing_regressions.py\n?? tests/test_shichusuimei_year_extract_prototype.py\n?? tests/test_shichusuimei_year_selection.py\n?? tests/test_shichusuimei_year_selection_ui.cjs"
+    }
+  }
+}

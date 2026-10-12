@@ -1,0 +1,224 @@
+annual_fortune_report:
+  schema_version: '1.0'
+  base_chart_id: synthetic
+  selected_year: 2026
+  calculation:
+    engine: nanami-shichusuimei-annual-v1
+    base_engine_version: test
+    year_boundary_rule: lichun(315deg)
+    daiun_calc_mode: approx_days_to_years
+    daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+    timezone: Asia/Tokyo
+    supported_years:
+      min: 1800
+      max: 2399
+    natal_time_basis: four_pillars
+  base_chart_usage:
+    full_yaml_required: true
+    note: 同じbase_chart_idのFull YAMLと併用。出生四柱は照合用。格局・用神などは基礎命式を参照。
+  natal_reference:
+    day_master: 丙
+    pillars:
+      year: 甲子
+      month: 己丑
+      day: 丙午
+      hour: 辛卯
+  annual:
+    effective_year: 2026
+    stem: 丙
+    branch: 午
+    kanshi: 丙午
+    period_start: '2026-02-04T05:02:09.089356+09:00'
+    period_end: '2027-02-04T10:46:19.211426+09:00'
+    period_end_exclusive: true
+    ten_god_to_day_master: 比肩
+    twelve_fortune_to_day_master: 帝旺
+  daiun:
+    status: overlapping_periods
+    contexts:
+    - index: 1
+      kanshi: 庚子
+      age_from: 0.0
+      age_to: 10.0
+      approx_start_year: 2020
+      approx_start_at: '2020-05-15T08:30:00+09:00'
+      approx_end_at: '2030-05-15T08:30:00+09:00'
+      stem: 庚
+      branch: 子
+      ten_god_to_day_master: 偏財
+      twelve_fortune_to_day_master: 胎
+      boundary_provisional: true
+      boundary_in_selected_year: false
+      overlap_start_approx: '2026-02-04T05:02:09.089356+09:00'
+      overlap_end_approx: '2027-02-04T10:46:19.211426+09:00'
+    boundary_in_selected_year: false
+    uncovered_before_first_daiun: null
+    note: 起運・交運日時は既存の簡易換算による概算。境界付近の大運を確定値として扱わない。
+  interactions:
+    natal_annual:
+    - left:
+        name: year
+        stem: 甲
+        branch: 子
+        kanshi: 甲子
+      right: &id001
+        name: annual
+        stem: 丙
+        branch: 午
+        kanshi: 丙午
+      type: clash
+      type_ja: 冲
+      detail: 子午冲
+    - left: &id003
+        name: month
+        stem: 己
+        branch: 丑
+        kanshi: 己丑
+      right: *id001
+      type: harm
+      type_ja: 害
+      detail: 丑午害
+    - left: &id004
+        name: day
+        stem: 丙
+        branch: 午
+        kanshi: 丙午
+      right: *id001
+      type: self_punishment
+      type_ja: 自刑
+      detail: 午午
+    - left: &id002
+        name: hour
+        stem: 辛
+        branch: 卯
+        kanshi: 辛卯
+      right: *id001
+      type: destruction
+      type_ja: 破
+      detail: 卯午破
+    - left: *id002
+      right: *id001
+      type: stem_combination
+      type_ja: 干合
+      element: 水
+      detail: 辛丙合
+      element_change_applied: false
+    natal_daiun:
+    - daiun_index: 1
+      left: *id003
+      right: &id005
+        name: daiun
+        stem: 庚
+        branch: 子
+        kanshi: 庚子
+      type: six_harmony
+      type_ja: 六合
+      element: 土
+      detail: 丑子合
+      element_change_applied: false
+    - daiun_index: 1
+      left: *id004
+      right: *id005
+      type: clash
+      type_ja: 冲
+      detail: 午子冲
+    - daiun_index: 1
+      left: *id002
+      right: *id005
+      type: punishment
+      type_ja: 刑
+      detail: 無礼の刑
+    daiun_annual:
+    - daiun_index: 1
+      left: *id005
+      right: *id001
+      type: clash
+      type_ja: 冲
+      detail: 子午冲
+    combined: []
+  kubo:
+    empty_branches:
+    - 寅
+    - 卯
+    annual_hit: false
+    natal_hits:
+    - hour
+    daiun_hits:
+    - daiun_index: 1
+      hit: false
+    method: membership_in_natal_day_jun_empty_branches
+  five_elements:
+    natal:
+      visible:
+        木: 2
+        火: 2
+        土: 2
+        金: 1
+        水: 1
+      with_hidden_stems:
+        木: 3
+        火: 3
+        土: 4
+        金: 2
+        水: 3
+    natal_reference_only: false
+    included_natal_reference:
+      visible:
+        木: 2
+        火: 2
+        土: 2
+        金: 1
+        水: 1
+      with_hidden_stems:
+        木: 3
+        火: 3
+        土: 4
+        金: 2
+        水: 3
+    annual:
+      visible:
+        木: 0
+        火: 2
+        土: 0
+        金: 0
+        水: 0
+      with_hidden_stems:
+        木: 0
+        火: 3
+        土: 1
+        金: 0
+        水: 0
+    daiun:
+    - daiun_index: 1
+      visible:
+        木: 0
+        火: 0
+        土: 0
+        金: 1
+        水: 1
+      with_hidden_stems:
+        木: 0
+        火: 0
+        土: 0
+        金: 1
+        水: 2
+    combined_reference:
+    - daiun_index: 1
+      visible:
+        木: 2
+        火: 4
+        土: 2
+        金: 2
+        水: 2
+      with_hidden_stems:
+        木: 3
+        火: 6
+        土: 5
+        金: 3
+        水: 5
+    method: existing_visible_stem_plus_branch_and_additive_hidden_stem_counts
+    note: 合算は参考個数。強弱・吉凶・合化の成立を示さない。時刻不明・推定の場合、合算から時柱を除外。
+  interpretation_flags:
+    calculation_only: true
+    automatic_good_bad_judgment: false
+    automatic_element_transformation: false

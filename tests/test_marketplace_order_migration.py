@@ -54,10 +54,12 @@ class FakeConnection:
 
 
 def test_migration_sql_is_limited_to_order_tables():
-    sql = "\n".join(migration.MIGRATION_STATEMENTS).lower()
+    sql = "\n".join(migration.LEGACY_COLUMN_STATEMENTS + migration.MIGRATION_STATEMENTS).lower()
     assert "marketplace_orders" in sql
     assert "order_entitlements" in sql
     assert "stores_orders" in sql
+    assert "marketplace_order_holds" in sql
+    assert "marketplace_processed_notices" in sql
     for forbidden in ("charts", "redemptions", "expires_at", "yaml_text", "drop table", "truncate"):
         assert forbidden not in sql
 
@@ -83,3 +85,55 @@ def test_apply_commits_once_without_rollback():
 
 def test_apply_confirmation_phrase_is_deliberately_specific():
     assert migration.CONFIRM_PHRASE == "MIGRATE:marketplace-order-entitlements"
+
+
+def test_missing_provider_is_added_before_count_and_copy():
+    class MissingProviderCursor(FakeCursor):
+        provider_exists = False
+
+        def execute(self, statement, params=None):
+            super().execute(statement, params)
+            if "ADD COLUMN IF NOT EXISTS provider" in self._last:
+                self.provider_exists = True
+            if "LOWER(provider)" in self._last:
+                assert self.provider_exists, "provider used before it exists"
+
+    con = FakeConnection()
+    con.cursor_instance = MissingProviderCursor()
+    migration.run_migration(con, apply=True)
+    sql = con.cursor_instance.statements
+    count = next(i for i, statement in enumerate(sql) if "FROM nanami_products.stores_orders" in statement)
+    copy = next(i for i, statement in enumerate(sql) if "INSERT INTO nanami_products.marketplace_orders" in statement)
+    assert all(sql.index(statement) < count for statement in migration.LEGACY_COLUMN_STATEMENTS)
+    assert count < copy
+
+
+def test_failure_after_column_preparation_rolls_back_without_commit():
+    class FailingCursor(FakeCursor):
+        def execute(self, statement, params=None):
+            super().execute(statement, params)
+            if "INSERT INTO nanami_products.marketplace_orders" in self._last:
+                raise RuntimeError("Synthetic migration failure")
+
+    con = FakeConnection()
+    con.cursor_instance = FailingCursor()
+    with pytest.raises(RuntimeError, match="Synthetic migration failure"):
+        migration.run_migration(con, apply=True)
+    assert all(statement in con.cursor_instance.statements for statement in migration.LEGACY_COLUMN_STATEMENTS)
+    assert con.commits == 0
+    assert con.rollbacks == 1
+
+
+def test_hold_ddl_failure_rolls_back_instead_of_committing_partial_migration():
+    class FailingHoldCursor(FakeCursor):
+        def execute(self, statement, params=None):
+            super().execute(statement, params)
+            if "CREATE TABLE IF NOT EXISTS nanami_products.marketplace_order_holds" in self._last:
+                raise RuntimeError("Synthetic hold DDL failure")
+
+    con = FakeConnection()
+    con.cursor_instance = FailingHoldCursor()
+    with pytest.raises(RuntimeError, match="Synthetic hold DDL failure"):
+        migration.run_migration(con, apply=True)
+    assert con.commits == 0
+    assert con.rollbacks == 1

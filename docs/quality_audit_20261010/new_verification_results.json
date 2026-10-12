@@ -1,0 +1,3695 @@
+{
+  "as_of": "2026-10-10T12:00:00+09:00",
+  "python": "3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]",
+  "swiss_ephemeris": "2.10.03",
+  "lunar_python": "1.4.8",
+  "results": [
+    {
+      "id": "application_source_unchanged",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "SHA256（検証開始時と比較）",
+      "changed_files": []
+    },
+    {
+      "id": "day:1900-1-1:Asia/Tokyo",
+      "status": "PASS",
+      "actual": "甲戌",
+      "expected": "甲戌",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1900-1-1:UTC",
+      "status": "FAIL",
+      "actual": "乙亥",
+      "expected": "甲戌",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1900-1-1:Europe/London",
+      "status": "FAIL",
+      "actual": "乙亥",
+      "expected": "甲戌",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1900-1-1:America/New_York",
+      "status": "FAIL",
+      "actual": "乙亥",
+      "expected": "甲戌",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1900-1-1:Australia/Sydney",
+      "status": "PASS",
+      "actual": "甲戌",
+      "expected": "甲戌",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1975-9-15:Asia/Tokyo",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1975-9-15:UTC",
+      "status": "FAIL",
+      "actual": "乙丑",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1975-9-15:Europe/London",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1975-9-15:America/New_York",
+      "status": "FAIL",
+      "actual": "乙丑",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1975-9-15:Australia/Sydney",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1990-5-15:Asia/Tokyo",
+      "status": "PASS",
+      "actual": "庚辰",
+      "expected": "庚辰",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1990-5-15:UTC",
+      "status": "FAIL",
+      "actual": "辛巳",
+      "expected": "庚辰",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1990-5-15:Europe/London",
+      "status": "PASS",
+      "actual": "庚辰",
+      "expected": "庚辰",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1990-5-15:America/New_York",
+      "status": "FAIL",
+      "actual": "辛巳",
+      "expected": "庚辰",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:1990-5-15:Australia/Sydney",
+      "status": "PASS",
+      "actual": "庚辰",
+      "expected": "庚辰",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2000-1-7:Asia/Tokyo",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2000-1-7:UTC",
+      "status": "FAIL",
+      "actual": "乙丑",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2000-1-7:Europe/London",
+      "status": "FAIL",
+      "actual": "乙丑",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2000-1-7:America/New_York",
+      "status": "FAIL",
+      "actual": "乙丑",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2000-1-7:Australia/Sydney",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2024-2-29:Asia/Tokyo",
+      "status": "PASS",
+      "actual": "癸亥",
+      "expected": "癸亥",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2024-2-29:UTC",
+      "status": "FAIL",
+      "actual": "甲子",
+      "expected": "癸亥",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2024-2-29:Europe/London",
+      "status": "FAIL",
+      "actual": "甲子",
+      "expected": "癸亥",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2024-2-29:America/New_York",
+      "status": "FAIL",
+      "actual": "甲子",
+      "expected": "癸亥",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2024-2-29:Australia/Sydney",
+      "status": "PASS",
+      "actual": "癸亥",
+      "expected": "癸亥",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2026-10-10:Asia/Tokyo",
+      "status": "PASS",
+      "actual": "丁巳",
+      "expected": "丁巳",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2026-10-10:UTC",
+      "status": "FAIL",
+      "actual": "戊午",
+      "expected": "丁巳",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2026-10-10:Europe/London",
+      "status": "PASS",
+      "actual": "丁巳",
+      "expected": "丁巳",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2026-10-10:America/New_York",
+      "status": "FAIL",
+      "actual": "戊午",
+      "expected": "丁巳",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day:2026-10-10:Australia/Sydney",
+      "status": "PASS",
+      "actual": "丁巳",
+      "expected": "丁巳",
+      "method": "lunar_python 1.4.8の独立干支計算（暦日0時切替）"
+    },
+    {
+      "id": "day_boundary_23:00:30",
+      "status": "FAIL",
+      "actual": "癸亥",
+      "expected": "甲子",
+      "method": "23時切替というUI選択の期待。内部実装の1時切替とは区別"
+    },
+    {
+      "id": "day_boundary_23:01:30",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "23時切替というUI選択の期待。内部実装の1時切替とは区別"
+    },
+    {
+      "id": "day_boundary_23:22:30",
+      "status": "PASS",
+      "actual": "甲子",
+      "expected": "甲子",
+      "method": "23時切替というUI選択の期待。内部実装の1時切替とは区別"
+    },
+    {
+      "id": "day_boundary_23:23:30",
+      "status": "FAIL",
+      "actual": "甲子",
+      "expected": "乙丑",
+      "method": "23時切替というUI選択の期待。内部実装の1時切替とは区別"
+    },
+    {
+      "id": "ten_god:甲:甲",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:乙",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:丙",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:丁",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:戊",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:己",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:庚",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:辛",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:壬",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:甲:癸",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:甲",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:乙",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:丙",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:丁",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:戊",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:己",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:庚",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:辛",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:壬",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:乙:癸",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:甲",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:乙",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:丙",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:丁",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:戊",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:己",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:庚",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:辛",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:壬",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丙:癸",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:甲",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:乙",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:丙",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:丁",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:戊",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:己",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:庚",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:辛",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:壬",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:丁:癸",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:甲",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:乙",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:丙",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:丁",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:戊",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:己",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:庚",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:辛",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:壬",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:戊:癸",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:甲",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:乙",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:丙",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:丁",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:戊",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:己",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:庚",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:辛",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:壬",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:己:癸",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:甲",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:乙",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:丙",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:丁",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:戊",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:己",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:庚",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:辛",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:壬",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:庚:癸",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:甲",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:乙",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:丙",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:丁",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:戊",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:己",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:庚",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:辛",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:壬",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:辛:癸",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:甲",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:乙",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:丙",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:丁",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:戊",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:己",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:庚",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:辛",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:壬",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:壬:癸",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:甲",
+      "status": "PASS",
+      "actual": "傷官",
+      "expected": "傷官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:乙",
+      "status": "PASS",
+      "actual": "食神",
+      "expected": "食神",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:丙",
+      "status": "PASS",
+      "actual": "正財",
+      "expected": "正財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:丁",
+      "status": "PASS",
+      "actual": "偏財",
+      "expected": "偏財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:戊",
+      "status": "PASS",
+      "actual": "正官",
+      "expected": "正官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:己",
+      "status": "PASS",
+      "actual": "偏官",
+      "expected": "偏官",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:庚",
+      "status": "PASS",
+      "actual": "印綬",
+      "expected": "印綬",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:辛",
+      "status": "PASS",
+      "actual": "偏印",
+      "expected": "偏印",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:壬",
+      "status": "PASS",
+      "actual": "劫財",
+      "expected": "劫財",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "ten_god:癸:癸",
+      "status": "PASS",
+      "actual": "比肩",
+      "expected": "比肩",
+      "method": "五行の相生相剋と陰陽から独立構成した100組"
+    },
+    {
+      "id": "kubo:甲子",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:甲子:午",
+      "status": "PASS",
+      "actual": "死",
+      "expected": "死",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:乙丑",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:乙丑:午",
+      "status": "PASS",
+      "actual": "長生",
+      "expected": "長生",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丙寅",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丙寅:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丁卯",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丁卯:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:戊辰",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:戊辰:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:己巳",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:己巳:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:庚午",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:庚午:午",
+      "status": "PASS",
+      "actual": "沐浴",
+      "expected": "沐浴",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:辛未",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:辛未:午",
+      "status": "PASS",
+      "actual": "病",
+      "expected": "病",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:壬申",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:壬申:午",
+      "status": "PASS",
+      "actual": "胎",
+      "expected": "胎",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:癸酉",
+      "status": "PASS",
+      "actual": [
+        "戌",
+        "亥"
+      ],
+      "expected": "戌亥",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:癸酉:午",
+      "status": "PASS",
+      "actual": "絶",
+      "expected": "絶",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:甲戌",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:甲戌:午",
+      "status": "PASS",
+      "actual": "死",
+      "expected": "死",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:乙亥",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:乙亥:午",
+      "status": "PASS",
+      "actual": "長生",
+      "expected": "長生",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丙子",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丙子:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丁丑",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丁丑:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:戊寅",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:戊寅:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:己卯",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:己卯:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:庚辰",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:庚辰:午",
+      "status": "PASS",
+      "actual": "沐浴",
+      "expected": "沐浴",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:辛巳",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:辛巳:午",
+      "status": "PASS",
+      "actual": "病",
+      "expected": "病",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:壬午",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:壬午:午",
+      "status": "PASS",
+      "actual": "胎",
+      "expected": "胎",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:癸未",
+      "status": "PASS",
+      "actual": [
+        "申",
+        "酉"
+      ],
+      "expected": "申酉",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:癸未:午",
+      "status": "PASS",
+      "actual": "絶",
+      "expected": "絶",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:甲申",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:甲申:午",
+      "status": "PASS",
+      "actual": "死",
+      "expected": "死",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:乙酉",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:乙酉:午",
+      "status": "PASS",
+      "actual": "長生",
+      "expected": "長生",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丙戌",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丙戌:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丁亥",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丁亥:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:戊子",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:戊子:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:己丑",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:己丑:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:庚寅",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:庚寅:午",
+      "status": "PASS",
+      "actual": "沐浴",
+      "expected": "沐浴",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:辛卯",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:辛卯:午",
+      "status": "PASS",
+      "actual": "病",
+      "expected": "病",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:壬辰",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:壬辰:午",
+      "status": "PASS",
+      "actual": "胎",
+      "expected": "胎",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:癸巳",
+      "status": "PASS",
+      "actual": [
+        "午",
+        "未"
+      ],
+      "expected": "午未",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:癸巳:午",
+      "status": "PASS",
+      "actual": "絶",
+      "expected": "絶",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:甲午",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:甲午:午",
+      "status": "PASS",
+      "actual": "死",
+      "expected": "死",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:乙未",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:乙未:午",
+      "status": "PASS",
+      "actual": "長生",
+      "expected": "長生",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丙申",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丙申:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丁酉",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丁酉:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:戊戌",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:戊戌:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:己亥",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:己亥:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:庚子",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:庚子:午",
+      "status": "PASS",
+      "actual": "沐浴",
+      "expected": "沐浴",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:辛丑",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:辛丑:午",
+      "status": "PASS",
+      "actual": "病",
+      "expected": "病",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:壬寅",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:壬寅:午",
+      "status": "PASS",
+      "actual": "胎",
+      "expected": "胎",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:癸卯",
+      "status": "PASS",
+      "actual": [
+        "辰",
+        "巳"
+      ],
+      "expected": "辰巳",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:癸卯:午",
+      "status": "PASS",
+      "actual": "絶",
+      "expected": "絶",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:甲辰",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:甲辰:午",
+      "status": "PASS",
+      "actual": "死",
+      "expected": "死",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:乙巳",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:乙巳:午",
+      "status": "PASS",
+      "actual": "長生",
+      "expected": "長生",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丙午",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丙午:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丁未",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丁未:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:戊申",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:戊申:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:己酉",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:己酉:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:庚戌",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:庚戌:午",
+      "status": "PASS",
+      "actual": "沐浴",
+      "expected": "沐浴",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:辛亥",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:辛亥:午",
+      "status": "PASS",
+      "actual": "病",
+      "expected": "病",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:壬子",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:壬子:午",
+      "status": "PASS",
+      "actual": "胎",
+      "expected": "胎",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:癸丑",
+      "status": "PASS",
+      "actual": [
+        "寅",
+        "卯"
+      ],
+      "expected": "寅卯",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:癸丑:午",
+      "status": "PASS",
+      "actual": "絶",
+      "expected": "絶",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:甲寅",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:甲寅:午",
+      "status": "PASS",
+      "actual": "死",
+      "expected": "死",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:乙卯",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:乙卯:午",
+      "status": "PASS",
+      "actual": "長生",
+      "expected": "長生",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丙辰",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丙辰:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:丁巳",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:丁巳:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:戊午",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:戊午:午",
+      "status": "PASS",
+      "actual": "帝旺",
+      "expected": "帝旺",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:己未",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:己未:午",
+      "status": "PASS",
+      "actual": "建禄",
+      "expected": "建禄",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:庚申",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:庚申:午",
+      "status": "PASS",
+      "actual": "沐浴",
+      "expected": "沐浴",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:辛酉",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:辛酉:午",
+      "status": "PASS",
+      "actual": "病",
+      "expected": "病",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:壬戌",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:壬戌:午",
+      "status": "PASS",
+      "actual": "胎",
+      "expected": "胎",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "kubo:癸亥",
+      "status": "PASS",
+      "actual": [
+        "子",
+        "丑"
+      ],
+      "expected": "子丑",
+      "method": "lunar_python全60旬空"
+    },
+    {
+      "id": "twelve:癸亥:午",
+      "status": "PASS",
+      "actual": "絶",
+      "expected": "絶",
+      "method": "lunar_pythonの日干×午支。陰干逆行・火土同根方式"
+    },
+    {
+      "id": "jd:2000-01-01T12:00:00+00:00",
+      "status": "PASS",
+      "actual": 2451545.0,
+      "expected": 2451545.0,
+      "method": "Gregorian ordinal→JDの独立算術"
+    },
+    {
+      "id": "jd:2024-02-29T00:00:00+00:00",
+      "status": "PASS",
+      "actual": 2460369.5,
+      "expected": 2460369.5,
+      "method": "Gregorian ordinal→JDの独立算術"
+    },
+    {
+      "id": "naoj_jie:285",
+      "status": "PASS",
+      "actual": "2026-01-05 08:23:10.217286+00:00",
+      "expected": "2026-01-05 17:23:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": 10.217286
+    },
+    {
+      "id": "jie_switch:285",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "乙巳",
+          "戊子"
+        ],
+        "after": [
+          "乙巳",
+          "己丑"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:315",
+      "status": "PASS",
+      "actual": "2026-02-03 20:02:08.898926+00:00",
+      "expected": "2026-02-04 05:02:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": 8.898926
+    },
+    {
+      "id": "jie_switch:315",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "乙巳",
+          "己丑"
+        ],
+        "after": [
+          "丙午",
+          "庚寅"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:345",
+      "status": "PASS",
+      "actual": "2026-03-05 13:58:59.670411+00:00",
+      "expected": "2026-03-05 22:59:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": -0.329589
+    },
+    {
+      "id": "jie_switch:345",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "庚寅"
+        ],
+        "after": [
+          "丙午",
+          "辛卯"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:15",
+      "status": "PASS",
+      "actual": "2026-04-04 18:39:59.670411+00:00",
+      "expected": "2026-04-05 03:40:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": -0.329589
+    },
+    {
+      "id": "jie_switch:15",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "辛卯"
+        ],
+        "after": [
+          "丙午",
+          "壬辰"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:45",
+      "status": "PASS",
+      "actual": "2026-05-05 11:48:43.850099+00:00",
+      "expected": "2026-05-05 20:49:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": -16.149901
+    },
+    {
+      "id": "jie_switch:45",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "壬辰"
+        ],
+        "after": [
+          "丙午",
+          "癸巳"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:75",
+      "status": "PASS",
+      "actual": "2026-06-05 15:48:22.741700+00:00",
+      "expected": "2026-06-06 00:48:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": 22.7417
+    },
+    {
+      "id": "jie_switch:75",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "癸巳"
+        ],
+        "after": [
+          "丙午",
+          "甲午"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:105",
+      "status": "PASS",
+      "actual": "2026-07-07 01:56:57.692871+00:00",
+      "expected": "2026-07-07 10:57:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": -2.307129
+    },
+    {
+      "id": "jie_switch:105",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "甲午"
+        ],
+        "after": [
+          "丙午",
+          "乙未"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:135",
+      "status": "PASS",
+      "actual": "2026-08-07 11:42:45.168458+00:00",
+      "expected": "2026-08-07 20:43:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": -14.831542
+    },
+    {
+      "id": "jie_switch:135",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "乙未"
+        ],
+        "after": [
+          "丙午",
+          "丙申"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:165",
+      "status": "PASS",
+      "actual": "2026-09-07 14:41:18.127442+00:00",
+      "expected": "2026-09-07 23:41:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": 18.127442
+    },
+    {
+      "id": "jie_switch:165",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "丙申"
+        ],
+        "after": [
+          "丙午",
+          "丁酉"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:195",
+      "status": "PASS",
+      "actual": "2026-10-08 06:29:18.127442+00:00",
+      "expected": "2026-10-08 15:29:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": 18.127442
+    },
+    {
+      "id": "jie_switch:195",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "丁酉"
+        ],
+        "after": [
+          "丙午",
+          "戊戌"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:225",
+      "status": "PASS",
+      "actual": "2026-11-07 09:52:04.943849+00:00",
+      "expected": "2026-11-07 18:52:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": 4.943849
+    },
+    {
+      "id": "jie_switch:225",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "戊戌"
+        ],
+        "after": [
+          "丙午",
+          "己亥"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "naoj_jie:255",
+      "status": "PASS",
+      "actual": "2026-12-07 02:52:31.984864+00:00",
+      "expected": "2026-12-07 11:53:00+09:00",
+      "method": "国立天文台2026暦要項（秒差、許容60秒）",
+      "seconds_error": -28.015136
+    },
+    {
+      "id": "jie_switch:255",
+      "status": "PASS",
+      "actual": {
+        "before": [
+          "丙午",
+          "己亥"
+        ],
+        "after": [
+          "丙午",
+          "庚子"
+        ]
+      },
+      "expected": null,
+      "method": "外部節気時刻近傍での年柱/月柱切替"
+    },
+    {
+      "id": "angle_geometry:Tokyo:asc",
+      "status": "PASS",
+      "actual": 325.3877318449871,
+      "expected": 325.39187673656113,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "angle_geometry:Tokyo:mc",
+      "status": "PASS",
+      "actual": 248.9508768145081,
+      "expected": 248.95179283246256,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:1",
+      "status": "PASS",
+      "actual": 325.3877318449871,
+      "expected": 325.39187673656113,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:4",
+      "status": "PASS",
+      "actual": 68.95087681450809,
+      "expected": 68.95179283246256,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:7",
+      "status": "PASS",
+      "actual": 145.38773184498712,
+      "expected": 145.39187673656113,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:10",
+      "status": "PASS",
+      "actual": 248.9508768145081,
+      "expected": 248.95179283246256,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:11",
+      "status": "PASS",
+      "actual": 271.10046833854807,
+      "expected": 271.102463044842,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:5",
+      "status": "PASS",
+      "actual": 91.10046833854807,
+      "expected": 91.10246304484201,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:12",
+      "status": "PASS",
+      "actual": 294.5390993598902,
+      "expected": 294.54239556689356,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:6",
+      "status": "PASS",
+      "actual": 114.5390993598902,
+      "expected": 114.54239556689356,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:2",
+      "status": "PASS",
+      "actual": 9.937421426557655,
+      "expected": 9.938787880766554,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:8",
+      "status": "PASS",
+      "actual": 189.93742142655765,
+      "expected": 189.93878788076654,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:3",
+      "status": "PASS",
+      "actual": 43.643359355896415,
+      "expected": 43.64376457867748,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Tokyo:9",
+      "status": "PASS",
+      "actual": 223.64335935589642,
+      "expected": 223.64376457867746,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "angle_geometry:Sydney:asc",
+      "status": "PASS",
+      "actual": 350.46098864824995,
+      "expected": 350.4620645957996,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "angle_geometry:Sydney:mc",
+      "status": "PASS",
+      "actual": 259.6056274793269,
+      "expected": 259.60669710264335,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "placidus_geometry:Sydney:1",
+      "status": "PASS",
+      "actual": 350.46098864824995,
+      "expected": 350.4620645957996,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:4",
+      "status": "PASS",
+      "actual": 79.60562747932693,
+      "expected": 79.60669710264335,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:7",
+      "status": "PASS",
+      "actual": 170.4609886482499,
+      "expected": 170.46206459579957,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:10",
+      "status": "PASS",
+      "actual": 259.6056274793269,
+      "expected": 259.60669710264335,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:11",
+      "status": "PASS",
+      "actual": 292.06833549379957,
+      "expected": 292.06937930580466,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:5",
+      "status": "PASS",
+      "actual": 112.06833549379957,
+      "expected": 112.06937930580466,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:12",
+      "status": "PASS",
+      "actual": 322.73769762276777,
+      "expected": 322.73874728630346,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:6",
+      "status": "PASS",
+      "actual": 142.73769762276777,
+      "expected": 142.73874728630346,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:2",
+      "status": "PASS",
+      "actual": 17.017943096579593,
+      "expected": 17.019210840755918,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:8",
+      "status": "PASS",
+      "actual": 197.0179430965796,
+      "expected": 197.01921084075593,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:3",
+      "status": "PASS",
+      "actual": 47.21801566437984,
+      "expected": 47.21919719696545,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Sydney:9",
+      "status": "PASS",
+      "actual": 227.21801566437983,
+      "expected": 227.21919719696547,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "angle_geometry:London:asc",
+      "status": "PASS",
+      "actual": 192.23803980605018,
+      "expected": 192.2393073646451,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "angle_geometry:London:mc",
+      "status": "PASS",
+      "actual": 106.00758084073571,
+      "expected": 106.00915578970623,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "placidus_geometry:London:1",
+      "status": "PASS",
+      "actual": 192.23803980605018,
+      "expected": 192.2393073646451,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:4",
+      "status": "PASS",
+      "actual": 286.0075808407357,
+      "expected": 286.00915578970626,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:7",
+      "status": "PASS",
+      "actual": 12.23803980605021,
+      "expected": 12.239307364645128,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:10",
+      "status": "PASS",
+      "actual": 106.00758084073571,
+      "expected": 106.00915578970623,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:11",
+      "status": "PASS",
+      "actual": 141.26576245198248,
+      "expected": 141.2668121980849,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:5",
+      "status": "PASS",
+      "actual": 321.2657624519825,
+      "expected": 321.2668121980849,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:12",
+      "status": "PASS",
+      "actual": 169.90724544442202,
+      "expected": 169.90820235622414,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:6",
+      "status": "PASS",
+      "actual": 349.907245444422,
+      "expected": 349.90820235622414,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:2",
+      "status": "PASS",
+      "actual": 217.5179021258947,
+      "expected": 217.5196534425706,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:8",
+      "status": "PASS",
+      "actual": 37.51790212589469,
+      "expected": 37.519653442570586,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:3",
+      "status": "PASS",
+      "actual": 249.0016353708853,
+      "expected": 249.0036471212331,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:London:9",
+      "status": "PASS",
+      "actual": 69.00163537088531,
+      "expected": 69.00364712123309,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "angle_geometry:Reykjavik:asc",
+      "status": "PASS",
+      "actual": 177.43700522164394,
+      "expected": 177.43769583700356,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "angle_geometry:Reykjavik:mc",
+      "status": "PASS",
+      "actual": 85.9103182810257,
+      "expected": 85.91150033599165,
+      "method": "GMST・平均黄道傾斜の独立球面式（真/平均差を考慮し0.03度許容）"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:1",
+      "status": "PASS",
+      "actual": 177.43700522164394,
+      "expected": 177.43769583700356,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:4",
+      "status": "PASS",
+      "actual": 265.9103182810257,
+      "expected": 265.91150033599166,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:7",
+      "status": "PASS",
+      "actual": 357.437005221644,
+      "expected": 357.43769583700356,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:10",
+      "status": "PASS",
+      "actual": 85.9103182810257,
+      "expected": 85.91150033599165,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:11",
+      "status": "PASS",
+      "actual": 127.56673147178284,
+      "expected": 127.56661429243327,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:5",
+      "status": "PASS",
+      "actual": 307.5667314717829,
+      "expected": 307.56661429243326,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:12",
+      "status": "PASS",
+      "actual": 156.63521696607165,
+      "expected": 156.63544179962753,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:6",
+      "status": "PASS",
+      "actual": 336.63521696607165,
+      "expected": 336.63544179962753,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:2",
+      "status": "PASS",
+      "actual": 197.37227551153657,
+      "expected": 197.37369490197045,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:8",
+      "status": "PASS",
+      "actual": 17.3722755115366,
+      "expected": 17.373694901970453,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:3",
+      "status": "PASS",
+      "actual": 225.47137589686565,
+      "expected": 225.4733233686331,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "placidus_geometry:Reykjavik:9",
+      "status": "PASS",
+      "actual": 45.47137589686565,
+      "expected": 45.47332336863309,
+      "method": "赤経/赤緯の半日弧を三等分する独立数値解、0.03度許容"
+    },
+    {
+      "id": "JPL_longitude:Sun",
+      "status": "PASS",
+      "actual": 19.38620022039142,
+      "expected": 19.3861885,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 1.1720391427161303e-05
+    },
+    {
+      "id": "JPL_retrograde:Sun",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Moon",
+      "status": "PASS",
+      "actual": 19.18320787774478,
+      "expected": 19.1832147,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 6.82225521586588e-06
+    },
+    {
+      "id": "JPL_retrograde:Moon",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Mercury",
+      "status": "PASS",
+      "actual": 24.807099753146055,
+      "expected": 24.8070865,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 1.3253146050828946e-05
+    },
+    {
+      "id": "JPL_retrograde:Mercury",
+      "status": "PASS",
+      "actual": true,
+      "expected": true,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Venus",
+      "status": "PASS",
+      "actual": 4.427206703505111,
+      "expected": 4.427195,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 1.170350512325058e-05
+    },
+    {
+      "id": "JPL_retrograde:Venus",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Mars",
+      "status": "PASS",
+      "actual": 343.040167815786,
+      "expected": 343.0401557,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 1.211578597803964e-05
+    },
+    {
+      "id": "JPL_retrograde:Mars",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Jupiter",
+      "status": "PASS",
+      "actual": 49.04255146899638,
+      "expected": 49.042528,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 2.3468996374731432e-05
+    },
+    {
+      "id": "JPL_retrograde:Jupiter",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Saturn",
+      "status": "PASS",
+      "actual": 344.45368899278645,
+      "expected": 344.4536677,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 2.1292786470894498e-05
+    },
+    {
+      "id": "JPL_retrograde:Saturn",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Uranus",
+      "status": "PASS",
+      "actual": 51.1703850372442,
+      "expected": 51.1703807,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 4.337244206453761e-06
+    },
+    {
+      "id": "JPL_retrograde:Uranus",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Neptune",
+      "status": "PASS",
+      "actual": 358.189632129852,
+      "expected": 358.1896143,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 1.7829851969963784e-05
+    },
+    {
+      "id": "JPL_retrograde:Neptune",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "JPL_longitude:Pluto",
+      "status": "PASS",
+      "actual": 301.9674945037546,
+      "expected": 301.9674783,
+      "method": "JPL Horizons DE系、地心視黄経（平均/真黄道差含み0.02度許容）",
+      "degrees_error": 1.620375462607626e-05
+    },
+    {
+      "id": "JPL_retrograde:Pluto",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "JPL独立黄経の翌日差分（留付近は対象外）"
+    },
+    {
+      "id": "high_latitude:69.65",
+      "status": "FAIL",
+      "actual": "swisseph.houses: error",
+      "expected": "明示的な利用制限または適切なエラー応答",
+      "method": "高緯度生成の例外"
+    },
+    {
+      "id": "high_latitude:-75",
+      "status": "FAIL",
+      "actual": "swisseph.houses: error",
+      "expected": "明示的な利用制限または適切なエラー応答",
+      "method": "高緯度生成の例外"
+    },
+    {
+      "id": "aspect_finite_diff:0:1:0",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "微小時間後の幾何学的オーブ差（ライブラリ不使用）"
+    },
+    {
+      "id": "aspect_finite_diff:0:359:0",
+      "status": "PASS",
+      "actual": false,
+      "expected": false,
+      "method": "微小時間後の幾何学的オーブ差（ライブラリ不使用）"
+    },
+    {
+      "id": "structure:useful_not_definitive:exact",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "不確実性契約。候補の占術上の正しさは未確定"
+    },
+    {
+      "id": "structure:no_element_change:exact",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "合化を適用しない出力契約"
+    },
+    {
+      "id": "daiun_sequence:exact:1",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:2",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:3",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:4",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:5",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:6",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:7",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:8",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:exact:9",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_intersection:exact:2026",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2027",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2028",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2029",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2030",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2031",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2032",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2033",
+      "status": "PASS",
+      "actual": [
+        4,
+        5
+      ],
+      "expected": [
+        4,
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2034",
+      "status": "PASS",
+      "actual": [
+        5
+      ],
+      "expected": [
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:exact:2035",
+      "status": "PASS",
+      "actual": [
+        5
+      ],
+      "expected": [
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "structure:useful_not_definitive:unknown",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "不確実性契約。候補の占術上の正しさは未確定"
+    },
+    {
+      "id": "structure:no_element_change:unknown",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "合化を適用しない出力契約"
+    },
+    {
+      "id": "daiun_sequence:unknown:1",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:2",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:3",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:4",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:5",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:6",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:7",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:8",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:unknown:9",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_intersection:unknown:2026",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2027",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2028",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2029",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2030",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2031",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2032",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2033",
+      "status": "PASS",
+      "actual": [
+        4,
+        5
+      ],
+      "expected": [
+        4,
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2034",
+      "status": "PASS",
+      "actual": [
+        5
+      ],
+      "expected": [
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:unknown:2035",
+      "status": "PASS",
+      "actual": [
+        5
+      ],
+      "expected": [
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "structure:useful_not_definitive:approximate",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "不確実性契約。候補の占術上の正しさは未確定"
+    },
+    {
+      "id": "structure:no_element_change:approximate",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "合化を適用しない出力契約"
+    },
+    {
+      "id": "daiun_sequence:approximate:1",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:2",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:3",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:4",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:5",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:6",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:7",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:8",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_sequence:approximate:9",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "60干支の連続性・順逆整合性"
+    },
+    {
+      "id": "daiun_intersection:approximate:2026",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2027",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2028",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2029",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2030",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2031",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2032",
+      "status": "PASS",
+      "actual": [
+        4
+      ],
+      "expected": [
+        4
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2033",
+      "status": "PASS",
+      "actual": [
+        4,
+        5
+      ],
+      "expected": [
+        4,
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2034",
+      "status": "PASS",
+      "actual": [
+        5
+      ],
+      "expected": [
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "daiun_intersection:approximate:2035",
+      "status": "PASS",
+      "actual": [
+        5
+      ],
+      "expected": [
+        5
+      ],
+      "method": "暦上の半開区間の独立交差判定（起運近似そのものの精度は未確認）"
+    },
+    {
+      "id": "direction:甲:male",
+      "status": "PASS",
+      "actual": "forward",
+      "expected": "forward",
+      "method": "陽男陰女順行、陰男陽女逆行の採用規則"
+    },
+    {
+      "id": "direction:甲:female",
+      "status": "PASS",
+      "actual": "reverse",
+      "expected": "reverse",
+      "method": "陽男陰女順行、陰男陽女逆行の採用規則"
+    },
+    {
+      "id": "direction:乙:male",
+      "status": "PASS",
+      "actual": "reverse",
+      "expected": "reverse",
+      "method": "陽男陰女順行、陰男陽女逆行の採用規則"
+    },
+    {
+      "id": "direction:乙:female",
+      "status": "PASS",
+      "actual": "forward",
+      "expected": "forward",
+      "method": "陽男陰女順行、陰男陽女逆行の採用規則"
+    },
+    {
+      "id": "DST:2024-03-10T02:30:00",
+      "status": "FAIL",
+      "actual": {
+        "input": "2024-03-10T02:30:00",
+        "utc": "2024-03-10T07:30:00+00:00",
+        "roundtrip": "2024-03-10T03:30:00-04:00"
+      },
+      "expected": "不存在時刻は拒否または明示。重複時刻のfold選択UIは未実装",
+      "method": "ZoneInfoの往復による独立存在判定・生成実行"
+    },
+    {
+      "id": "DST:2024-11-03T01:30:00",
+      "status": "PASS",
+      "actual": {
+        "input": "2024-11-03T01:30:00",
+        "utc": "2024-11-03T05:30:00+00:00",
+        "roundtrip": "2024-11-03T01:30:00-04:00"
+      },
+      "expected": "不存在時刻は拒否または明示。重複時刻のfold選択UIは未実装",
+      "method": "ZoneInfoの往復による独立存在判定・生成実行"
+    },
+    {
+      "id": "yaml_roundtrip:western_basic",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:western_basic",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:western_full",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:western_full",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:western_asteroids",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:western_asteroids",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:western_transit",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:western_transit",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:acg_bundle",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:acg_bundle",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:shichu_full",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:shichu_full",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:combined_admin",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:combined_admin",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:western_asteroids_addon",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:western_asteroids_addon",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:western_31days_transit_addon",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:western_31days_transit_addon",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:shichu_fortune_cycles_addon",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:shichu_fortune_cycles_addon",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "yaml_roundtrip:transit_only",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "実際の生成YAMLをsafe_load、アンカー解決を含む"
+    },
+    {
+      "id": "no_internal_paths:transit_only",
+      "status": "FAIL",
+      "actual": null,
+      "expected": null,
+      "method": "生成商品データの診断情報検査"
+    },
+    {
+      "id": "selection_years:[]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "保存済み年別データの値・配置を比較（再計算なし）"
+    },
+    {
+      "id": "selection_daiun:[]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "全大運の保存値比較"
+    },
+    {
+      "id": "selection_years:[2026]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "保存済み年別データの値・配置を比較（再計算なし）"
+    },
+    {
+      "id": "selection_daiun:[2026]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "全大運の保存値比較"
+    },
+    {
+      "id": "selection_years:[2026, 2027]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "保存済み年別データの値・配置を比較（再計算なし）"
+    },
+    {
+      "id": "selection_daiun:[2026, 2027]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "全大運の保存値比較"
+    },
+    {
+      "id": "selection_years:[2026, 2035]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "保存済み年別データの値・配置を比較（再計算なし）"
+    },
+    {
+      "id": "selection_daiun:[2026, 2035]",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "全大運の保存値比較"
+    },
+    {
+      "id": "complete_original",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "原本の改行を含む文字列一致"
+    },
+    {
+      "id": "selection_out_of_range",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "未収録年拒否"
+    },
+    {
+      "id": "application_source_unchanged",
+      "status": "PASS",
+      "actual": null,
+      "expected": null,
+      "method": "SHA256（検証開始時と比較）",
+      "changed_files": []
+    }
+  ]
+}

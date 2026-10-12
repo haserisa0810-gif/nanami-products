@@ -28,6 +28,10 @@ $deployArgs = @(
     "--allow-unauthenticated",
     "--no-traffic",
     "--tag", $candidateTag,
+    # A tagged revision inherits revision-level scaling unless overridden.
+    # Keep candidates scaled to zero; the production revision is kept warm by
+    # the service-level minimum configured on the Cloud Run service.
+    "--min-instances", "0",
     "--quiet"
 )
 

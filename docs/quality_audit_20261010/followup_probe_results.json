@@ -1,0 +1,3318 @@
+[
+  {
+    "id": "hidden_members:子",
+    "status": "PASS",
+    "actual": [
+      "癸"
+    ],
+    "expected": [
+      "癸"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:丑",
+    "status": "PASS",
+    "actual": [
+      "己",
+      "癸",
+      "辛"
+    ],
+    "expected": [
+      "己",
+      "癸",
+      "辛"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:寅",
+    "status": "PASS",
+    "actual": [
+      "甲",
+      "丙",
+      "戊"
+    ],
+    "expected": [
+      "甲",
+      "丙",
+      "戊"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:卯",
+    "status": "PASS",
+    "actual": [
+      "乙"
+    ],
+    "expected": [
+      "乙"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:辰",
+    "status": "PASS",
+    "actual": [
+      "戊",
+      "乙",
+      "癸"
+    ],
+    "expected": [
+      "戊",
+      "乙",
+      "癸"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:巳",
+    "status": "PASS",
+    "actual": [
+      "丙",
+      "戊",
+      "庚"
+    ],
+    "expected": [
+      "丙",
+      "庚",
+      "戊"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_order:巳",
+    "status": "未実施",
+    "actual": [
+      "丙",
+      "戊",
+      "庚"
+    ],
+    "expected": [
+      "丙",
+      "庚",
+      "戊"
+    ],
+    "method": "並び順に方式差。固定0.3/0.1重みへの影響は方式として要評価"
+  },
+  {
+    "id": "hidden_members:午",
+    "status": "PASS",
+    "actual": [
+      "丁",
+      "己"
+    ],
+    "expected": [
+      "丁",
+      "己"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:未",
+    "status": "PASS",
+    "actual": [
+      "己",
+      "丁",
+      "乙"
+    ],
+    "expected": [
+      "己",
+      "丁",
+      "乙"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:申",
+    "status": "PASS",
+    "actual": [
+      "庚",
+      "壬",
+      "戊"
+    ],
+    "expected": [
+      "庚",
+      "壬",
+      "戊"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:酉",
+    "status": "PASS",
+    "actual": [
+      "辛"
+    ],
+    "expected": [
+      "辛"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:戌",
+    "status": "PASS",
+    "actual": [
+      "戊",
+      "辛",
+      "丁"
+    ],
+    "expected": [
+      "戊",
+      "辛",
+      "丁"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "hidden_members:亥",
+    "status": "PASS",
+    "actual": [
+      "壬",
+      "甲"
+    ],
+    "expected": [
+      "壬",
+      "甲"
+    ],
+    "method": "lunar_python独立蔵干表（構成員の照合）"
+  },
+  {
+    "id": "stage:甲:丑",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:1",
+    "status": "PASS",
+    "actual": "乙丑",
+    "expected": "乙丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:寅",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:3",
+    "status": "PASS",
+    "actual": "丙寅",
+    "expected": "丙寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:卯",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:5",
+    "status": "PASS",
+    "actual": "丁卯",
+    "expected": "丁卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:辰",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:7",
+    "status": "PASS",
+    "actual": "戊辰",
+    "expected": "戊辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:巳",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:9",
+    "status": "PASS",
+    "actual": "己巳",
+    "expected": "己巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:午",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:11",
+    "status": "PASS",
+    "actual": "庚午",
+    "expected": "庚午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:未",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:13",
+    "status": "PASS",
+    "actual": "辛未",
+    "expected": "辛未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:申",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:15",
+    "status": "PASS",
+    "actual": "壬申",
+    "expected": "壬申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:酉",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:17",
+    "status": "PASS",
+    "actual": "癸酉",
+    "expected": "癸酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:戌",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:19",
+    "status": "PASS",
+    "actual": "甲戌",
+    "expected": "甲戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:甲:亥",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:甲子:21",
+    "status": "PASS",
+    "actual": "乙亥",
+    "expected": "乙亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:丑",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:1",
+    "status": "PASS",
+    "actual": "丁丑",
+    "expected": "丁丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:寅",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:3",
+    "status": "PASS",
+    "actual": "戊寅",
+    "expected": "戊寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:卯",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:5",
+    "status": "PASS",
+    "actual": "己卯",
+    "expected": "己卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:辰",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:7",
+    "status": "PASS",
+    "actual": "庚辰",
+    "expected": "庚辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:巳",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:9",
+    "status": "PASS",
+    "actual": "辛巳",
+    "expected": "辛巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:午",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:11",
+    "status": "PASS",
+    "actual": "壬午",
+    "expected": "壬午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:未",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:13",
+    "status": "PASS",
+    "actual": "癸未",
+    "expected": "癸未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:申",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:15",
+    "status": "PASS",
+    "actual": "甲申",
+    "expected": "甲申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:酉",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:17",
+    "status": "PASS",
+    "actual": "乙酉",
+    "expected": "乙酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:戌",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:19",
+    "status": "PASS",
+    "actual": "丙戌",
+    "expected": "丙戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:乙:亥",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:乙丑:21",
+    "status": "PASS",
+    "actual": "丁亥",
+    "expected": "丁亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:丑",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:1",
+    "status": "PASS",
+    "actual": "己丑",
+    "expected": "己丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:寅",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:3",
+    "status": "PASS",
+    "actual": "庚寅",
+    "expected": "庚寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:卯",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:5",
+    "status": "PASS",
+    "actual": "辛卯",
+    "expected": "辛卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:辰",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:7",
+    "status": "PASS",
+    "actual": "壬辰",
+    "expected": "壬辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:巳",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:9",
+    "status": "PASS",
+    "actual": "癸巳",
+    "expected": "癸巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:午",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:11",
+    "status": "PASS",
+    "actual": "甲午",
+    "expected": "甲午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:未",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:13",
+    "status": "PASS",
+    "actual": "乙未",
+    "expected": "乙未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:申",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:15",
+    "status": "PASS",
+    "actual": "丙申",
+    "expected": "丙申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:酉",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:17",
+    "status": "PASS",
+    "actual": "丁酉",
+    "expected": "丁酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:戌",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:19",
+    "status": "PASS",
+    "actual": "戊戌",
+    "expected": "戊戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丙:亥",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丙寅:21",
+    "status": "PASS",
+    "actual": "己亥",
+    "expected": "己亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:丑",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:1",
+    "status": "PASS",
+    "actual": "辛丑",
+    "expected": "辛丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:寅",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:3",
+    "status": "PASS",
+    "actual": "壬寅",
+    "expected": "壬寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:卯",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:5",
+    "status": "PASS",
+    "actual": "癸卯",
+    "expected": "癸卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:辰",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:7",
+    "status": "PASS",
+    "actual": "甲辰",
+    "expected": "甲辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:巳",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:9",
+    "status": "PASS",
+    "actual": "乙巳",
+    "expected": "乙巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:午",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:11",
+    "status": "PASS",
+    "actual": "丙午",
+    "expected": "丙午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:未",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:13",
+    "status": "PASS",
+    "actual": "丁未",
+    "expected": "丁未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:申",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:15",
+    "status": "PASS",
+    "actual": "戊申",
+    "expected": "戊申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:酉",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:17",
+    "status": "PASS",
+    "actual": "己酉",
+    "expected": "己酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:戌",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:19",
+    "status": "PASS",
+    "actual": "庚戌",
+    "expected": "庚戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:丁:亥",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:丁卯:21",
+    "status": "PASS",
+    "actual": "辛亥",
+    "expected": "辛亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:丑",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:1",
+    "status": "PASS",
+    "actual": "癸丑",
+    "expected": "癸丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:寅",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:3",
+    "status": "PASS",
+    "actual": "甲寅",
+    "expected": "甲寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:卯",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:5",
+    "status": "PASS",
+    "actual": "乙卯",
+    "expected": "乙卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:辰",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:7",
+    "status": "PASS",
+    "actual": "丙辰",
+    "expected": "丙辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:巳",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:9",
+    "status": "PASS",
+    "actual": "丁巳",
+    "expected": "丁巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:午",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:11",
+    "status": "PASS",
+    "actual": "戊午",
+    "expected": "戊午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:未",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:13",
+    "status": "PASS",
+    "actual": "己未",
+    "expected": "己未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:申",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:15",
+    "status": "PASS",
+    "actual": "庚申",
+    "expected": "庚申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:酉",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:17",
+    "status": "PASS",
+    "actual": "辛酉",
+    "expected": "辛酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:戌",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:19",
+    "status": "PASS",
+    "actual": "壬戌",
+    "expected": "壬戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:戊:亥",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:戊辰:21",
+    "status": "PASS",
+    "actual": "癸亥",
+    "expected": "癸亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:丑",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:1",
+    "status": "PASS",
+    "actual": "乙丑",
+    "expected": "乙丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:寅",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:3",
+    "status": "PASS",
+    "actual": "丙寅",
+    "expected": "丙寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:卯",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:5",
+    "status": "PASS",
+    "actual": "丁卯",
+    "expected": "丁卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:辰",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:7",
+    "status": "PASS",
+    "actual": "戊辰",
+    "expected": "戊辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:巳",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:9",
+    "status": "PASS",
+    "actual": "己巳",
+    "expected": "己巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:午",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:11",
+    "status": "PASS",
+    "actual": "庚午",
+    "expected": "庚午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:未",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:13",
+    "status": "PASS",
+    "actual": "辛未",
+    "expected": "辛未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:申",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:15",
+    "status": "PASS",
+    "actual": "壬申",
+    "expected": "壬申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:酉",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:17",
+    "status": "PASS",
+    "actual": "癸酉",
+    "expected": "癸酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:戌",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:19",
+    "status": "PASS",
+    "actual": "甲戌",
+    "expected": "甲戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:己:亥",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:己巳:21",
+    "status": "PASS",
+    "actual": "乙亥",
+    "expected": "乙亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:丑",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:1",
+    "status": "PASS",
+    "actual": "丁丑",
+    "expected": "丁丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:寅",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:3",
+    "status": "PASS",
+    "actual": "戊寅",
+    "expected": "戊寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:卯",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:5",
+    "status": "PASS",
+    "actual": "己卯",
+    "expected": "己卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:辰",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:7",
+    "status": "PASS",
+    "actual": "庚辰",
+    "expected": "庚辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:巳",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:9",
+    "status": "PASS",
+    "actual": "辛巳",
+    "expected": "辛巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:午",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:11",
+    "status": "PASS",
+    "actual": "壬午",
+    "expected": "壬午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:未",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:13",
+    "status": "PASS",
+    "actual": "癸未",
+    "expected": "癸未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:申",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:15",
+    "status": "PASS",
+    "actual": "甲申",
+    "expected": "甲申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:酉",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:17",
+    "status": "PASS",
+    "actual": "乙酉",
+    "expected": "乙酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:戌",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:19",
+    "status": "PASS",
+    "actual": "丙戌",
+    "expected": "丙戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:庚:亥",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:庚午:21",
+    "status": "PASS",
+    "actual": "丁亥",
+    "expected": "丁亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:丑",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:1",
+    "status": "PASS",
+    "actual": "己丑",
+    "expected": "己丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:寅",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:3",
+    "status": "PASS",
+    "actual": "庚寅",
+    "expected": "庚寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:卯",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:5",
+    "status": "PASS",
+    "actual": "辛卯",
+    "expected": "辛卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:辰",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:7",
+    "status": "PASS",
+    "actual": "壬辰",
+    "expected": "壬辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:巳",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:9",
+    "status": "PASS",
+    "actual": "癸巳",
+    "expected": "癸巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:午",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:11",
+    "status": "PASS",
+    "actual": "甲午",
+    "expected": "甲午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:未",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:13",
+    "status": "PASS",
+    "actual": "乙未",
+    "expected": "乙未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:申",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:15",
+    "status": "PASS",
+    "actual": "丙申",
+    "expected": "丙申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:酉",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:17",
+    "status": "PASS",
+    "actual": "丁酉",
+    "expected": "丁酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:戌",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:19",
+    "status": "PASS",
+    "actual": "戊戌",
+    "expected": "戊戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:辛:亥",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:辛未:21",
+    "status": "PASS",
+    "actual": "己亥",
+    "expected": "己亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:丑",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:1",
+    "status": "PASS",
+    "actual": "辛丑",
+    "expected": "辛丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:寅",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:3",
+    "status": "PASS",
+    "actual": "壬寅",
+    "expected": "壬寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:卯",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:5",
+    "status": "PASS",
+    "actual": "癸卯",
+    "expected": "癸卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:辰",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:7",
+    "status": "PASS",
+    "actual": "甲辰",
+    "expected": "甲辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:巳",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:9",
+    "status": "PASS",
+    "actual": "乙巳",
+    "expected": "乙巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:午",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:11",
+    "status": "PASS",
+    "actual": "丙午",
+    "expected": "丙午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:未",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:13",
+    "status": "PASS",
+    "actual": "丁未",
+    "expected": "丁未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:申",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:15",
+    "status": "PASS",
+    "actual": "戊申",
+    "expected": "戊申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:酉",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:17",
+    "status": "PASS",
+    "actual": "己酉",
+    "expected": "己酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:戌",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:19",
+    "status": "PASS",
+    "actual": "庚戌",
+    "expected": "庚戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:壬:亥",
+    "status": "PASS",
+    "actual": "建禄",
+    "expected": "建禄",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:壬申:21",
+    "status": "PASS",
+    "actual": "辛亥",
+    "expected": "辛亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:丑",
+    "status": "PASS",
+    "actual": "冠帯",
+    "expected": "冠帯",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:1",
+    "status": "PASS",
+    "actual": "癸丑",
+    "expected": "癸丑",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:寅",
+    "status": "PASS",
+    "actual": "沐浴",
+    "expected": "沐浴",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:3",
+    "status": "PASS",
+    "actual": "甲寅",
+    "expected": "甲寅",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:卯",
+    "status": "PASS",
+    "actual": "長生",
+    "expected": "長生",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:5",
+    "status": "PASS",
+    "actual": "乙卯",
+    "expected": "乙卯",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:辰",
+    "status": "PASS",
+    "actual": "養",
+    "expected": "養",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:7",
+    "status": "PASS",
+    "actual": "丙辰",
+    "expected": "丙辰",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:巳",
+    "status": "PASS",
+    "actual": "胎",
+    "expected": "胎",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:9",
+    "status": "PASS",
+    "actual": "丁巳",
+    "expected": "丁巳",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:午",
+    "status": "PASS",
+    "actual": "絶",
+    "expected": "絶",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:11",
+    "status": "PASS",
+    "actual": "戊午",
+    "expected": "戊午",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:未",
+    "status": "PASS",
+    "actual": "墓",
+    "expected": "墓",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:13",
+    "status": "PASS",
+    "actual": "己未",
+    "expected": "己未",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:申",
+    "status": "PASS",
+    "actual": "死",
+    "expected": "死",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:15",
+    "status": "PASS",
+    "actual": "庚申",
+    "expected": "庚申",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:酉",
+    "status": "PASS",
+    "actual": "病",
+    "expected": "病",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:17",
+    "status": "PASS",
+    "actual": "辛酉",
+    "expected": "辛酉",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:戌",
+    "status": "PASS",
+    "actual": "衰",
+    "expected": "衰",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:19",
+    "status": "PASS",
+    "actual": "壬戌",
+    "expected": "壬戌",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "stage:癸:亥",
+    "status": "PASS",
+    "actual": "帝旺",
+    "expected": "帝旺",
+    "method": "lunar_python独立十二運表（陰干・土の方式を統一）"
+  },
+  {
+    "id": "hour:癸酉:21",
+    "status": "PASS",
+    "actual": "癸亥",
+    "expected": "癸亥",
+    "method": "lunar_python五鼠遁、日替わり境界を避ける"
+  },
+  {
+    "id": "branch_geometry:子丑:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子丑:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子丑:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子寅:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子寅:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子寅:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子卯:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子卯:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子卯:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子辰:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子辰:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子辰:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子巳:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子巳:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子巳:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子午:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子午:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子午:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:子亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑寅:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑寅:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑寅:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑卯:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑卯:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑卯:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑辰:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑辰:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑辰:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑巳:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑巳:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑巳:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑午:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑午:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑午:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:丑亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅卯:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅卯:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅卯:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅辰:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅辰:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅辰:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅巳:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅巳:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅巳:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅午:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅午:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅午:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:寅亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯辰:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯辰:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯辰:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯巳:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯巳:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯巳:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯午:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯午:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯午:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:卯亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰巳:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰巳:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰巳:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰午:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰午:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰午:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:辰亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳午:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳午:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳午:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:巳亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午未:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午未:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午未:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:午亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未申:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未申:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未申:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:未亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申酉:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申酉:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申酉:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:申亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:酉戌:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:酉戌:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:酉戌:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:酉亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:酉亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:酉亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:戌亥:clash",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:戌亥:six_harmony",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "branch_geometry:戌亥:harm",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "12地支の対向・鏡映関係から独立構成"
+  },
+  {
+    "id": "gender_unknown_female_default",
+    "status": "FAIL",
+    "actual": {
+      "input_gender": "female",
+      "daiun_gender": "female",
+      "direction": "reverse"
+    },
+    "expected": "未指定の性別を確定させない。API/管理者/ライブラリ経路",
+    "method": "実行再現",
+    "reviewer": "F4"
+  },
+  {
+    "id": "strength_output_month_neutral",
+    "status": "FAIL",
+    "actual": {
+      "name": "得令(中立)",
+      "delta": 0,
+      "detail": "月支(午)=火 と日干(甲)=木 の直接関係が弱い"
+    },
+    "expected": "木→火の洩気関係を明示（点数の正解自体は未検証）",
+    "method": "実行再現",
+    "reviewer": "F5"
+  },
+  {
+    "id": "pre1970_windows_current_runtime",
+    "status": "FAIL",
+    "actual": "[Errno 22] Invalid argument",
+    "expected": null,
+    "method": "実行再現",
+    "reviewer": "F9"
+  },
+  {
+    "id": "unknown_transit_natal_house",
+    "status": "FAIL",
+    "actual": {
+      "non_null": 310,
+      "total": 310,
+      "sample": [
+        2,
+        2,
+        3,
+        3,
+        12,
+        12,
+        8,
+        10,
+        8,
+        5
+      ]
+    },
+    "expected": "仮置きハウスを確定値に使わない。出生図側の暫定情報と照合が必要",
+    "method": "実行再現",
+    "reviewer": "F7"
+  },
+  {
+    "id": "freeastro_timezone_contract",
+    "status": "未実施",
+    "actual": {
+      "sent_keys": [
+        "asteroids",
+        "bodies",
+        "city",
+        "day",
+        "hour",
+        "house_system",
+        "include_asteroids",
+        "lat",
+        "lng",
+        "minute",
+        "month",
+        "year",
+        "zodiac_type"
+      ],
+      "offset_sent": false
+    },
+    "expected": "受信サービスの既定タイムゾーン未確認。送信にoffsetがないことのみ確認",
+    "method": "実行再現",
+    "reviewer": "F8"
+  },
+  {
+    "id": "api_invalid:birth_date:not-a-date",
+    "status": "FAIL",
+    "actual": {
+      "http_status": 500,
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "invalid literal for int() with base 10: 'not'"
+        }
+      }
+    },
+    "expected": "不正な入力にHTTP400（API契約）",
+    "method": "実行再現"
+  },
+  {
+    "id": "api_invalid:birth_date:2023-02-29",
+    "status": "FAIL",
+    "actual": {
+      "http_status": 500,
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "day 29 must be in range 1..28 for month 2 in year 2023"
+        }
+      }
+    },
+    "expected": "不正な入力にHTTP400（API契約）",
+    "method": "実行再現"
+  },
+  {
+    "id": "api_invalid:birth_time:24:00",
+    "status": "FAIL",
+    "actual": {
+      "http_status": 500,
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "hour must be in 0..23, not 24"
+        }
+      }
+    },
+    "expected": "不正な入力にHTTP400（API契約）",
+    "method": "実行再現"
+  },
+  {
+    "id": "api_invalid:lat:100",
+    "status": "FAIL",
+    "actual": {
+      "http_status": 500,
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "swisseph.houses: error"
+        }
+      }
+    },
+    "expected": "不正な入力にHTTP400（API契約）",
+    "method": "実行再現"
+  },
+  {
+    "id": "DST_ambiguous_fold",
+    "status": "FAIL",
+    "actual": {
+      "default_utc": "2024-11-03T05:30:00+00:00",
+      "other_utc": "2024-11-03T06:30:00+00:00"
+    },
+    "expected": "1時間異なる2候補を区別するUIまたは明示。現実装にはfold指定なし",
+    "method": "実行再現"
+  },
+  {
+    "id": "long_term_parse",
+    "status": "PASS",
+    "actual": {
+      "samples": 53,
+      "days": 365
+    },
+    "expected": null,
+    "method": "実計算・実商品用exporter。ピーク精度は週次近似"
+  },
+  {
+    "id": "western_light_parse",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "既存Light生成経路"
+  },
+  {
+    "id": "western_svg_parse",
+    "status": "PASS",
+    "actual": null,
+    "expected": null,
+    "method": "実商品SVG生成・XML解析（目視は未実施）"
+  },
+  {
+    "id": "source_sync_content:services/western_core.py",
+    "status": "PASS",
+    "actual": {
+      "source_sha256": "2e0f82fabd9722a50a7e1dcea1a4443b5bac7a905f93af6f26590ff327d94a0c",
+      "products_sha256": "88aeb17272cc7fec401a3a67f98740bcbab215a993c68d080ff409adcdbef31c",
+      "byte_equal": false
+    },
+    "expected": null,
+    "method": "nanami-astro正本と改行正規化後の比較。同期コマンドのrawハッシュ失敗と区別"
+  },
+  {
+    "id": "source_sync_content:tests/test_western_core_golden.py",
+    "status": "PASS",
+    "actual": {
+      "source_sha256": "5a5007667ffdf21d52e4206038a16f0621e78b1c7312897740e908c150f609b3",
+      "products_sha256": "ff70c4d74a25fb8ffab7b692417101c52a343ec0fbaac29a313c0b44b548f988",
+      "byte_equal": false
+    },
+    "expected": null,
+    "method": "nanami-astro正本と改行正規化後の比較。同期コマンドのrawハッシュ失敗と区別"
+  },
+  {
+    "id": "source_sync_content:tests/fixtures/western_core_golden.json",
+    "status": "PASS",
+    "actual": {
+      "source_sha256": "38467d86ba7b9a6cca532905c3a1af8996b6b1bd01f1e82df686c101e0743f7c",
+      "products_sha256": "f9f376df5887fb8947d836a35a59e39aa0811313eb5b9703630258d9061f5395",
+      "byte_equal": false
+    },
+    "expected": null,
+    "method": "nanami-astro正本と改行正規化後の比較。同期コマンドのrawハッシュ失敗と区別"
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "existing_files_checked": 2591,
+  "changed_existing_files": [],
+  "missing_existing_files": [],
+  "branch": "codex/neko-permanent-demo",
+  "tests_passed": 111,
+  "subtests_passed": 4,
+  "warnings": 123,
+  "test_seconds": 121.57,
+  "current_task_only_added_files": true,
+  "external_ai_calls": false,
+  "production_database_access": false,
+  "deployed": false,
+  "committed": false
+}

@@ -1,0 +1,186 @@
+{
+  "checked_at": "2026-10-11T02:40:41.713805+00:00",
+  "source": "current Cloud Run Gmail configuration; read-only original mail",
+  "database_access": false,
+  "mail_mutations": false,
+  "customer_or_order_identifiers_saved": false,
+  "providers": {
+    "payhip": {
+      "fetched": 10,
+      "counts": {
+        "not_order_notice": 2,
+        "parsed_orders": 8,
+        "recognized_code_candidates_available": 8,
+        "multiple_items": 3,
+        "quantity_above_one": 0,
+        "sku_label_present": 0,
+        "product_id_label_present": 0,
+        "product_link_present": 0
+      },
+      "recognized_code_occurrences": {
+        "NP-WB": 5,
+        "NP-WF": 4,
+        "NP-AA": 3,
+        "NP-TA": 1,
+        "NP-WA": 2,
+        "NP-WT": 2
+      },
+      "classification_differences": {
+        "western_basic -> unclassified": 3
+      },
+      "multiple_code_line_structures": [
+        {
+          "code_lines": [
+            {
+              "codes": [
+                "NP-WF"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WB"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-AA"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-TA"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            }
+          ],
+          "subject_codes": []
+        },
+        {
+          "code_lines": [
+            {
+              "codes": [
+                "NP-WF"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WB"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WA"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WT"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            }
+          ],
+          "subject_codes": []
+        },
+        {
+          "code_lines": [
+            {
+              "codes": [
+                "NP-WF"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WB"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WA"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            },
+            {
+              "codes": [
+                "NP-WT"
+              ],
+              "product_field_label": false,
+              "quantity_field_on_same_line": false
+            }
+          ],
+          "subject_codes": []
+        }
+      ],
+      "notice_date_range": [
+        "2026-05-29",
+        "2026-07-08"
+      ]
+    },
+    "stores": {
+      "fetched": 10,
+      "counts": {
+        "not_order_notice": 4,
+        "parsed_orders": 6,
+        "recognized_code_candidates_available": 6,
+        "multiple_items": 0,
+        "quantity_above_one": 0,
+        "sku_label_present": 0,
+        "product_id_label_present": 0,
+        "product_link_present": 5
+      },
+      "recognized_code_occurrences": {
+        "NP-WF": 1,
+        "NP-WB": 2,
+        "NP-SC": 3
+      },
+      "classification_differences": {},
+      "multiple_code_line_structures": [],
+      "notice_date_range": [
+        "2026-07-26",
+        "2026-08-28"
+      ]
+    },
+    "etsy": {
+      "fetched": 3,
+      "counts": {
+        "not_order_notice": 2,
+        "parsed_orders": 1,
+        "identity_unverified": 1,
+        "lost_classification": 1,
+        "multiple_items": 0,
+        "quantity_above_one": 0,
+        "sku_label_present": 0,
+        "product_id_label_present": 0,
+        "product_link_present": 0
+      },
+      "recognized_code_occurrences": {},
+      "classification_differences": {
+        "western_basic -> unclassified": 1
+      },
+      "multiple_code_line_structures": [],
+      "notice_date_range": [
+        "2026-07-25",
+        "2026-07-25"
+      ]
+    }
+  },
+  "ok": true
+}

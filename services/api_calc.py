@@ -5,10 +5,12 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from services.api_tags import integration_tags, shichu_tags, transit_tags, western_tags
-from services.api_yaml import build_handoff_yaml
+from services.api_yaml import build_handoff_yaml, build_ai_prompt_context
 from services.yaml_exporter import build_product_yaml
+from services.birth_datetime import BirthDatetimeError
 
 API_VERSION = "1.0"
+SHICHU_API_VERSION = "1.1"
 ENGINE_NAME = "nanami-products"
 
 
@@ -73,7 +75,7 @@ def _success(endpoint: str, input_data: dict[str, Any], doc: dict[str, Any], *, 
 
     response_doc = {
         "meta": {
-            "api_version": API_VERSION,
+            "api_version": SHICHU_API_VERSION if raw_shichu is not None else API_VERSION,
             "engine": ENGINE_NAME,
             "endpoint": endpoint,
         },
@@ -115,6 +117,7 @@ def _success(endpoint: str, input_data: dict[str, Any], doc: dict[str, Any], *, 
             "svg_url": None,
             "png_url": None,
         }
+    response_doc["ai_prompt_context"] = build_ai_prompt_context(doc, response_doc["ai_prompt_context"])
     response_doc["handoff_yaml"] = build_handoff_yaml(response_doc)
     if yaml_text and ("chart" in response_doc or "shichusuimei_chart" in response_doc):
         response_doc["_internal_chart_yaml_text"] = yaml_text
@@ -142,8 +145,43 @@ def _normalize_timezone(payload: dict[str, Any]) -> str:
 
 
 def _normalize_day_boundary(payload: dict[str, Any]) -> bool:
-    value = str(payload.get("day_boundary") or "").strip().lower()
-    return value in {"23:00", "23", "true", "1", "on", "yes"}
+    return _normalize_day_boundary_hour(payload) == 23
+
+
+def _normalize_shichu_timezone(payload: dict[str, Any]) -> str:
+    raw = payload.get("timezone")
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        raw = payload.get("tz_name")
+    if isinstance(raw, str) and not raw.strip():
+        raw = None
+    if raw is not None:
+        if not isinstance(raw, str) or not raw.strip():
+            raise ApiCalcError("INVALID_TIMEZONE", "an IANA birth timezone is required", 400)
+        tz = raw.strip()
+        try:
+            ZoneInfo(tz)
+        except Exception as exc:
+            raise ApiCalcError("INVALID_TIMEZONE", "invalid IANA birth timezone", 400) from exc
+        return tz
+    # Preserve the domestic prefecture API default; an overseas place cannot
+    # silently inherit that default or UTC.
+    from services.location import resolve_prefecture
+    try:
+        resolve_prefecture(_normalize_birth_place(payload))
+    except ValueError as exc:
+        raise ApiCalcError("INVALID_TIMEZONE", "specify the overseas IANA birth timezone", 400) from exc
+    return "Asia/Tokyo"
+
+
+def _normalize_day_boundary_hour(payload: dict[str, Any]) -> int:
+    raw = payload.get("day_boundary")
+    value = str(raw if raw is not None else "").strip().lower()
+    choices = {"": 1, "01:00": 1, "1": 1, "01": 1, "false": 1, "off": 1, "no": 1,
+               "00:00": 0, "0": 0, "midnight": 0,
+               "23:00": 23, "23": 23, "true": 23, "on": 23, "yes": 23}
+    if value not in choices:
+        raise ApiCalcError("INVALID_DAY_BOUNDARY", "day_boundary must be 00:00, 01:00 or 23:00", 400)
+    return choices[value]
 
 
 def _normalize_period(payload: dict[str, Any]) -> str:
@@ -198,6 +236,9 @@ def _build_doc(
     transit_start_date: datetime | None = None,
     transit_days: int = 31,
     day_change_at_23: bool = False,
+    day_boundary_hour: int | None = None,
+    birth_fold: int | None = None,
+    birth_utc_offset_hours: float | None = None,
 ) -> dict[str, Any]:
     yaml_text, _prompt_text, doc = build_product_yaml(
         title=title,
@@ -215,6 +256,8 @@ def _build_doc(
         transit_start_date=transit_start_date,
         transit_days=transit_days,
         day_change_at_23=day_change_at_23,
+        **({"day_boundary_hour": day_boundary_hour, "birth_fold": birth_fold,
+            "birth_utc_offset_hours": birth_utc_offset_hours} if include_shichusuimei else {}),
     )
     return {
         "doc": doc,
@@ -281,14 +324,19 @@ def calc_shichu_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
             birth_place=input_data["birth_place"],
             birth_lat=_optional_float(payload, "lat"),
             birth_lng=_optional_float(payload, "lon"),
-            tz_name=_normalize_timezone(payload),
+            tz_name=_normalize_shichu_timezone(payload),
             gender=str(payload.get("gender") or "unknown"),
             include_asteroids=False,
             include_shichusuimei=True,
             include_transit=False,
             day_change_at_23=_normalize_day_boundary(payload),
+            day_boundary_hour=_normalize_day_boundary_hour(payload),
+            birth_fold=payload.get("birth_fold"),
+            birth_utc_offset_hours=payload.get("birth_utc_offset_hours"),
         )
         return _success("shichu", input_data, result["doc"], yaml_text=result.get("yaml_text"))
+    except BirthDatetimeError as exc:
+        return _error("INVALID_BIRTH_DATETIME", str(exc), status_code=400)
     except ApiCalcError as exc:
         return _error(exc.code, exc.message, status_code=exc.status_code)
     except Exception as exc:
@@ -346,7 +394,7 @@ def calc_combined_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
         if not birth_date:
             raise ApiCalcError("INVALID_INPUT", "birth_date is required", 400)
         period = _normalize_period(payload)
-        tz_name = _normalize_timezone(payload)
+        tz_name = _normalize_shichu_timezone(payload)
         writing = _normalize_writing(payload)
         target_date_value = payload.get("target_date") or birth_date
         target_start = _parse_optional_datetime(target_date_value, "target_date", tz_name=tz_name, default_hour=12)
@@ -380,8 +428,13 @@ def calc_combined_api(payload: dict[str, Any]) -> tuple[dict[str, Any], int]:
             transit_start_date=target_start,
             transit_days=transit_days,
             day_change_at_23=_normalize_day_boundary(payload),
+            day_boundary_hour=_normalize_day_boundary_hour(payload),
+            birth_fold=payload.get("birth_fold"),
+            birth_utc_offset_hours=payload.get("birth_utc_offset_hours"),
         )
         return _success("combined", input_data, result["doc"], yaml_text=result.get("yaml_text"))
+    except BirthDatetimeError as exc:
+        return _error("INVALID_BIRTH_DATETIME", str(exc), status_code=400)
     except ApiCalcError as exc:
         return _error(exc.code, exc.message, status_code=exc.status_code)
     except Exception as exc:

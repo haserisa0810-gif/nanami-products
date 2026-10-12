@@ -1,0 +1,6698 @@
+あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図・31日分のトランジットを含む計算済みデータです。
+
+
+【データ利用の優先規則】
+- 計算済みの値を再計算・訂正しない
+- interpretation_flags と time_sensitive_provisional の指示を最優先する
+- time_sensitive_provisional 内の値（ハウス・ASC/MC・アングルとのアスペクト）は仮定時刻による参考計算である。本人の確定的特徴として断定に使わない。可能性として触れる場合は「出生時刻が不確かなため暫定」と明示する。出生時刻が判明した場合は再計算が必要である
+- データに存在しないセクションを推測で補完しない
+- 配置と出来事の因果関係を断定しない
+
+重要ルール:
+- 天体位置・ハウス・アスペクト・トランジットの計算結果は変更しないでください。
+- 生年月日から再計算しないでください。
+- YAML内の計算結果を唯一の根拠として解釈してください。
+- 断定しすぎず、傾向・使い方・活かし方として表現してください。
+- 出生図を土台に、今後31日分のトランジットをつなげて読んでください。
+- 月は朝・昼・夜の動きが入っています。日内の変化を読む時に参照してください。
+- transitデータは「現在の流れ」の根拠として使ってください。
+- moon_timepoints は「朝・昼・夜」の日内の使い方の根拠として使ってください。
+- 今後数日の動きは、トランジットのタイトなアスペクトを優先して判断してください。
+- transiting_bodies[].natal_house は出生図カスプに対する在住ハウスです。mundane_house はその時刻のマンデンハウスなので、出生図への解釈根拠にしないでください。
+- today.selected_date を基準日として扱い、next_31_days_summary 内の日付が基準日より前の場合は、「今後の予定」ではなく「過去の流れ・振り返り」として扱ってください。
+- 「動きやすい日」「注意したい日」には、today.selected_date 以降の日付を優先して出力してください。
+- next_31_days_summary に過去日しか存在しない場合は、過去日を無理に未来の予定として書かず、「この期間に出た違和感や発想は今後の参考になる」などの振り返り表現にしてください。
+- 当日以降の判断は today と next_few_days を優先し、next_31_days_summary は補助として使ってください。
+- 「良い・悪い」ではなく、「どう使うとズレにくいか」を優先して書いてください。
+- 「ラッキー」などの軽い表現は避け、具体的な行動ヒントに置き換えてください。
+
+
+【相談モード（ACG連携）】
+ユーザーから旅行、移住、海外展開、活動場所、土地との相性について相談された場合は、出生図だけで判断せず、アストロカートグラフィも補助情報として利用してください。
+
+アプリ:
+https://chart.nanami-astro.com/acg?lang=ja&utm_source=chatgpt.com
+
+AIがURLを参照できる場合は利用してください。
+
+URLを参照できない場合は内容を推測しないでください。まず「ACGアプリへ貼り付ける占術YAMLをこの会話に表示しますか？」とユーザーに確認してください。
+
+ユーザーが「はい」と答え、会話開始時に渡された元の占術YAMLを参照できる場合は、そのYAMLを要約・再計算・書き換えせず、YAMLコードブロックでそのまま再掲してください。元のYAMLを正確に参照できない場合は再構成や推測をせず、再掲できないことを伝えてください。
+
+その後、ユーザーにYAMLをACGアプリへ貼り付けて対象地点を検索してもらい、ACGアプリから出力されたYAMLを会話へ貼り付けてもらうよう案内してください。
+
+アストロカートグラフィ単独では判断せず、出生図・現在のトランジット・相談内容を合わせて解釈してください。
+
+出力してほしい内容:
+- 全体像
+- 才能・強み
+- つまずきやすいパターン
+- 仕事・活動の向き
+- 人間関係の傾向
+- 今後31日間の流れ
+- 動きやすい日・注意したい日
+- 現在の流れ（トランジット）
+- 今日の使い方（朝・昼・夜）
+- 今後数日の動き
+- 今後の活かし方
+
+出生時刻が不明または推定のため、ハウス・ASC・MC・Vertexは参考値として扱ってください。これらを性格や仕事傾向の中心根拠にせず、サイン配置・天体同士の主要アスペクト・エレメント・モードを中心に解釈してください。月は日内で度数やサインが変わる可能性があるため、断定しすぎないでください。
+
+以下のYAMLを読み込んで鑑定してください。
+
+
+```yaml
+version: nanami-products-yaml-v1
+meta:
+  schema_version: '2.0'
+  product_type: personal_ai_astrology_yaml
+  profile_id: profile_cdb7e9296fab42e2
+  chart_id: chart_88ed98a9230c3ab9
+  generated_at: '2026-10-10T17:34:06.999838+09:00'
+  data_role: base_chart
+  yaml_variant: full
+base: null
+product:
+  type: personal_ai_astrology_yaml
+  options:
+    western_natal: true
+    asteroids: false
+    transit: true
+    shichusuimei: false
+generated_at: '2026-10-10T17:34:06.999838+09:00'
+calculation:
+  engine: Swiss Ephemeris
+  zodiac: tropical
+  house_system: P
+  timezone: Asia/Tokyo
+  location_source: input
+  ephemeris_version: null
+birth_time:
+  input_value: null
+  calculation_time: '12:00'
+  accuracy: unknown
+  note: 出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。
+interpretation_flags:
+  allow_house_interpretation: false
+  allow_asc_mc_interpretation: false
+  house_reliability: low
+  moon_reliability: medium
+  use_houses_as_reference_only: true
+assets:
+  horoscope_svg:
+    available: true
+    file_name: horoscope.svg
+    generated_from_chart_id: chart_88ed98a9230c3ab9
+  shichusuimei_svg:
+    available: false
+    file_name: shichusuimei-chart.svg
+    generated_from_chart_id: chart_88ed98a9230c3ab9
+  yaml_lite:
+    available: true
+  yaml_detail:
+    available: false
+  yaml_full:
+    available: true
+input:
+  title: Quality audit fictional B unknown time
+  birth_date: '1990-05-15'
+  birth_time: unknown
+  calculation_time: '12:00'
+  birth_time_accuracy: unknown
+  birth_time_note: 出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。
+  prefecture: 東京都
+  birth_place_kind: domestic
+  birth_place: 東京
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
+  gender: unknown
+usage_note:
+  for_ai: このYAMLは計算済みデータです。AIに解釈させる場合、生年月日から再計算させず、この値を根拠にしてください。
+  not_included: 鑑定本文は含みません。AI解釈用の構造化データです。
+  continuous_use: このYAMLはAIに一度読み込ませて継続的に使える基礎データです。今後、月ごとのトランジット追加データと組み合わせて使うこともできます。
+systems:
+  western:
+    natal:
+      engine: Swiss Ephemeris
+      house_system: P
+      subject:
+        datetime: '1990-05-15T12:00:00+09:00'
+        location:
+          lat: 35.6895
+          lng: 139.6917
+          city: 東京
+      bodies:
+        Sun:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 24.0345
+          absolute_longitude: 54.0345
+          retrograde: false
+        Moon:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 22.5448
+          absolute_longitude: 292.5448
+          retrograde: false
+        Mercury:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 8.0628
+          absolute_longitude: 38.0628
+          retrograde: true
+        Venus:
+          sign: Ari
+          sign_ja: 牡羊座
+          degree: 12.3907
+          absolute_longitude: 12.3907
+          retrograde: false
+        Mars:
+          sign: Pis
+          sign_ja: 魚座
+          degree: 18.0553
+          absolute_longitude: 348.0553
+          retrograde: false
+        Jupiter:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 9.4709
+          absolute_longitude: 99.4709
+          retrograde: false
+        Saturn:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 25.2556
+          absolute_longitude: 295.2556
+          retrograde: true
+        Uranus:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 9.1931
+          absolute_longitude: 279.1931
+          retrograde: true
+        Neptune:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 14.3584
+          absolute_longitude: 284.3584
+          retrograde: true
+        Pluto:
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 16.1778
+          absolute_longitude: 226.1778
+          retrograde: true
+        North Node:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 10.2688
+          absolute_longitude: 310.2688
+          retrograde: true
+        South Node:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 10.2688
+          absolute_longitude: 130.2688
+          retrograde: true
+      aspects:
+      - body1: North Node
+        body2: South Node
+        aspect: opposition
+        orb: 0.0
+      - body1: Jupiter
+        body2: Uranus
+        aspect: opposition
+        orb: 0.28
+      - body1: Venus
+        body2: Chiron
+        aspect: square
+        orb: 0.79
+      - body1: Mercury
+        body2: Uranus
+        aspect: trine
+        orb: 1.13
+      - body1: Neptune
+        body2: Chiron
+        aspect: opposition
+        orb: 1.18
+      - body1: Sun
+        body2: Saturn
+        aspect: trine
+        orb: 1.22
+      - body1: Mercury
+        body2: Jupiter
+        aspect: sextile
+        orb: 1.41
+      - body1: Sun
+        body2: Moon
+        aspect: trine
+        orb: 1.49
+      - body1: Neptune
+        body2: Pluto
+        aspect: sextile
+        orb: 1.82
+      - body1: Mars
+        body2: Pluto
+        aspect: trine
+        orb: 1.88
+      - body1: Venus
+        body2: Neptune
+        aspect: square
+        orb: 1.97
+      - body1: Venus
+        body2: North Node
+        aspect: sextile
+        orb: 2.12
+      - body1: Venus
+        body2: South Node
+        aspect: trine
+        orb: 2.12
+      - body1: Mercury
+        body2: North Node
+        aspect: square
+        orb: 2.21
+      - body1: Mercury
+        body2: South Node
+        aspect: square
+        orb: 2.21
+      - body1: Moon
+        body2: Saturn
+        aspect: conjunction
+        orb: 2.71
+      - body1: Venus
+        body2: Jupiter
+        aspect: square
+        orb: 2.92
+      - body1: Pluto
+        body2: Chiron
+        aspect: trine
+        orb: 3.0
+      - body1: Venus
+        body2: Uranus
+        aspect: square
+        orb: 3.2
+      - body1: Mars
+        body2: Neptune
+        aspect: sextile
+        orb: 3.7
+      - body1: Jupiter
+        body2: Chiron
+        aspect: conjunction
+        orb: 3.71
+      - body1: Uranus
+        body2: Chiron
+        aspect: opposition
+        orb: 3.99
+      - body1: South Node
+        body2: Lilith
+        aspect: trine
+        orb: 4.14
+      - body1: Mars
+        body2: Chiron
+        aspect: trine
+        orb: 4.87
+      - body1: Jupiter
+        body2: Neptune
+        aspect: opposition
+        orb: 4.89
+      - body1: Uranus
+        body2: Neptune
+        aspect: conjunction
+        orb: 5.17
+      - body1: Pluto
+        body2: North Node
+        aspect: square
+        orb: 5.91
+      - body1: Pluto
+        body2: South Node
+        aspect: square
+        orb: 5.91
+      - body1: Sun
+        body2: Pluto
+        aspect: opposition
+        orb: 7.86
+      summary:
+        elements:
+          fire: 1
+          earth: 6
+          air: 0
+          water: 3
+        modes:
+          cardinal: 6
+          fixed: 3
+          mutable: 1
+        dominant_signs:
+        - sign: Cap
+          sign_ja: 山羊座
+          count: 4
+        - sign: Tau
+          sign_ja: 牡牛座
+          count: 2
+        - sign: Ari
+          sign_ja: 牡羊座
+          count: 1
+      skipped_bodies: []
+      time_sensitive_provisional:
+        status: assumed_birth_time
+        assumed_time: '12:00'
+        valid_for_assertive_interpretation: false
+        recalculation_required_when_time_known: true
+        reason: birth_time_unknown
+        angles:
+          asc:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 2.928
+            absolute_longitude: 152.928
+            house: 1
+            retrograde: false
+          mc:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 29.481
+            absolute_longitude: 59.481
+            house: 10
+            retrograde: false
+        houses:
+          '1':
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 2.928
+            absolute_longitude: 152.928
+          '2':
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 27.5436
+            absolute_longitude: 177.5436
+          '3':
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 26.7083
+            absolute_longitude: 206.7083
+          '4':
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 29.481
+            absolute_longitude: 239.481
+          '5':
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 3.0437
+            absolute_longitude: 273.0437
+          '6':
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 4.5552
+            absolute_longitude: 304.5552
+          '7':
+            sign: Pis
+            sign_ja: 魚座
+            degree: 2.928
+            absolute_longitude: 332.928
+          '8':
+            sign: Pis
+            sign_ja: 魚座
+            degree: 27.5436
+            absolute_longitude: 357.5436
+          '9':
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 26.7083
+            absolute_longitude: 26.7083
+          '10':
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 29.481
+            absolute_longitude: 59.481
+          '11':
+            sign: Can
+            sign_ja: 蟹座
+            degree: 3.0437
+            absolute_longitude: 93.0437
+          '12':
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 4.5552
+            absolute_longitude: 124.5552
+        body_house_placements:
+          Sun: 9
+          Moon: 5
+          Mercury: 9
+          Venus: 8
+          Mars: 7
+          Jupiter: 11
+          Saturn: 5
+          Uranus: 5
+          Neptune: 5
+          Pluto: 3
+          North Node: 6
+          South Node: 12
+          Lilith: 4
+          Chiron: 11
+          ASC: 1
+          MC: 10
+        angle_aspects:
+        - body1: Lilith
+          body2: ASC
+          aspect: square
+          orb: 3.2
+        - body1: ASC
+          body2: MC
+          aspect: square
+          orb: 3.45
+        - body1: Saturn
+          body2: MC
+          aspect: trine
+          orb: 4.23
+        - body1: Mercury
+          body2: ASC
+          aspect: trine
+          orb: 5.13
+        - body1: Sun
+          body2: MC
+          aspect: conjunction
+          orb: 5.45
+        - body1: Lilith
+          body2: MC
+          aspect: opposition
+          orb: 6.64
+    asteroids: null
+    transit:
+      period:
+        start_date: '2026-10-10'
+        days: 38
+        timezone: Asia/Tokyo
+        sample_time: '12:00'
+        moon_timepoints:
+        - 06:00
+        - '12:00'
+        - '21:00'
+      daily:
+      - date: '2026-10-10'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 16.832
+            absolute_longitude: 196.832
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 10.3686
+            absolute_longitude: 190.3686
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 11.7414
+            absolute_longitude: 221.7414
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 7.5731
+            absolute_longitude: 217.5731
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 6.9198
+            absolute_longitude: 126.9198
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.1635
+            absolute_longitude: 141.1635
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.8622
+            absolute_longitude: 10.8622
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.3419
+            absolute_longitude: 65.3419
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.6135
+            absolute_longitude: 2.6135
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0772
+            absolute_longitude: 303.0772
+            retrograde: true
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Venus
+          natal_body: Mercury
+          aspect: opposition
+          orb: 0.49
+          transit_longitude: 217.5731
+          natal_longitude: 38.0628
+        - transit_body: Moon
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.9
+          transit_longitude: 190.3686
+          natal_longitude: 99.4709
+        - transit_body: Mars
+          natal_body: Mercury
+          aspect: square
+          orb: 1.14
+          transit_longitude: 126.9198
+          natal_longitude: 38.0628
+        - transit_body: Moon
+          natal_body: Uranus
+          aspect: square
+          orb: 1.18
+          transit_longitude: 190.3686
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 1.39
+          transit_longitude: 10.8622
+          natal_longitude: 99.4709
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 7.078
+            absolute_longitude: 187.078
+            retrograde: false
+            mundane_house: 12
+            natal_house: 2
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 10.3686
+            absolute_longitude: 190.3686
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Jupiter
+            aspect: square
+            orb: 0.9
+            transit_longitude: 190.3686
+            natal_longitude: 99.4709
+          - transit_body: Moon
+            natal_body: Uranus
+            aspect: square
+            orb: 1.18
+            transit_longitude: 190.3686
+            natal_longitude: 279.1931
+        - label: night
+          time: '21:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 15.2784
+            absolute_longitude: 195.2784
+            retrograde: false
+            mundane_house: 5
+            natal_house: 2
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Neptune
+            aspect: square
+            orb: 0.92
+            transit_longitude: 195.2784
+            natal_longitude: 284.3584
+      - date: '2026-10-11'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 17.8207
+            absolute_longitude: 197.8207
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.3894
+            absolute_longitude: 203.3894
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 12.7979
+            absolute_longitude: 222.7979
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 7.2844
+            absolute_longitude: 217.2844
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 7.4818
+            absolute_longitude: 127.4818
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.3277
+            absolute_longitude: 141.3277
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.7842
+            absolute_longitude: 10.7842
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.318
+            absolute_longitude: 65.318
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.5869
+            absolute_longitude: 2.5869
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0746
+            absolute_longitude: 303.0746
+            retrograde: true
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mars
+          natal_body: Mercury
+          aspect: square
+          orb: 0.58
+          transit_longitude: 127.4818
+          natal_longitude: 38.0628
+        - transit_body: Venus
+          natal_body: Mercury
+          aspect: opposition
+          orb: 0.78
+          transit_longitude: 217.2844
+          natal_longitude: 38.0628
+        - transit_body: Moon
+          natal_body: Moon
+          aspect: square
+          orb: 0.84
+          transit_longitude: 203.3894
+          natal_longitude: 292.5448
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 1.31
+          transit_longitude: 10.7842
+          natal_longitude: 99.4709
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 20.156
+            absolute_longitude: 200.156
+            retrograde: false
+            mundane_house: 1
+            natal_house: 2
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.3894
+            absolute_longitude: 203.3894
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Moon
+            aspect: square
+            orb: 0.84
+            transit_longitude: 203.3894
+            natal_longitude: 292.5448
+        - label: night
+          time: '21:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 28.2115
+            absolute_longitude: 208.2115
+            retrograde: false
+            mundane_house: 5
+            natal_house: 3
+          natal_aspects: []
+      - date: '2026-10-12'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 18.8099
+            absolute_longitude: 198.8099
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.1727
+            absolute_longitude: 216.1727
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 13.8141
+            absolute_longitude: 223.8141
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.9575
+            absolute_longitude: 216.9575
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 8.0415
+            absolute_longitude: 128.0415
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.4903
+            absolute_longitude: 141.4903
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.7066
+            absolute_longitude: 10.7066
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.2934
+            absolute_longitude: 65.2934
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.5604
+            absolute_longitude: 2.5604
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0724
+            absolute_longitude: 303.0724
+            retrograde: true
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mars
+          natal_body: Mercury
+          aspect: square
+          orb: 0.02
+          transit_longitude: 128.0415
+          natal_longitude: 38.0628
+        - transit_body: Mercury
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.54
+          transit_longitude: 223.8141
+          natal_longitude: 284.3584
+        - transit_body: Venus
+          natal_body: Mercury
+          aspect: opposition
+          orb: 1.11
+          transit_longitude: 216.9575
+          natal_longitude: 38.0628
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 1.24
+          transit_longitude: 10.7066
+          natal_longitude: 99.4709
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 2.9996
+            absolute_longitude: 212.9996
+            retrograde: false
+            mundane_house: 1
+            natal_house: 3
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.1727
+            absolute_longitude: 216.1727
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 10.9037
+            absolute_longitude: 220.9037
+            retrograde: false
+            mundane_house: 5
+            natal_house: 3
+          natal_aspects: []
+      - date: '2026-10-13'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 19.7996
+            absolute_longitude: 199.7996
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 18.7134
+            absolute_longitude: 228.7134
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 14.7862
+            absolute_longitude: 224.7862
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.5937
+            absolute_longitude: 216.5937
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 8.5988
+            absolute_longitude: 128.5988
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.651
+            absolute_longitude: 141.651
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.6293
+            absolute_longitude: 10.6293
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.2681
+            absolute_longitude: 65.2681
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.5341
+            absolute_longitude: 2.5341
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0707
+            absolute_longitude: 303.0707
+            retrograde: true
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mercury
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.43
+          transit_longitude: 224.7862
+          natal_longitude: 284.3584
+        - transit_body: Mars
+          natal_body: Mercury
+          aspect: square
+          orb: 0.54
+          transit_longitude: 128.5988
+          natal_longitude: 38.0628
+        - transit_body: Moon
+          natal_body: Mars
+          aspect: trine
+          orb: 0.66
+          transit_longitude: 228.7134
+          natal_longitude: 348.0553
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 1.16
+          transit_longitude: 10.6293
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 1.44
+          transit_longitude: 10.6293
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 15.6007
+            absolute_longitude: 225.6007
+            retrograde: false
+            mundane_house: 1
+            natal_house: 3
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: conjunction
+            orb: 0.58
+            transit_longitude: 225.6007
+            natal_longitude: 226.1778
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 18.7134
+            absolute_longitude: 228.7134
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mars
+            aspect: trine
+            orb: 0.66
+            transit_longitude: 228.7134
+            natal_longitude: 348.0553
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 23.3554
+            absolute_longitude: 233.3554
+            retrograde: false
+            mundane_house: 5
+            natal_house: 3
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: opposition
+            orb: 0.68
+            transit_longitude: 233.3554
+            natal_longitude: 54.0345
+          - transit_body: Moon
+            natal_body: Moon
+            aspect: sextile
+            orb: 0.81
+            transit_longitude: 233.3554
+            natal_longitude: 292.5448
+      - date: '2026-10-14'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 20.7899
+            absolute_longitude: 200.7899
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 1.0225
+            absolute_longitude: 241.0225
+            retrograde: false
+            mundane_house: 11
+            natal_house: 4
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 15.7101
+            absolute_longitude: 225.7101
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.1943
+            absolute_longitude: 216.1943
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 9.1536
+            absolute_longitude: 129.1536
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.8101
+            absolute_longitude: 141.8101
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.5524
+            absolute_longitude: 10.5524
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.2421
+            absolute_longitude: 65.2421
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.508
+            absolute_longitude: 2.508
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0696
+            absolute_longitude: 303.0696
+            retrograde: true
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mercury
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 0.47
+          transit_longitude: 225.7101
+          natal_longitude: 226.1778
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 1.08
+          transit_longitude: 10.5524
+          natal_longitude: 99.4709
+        - transit_body: Mars
+          natal_body: Mercury
+          aspect: square
+          orb: 1.09
+          transit_longitude: 129.1536
+          natal_longitude: 38.0628
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 1.36
+          transit_longitude: 10.5524
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 27.9657
+            absolute_longitude: 237.9657
+            retrograde: false
+            mundane_house: 2
+            natal_house: 3
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 1.0225
+            absolute_longitude: 241.0225
+            retrograde: false
+            mundane_house: 11
+            natal_house: 4
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 5.584
+            absolute_longitude: 245.584
+            retrograde: false
+            mundane_house: 6
+            natal_house: 4
+          natal_aspects: []
+      - date: '2026-10-15'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 21.7808
+            absolute_longitude: 201.7808
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 13.1286
+            absolute_longitude: 253.1286
+            retrograde: false
+            mundane_house: 11
+            natal_house: 4
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 16.5812
+            absolute_longitude: 226.5812
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.761
+            absolute_longitude: 215.761
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 9.706
+            absolute_longitude: 129.706
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.9673
+            absolute_longitude: 141.9673
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.4759
+            absolute_longitude: 10.4759
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.2155
+            absolute_longitude: 65.2155
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.4821
+            absolute_longitude: 2.4821
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0688
+            absolute_longitude: 303.0688
+            retrograde: true
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mercury
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 0.4
+          transit_longitude: 226.5812
+          natal_longitude: 226.1778
+        - transit_body: Moon
+          natal_body: Venus
+          aspect: trine
+          orb: 0.74
+          transit_longitude: 253.1286
+          natal_longitude: 12.3907
+        - transit_body: Sun
+          natal_body: Moon
+          aspect: square
+          orb: 0.76
+          transit_longitude: 201.7808
+          natal_longitude: 292.5448
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 1.0
+          transit_longitude: 10.4759
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 1.28
+          transit_longitude: 10.4759
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 10.1188
+            absolute_longitude: 250.1188
+            retrograde: false
+            mundane_house: 2
+            natal_house: 4
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 13.1286
+            absolute_longitude: 253.1286
+            retrograde: false
+            mundane_house: 11
+            natal_house: 4
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: trine
+            orb: 0.74
+            transit_longitude: 253.1286
+            natal_longitude: 12.3907
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 17.6248
+            absolute_longitude: 257.6248
+            retrograde: false
+            mundane_house: 6
+            natal_house: 4
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mars
+            aspect: square
+            orb: 0.43
+            transit_longitude: 257.6248
+            natal_longitude: 348.0553
+      - date: '2026-10-16'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 22.7721
+            absolute_longitude: 202.7721
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 25.0777
+            absolute_longitude: 265.0777
+            retrograde: false
+            mundane_house: 12
+            natal_house: 4
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 17.3941
+            absolute_longitude: 227.3941
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.2957
+            absolute_longitude: 215.2957
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 10.2558
+            absolute_longitude: 130.2558
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.1227
+            absolute_longitude: 142.1227
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.3999
+            absolute_longitude: 10.3999
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.1882
+            absolute_longitude: 65.1882
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.4564
+            absolute_longitude: 2.4564
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0686
+            absolute_longitude: 303.0686
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Sun
+          natal_body: Moon
+          aspect: square
+          orb: 0.23
+          transit_longitude: 202.7721
+          natal_longitude: 292.5448
+        - transit_body: Mercury
+          natal_body: Mars
+          aspect: trine
+          orb: 0.66
+          transit_longitude: 227.3941
+          natal_longitude: 348.0553
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.93
+          transit_longitude: 10.3999
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 1.21
+          transit_longitude: 10.3999
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 22.102
+            absolute_longitude: 262.102
+            retrograde: false
+            mundane_house: 2
+            natal_house: 4
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 25.0777
+            absolute_longitude: 265.0777
+            retrograde: false
+            mundane_house: 12
+            natal_house: 4
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 29.5304
+            absolute_longitude: 269.5304
+            retrograde: false
+            mundane_house: 6
+            natal_house: 4
+          natal_aspects: []
+      - date: '2026-10-17'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.7639
+            absolute_longitude: 203.7639
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 6.932
+            absolute_longitude: 276.932
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 18.1432
+            absolute_longitude: 228.1432
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 4.8009
+            absolute_longitude: 214.8009
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 10.8031
+            absolute_longitude: 130.8031
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.2763
+            absolute_longitude: 142.2763
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.3243
+            absolute_longitude: 10.3243
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.1602
+            absolute_longitude: 65.1602
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.431
+            absolute_longitude: 2.431
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0689
+            absolute_longitude: 303.0689
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mercury
+          natal_body: Mars
+          aspect: trine
+          orb: 0.09
+          transit_longitude: 228.1432
+          natal_longitude: 348.0553
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.85
+          transit_longitude: 10.3243
+          natal_longitude: 99.4709
+        - transit_body: Moon
+          natal_body: Mercury
+          aspect: trine
+          orb: 1.13
+          transit_longitude: 276.932
+          natal_longitude: 38.0628
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 1.13
+          transit_longitude: 10.3243
+          natal_longitude: 279.1931
+        - transit_body: Sun
+          natal_body: Moon
+          aspect: square
+          orb: 1.22
+          transit_longitude: 203.7639
+          natal_longitude: 292.5448
+        - transit_body: Sun
+          natal_body: Saturn
+          aspect: square
+          orb: 1.49
+          transit_longitude: 203.7639
+          natal_longitude: 295.2556
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 3.9734
+            absolute_longitude: 273.9734
+            retrograde: false
+            mundane_house: 3
+            natal_house: 5
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 6.932
+            absolute_longitude: 276.932
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: trine
+            orb: 1.13
+            transit_longitude: 276.932
+            natal_longitude: 38.0628
+        - label: night
+          time: '21:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 11.3679
+            absolute_longitude: 281.3679
+            retrograde: false
+            mundane_house: 7
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: square
+            orb: 1.02
+            transit_longitude: 281.3679
+            natal_longitude: 12.3907
+      - date: '2026-10-18'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 24.7563
+            absolute_longitude: 204.7563
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 18.7664
+            absolute_longitude: 288.7664
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 18.8219
+            absolute_longitude: 228.8219
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 4.2792
+            absolute_longitude: 214.2792
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 11.3479
+            absolute_longitude: 131.3479
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.428
+            absolute_longitude: 142.428
+            retrograde: false
+            mundane_house: 8
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.2494
+            absolute_longitude: 10.2494
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.1316
+            absolute_longitude: 65.1316
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.4057
+            absolute_longitude: 2.4057
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0696
+            absolute_longitude: 303.0696
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Sun
+          natal_body: Saturn
+          aspect: square
+          orb: 0.5
+          transit_longitude: 204.7563
+          natal_longitude: 295.2556
+        - transit_body: Moon
+          natal_body: Mars
+          aspect: sextile
+          orb: 0.71
+          transit_longitude: 288.7664
+          natal_longitude: 348.0553
+        - transit_body: Mercury
+          natal_body: Mars
+          aspect: trine
+          orb: 0.77
+          transit_longitude: 228.8219
+          natal_longitude: 348.0553
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.78
+          transit_longitude: 10.2494
+          natal_longitude: 99.4709
+        - transit_body: Mars
+          natal_body: Venus
+          aspect: trine
+          orb: 1.04
+          transit_longitude: 131.3479
+          natal_longitude: 12.3907
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 1.06
+          transit_longitude: 10.2494
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 15.8052
+            absolute_longitude: 285.8052
+            retrograde: false
+            mundane_house: 3
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: sextile
+            orb: 0.37
+            transit_longitude: 285.8052
+            natal_longitude: 226.1778
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 18.7664
+            absolute_longitude: 288.7664
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mars
+            aspect: sextile
+            orb: 0.71
+            transit_longitude: 288.7664
+            natal_longitude: 348.0553
+        - label: night
+          time: '21:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 23.2161
+            absolute_longitude: 293.2161
+            retrograde: false
+            mundane_house: 7
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Moon
+            aspect: conjunction
+            orb: 0.67
+            transit_longitude: 293.2161
+            natal_longitude: 292.5448
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: trine
+            orb: 0.82
+            transit_longitude: 293.2161
+            natal_longitude: 54.0345
+      - date: '2026-10-19'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 25.7491
+            absolute_longitude: 205.7491
+            retrograde: false
+            mundane_house: 9
+            natal_house: 2
+          Moon:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 0.6648
+            absolute_longitude: 300.6648
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 19.4232
+            absolute_longitude: 229.4232
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 3.7336
+            absolute_longitude: 213.7336
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 11.89
+            absolute_longitude: 131.89
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.5778
+            absolute_longitude: 142.5778
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.175
+            absolute_longitude: 10.175
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.1024
+            absolute_longitude: 65.1024
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.3807
+            absolute_longitude: 2.3807
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0708
+            absolute_longitude: 303.0708
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Sun
+          natal_body: Saturn
+          aspect: square
+          orb: 0.49
+          transit_longitude: 205.7491
+          natal_longitude: 295.2556
+        - transit_body: Mars
+          natal_body: Venus
+          aspect: trine
+          orb: 0.5
+          transit_longitude: 131.89
+          natal_longitude: 12.3907
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.7
+          transit_longitude: 10.175
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.98
+          transit_longitude: 10.175
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.46
+          transit_longitude: 142.5778
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 27.6794
+            absolute_longitude: 297.6794
+            retrograde: false
+            mundane_house: 3
+            natal_house: 5
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 0.6648
+            absolute_longitude: 300.6648
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 5.1612
+            absolute_longitude: 305.1612
+            retrograde: false
+            mundane_house: 8
+            natal_house: 6
+          natal_aspects: []
+      - date: '2026-10-20'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 26.7423
+            absolute_longitude: 206.7423
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 12.7155
+            absolute_longitude: 312.7155
+            retrograde: false
+            mundane_house: 1
+            natal_house: 6
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 19.9393
+            absolute_longitude: 229.9393
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 3.1673
+            absolute_longitude: 213.1673
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 12.4295
+            absolute_longitude: 132.4295
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.7256
+            absolute_longitude: 142.7256
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.1012
+            absolute_longitude: 10.1012
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.0726
+            absolute_longitude: 65.0726
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.356
+            absolute_longitude: 2.356
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0724
+            absolute_longitude: 303.0724
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mars
+          natal_body: Venus
+          aspect: trine
+          orb: 0.04
+          transit_longitude: 132.4295
+          natal_longitude: 12.3907
+        - transit_body: Moon
+          natal_body: Venus
+          aspect: sextile
+          orb: 0.32
+          transit_longitude: 312.7155
+          natal_longitude: 12.3907
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.63
+          transit_longitude: 10.1012
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.91
+          transit_longitude: 10.1012
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.31
+          transit_longitude: 142.7256
+          natal_longitude: 54.0345
+        - transit_body: Sun
+          natal_body: Saturn
+          aspect: square
+          orb: 1.49
+          transit_longitude: 206.7423
+          natal_longitude: 295.2556
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 9.6837
+            absolute_longitude: 309.6837
+            retrograde: false
+            mundane_house: 4
+            natal_house: 6
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 12.7155
+            absolute_longitude: 312.7155
+            retrograde: false
+            mundane_house: 1
+            natal_house: 6
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: sextile
+            orb: 0.32
+            transit_longitude: 312.7155
+            natal_longitude: 12.3907
+        - label: night
+          time: '21:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 17.2918
+            absolute_longitude: 317.2918
+            retrograde: false
+            mundane_house: 8
+            natal_house: 6
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: square
+            orb: 1.11
+            transit_longitude: 317.2918
+            natal_longitude: 226.1778
+      - date: '2026-10-21'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 27.7361
+            absolute_longitude: 207.7361
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 25.0059
+            absolute_longitude: 325.0059
+            retrograde: false
+            mundane_house: 1
+            natal_house: 6
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.3618
+            absolute_longitude: 230.3618
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 2.5839
+            absolute_longitude: 212.5839
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 12.9663
+            absolute_longitude: 132.9663
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.8714
+            absolute_longitude: 142.8714
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 10.0281
+            absolute_longitude: 10.0281
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.0421
+            absolute_longitude: 65.0421
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.3314
+            absolute_longitude: 2.3314
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0745
+            absolute_longitude: 303.0745
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.56
+          transit_longitude: 10.0281
+          natal_longitude: 99.4709
+        - transit_body: Mars
+          natal_body: Venus
+          aspect: trine
+          orb: 0.58
+          transit_longitude: 132.9663
+          natal_longitude: 12.3907
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.83
+          transit_longitude: 10.0281
+          natal_longitude: 279.1931
+        - transit_body: Moon
+          natal_body: Sun
+          aspect: square
+          orb: 0.97
+          transit_longitude: 325.0059
+          natal_longitude: 54.0345
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.16
+          transit_longitude: 142.8714
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 21.9063
+            absolute_longitude: 321.9063
+            retrograde: false
+            mundane_house: 4
+            natal_house: 6
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 25.0059
+            absolute_longitude: 325.0059
+            retrograde: false
+            mundane_house: 1
+            natal_house: 6
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: square
+            orb: 0.97
+            transit_longitude: 325.0059
+            natal_longitude: 54.0345
+        - label: night
+          time: '21:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 29.6932
+            absolute_longitude: 329.6932
+            retrograde: false
+            mundane_house: 9
+            natal_house: 6
+          natal_aspects: []
+      - date: '2026-10-22'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 28.7303
+            absolute_longitude: 208.7303
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 7.6153
+            absolute_longitude: 337.6153
+            retrograde: false
+            mundane_house: 2
+            natal_house: 7
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.6818
+            absolute_longitude: 230.6818
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 1.9871
+            absolute_longitude: 211.9871
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 13.5004
+            absolute_longitude: 133.5004
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.0153
+            absolute_longitude: 143.0153
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.9557
+            absolute_longitude: 9.9557
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 5.0111
+            absolute_longitude: 65.0111
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.3072
+            absolute_longitude: 2.3072
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0771
+            absolute_longitude: 303.0771
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Moon
+          natal_body: Mercury
+          aspect: sextile
+          orb: 0.45
+          transit_longitude: 337.6153
+          natal_longitude: 38.0628
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.48
+          transit_longitude: 9.9557
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.76
+          transit_longitude: 9.9557
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.02
+          transit_longitude: 143.0153
+          natal_longitude: 54.0345
+        - transit_body: Mars
+          natal_body: Venus
+          aspect: trine
+          orb: 1.11
+          transit_longitude: 133.5004
+          natal_longitude: 12.3907
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 4.4292
+            absolute_longitude: 334.4292
+            retrograde: false
+            mundane_house: 4
+            natal_house: 7
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 7.6153
+            absolute_longitude: 337.6153
+            retrograde: false
+            mundane_house: 2
+            natal_house: 7
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: sextile
+            orb: 0.45
+            transit_longitude: 337.6153
+            natal_longitude: 38.0628
+        - label: night
+          time: '21:00'
+          body:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 12.4396
+            absolute_longitude: 342.4396
+            retrograde: false
+            mundane_house: 9
+            natal_house: 7
+          natal_aspects: []
+      - date: '2026-10-23'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 29.725
+            absolute_longitude: 209.725
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 20.6063
+            absolute_longitude: 350.6063
+            retrograde: false
+            mundane_house: 2
+            natal_house: 7
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.8901
+            absolute_longitude: 230.8901
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 1.381
+            absolute_longitude: 211.381
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 14.0317
+            absolute_longitude: 134.0317
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.1571
+            absolute_longitude: 143.1571
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.884
+            absolute_longitude: 9.884
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.9795
+            absolute_longitude: 64.9795
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.2832
+            absolute_longitude: 2.2832
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0802
+            absolute_longitude: 303.0802
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.41
+          transit_longitude: 9.884
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.69
+          transit_longitude: 9.884
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.88
+          transit_longitude: 143.1571
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 17.3202
+            absolute_longitude: 347.3202
+            retrograde: false
+            mundane_house: 5
+            natal_house: 7
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mars
+            aspect: conjunction
+            orb: 0.74
+            transit_longitude: 347.3202
+            natal_longitude: 348.0553
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: trine
+            orb: 1.14
+            transit_longitude: 347.3202
+            natal_longitude: 226.1778
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 20.6063
+            absolute_longitude: 350.6063
+            retrograde: false
+            mundane_house: 2
+            natal_house: 7
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Pis
+            sign_ja: 魚座
+            degree: 25.5848
+            absolute_longitude: 355.5848
+            retrograde: false
+            mundane_house: 10
+            natal_house: 7
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Saturn
+            aspect: sextile
+            orb: 0.33
+            transit_longitude: 355.5848
+            natal_longitude: 295.2556
+      - date: '2026-10-24'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 0.7202
+            absolute_longitude: 210.7202
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 4.0153
+            absolute_longitude: 4.0153
+            retrograde: false
+            mundane_house: 2
+            natal_house: 8
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.977
+            absolute_longitude: 230.977
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 0.7695
+            absolute_longitude: 210.7695
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 14.5603
+            absolute_longitude: 134.5603
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.2968
+            absolute_longitude: 143.2968
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.8131
+            absolute_longitude: 9.8131
+            retrograde: true
+            mundane_house: 3
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.9473
+            absolute_longitude: 64.9473
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.2594
+            absolute_longitude: 2.2594
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0837
+            absolute_longitude: 303.0837
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.34
+          transit_longitude: 9.8131
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.62
+          transit_longitude: 9.8131
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.74
+          transit_longitude: 143.2968
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 0.6232
+            absolute_longitude: 0.6232
+            retrograde: false
+            mundane_house: 5
+            natal_house: 8
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 4.0153
+            absolute_longitude: 4.0153
+            retrograde: false
+            mundane_house: 2
+            natal_house: 8
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.1528
+            absolute_longitude: 9.1528
+            retrograde: false
+            mundane_house: 10
+            natal_house: 8
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Uranus
+            aspect: square
+            orb: 0.04
+            transit_longitude: 9.1528
+            natal_longitude: 279.1931
+          - transit_body: Moon
+            natal_body: Jupiter
+            aspect: square
+            orb: 0.32
+            transit_longitude: 9.1528
+            natal_longitude: 99.4709
+      - date: '2026-10-25'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 1.7159
+            absolute_longitude: 211.7159
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 17.8424
+            absolute_longitude: 17.8424
+            retrograde: false
+            mundane_house: 3
+            natal_house: 8
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.9332
+            absolute_longitude: 230.9332
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 0.157
+            absolute_longitude: 210.157
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 15.0861
+            absolute_longitude: 135.0861
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.4345
+            absolute_longitude: 143.4345
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.743
+            absolute_longitude: 9.743
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.9145
+            absolute_longitude: 64.9145
+            retrograde: true
+            mundane_house: 5
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.236
+            absolute_longitude: 2.236
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0877
+            absolute_longitude: 303.0877
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.27
+          transit_longitude: 9.743
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.55
+          transit_longitude: 9.743
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.6
+          transit_longitude: 143.4345
+          natal_longitude: 54.0345
+        - transit_body: Mars
+          natal_body: Pluto
+          aspect: square
+          orb: 1.09
+          transit_longitude: 135.0861
+          natal_longitude: 226.1778
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 14.348
+            absolute_longitude: 14.348
+            retrograde: false
+            mundane_house: 6
+            natal_house: 8
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Neptune
+            aspect: square
+            orb: 0.01
+            transit_longitude: 14.348
+            natal_longitude: 284.3584
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 17.8424
+            absolute_longitude: 17.8424
+            retrograde: false
+            mundane_house: 3
+            natal_house: 8
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 23.128
+            absolute_longitude: 23.128
+            retrograde: false
+            mundane_house: 10
+            natal_house: 8
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Moon
+            aspect: square
+            orb: 0.58
+            transit_longitude: 23.128
+            natal_longitude: 292.5448
+      - date: '2026-10-26'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 2.7122
+            absolute_longitude: 212.7122
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 2.0451
+            absolute_longitude: 32.0451
+            retrograde: false
+            mundane_house: 3
+            natal_house: 9
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.7501
+            absolute_longitude: 230.7501
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 29.5476
+            absolute_longitude: 209.5476
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 15.609
+            absolute_longitude: 135.609
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.5702
+            absolute_longitude: 143.5702
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.6738
+            absolute_longitude: 9.6738
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.8813
+            absolute_longitude: 64.8813
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.2129
+            absolute_longitude: 2.2129
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0922
+            absolute_longitude: 303.0922
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.2
+          transit_longitude: 9.6738
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.46
+          transit_longitude: 143.5702
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.48
+          transit_longitude: 9.6738
+          natal_longitude: 279.1931
+        - transit_body: Mars
+          natal_body: Pluto
+          aspect: square
+          orb: 0.57
+          transit_longitude: 135.609
+          natal_longitude: 226.1778
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 28.4631
+            absolute_longitude: 28.4631
+            retrograde: false
+            mundane_house: 6
+            natal_house: 9
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 2.0451
+            absolute_longitude: 32.0451
+            retrograde: false
+            mundane_house: 3
+            natal_house: 9
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 7.4518
+            absolute_longitude: 37.4518
+            retrograde: false
+            mundane_house: 11
+            natal_house: 9
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: conjunction
+            orb: 0.61
+            transit_longitude: 37.4518
+            natal_longitude: 38.0628
+      - date: '2026-10-27'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 3.709
+            absolute_longitude: 213.709
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 16.5387
+            absolute_longitude: 46.5387
+            retrograde: false
+            mundane_house: 4
+            natal_house: 9
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.4203
+            absolute_longitude: 230.4203
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 28.9456
+            absolute_longitude: 208.9456
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 16.1291
+            absolute_longitude: 136.1291
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.7037
+            absolute_longitude: 143.7037
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.6054
+            absolute_longitude: 9.6054
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.8475
+            absolute_longitude: 64.8475
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.1901
+            absolute_longitude: 2.1901
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.0972
+            absolute_longitude: 303.0972
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mars
+          natal_body: Pluto
+          aspect: square
+          orb: 0.05
+          transit_longitude: 136.1291
+          natal_longitude: 226.1778
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.13
+          transit_longitude: 9.6054
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.33
+          transit_longitude: 143.7037
+          natal_longitude: 54.0345
+        - transit_body: Moon
+          natal_body: Pluto
+          aspect: opposition
+          orb: 0.36
+          transit_longitude: 46.5387
+          natal_longitude: 226.1778
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.41
+          transit_longitude: 9.6054
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 12.894
+            absolute_longitude: 42.894
+            retrograde: false
+            mundane_house: 7
+            natal_house: 9
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 16.5387
+            absolute_longitude: 46.5387
+            retrograde: false
+            mundane_house: 4
+            natal_house: 9
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: opposition
+            orb: 0.36
+            transit_longitude: 46.5387
+            natal_longitude: 226.1778
+        - label: night
+          time: '21:00'
+          body:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 22.0256
+            absolute_longitude: 52.0256
+            retrograde: false
+            mundane_house: 11
+            natal_house: 9
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Moon
+            aspect: trine
+            orb: 0.52
+            transit_longitude: 52.0256
+            natal_longitude: 292.5448
+      - date: '2026-10-28'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 4.7064
+            absolute_longitude: 214.7064
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 1.2064
+            absolute_longitude: 61.2064
+            retrograde: false
+            mundane_house: 4
+            natal_house: 10
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 19.9385
+            absolute_longitude: 229.9385
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 28.3552
+            absolute_longitude: 208.3552
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 16.6463
+            absolute_longitude: 136.6463
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.835
+            absolute_longitude: 143.835
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.5381
+            absolute_longitude: 9.5381
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.8133
+            absolute_longitude: 64.8133
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.1677
+            absolute_longitude: 2.1677
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1027
+            absolute_longitude: 303.1027
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.07
+          transit_longitude: 9.5381
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.2
+          transit_longitude: 143.835
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.34
+          transit_longitude: 9.5381
+          natal_longitude: 279.1931
+        - transit_body: Mars
+          natal_body: Pluto
+          aspect: square
+          orb: 0.47
+          transit_longitude: 136.6463
+          natal_longitude: 226.1778
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Tau
+            sign_ja: 牡牛座
+            degree: 27.5303
+            absolute_longitude: 57.5303
+            retrograde: false
+            mundane_house: 7
+            natal_house: 9
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 1.2064
+            absolute_longitude: 61.2064
+            retrograde: false
+            mundane_house: 4
+            natal_house: 10
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 6.725
+            absolute_longitude: 66.725
+            retrograde: false
+            mundane_house: 11
+            natal_house: 10
+          natal_aspects: []
+      - date: '2026-10-29'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.7044
+            absolute_longitude: 215.7044
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 15.9177
+            absolute_longitude: 75.9177
+            retrograde: false
+            mundane_house: 5
+            natal_house: 10
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 19.3028
+            absolute_longitude: 229.3028
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 27.7803
+            absolute_longitude: 207.7803
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 17.1605
+            absolute_longitude: 137.1605
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.9642
+            absolute_longitude: 143.9642
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.4717
+            absolute_longitude: 9.4717
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.7785
+            absolute_longitude: 64.7785
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.1456
+            absolute_longitude: 2.1456
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1087
+            absolute_longitude: 303.1087
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.0
+          transit_longitude: 9.4717
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.07
+          transit_longitude: 143.9642
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.28
+          transit_longitude: 9.4717
+          natal_longitude: 279.1931
+        - transit_body: Mars
+          natal_body: Pluto
+          aspect: square
+          orb: 0.98
+          transit_longitude: 137.1605
+          natal_longitude: 226.1778
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 12.2428
+            absolute_longitude: 72.2428
+            retrograde: false
+            mundane_house: 8
+            natal_house: 10
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: sextile
+            orb: 0.15
+            transit_longitude: 72.2428
+            natal_longitude: 12.3907
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 15.9177
+            absolute_longitude: 75.9177
+            retrograde: false
+            mundane_house: 5
+            natal_house: 10
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 21.42
+            absolute_longitude: 81.42
+            retrograde: false
+            mundane_house: 12
+            natal_house: 10
+          natal_aspects: []
+      - date: '2026-10-30'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.7029
+            absolute_longitude: 216.7029
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 0.5504
+            absolute_longitude: 90.5504
+            retrograde: false
+            mundane_house: 5
+            natal_house: 10
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 18.5154
+            absolute_longitude: 228.5154
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 27.2247
+            absolute_longitude: 207.2247
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 17.6717
+            absolute_longitude: 137.6717
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.0912
+            absolute_longitude: 144.0912
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.4063
+            absolute_longitude: 9.4063
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.7433
+            absolute_longitude: 64.7433
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.1238
+            absolute_longitude: 2.1238
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1151
+            absolute_longitude: 303.1151
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.06
+          transit_longitude: 144.0912
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.06
+          transit_longitude: 9.4063
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.21
+          transit_longitude: 9.4063
+          natal_longitude: 279.1931
+        - transit_body: Mercury
+          natal_body: Mars
+          aspect: trine
+          orb: 0.46
+          transit_longitude: 228.5154
+          natal_longitude: 348.0553
+        - transit_body: Sun
+          natal_body: Mercury
+          aspect: opposition
+          orb: 1.36
+          transit_longitude: 216.7029
+          natal_longitude: 38.0628
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 26.9054
+            absolute_longitude: 86.9054
+            retrograde: false
+            mundane_house: 8
+            natal_house: 10
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 0.5504
+            absolute_longitude: 90.5504
+            retrograde: false
+            mundane_house: 5
+            natal_house: 10
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 5.9969
+            absolute_longitude: 95.9969
+            retrograde: false
+            mundane_house: 12
+            natal_house: 11
+          natal_aspects: []
+      - date: '2026-10-31'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 7.7021
+            absolute_longitude: 217.7021
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 15.0094
+            absolute_longitude: 105.0094
+            retrograde: false
+            mundane_house: 6
+            natal_house: 11
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 17.5838
+            absolute_longitude: 227.5838
+            retrograde: true
+            mundane_house: 10
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 26.692
+            absolute_longitude: 206.692
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 18.1797
+            absolute_longitude: 138.1797
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.2159
+            absolute_longitude: 144.2159
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.3419
+            absolute_longitude: 9.3419
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.7076
+            absolute_longitude: 64.7076
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.1024
+            absolute_longitude: 2.1024
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1221
+            absolute_longitude: 303.1221
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.13
+          transit_longitude: 9.3419
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.15
+          transit_longitude: 9.3419
+          natal_longitude: 279.1931
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.18
+          transit_longitude: 144.2159
+          natal_longitude: 54.0345
+        - transit_body: Sun
+          natal_body: Mercury
+          aspect: opposition
+          orb: 0.36
+          transit_longitude: 217.7021
+          natal_longitude: 38.0628
+        - transit_body: Mercury
+          natal_body: Mars
+          aspect: trine
+          orb: 0.47
+          transit_longitude: 227.5838
+          natal_longitude: 348.0553
+        - transit_body: Moon
+          natal_body: Neptune
+          aspect: opposition
+          orb: 0.65
+          transit_longitude: 105.0094
+          natal_longitude: 284.3584
+        - transit_body: Moon
+          natal_body: Pluto
+          aspect: trine
+          orb: 1.17
+          transit_longitude: 105.0094
+          natal_longitude: 226.1778
+        - transit_body: Sun
+          natal_body: Uranus
+          aspect: sextile
+          orb: 1.49
+          transit_longitude: 217.7021
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 11.4148
+            absolute_longitude: 101.4148
+            retrograde: false
+            mundane_house: 9
+            natal_house: 11
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: square
+            orb: 0.98
+            transit_longitude: 101.4148
+            natal_longitude: 12.3907
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 15.0094
+            absolute_longitude: 105.0094
+            retrograde: false
+            mundane_house: 6
+            natal_house: 11
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Neptune
+            aspect: opposition
+            orb: 0.65
+            transit_longitude: 105.0094
+            natal_longitude: 284.3584
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: trine
+            orb: 1.17
+            transit_longitude: 105.0094
+            natal_longitude: 226.1778
+        - label: night
+          time: '21:00'
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 20.3733
+            absolute_longitude: 110.3733
+            retrograde: false
+            mundane_house: 1
+            natal_house: 11
+          natal_aspects: []
+      - date: '2026-11-01'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 8.7019
+            absolute_longitude: 218.7019
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 29.2348
+            absolute_longitude: 119.2348
+            retrograde: false
+            mundane_house: 7
+            natal_house: 11
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 16.5222
+            absolute_longitude: 226.5222
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 26.1853
+            absolute_longitude: 206.1853
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 18.6846
+            absolute_longitude: 138.6846
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.3384
+            absolute_longitude: 144.3384
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.2786
+            absolute_longitude: 9.2786
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.6715
+            absolute_longitude: 64.6715
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.0814
+            absolute_longitude: 2.0814
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1295
+            absolute_longitude: 303.1295
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.09
+          transit_longitude: 9.2786
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.19
+          transit_longitude: 9.2786
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.3
+          transit_longitude: 144.3384
+          natal_longitude: 54.0345
+        - transit_body: Mercury
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 0.34
+          transit_longitude: 226.5222
+          natal_longitude: 226.1778
+        - transit_body: Sun
+          natal_body: Uranus
+          aspect: sextile
+          orb: 0.49
+          transit_longitude: 218.7019
+          natal_longitude: 279.1931
+        - transit_body: Sun
+          natal_body: Mercury
+          aspect: opposition
+          orb: 0.64
+          transit_longitude: 218.7019
+          natal_longitude: 38.0628
+        - transit_body: Sun
+          natal_body: Jupiter
+          aspect: trine
+          orb: 0.77
+          transit_longitude: 218.7019
+          natal_longitude: 99.4709
+        - transit_body: Venus
+          natal_body: Saturn
+          aspect: square
+          orb: 0.93
+          transit_longitude: 206.1853
+          natal_longitude: 295.2556
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 25.7022
+            absolute_longitude: 115.7022
+            retrograde: false
+            mundane_house: 9
+            natal_house: 11
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Saturn
+            aspect: opposition
+            orb: 0.45
+            transit_longitude: 115.7022
+            natal_longitude: 295.2556
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Can
+            sign_ja: 蟹座
+            degree: 29.2348
+            absolute_longitude: 119.2348
+            retrograde: false
+            mundane_house: 7
+            natal_house: 11
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 4.5032
+            absolute_longitude: 124.5032
+            retrograde: false
+            mundane_house: 1
+            natal_house: 11
+          natal_aspects: []
+      - date: '2026-11-02'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 9.7023
+            absolute_longitude: 219.7023
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 13.2022
+            absolute_longitude: 133.2022
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 15.3517
+            absolute_longitude: 225.3517
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 25.7076
+            absolute_longitude: 205.7076
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 19.1862
+            absolute_longitude: 139.1862
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.4585
+            absolute_longitude: 144.4585
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.2163
+            absolute_longitude: 9.2163
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.6349
+            absolute_longitude: 64.6349
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.0607
+            absolute_longitude: 2.0607
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1373
+            absolute_longitude: 303.1373
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.02
+          transit_longitude: 9.2163
+          natal_longitude: 279.1931
+        - transit_body: Sun
+          natal_body: Jupiter
+          aspect: trine
+          orb: 0.23
+          transit_longitude: 219.7023
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.25
+          transit_longitude: 9.2163
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.42
+          transit_longitude: 144.4585
+          natal_longitude: 54.0345
+        - transit_body: Venus
+          natal_body: Saturn
+          aspect: square
+          orb: 0.45
+          transit_longitude: 205.7076
+          natal_longitude: 295.2556
+        - transit_body: Sun
+          natal_body: Uranus
+          aspect: sextile
+          orb: 0.51
+          transit_longitude: 219.7023
+          natal_longitude: 279.1931
+        - transit_body: Moon
+          natal_body: Venus
+          aspect: trine
+          orb: 0.81
+          transit_longitude: 133.2022
+          natal_longitude: 12.3907
+        - transit_body: Mercury
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 0.83
+          transit_longitude: 225.3517
+          natal_longitude: 226.1778
+        - transit_body: Mercury
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.99
+          transit_longitude: 225.3517
+          natal_longitude: 284.3584
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 9.7348
+            absolute_longitude: 129.7348
+            retrograde: false
+            mundane_house: 9
+            natal_house: 12
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 13.2022
+            absolute_longitude: 133.2022
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: trine
+            orb: 0.81
+            transit_longitude: 133.2022
+            natal_longitude: 12.3907
+        - label: night
+          time: '21:00'
+          body:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 18.3732
+            absolute_longitude: 138.3732
+            retrograde: false
+            mundane_house: 2
+            natal_house: 12
+          natal_aspects: []
+      - date: '2026-11-03'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 10.7032
+            absolute_longitude: 220.7032
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 26.9134
+            absolute_longitude: 146.9134
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 14.1004
+            absolute_longitude: 224.1004
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 25.2614
+            absolute_longitude: 205.2614
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 19.6845
+            absolute_longitude: 139.6845
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.5762
+            absolute_longitude: 144.5762
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.1552
+            absolute_longitude: 9.1552
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.5978
+            absolute_longitude: 64.5978
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.0403
+            absolute_longitude: 2.0403
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1456
+            absolute_longitude: 303.1456
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Venus
+          natal_body: Saturn
+          aspect: square
+          orb: 0.01
+          transit_longitude: 205.2614
+          natal_longitude: 295.2556
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.04
+          transit_longitude: 9.1552
+          natal_longitude: 279.1931
+        - transit_body: Mercury
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.26
+          transit_longitude: 224.1004
+          natal_longitude: 284.3584
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.32
+          transit_longitude: 9.1552
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.54
+          transit_longitude: 144.5762
+          natal_longitude: 54.0345
+        - transit_body: Sun
+          natal_body: Jupiter
+          aspect: trine
+          orb: 1.23
+          transit_longitude: 220.7032
+          natal_longitude: 99.4709
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.5088
+            absolute_longitude: 143.5088
+            retrograde: false
+            mundane_house: 10
+            natal_house: 12
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: square
+            orb: 0.53
+            transit_longitude: 143.5088
+            natal_longitude: 54.0345
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 26.9134
+            absolute_longitude: 146.9134
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 1.9924
+            absolute_longitude: 151.9924
+            retrograde: false
+            mundane_house: 2
+            natal_house: 12
+          natal_aspects: []
+      - date: '2026-11-04'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 11.7048
+            absolute_longitude: 221.7048
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 10.3861
+            absolute_longitude: 160.3861
+            retrograde: false
+            mundane_house: 7
+            natal_house: 1
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 12.8027
+            absolute_longitude: 222.8027
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 24.8491
+            absolute_longitude: 204.8491
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 20.1794
+            absolute_longitude: 140.1794
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.6915
+            absolute_longitude: 144.6915
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.0952
+            absolute_longitude: 9.0952
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.5603
+            absolute_longitude: 64.5603
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.0203
+            absolute_longitude: 2.0203
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1544
+            absolute_longitude: 303.1544
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.1
+          transit_longitude: 9.0952
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.38
+          transit_longitude: 9.0952
+          natal_longitude: 99.4709
+        - transit_body: Venus
+          natal_body: Saturn
+          aspect: square
+          orb: 0.41
+          transit_longitude: 204.8491
+          natal_longitude: 295.2556
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.66
+          transit_longitude: 144.6915
+          natal_longitude: 54.0345
+        - transit_body: Moon
+          natal_body: Jupiter
+          aspect: sextile
+          orb: 0.92
+          transit_longitude: 160.3861
+          natal_longitude: 99.4709
+        - transit_body: Moon
+          natal_body: Uranus
+          aspect: trine
+          orb: 1.19
+          transit_longitude: 160.3861
+          natal_longitude: 279.1931
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 7.039
+            absolute_longitude: 157.039
+            retrograde: false
+            mundane_house: 10
+            natal_house: 1
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: trine
+            orb: 1.02
+            transit_longitude: 157.039
+            natal_longitude: 38.0628
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 10.3861
+            absolute_longitude: 160.3861
+            retrograde: false
+            mundane_house: 7
+            natal_house: 1
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Jupiter
+            aspect: sextile
+            orb: 0.92
+            transit_longitude: 160.3861
+            natal_longitude: 99.4709
+          - transit_body: Moon
+            natal_body: Uranus
+            aspect: trine
+            orb: 1.19
+            transit_longitude: 160.3861
+            natal_longitude: 279.1931
+        - label: night
+          time: '21:00'
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 15.3815
+            absolute_longitude: 165.3815
+            retrograde: false
+            mundane_house: 3
+            natal_house: 1
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: sextile
+            orb: 0.8
+            transit_longitude: 165.3815
+            natal_longitude: 226.1778
+          - transit_body: Moon
+            natal_body: Neptune
+            aspect: trine
+            orb: 1.02
+            transit_longitude: 165.3815
+            natal_longitude: 284.3584
+      - date: '2026-11-05'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 12.7069
+            absolute_longitude: 222.7069
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 23.6429
+            absolute_longitude: 173.6429
+            retrograde: false
+            mundane_house: 8
+            natal_house: 1
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 11.4977
+            absolute_longitude: 221.4977
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 24.4726
+            absolute_longitude: 204.4726
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 20.6708
+            absolute_longitude: 140.6708
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.8044
+            absolute_longitude: 144.8044
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 9.0364
+            absolute_longitude: 9.0364
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.5225
+            absolute_longitude: 64.5225
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 2.0007
+            absolute_longitude: 2.0007
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1636
+            absolute_longitude: 303.1636
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.16
+          transit_longitude: 9.0364
+          natal_longitude: 279.1931
+        - transit_body: Moon
+          natal_body: Sun
+          aspect: trine
+          orb: 0.39
+          transit_longitude: 173.6429
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.43
+          transit_longitude: 9.0364
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.77
+          transit_longitude: 144.8044
+          natal_longitude: 54.0345
+        - transit_body: Venus
+          natal_body: Saturn
+          aspect: square
+          orb: 0.78
+          transit_longitude: 204.4726
+          natal_longitude: 295.2556
+        - transit_body: Moon
+          natal_body: Moon
+          aspect: trine
+          orb: 1.1
+          transit_longitude: 173.6429
+          natal_longitude: 292.5448
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 20.3477
+            absolute_longitude: 170.3477
+            retrograde: false
+            mundane_house: 11
+            natal_house: 1
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 23.6429
+            absolute_longitude: 173.6429
+            retrograde: false
+            mundane_house: 8
+            natal_house: 1
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: trine
+            orb: 0.39
+            transit_longitude: 173.6429
+            natal_longitude: 54.0345
+          - transit_body: Moon
+            natal_body: Moon
+            aspect: trine
+            orb: 1.1
+            transit_longitude: 173.6429
+            natal_longitude: 292.5448
+        - label: night
+          time: '21:00'
+          body:
+            sign: Vir
+            sign_ja: 乙女座
+            degree: 28.5628
+            absolute_longitude: 178.5628
+            retrograde: false
+            mundane_house: 3
+            natal_house: 2
+          natal_aspects: []
+      - date: '2026-11-06'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 13.7096
+            absolute_longitude: 223.7096
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 6.7036
+            absolute_longitude: 186.7036
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 10.2268
+            absolute_longitude: 220.2268
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 24.1335
+            absolute_longitude: 204.1335
+            retrograde: true
+            mundane_house: 9
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.1587
+            absolute_longitude: 141.1587
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.9149
+            absolute_longitude: 144.9149
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.9788
+            absolute_longitude: 8.9788
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.4842
+            absolute_longitude: 64.4842
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.9815
+            absolute_longitude: 1.9815
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1733
+            absolute_longitude: 303.1733
+            retrograde: false
+            mundane_house: 1
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.21
+          transit_longitude: 8.9788
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.49
+          transit_longitude: 8.9788
+          natal_longitude: 99.4709
+        - transit_body: Sun
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.65
+          transit_longitude: 223.7096
+          natal_longitude: 284.3584
+        - transit_body: Mercury
+          natal_body: Jupiter
+          aspect: trine
+          orb: 0.76
+          transit_longitude: 220.2268
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.88
+          transit_longitude: 144.9149
+          natal_longitude: 54.0345
+        - transit_body: Mercury
+          natal_body: Uranus
+          aspect: sextile
+          orb: 1.03
+          transit_longitude: 220.2268
+          natal_longitude: 279.1931
+        - transit_body: Venus
+          natal_body: Saturn
+          aspect: square
+          orb: 1.12
+          transit_longitude: 204.1335
+          natal_longitude: 295.2556
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 3.456
+            absolute_longitude: 183.456
+            retrograde: false
+            mundane_house: 11
+            natal_house: 2
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 6.7036
+            absolute_longitude: 186.7036
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 11.5536
+            absolute_longitude: 191.5536
+            retrograde: false
+            mundane_house: 4
+            natal_house: 2
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: opposition
+            orb: 0.84
+            transit_longitude: 191.5536
+            natal_longitude: 12.3907
+      - date: '2026-11-07'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 14.7128
+            absolute_longitude: 224.7128
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 19.5809
+            absolute_longitude: 199.5809
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 9.0307
+            absolute_longitude: 219.0307
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.833
+            absolute_longitude: 203.833
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 21.6429
+            absolute_longitude: 141.6429
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.0228
+            absolute_longitude: 145.0228
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.9226
+            absolute_longitude: 8.9226
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.4456
+            absolute_longitude: 64.4456
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.9627
+            absolute_longitude: 1.9627
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1835
+            absolute_longitude: 303.1835
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mercury
+          natal_body: Uranus
+          aspect: sextile
+          orb: 0.16
+          transit_longitude: 219.0307
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.27
+          transit_longitude: 8.9226
+          natal_longitude: 279.1931
+        - transit_body: Sun
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.35
+          transit_longitude: 224.7128
+          natal_longitude: 284.3584
+        - transit_body: Mercury
+          natal_body: Jupiter
+          aspect: trine
+          orb: 0.44
+          transit_longitude: 219.0307
+          natal_longitude: 99.4709
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.55
+          transit_longitude: 8.9226
+          natal_longitude: 99.4709
+        - transit_body: Mercury
+          natal_body: Mercury
+          aspect: opposition
+          orb: 0.97
+          transit_longitude: 219.0307
+          natal_longitude: 38.0628
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 0.99
+          transit_longitude: 145.0228
+          natal_longitude: 54.0345
+        - transit_body: Sun
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 1.47
+          transit_longitude: 224.7128
+          natal_longitude: 226.1778
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 16.3784
+            absolute_longitude: 196.3784
+            retrograde: false
+            mundane_house: 11
+            natal_house: 2
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 19.5809
+            absolute_longitude: 199.5809
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 24.3639
+            absolute_longitude: 204.3639
+            retrograde: false
+            mundane_house: 4
+            natal_house: 2
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Saturn
+            aspect: square
+            orb: 0.89
+            transit_longitude: 204.3639
+            natal_longitude: 295.2556
+      - date: '2026-11-08'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 15.7166
+            absolute_longitude: 225.7166
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 2.2801
+            absolute_longitude: 212.2801
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 7.9471
+            absolute_longitude: 217.9471
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.5722
+            absolute_longitude: 203.5722
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.1234
+            absolute_longitude: 142.1234
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.1282
+            absolute_longitude: 145.1282
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.8676
+            absolute_longitude: 8.8676
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.4066
+            absolute_longitude: 64.4066
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.9443
+            absolute_longitude: 1.9443
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.1941
+            absolute_longitude: 303.1941
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mercury
+          natal_body: Mercury
+          aspect: opposition
+          orb: 0.12
+          transit_longitude: 217.9471
+          natal_longitude: 38.0628
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.33
+          transit_longitude: 8.8676
+          natal_longitude: 279.1931
+        - transit_body: Sun
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 0.46
+          transit_longitude: 225.7166
+          natal_longitude: 226.1778
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.6
+          transit_longitude: 8.8676
+          natal_longitude: 99.4709
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 1.03
+          transit_longitude: 203.5722
+          natal_longitude: 292.5448
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.09
+          transit_longitude: 145.1282
+          natal_longitude: 54.0345
+        - transit_body: Sun
+          natal_body: Neptune
+          aspect: sextile
+          orb: 1.36
+          transit_longitude: 225.7166
+          natal_longitude: 284.3584
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 29.122
+            absolute_longitude: 209.122
+            retrograde: false
+            mundane_house: 12
+            natal_house: 3
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 2.2801
+            absolute_longitude: 212.2801
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.9966
+            absolute_longitude: 216.9966
+            retrograde: false
+            mundane_house: 4
+            natal_house: 3
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: opposition
+            orb: 1.07
+            transit_longitude: 216.9966
+            natal_longitude: 38.0628
+      - date: '2026-11-09'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 16.7209
+            absolute_longitude: 226.7209
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 14.8018
+            absolute_longitude: 224.8018
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 7.0076
+            absolute_longitude: 217.0076
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.3518
+            absolute_longitude: 203.3518
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 22.6002
+            absolute_longitude: 142.6002
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.2311
+            absolute_longitude: 145.2311
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.8139
+            absolute_longitude: 8.8139
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.3674
+            absolute_longitude: 64.3674
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.9264
+            absolute_longitude: 1.9264
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2052
+            absolute_longitude: 303.2052
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.38
+          transit_longitude: 8.8139
+          natal_longitude: 279.1931
+        - transit_body: Moon
+          natal_body: Neptune
+          aspect: sextile
+          orb: 0.44
+          transit_longitude: 224.8018
+          natal_longitude: 284.3584
+        - transit_body: Sun
+          natal_body: Pluto
+          aspect: conjunction
+          orb: 0.54
+          transit_longitude: 226.7209
+          natal_longitude: 226.1778
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.66
+          transit_longitude: 8.8139
+          natal_longitude: 99.4709
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.81
+          transit_longitude: 203.3518
+          natal_longitude: 292.5448
+        - transit_body: Mercury
+          natal_body: Mercury
+          aspect: opposition
+          orb: 1.06
+          transit_longitude: 217.0076
+          natal_longitude: 38.0628
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.2
+          transit_longitude: 145.2311
+          natal_longitude: 54.0345
+        - transit_body: Sun
+          natal_body: Mars
+          aspect: trine
+          orb: 1.33
+          transit_longitude: 226.7209
+          natal_longitude: 348.0553
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 11.6881
+            absolute_longitude: 221.6881
+            retrograde: false
+            mundane_house: 12
+            natal_house: 3
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 14.8018
+            absolute_longitude: 224.8018
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Neptune
+            aspect: sextile
+            orb: 0.44
+            transit_longitude: 224.8018
+            natal_longitude: 284.3584
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 19.4517
+            absolute_longitude: 229.4517
+            retrograde: false
+            mundane_house: 5
+            natal_house: 3
+          natal_aspects: []
+      - date: '2026-11-10'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 17.7257
+            absolute_longitude: 227.7257
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 27.1466
+            absolute_longitude: 237.1466
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 6.2367
+            absolute_longitude: 216.2367
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.1722
+            absolute_longitude: 203.1722
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.0732
+            absolute_longitude: 143.0732
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.3314
+            absolute_longitude: 145.3314
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.7617
+            absolute_longitude: 8.7617
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.3278
+            absolute_longitude: 64.3278
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.9089
+            absolute_longitude: 1.9089
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2168
+            absolute_longitude: 303.2168
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Sun
+          natal_body: Mars
+          aspect: trine
+          orb: 0.33
+          transit_longitude: 227.7257
+          natal_longitude: 348.0553
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.43
+          transit_longitude: 8.7617
+          natal_longitude: 279.1931
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.63
+          transit_longitude: 203.1722
+          natal_longitude: 292.5448
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.71
+          transit_longitude: 8.7617
+          natal_longitude: 99.4709
+        - transit_body: Mars
+          natal_body: Sun
+          aspect: square
+          orb: 0.96
+          transit_longitude: 143.0732
+          natal_longitude: 54.0345
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.3
+          transit_longitude: 145.3314
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 24.0768
+            absolute_longitude: 234.0768
+            retrograde: false
+            mundane_house: 1
+            natal_house: 3
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: opposition
+            orb: 0.04
+            transit_longitude: 234.0768
+            natal_longitude: 54.0345
+          - transit_body: Moon
+            natal_body: Saturn
+            aspect: sextile
+            orb: 1.18
+            transit_longitude: 234.0768
+            natal_longitude: 295.2556
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 27.1466
+            absolute_longitude: 237.1466
+            retrograde: false
+            mundane_house: 10
+            natal_house: 3
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 1.7312
+            absolute_longitude: 241.7312
+            retrograde: false
+            mundane_house: 5
+            natal_house: 4
+          natal_aspects: []
+      - date: '2026-11-11'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 18.731
+            absolute_longitude: 228.731
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 9.3204
+            absolute_longitude: 249.3204
+            retrograde: false
+            mundane_house: 10
+            natal_house: 4
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.6508
+            absolute_longitude: 215.6508
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 23.0337
+            absolute_longitude: 203.0337
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 23.5422
+            absolute_longitude: 143.5422
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.4291
+            absolute_longitude: 145.4291
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.7108
+            absolute_longitude: 8.7108
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.288
+            absolute_longitude: 64.288
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.8918
+            absolute_longitude: 1.8918
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2289
+            absolute_longitude: 303.2289
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.48
+          transit_longitude: 8.7108
+          natal_longitude: 279.1931
+        - transit_body: Mars
+          natal_body: Sun
+          aspect: square
+          orb: 0.49
+          transit_longitude: 143.5422
+          natal_longitude: 54.0345
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.49
+          transit_longitude: 203.0337
+          natal_longitude: 292.5448
+        - transit_body: Sun
+          natal_body: Mars
+          aspect: trine
+          orb: 0.68
+          transit_longitude: 228.731
+          natal_longitude: 348.0553
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.76
+          transit_longitude: 8.7108
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.39
+          transit_longitude: 145.4291
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 6.2923
+            absolute_longitude: 246.2923
+            retrograde: false
+            mundane_house: 1
+            natal_house: 4
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 9.3204
+            absolute_longitude: 249.3204
+            retrograde: false
+            mundane_house: 10
+            natal_house: 4
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 13.8444
+            absolute_longitude: 253.8444
+            retrograde: false
+            mundane_house: 5
+            natal_house: 4
+          natal_aspects: []
+      - date: '2026-11-12'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 19.7367
+            absolute_longitude: 229.7367
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 21.3396
+            absolute_longitude: 261.3396
+            retrograde: false
+            mundane_house: 11
+            natal_house: 4
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.2583
+            absolute_longitude: 215.2583
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 22.9363
+            absolute_longitude: 202.9363
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.0073
+            absolute_longitude: 144.0073
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.5242
+            absolute_longitude: 145.5242
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.6614
+            absolute_longitude: 8.6614
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.2479
+            absolute_longitude: 64.2479
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.8753
+            absolute_longitude: 1.8753
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2414
+            absolute_longitude: 303.2414
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Mars
+          natal_body: Sun
+          aspect: square
+          orb: 0.03
+          transit_longitude: 144.0073
+          natal_longitude: 54.0345
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.39
+          transit_longitude: 202.9363
+          natal_longitude: 292.5448
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.53
+          transit_longitude: 8.6614
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.81
+          transit_longitude: 8.6614
+          natal_longitude: 99.4709
+        - transit_body: Jupiter
+          natal_body: Sun
+          aspect: square
+          orb: 1.49
+          transit_longitude: 145.5242
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 18.3479
+            absolute_longitude: 258.3479
+            retrograde: false
+            mundane_house: 2
+            natal_house: 4
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mars
+            aspect: square
+            orb: 0.29
+            transit_longitude: 258.3479
+            natal_longitude: 348.0553
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 21.3396
+            absolute_longitude: 261.3396
+            retrograde: false
+            mundane_house: 11
+            natal_house: 4
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Sag
+            sign_ja: 射手座
+            degree: 25.8126
+            absolute_longitude: 265.8126
+            retrograde: false
+            mundane_house: 6
+            natal_house: 4
+          natal_aspects: []
+      - date: '2026-11-13'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 20.7429
+            absolute_longitude: 230.7429
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 3.2342
+            absolute_longitude: 273.2342
+            retrograde: false
+            mundane_house: 11
+            natal_house: 5
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.0606
+            absolute_longitude: 215.0606
+            retrograde: true
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 22.8798
+            absolute_longitude: 202.8798
+            retrograde: true
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.4683
+            absolute_longitude: 144.4683
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.6166
+            absolute_longitude: 145.6166
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.6134
+            absolute_longitude: 8.6134
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.2075
+            absolute_longitude: 64.2075
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.8591
+            absolute_longitude: 1.8591
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2544
+            absolute_longitude: 303.2544
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.33
+          transit_longitude: 202.8798
+          natal_longitude: 292.5448
+        - transit_body: Mars
+          natal_body: Sun
+          aspect: square
+          orb: 0.43
+          transit_longitude: 144.4683
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.58
+          transit_longitude: 8.6134
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.86
+          transit_longitude: 8.6134
+          natal_longitude: 99.4709
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 0.27
+            absolute_longitude: 270.27
+            retrograde: false
+            mundane_house: 2
+            natal_house: 4
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 3.2342
+            absolute_longitude: 273.2342
+            retrograde: false
+            mundane_house: 11
+            natal_house: 5
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 7.6713
+            absolute_longitude: 277.6713
+            retrograde: false
+            mundane_house: 6
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: trine
+            orb: 0.39
+            transit_longitude: 277.6713
+            natal_longitude: 38.0628
+      - date: '2026-11-14'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 21.7495
+            absolute_longitude: 231.7495
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 15.0495
+            absolute_longitude: 285.0495
+            retrograde: false
+            mundane_house: 11
+            natal_house: 5
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.0533
+            absolute_longitude: 215.0533
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 22.8639
+            absolute_longitude: 202.8639
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 24.9251
+            absolute_longitude: 144.9251
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.7063
+            absolute_longitude: 145.7063
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.5669
+            absolute_longitude: 8.5669
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.1669
+            absolute_longitude: 64.1669
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.8435
+            absolute_longitude: 1.8435
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2678
+            absolute_longitude: 303.2678
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.32
+          transit_longitude: 202.8639
+          natal_longitude: 292.5448
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.63
+          transit_longitude: 8.5669
+          natal_longitude: 279.1931
+        - transit_body: Moon
+          natal_body: Neptune
+          aspect: conjunction
+          orb: 0.69
+          transit_longitude: 285.0495
+          natal_longitude: 284.3584
+        - transit_body: Sun
+          natal_body: Moon
+          aspect: sextile
+          orb: 0.8
+          transit_longitude: 231.7495
+          natal_longitude: 292.5448
+        - transit_body: Mars
+          natal_body: Sun
+          aspect: square
+          orb: 0.89
+          transit_longitude: 144.9251
+          natal_longitude: 54.0345
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.9
+          transit_longitude: 8.5669
+          natal_longitude: 99.4709
+        - transit_body: Moon
+          natal_body: Pluto
+          aspect: sextile
+          orb: 1.13
+          transit_longitude: 285.0495
+          natal_longitude: 226.1778
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 12.1
+            absolute_longitude: 282.1
+            retrograde: false
+            mundane_house: 2
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: square
+            orb: 0.29
+            transit_longitude: 282.1
+            natal_longitude: 12.3907
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 15.0495
+            absolute_longitude: 285.0495
+            retrograde: false
+            mundane_house: 11
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Neptune
+            aspect: conjunction
+            orb: 0.69
+            transit_longitude: 285.0495
+            natal_longitude: 284.3584
+          - transit_body: Moon
+            natal_body: Pluto
+            aspect: sextile
+            orb: 1.13
+            transit_longitude: 285.0495
+            natal_longitude: 226.1778
+        - label: night
+          time: '21:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 19.4717
+            absolute_longitude: 289.4717
+            retrograde: false
+            mundane_house: 6
+            natal_house: 5
+          natal_aspects: []
+      - date: '2026-11-15'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 22.7564
+            absolute_longitude: 232.7564
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 26.8461
+            absolute_longitude: 296.8461
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.2273
+            absolute_longitude: 215.2273
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 22.8881
+            absolute_longitude: 202.8881
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.3777
+            absolute_longitude: 145.3777
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.7932
+            absolute_longitude: 145.7932
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.5218
+            absolute_longitude: 8.5218
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.1261
+            absolute_longitude: 64.1261
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.8283
+            absolute_longitude: 1.8283
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.2817
+            absolute_longitude: 303.2817
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Sun
+          natal_body: Moon
+          aspect: sextile
+          orb: 0.21
+          transit_longitude: 232.7564
+          natal_longitude: 292.5448
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.34
+          transit_longitude: 202.8881
+          natal_longitude: 292.5448
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.67
+          transit_longitude: 8.5218
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.95
+          transit_longitude: 8.5218
+          natal_longitude: 99.4709
+        - transit_body: Sun
+          natal_body: Sun
+          aspect: opposition
+          orb: 1.28
+          transit_longitude: 232.7564
+          natal_longitude: 54.0345
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 23.8949
+            absolute_longitude: 293.8949
+            retrograde: false
+            mundane_house: 3
+            natal_house: 5
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Sun
+            aspect: trine
+            orb: 0.14
+            transit_longitude: 293.8949
+            natal_longitude: 54.0345
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Cap
+            sign_ja: 山羊座
+            degree: 26.8461
+            absolute_longitude: 296.8461
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+          natal_aspects: []
+        - label: night
+          time: '21:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 1.2799
+            absolute_longitude: 301.2799
+            retrograde: false
+            mundane_house: 7
+            natal_house: 5
+          natal_aspects: []
+      - date: '2026-11-16'
+        time: '12:00'
+        timezone: Asia/Tokyo
+        transiting_bodies:
+          Sun:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 23.7638
+            absolute_longitude: 233.7638
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Moon:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 8.6985
+            absolute_longitude: 308.6985
+            retrograde: false
+            mundane_house: 12
+            natal_house: 6
+          Mercury:
+            sign: Sco
+            sign_ja: 蠍座
+            degree: 5.5705
+            absolute_longitude: 215.5705
+            retrograde: false
+            mundane_house: 9
+            natal_house: 3
+          Venus:
+            sign: Lib
+            sign_ja: 天秤座
+            degree: 22.9519
+            absolute_longitude: 202.9519
+            retrograde: false
+            mundane_house: 8
+            natal_house: 2
+          Mars:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.8261
+            absolute_longitude: 145.8261
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Jupiter:
+            sign: Leo
+            sign_ja: 獅子座
+            degree: 25.8774
+            absolute_longitude: 145.8774
+            retrograde: false
+            mundane_house: 7
+            natal_house: 12
+          Saturn:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 8.4783
+            absolute_longitude: 8.4783
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Uranus:
+            sign: Gem
+            sign_ja: 双子座
+            degree: 4.0851
+            absolute_longitude: 64.0851
+            retrograde: true
+            mundane_house: 4
+            natal_house: 10
+          Neptune:
+            sign: Ari
+            sign_ja: 牡羊座
+            degree: 1.8135
+            absolute_longitude: 1.8135
+            retrograde: true
+            mundane_house: 2
+            natal_house: 8
+          Pluto:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 3.296
+            absolute_longitude: 303.296
+            retrograde: false
+            mundane_house: 12
+            natal_house: 5
+        natal_aspects:
+        - transit_body: Sun
+          natal_body: Sun
+          aspect: opposition
+          orb: 0.27
+          transit_longitude: 233.7638
+          natal_longitude: 54.0345
+        - transit_body: Venus
+          natal_body: Moon
+          aspect: square
+          orb: 0.41
+          transit_longitude: 202.9519
+          natal_longitude: 292.5448
+        - transit_body: Moon
+          natal_body: Mercury
+          aspect: square
+          orb: 0.64
+          transit_longitude: 308.6985
+          natal_longitude: 38.0628
+        - transit_body: Saturn
+          natal_body: Uranus
+          aspect: square
+          orb: 0.71
+          transit_longitude: 8.4783
+          natal_longitude: 279.1931
+        - transit_body: Saturn
+          natal_body: Jupiter
+          aspect: square
+          orb: 0.99
+          transit_longitude: 8.4783
+          natal_longitude: 99.4709
+        - transit_body: Sun
+          natal_body: Moon
+          aspect: sextile
+          orb: 1.22
+          transit_longitude: 233.7638
+          natal_longitude: 292.5448
+        - transit_body: Sun
+          natal_body: Saturn
+          aspect: sextile
+          orb: 1.49
+          transit_longitude: 233.7638
+          natal_longitude: 295.2556
+        moon_timepoints:
+        - label: morning
+          time: 06:00
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 5.7257
+            absolute_longitude: 305.7257
+            retrograde: false
+            mundane_house: 3
+            natal_house: 6
+          natal_aspects: []
+        - label: noon
+          time: '12:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 8.6985
+            absolute_longitude: 308.6985
+            retrograde: false
+            mundane_house: 12
+            natal_house: 6
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Mercury
+            aspect: square
+            orb: 0.64
+            transit_longitude: 308.6985
+            natal_longitude: 38.0628
+        - label: night
+          time: '21:00'
+          body:
+            sign: Aqu
+            sign_ja: 水瓶座
+            degree: 13.1746
+            absolute_longitude: 313.1746
+            retrograde: false
+            mundane_house: 7
+            natal_house: 6
+          natal_aspects:
+          - transit_body: Moon
+            natal_body: Venus
+            aspect: sextile
+            orb: 0.78
+            transit_longitude: 313.1746
+            natal_longitude: 12.3907
+  shichusuimei: null
+
+```
+
+
+購入者の質問:
+出生時刻が不明です。仕事・適性、人間関係と、収録されたトランジットのテーマを鑑定してください。時刻不明の制限を守り、日本語で1500〜2500字程度。
+
+先ほどのAIの回答:
+# 西洋占星術 鑑定書
+
+> **前提**
+> - 出生時刻が不明のため、ハウス・ASC・MCは解釈の根拠にしていません。サイン、天体同士のアスペクト、エレメント、モードを中心に読んでいます。
+> - 出生時の月は日内で度数が動くため、山羊座の月は「可能性の高い配置」として扱っています。
+> - YAMLに `today.selected_date` がないため、トランジット開始日の2026-10-10を基準日としています。
+
+## 全体像
+エレメントは地が6つと突出し、風は0です。モードは活動宮が6つです。太陽は牡牛座、月と土星は山羊座で合（オーブ2.71）、太陽は月・土星の両方とトライン（三角）を組んでいます。気持ちと目標と責任感の向きがそろいやすく、「積み上げて形にする」ことに自然と力が向く構造です。一方で風が欠けているため、考えを言葉にして周囲と共有する場面は、意識して作るほうがうまく回ります。
+
+## 才能・強み/仕事の向き
+- **実務と継続力**:太陽と土星のトラインが示すのは、長期の計画を淡々と進める力です。品質管理、財務、運営、職人的な仕事のように、信頼の蓄積が成果になる分野と相性がよい傾向です。
+- **堅実さの中の発想力**:水星(牡牛座・逆行)は天王星とトライン、木星とセクスタイル(60度)です。慎重に考えた末に、独自の改善案を出せるタイプです。「新しいけれど実用的」な提案が強みになります。
+- **静かな粘り強さ**:火星(魚座)は冥王星とトライン、海王星とセクスタイルです。表立って競うより、裏方で深く集中するほうが力を出しやすいでしょう。
+
+**つまずきやすい点**:木星と天王星のオポジション(対向)はオーブ0.28と非常にタイトです。安定を求める気持ちと、急に枠を壊したくなる衝動の間で揺れやすい傾向があります。我慢が限界を超えてから一気に方向転換するより、小さな変更を定期的に入れるほうがズレにくくなります。
+
+## 人間関係の傾向
+金星(牡羊座)は木星・天王星・海王星・キロンとスクエア(90度)を組んでいます。好意や関心は率直に出せますが、「期待しすぎて落差を感じる」「理想化してから幻滅する」という揺れが起きやすい配置です。月と土星の合もあり、甘えるのが苦手で、相手に頼る前に自分で抱え込みがちです。気持ちを早めに短く言葉にすることが、関係を安定させる鍵になります。金星とノースノードのセクスタイルは、新しい人や場との関わりが成長につながりやすいことを示します。
+
+## 現在の流れ(10/10〜11/9、補足として11/16まで)
+期間全体の土台は二つのトランジットです。
+- **土星→出生の木星**:スクエアで、10/29にオーブ0.0。
+- **土星→出生の天王星**:スクエアで、11/2にオーブ0.02。
+
+出生図の木星と天王星のオポジションが同時に刺激されています。「広げたい・変えたい」という気持ちに現実の制約が入り、計画の見直しを迫られやすい時期です。さらに木星→太陽のスクエアが10/30に最も近づきます(オーブ0.06)。手を広げすぎや抱え込みすぎに注意したい流れです。
+
+もう一つの特徴は、逆行する天体が重なることです。
+- **金星**:期間中ずっと逆行しており、11/14に順行へ戻ります。
+- **水星**:10/25から逆行し、11/14に順行へ戻ります。
+
+人間関係やお金の価値観、過去の案件の再確認に向く期間です。新規の契約よりも、既存の約束や手順の点検が実りやすいでしょう。
+
+### 動きやすい日
+| 日付 | トランジット | 活かし方 |
+|---|---|---|
+| 10/17 | 水星→火星のトライン(オーブ0.09) | 考えたことを行動に移しやすい日です |
+| 10/20 | 火星→金星のトライン(オーブ0.04) | 人に働きかけたり、好きなことに着手したりするのに向きます |
+| 11/2 | 太陽→木星のトライン、太陽→天王星のセクスタイル | 見直した計画を前向きに出す日として使えます |
+| 11/6〜7 | 水星→木星のトライン、水星→天王星のセクスタイル | 改善案の共有に向きます |
+
+### 注意したい日
+| 日付 | トランジット | 気をつけたいこと |
+|---|---|---|
+| 10/12 | 火星→水星のスクエア(オーブ0.02) | 言葉が強くなりやすいです |
+| 10/16 | 太陽→月のスクエア | 疲れや焦りを感じやすいです |
+| 10/27 | 火星→冥王星のスクエア(オーブ0.05) | 張り合いや執着に注意してください |
+| 10/29〜30 | 土星→木星、木星→太陽のスクエアが最接近 | 大きな約束は即決しないほうが無難です |
+| 11/3 | 金星→土星のスクエア(オーブ0.01) | 関係やお金の現実を突きつけられやすいです |
+
+## 今日(10/10)の使い方
+今日は、金星→水星のオポジション(オーブ0.49)と火星→水星のスクエアが重なっています。意見の食い違いが起きやすい日です。
+- **朝**:月とのアスペクトはありません。静かに予定を整理する時間に向いています。
+- **昼**:月が木星・天王星とスクエアになります。予定変更や思いつきに振り回されやすいので、決定は保留にしてメモに残す程度にとどめましょう。
+- **夜**:月が海王星とスクエアになります。ぼんやりしやすく、判断もあいまいになりがちです。大事な返信は翌日に回し、休息を優先してください。
+
+## 今後数日の動き
+- **10/11〜12**:火星→水星のスクエアがピークになります。言い方を一段やわらげ、反論の前に一呼吸おくと摩擦を減らせます。
+- **10/12〜13**:水星→海王星のセクスタイルがあります。直感的なアイデアを書き留めるのに向いています。
+- **10/14**:水星と出生の冥王星が合になります(オーブ0.47)。調べもの、深い分析、本音の話し合いに集中しやすい日です。
+
+## 今後の活かし方
+この1か月は、「広げる」より「構造を組み直す」ことに使うとズレにくい時期です。山羊座と牡牛座の堅実さを土台にして、具体的には次のことを意識してみてください。
+- 天王星的な変化の欲求は、手順の改善という形で小さく試す。
+- 逆行期間中に見えた違和感は、11/14の順行以降に判断する材料として記録しておく。
+- 人間関係では、期待を言葉にして確認する習慣をつくる。
+
+これが、今後の安定につながっていきます。
+
+※出生時刻が判明した場合は、ハウスやアングルを含めて再計算が必要です。
+
+購入者の追加質問:
+前の鑑定を踏まえて、私のASCのサインとMCのハウスを確定して、仕事にどう使えばいいか教えて。

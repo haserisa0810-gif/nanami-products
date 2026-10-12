@@ -10,7 +10,9 @@ import yaml
 
 from services.location import resolve_prefecture
 from services.western_calc import calc_western_from_payload, house_of
-from services.prompt_builder import build_prompt
+from services.prompt_builder import build_prompt, ensure_shichusuimei_structure_guidance
+from services.output_metadata import customer_output_doc
+from services.birth_datetime import resolve_birth_datetime
 
 SIGN_JA = {
     "Ari": "牡羊座", "Tau": "牡牛座", "Gem": "双子座", "Can": "蟹座", "Leo": "獅子座", "Vir": "乙女座",
@@ -115,7 +117,17 @@ def build_prompt_for_doc(
     丸ごと再実行すると、使わない天体計算をもう一度走らせることになる。
     """
     input_block = doc.get("input") or {}
-    accuracy = str(input_block.get("birth_time_accuracy") or "exact")
+    accuracy = str((doc.get("birth_time") or {}).get("accuracy") or input_block.get("birth_time_accuracy") or "exact")
+    systems = doc.get("systems")
+    include_western = None
+    if isinstance(systems, dict) and any(k in systems for k in ("western", "shichusuimei")):
+        include_western = bool(systems.get("western"))
+        include_shichusuimei = bool(systems.get("shichusuimei"))
+    if include_shichusuimei:
+        # 既存購入者の四柱推命原本（版の区分より前の発行）は、本番と同じ指示文に固定する。
+        from services.shichusuimei_editions import is_legacy_shichu_doc, legacy_reading_prompt
+        if is_legacy_shichu_doc(doc):
+            return legacy_reading_prompt(doc, lang)
     return build_prompt(
         include_shichusuimei=include_shichusuimei,
         include_asteroids=include_asteroids,
@@ -123,6 +135,7 @@ def build_prompt_for_doc(
         birth_time_accuracy=accuracy,
         interpretation_flags=doc.get("interpretation_flags") or {},
         lang=lang,
+        include_western=include_western,
     )
 
 
@@ -241,6 +254,9 @@ def validate_yaml_option_section_consistency(doc: dict[str, Any]) -> None:
         "shichu_fortune_cycles_addon",
         "personal_ai_astrology_yaml_transit",
         "western_note_transit_addon",
+        "shichu_annual_5y_addon",
+        "shichu_annual_10y_addon",
+        "shichu_annual_20y_addon",
     }
     if product_type in addon_product_types and data_role != "addon":
         raise ValueError(f"Invalid YAML metadata: {product_type} requires data_role=addon")
@@ -498,15 +514,26 @@ def build_product_yaml(
     transit_profile: str = "standard",
     day_change_at_23: bool = False,
     birth_time_accuracy: str = "auto",
+    day_boundary_hour: int | None = None,
+    birth_fold: int | None = None,
+    birth_utc_offset_hours: float | None = None,
     birth_time_range: dict[str, Any] | None = None,
     birth_time_note: str | None = None,
     data_role: str = "base_chart",
     base: dict[str, Any] | None = None,
     lang: str = "ja",
+    shichusuimei_edition: str = "full",
+    shichusuimei_as_of: datetime | None = None,
+    shichusuimei_annual_years: int = 10,
 ) -> tuple[str, str, dict[str, Any]]:
     include_western = not (include_shichusuimei and not include_asteroids and not include_transit)
     if birth_time_accuracy == "auto":
         birth_time_accuracy = "exact" if birth_time else "unknown"
+    if not include_western and not birth_time_note:
+        birth_time_note = {
+            "unknown": "出生時刻不明のため仮定時刻で計算しています。時柱に依存する情報は確定根拠にせず、time_sensitive_reference に従ってください。",
+            "approximate": "出生時刻は推定です。時柱に依存する情報は暫定値とし、time_sensitive_reference に従ってください。",
+        }.get(birth_time_accuracy, "出生時刻あり。時柱を含む四柱の計算済みデータを参照できます。")
     if birth_time_accuracy == "unknown" and not birth_time_note:
         birth_time_note = "出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。"
     elif birth_time_accuracy == "approximate" and not birth_time_note:
@@ -523,6 +550,12 @@ def build_product_yaml(
         pref_name, lat, lng = resolve_prefecture(prefecture)
     tz = ZoneInfo(tz_name)
     local_dt = datetime(y, m, d, hour, minute, tzinfo=tz)
+    if include_shichusuimei:
+        from services.shichusuimei_calc import resolve_day_boundary_hour
+        day_boundary_hour = resolve_day_boundary_hour(day_change_at_23, day_boundary_hour)
+        day_change_at_23 = day_boundary_hour == 23
+        local_dt = resolve_birth_datetime(datetime(y, m, d, hour, minute), tz_name,
+                                          fold=birth_fold, utc_offset_hours=birth_utc_offset_hours)
     tz_offset = local_dt.utcoffset()
     tz_offset_hours = tz_offset.total_seconds() / 3600 if tz_offset is not None else 9
     generated_at = datetime.now(timezone.utc).astimezone()
@@ -646,10 +679,20 @@ def build_product_yaml(
     if include_shichusuimei:
         from services.shichusuimei_calc import calc_shichusuimei_from_payload
         systems["shichusuimei"] = calc_shichusuimei_from_payload(
-            {"year": y, "month": m, "day": d, "hour": hour, "minute": minute, "gender": gender},
+            {"year": y, "month": m, "day": d, "hour": hour if birth_time else None, "minute": minute, "gender": gender,
+             "birth_time_accuracy": birth_time_accuracy, "birth_time_range": birth_time_range,
+             "birth_fold": local_dt.fold,
+             "birth_utc_offset_hours": tz_offset_hours},
             tz_name=tz_name,
             day_change_at_23=day_change_at_23,
+            day_boundary_hour=day_boundary_hour,
+            as_of=shichusuimei_as_of,
+            annual_years=shichusuimei_annual_years,
         )
+        # エンジンの戻り値は変更せず、コピーに販売版の出力範囲を適用する。
+        from copy import deepcopy
+        from services.shichusuimei_calc import apply_shichusuimei_edition
+        systems["shichusuimei"] = apply_shichusuimei_edition(deepcopy(systems["shichusuimei"]), shichusuimei_edition)
     calculation_time = f"{hour:02d}:{minute:02d}"
     display_birth_time = birth_time if birth_time_accuracy == "exact" else birth_time_accuracy
     profile_id = _short_hash("profile", {
@@ -674,6 +717,9 @@ def build_product_yaml(
         "transit_days": transit_days,
         "transit_profile": transit_profile,
         "day_change_at_23": day_change_at_23,
+        **({"day_boundary_hour": day_boundary_hour, "birth_fold": local_dt.fold,
+            "shichusuimei_engine_version": systems["shichusuimei"]["engine_version"],
+            "shichusuimei_edition": shichusuimei_edition} if include_shichusuimei else {}),
     })
     birth_time_data = _birth_time_struct(
         input_value=birth_time,
@@ -722,6 +768,7 @@ def build_product_yaml(
                 "asteroids": include_asteroids,
                 "transit": include_transit,
                 "shichusuimei": include_shichusuimei,
+                **({"shichusuimei_edition": shichusuimei_edition} if include_shichusuimei else {}),
             },
         },
         "generated_at": generated_at.isoformat(),
@@ -765,6 +812,11 @@ def build_product_yaml(
         "systems": systems,
     }
     validate_yaml_option_section_consistency(doc)
+    # Installation paths are diagnostics, not interpretation data. Engines and
+    # saved originals are untouched; sanitize only this newly issued document.
+    doc = customer_output_doc(doc)
+    if not include_western:
+        doc["usage_note"]["continuous_use"] = "保存した命式・大運・流年を継続利用できます。単年流年は原本作成時の年を参照し、年選択では収録された対象年だけを使ってください。"
     yaml_text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=120)
     prompt_text = build_prompt(
         include_shichusuimei=include_shichusuimei,
@@ -773,6 +825,7 @@ def build_product_yaml(
         birth_time_accuracy=birth_time_accuracy,
         interpretation_flags=interpretation_flags,
         lang=lang,
+        include_western=include_western,
     )
     return yaml_text, prompt_text, doc
 
@@ -1042,13 +1095,16 @@ SHICHU_FORTUNE_CYCLES_ADDON_PROMPT = """あなたは四柱推命の鑑定者で�
 重要ルール:
 - このYAML単体を四柱推命の基本命式全体として扱わないでください。
 - 先に読み込ませた四柱推命基本版YAMLと一緒にAIへ貼り付けて使ってください。
-- systems.shichusuimei.normalized_data.daiun と systems.shichusuimei.normalized_data.annual_fortune を追加部品として読んでください。
+- systems.shichusuimei.normalized_data の daiun・annual_fortune・annual_forecasts を追加部品として読んでください。annual_fortune はこの追加データ作成時の単年流年、annual_forecasts は収録された各立春年の年別データです。
 - 大運・流年の干支、年齢、関係性、計算前提は変更しないでください。
 - 生年月日から再計算しないでください。
-- YAML内の計算結果を根拠として、長期運勢と今年の流れを読んでください。
+- YAML内の計算結果を根拠として、長期運勢と原本作成時の流年、または指定した収録年の流れを読んでください。
 
 以下のYAMLを読み込んで、四柱推命基本版データと組み合わせて解釈してください。
 """
+
+
+SHICHU_FORTUNE_CYCLES_ADDON_PROMPT = ensure_shichusuimei_structure_guidance(SHICHU_FORTUNE_CYCLES_ADDON_PROMPT)
 
 
 def build_shichu_fortune_cycles_addon_yaml(
@@ -1066,6 +1122,9 @@ def build_shichu_fortune_cycles_addon_yaml(
     birth_time_range: dict[str, Any] | None = None,
     birth_time_note: str | None = None,
     day_change_at_23: bool = False,
+    day_boundary_hour: int | None = None,
+    birth_fold: int | None = None,
+    birth_utc_offset_hours: float | None = None,
 ) -> tuple[str, str, dict[str, Any]]:
     _full_yaml_text, _full_prompt_text, full_doc = build_product_yaml(
         title=title,
@@ -1081,6 +1140,9 @@ def build_shichu_fortune_cycles_addon_yaml(
         include_shichusuimei=True,
         include_transit=False,
         day_change_at_23=day_change_at_23,
+        day_boundary_hour=day_boundary_hour,
+        birth_fold=birth_fold,
+        birth_utc_offset_hours=birth_utc_offset_hours,
         birth_time_accuracy=birth_time_accuracy,
         birth_time_range=birth_time_range,
         birth_time_note=birth_time_note,
@@ -1091,6 +1153,7 @@ def build_shichu_fortune_cycles_addon_yaml(
     normalized = shichu.get("normalized_data") or {}
     daiun = normalized.get("daiun") or {}
     annual_fortune = normalized.get("annual_fortune") or {}
+    annual_forecasts = normalized.get("annual_forecasts") or {}
     shichu_input = shichu.get("input") or {}
     assumptions = shichu_input.get("assumptions") or {}
     doc = {
@@ -1124,8 +1187,12 @@ def build_shichu_fortune_cycles_addon_yaml(
         "generated_at": full_doc.get("generated_at"),
         "calculation": {
             "engine": "nanami-products shichusuimei",
+            "engine_version": shichu.get("engine_version"),
             "timezone": tz_name,
-            "day_change_at_23": day_change_at_23,
+            "day_change_at_23": assumptions.get("day_change_at_23"),
+            "day_boundary_hour": assumptions.get("day_boundary_hour"),
+            "day_boundary_rule": assumptions.get("day_boundary_rule"),
+            "time_context": shichu_input.get("time_context"),
             "year_boundary_rule": assumptions.get("year_boundary_rule"),
             "daiun_start_mode": assumptions.get("daiun_start_mode"),
         },
@@ -1142,7 +1209,7 @@ def build_shichu_fortune_cycles_addon_yaml(
         "input": full_doc.get("input") or {},
         "usage_note": {
             "for_ai": "これは追加部品データです。四柱推命基本版YAMLと一緒にAIへ貼り付けて使ってください。",
-            "merge_instruction": "systems.shichusuimei.normalized_data.daiun と annual_fortune を、同じ出生情報で作成済みの四柱推命基本版YAMLへ追加する想定です。",
+            "merge_instruction": "systems.shichusuimei.normalized_data.daiun、annual_fortune、annual_forecasts を、同じ出生情報で作成済みの四柱推命基本版YAMLへ追加する想定です。",
             "not_included": "基本命式全体・通変星一覧・十二運一覧・神殺・五行バランス・鑑定本文は含みません。大運・流年追加用の計算済みデータです。",
             "reference_scope": "流年の十神・十二運を読むため、日主と計算前提だけを最小参照情報として含めています。",
         },
@@ -1152,12 +1219,15 @@ def build_shichu_fortune_cycles_addon_yaml(
                 "normalized_data": {
                     "daiun": daiun,
                     "annual_fortune": annual_fortune,
+                    "annual_forecasts": annual_forecasts,
                 },
                 "reference": {
                     "day_master": shichu.get("day_master"),
+                    "day_kanshi": (normalized.get("pillars") or {}).get("day", {}).get("kanshi"),
                     "assumptions": {
                         "tz_name": assumptions.get("tz_name"),
                         "day_change_at_23": assumptions.get("day_change_at_23"),
+                        "day_boundary_hour": assumptions.get("day_boundary_hour"),
                         "day_boundary_rule": assumptions.get("day_boundary_rule"),
                         "year_boundary_rule": assumptions.get("year_boundary_rule"),
                         "daiun_start_mode": assumptions.get("daiun_start_mode"),

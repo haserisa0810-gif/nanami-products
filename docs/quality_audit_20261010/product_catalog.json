@@ -1,0 +1,105 @@
+{
+  "western_basic": {
+    "label": "ホロスコープ基本版",
+    "description": "西洋占星術の出生図データを生成します。小惑星・四柱推命・日替わり境界の選択項目は表示しません。",
+    "features": [
+      "西洋占星術の出生図データ",
+      "小惑星オプションなし",
+      "四柱推命なし",
+      "トランジットなし"
+    ],
+    "include_asteroids": false,
+    "include_shichusuimei": false,
+    "include_transit": false
+  },
+  "western_full": {
+    "label": "ホロスコープFULL版",
+    "description": "小惑星とトランジット（1ヶ月）をセットで含めます。トランジットが含まれるため、1年分のトランジット手帳（PDF）も作成できます。購入者側での選択は不要です。",
+    "features": [
+      "西洋占星術の出生図データ",
+      "小惑星込み",
+      "トランジット（1ヶ月）込み",
+      "トランジット手帳（PDF・1年分）対応",
+      "四柱推命なし"
+    ],
+    "include_asteroids": true,
+    "include_shichusuimei": false,
+    "include_transit": true
+  },
+  "western_asteroids": {
+    "label": "ホロスコープ基本版＋小惑星",
+    "description": "基本版の出生図に小惑星データを加えて生成します。トランジットは含みません。",
+    "features": [
+      "基本版の出生図",
+      "小惑星込み",
+      "トランジットなし"
+    ],
+    "include_asteroids": true,
+    "include_shichusuimei": false,
+    "include_transit": false
+  },
+  "western_transit": {
+    "label": "ホロスコープ基本版＋トランジット",
+    "description": "基本版の出生図にトランジットを加えて生成します。小惑星は含みません。",
+    "features": [
+      "基本版の出生図",
+      "トランジット込み",
+      "プランナー対応"
+    ],
+    "include_asteroids": false,
+    "include_shichusuimei": false,
+    "include_transit": true
+  },
+  "acg_bundle": {
+    "label": "ACGバンドル",
+    "description": "出生図・小惑星・トランジットとACG活用をまとめたプレミアム商品です。",
+    "features": [
+      "小惑星込み",
+      "トランジット込み",
+      "プランナー・ACG対応"
+    ],
+    "include_asteroids": true,
+    "include_shichusuimei": false,
+    "include_transit": true
+  },
+  "western_asteroids_addon": {
+    "label": "ホロスコープ：小惑星追加",
+    "description": "基本版購入後に、小惑星データだけを追加するためのYAMLを生成します。",
+    "features": [
+      "Ceres / Pallas / Juno / Vesta / Chiron / Lilith / Vertex",
+      "基本版ホロスコープに追加して使う部品データ",
+      "トランジットなし",
+      "四柱推命なし"
+    ],
+    "include_asteroids": true,
+    "include_shichusuimei": false,
+    "include_transit": false,
+    "addon_type": "western_asteroids"
+  },
+  "shichu": {
+    "label": "四柱推命版",
+    "description": "四柱推命データを生成します。日替わり境界は、購入者が23時または1時から選択できます。",
+    "features": [
+      "四柱推命データ",
+      "日替わり境界を選択可能",
+      "標準選択は1時（丑の刻）",
+      "小惑星・トランジットなし"
+    ],
+    "include_asteroids": false,
+    "include_shichusuimei": true,
+    "include_transit": false
+  },
+  "transit_yaml": {
+    "label": "トランジットYAML版",
+    "description": "歴史イベント・特定日時・特定場所の、その瞬間の天体配置だけをYAML化します。",
+    "features": [
+      "出生情報なし",
+      "イベント日時・場所の天体配置",
+      "Julian / Gregorian 暦選択",
+      "月相・主要アスペクト込み"
+    ],
+    "include_asteroids": false,
+    "include_shichusuimei": false,
+    "include_transit": true
+  }
+}

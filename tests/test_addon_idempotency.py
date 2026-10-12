@@ -20,8 +20,12 @@ class _RecordingCursor:
 
     def execute(self, sql, params=None) -> None:
         self.executed.append((" ".join(sql.split()), params or ()))
+        self._last_sql = sql
 
     def fetchone(self):
+        # These existing fixtures model orders predating entitlement/hold tables.
+        if "AS entitlement_table" in self._last_sql:
+            return {"entitlement_table": None, "marketplace_table": None, "hold_table": None}
         return self._fetchone_results.pop(0)
 
 

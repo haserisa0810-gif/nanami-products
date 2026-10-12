@@ -181,7 +181,7 @@ class EtsyMailParseTest(unittest.TestCase):
                     expected,
                 )
 
-    def test_real_etsy_full_listing_without_product_code_is_full(self) -> None:
+    def test_code_free_etsy_listing_requires_verified_product_code(self) -> None:
         parsed = sync._parse_etsy_mail(
             "Etsy でのご注文内容の確認：carinenguyen より US$22.80（4149215031）",
             ETSY_REAL_FULL_MAIL_BODY,
@@ -193,7 +193,8 @@ class EtsyMailParseTest(unittest.TestCase):
         self.assertIsNotNone(parsed)
         self.assertEqual(parsed["stores_order_no"], "4149215031")
         self.assertEqual(parsed["provider"], "etsy")
-        self.assertEqual(parsed["product_type"], "western_full")
+        self.assertIsNone(parsed["product_type"])
+        self.assertEqual(parsed["line_items"], [])
         self.assertEqual(parsed["payment_status"], "paid")
         self.assertEqual(parsed["amount"], 19)
 
@@ -228,7 +229,7 @@ class EtsyMailParseTest(unittest.TestCase):
         self.assertEqual(fetch.call_args.kwargs["limit"], 25)
         connection.commit.assert_called_once_with()
 
-    def test_unlabeled_monthly_transit_is_addon_not_event_yaml(self) -> None:
+    def test_unlabeled_monthly_transit_is_not_guessed(self) -> None:
         cases = [
             "月替わりトランジット（指定月・38日分）",
             "38日トランジット追加",
@@ -236,10 +237,7 @@ class EtsyMailParseTest(unittest.TestCase):
         ]
         for title in cases:
             with self.subTest(title=title):
-                self.assertEqual(
-                    sync._guess_product_type("", f"商品： {title}"),
-                    "western_31days_transit_addon",
-                )
+                self.assertIsNone(sync._guess_product_type("", f"商品： {title}"))
 
     def test_explicit_transit_yaml_code_stays_event_yaml(self) -> None:
         self.assertEqual(
@@ -247,7 +245,7 @@ class EtsyMailParseTest(unittest.TestCase):
             "transit_yaml",
         )
 
-    def test_exact_test_listing_is_treated_as_basic_for_live_e2e(self) -> None:
+    def test_test_listing_without_registered_code_is_not_guessed(self) -> None:
         parsed = sync._parse_etsy_mail(
             "初めての販売おめでとうございます！注文の詳細はこちらです。",
             ETSY_MAIL_BODY.replace(
@@ -259,7 +257,7 @@ class EtsyMailParseTest(unittest.TestCase):
             "Etsy <emails@mail.etsy.com>",
         )
         self.assertIsNotNone(parsed)
-        self.assertEqual(parsed["product_type"], "western_basic")
+        self.assertIsNone(parsed["product_type"])
 
     def test_refund_and_cancellation_words_do_not_change_payment_status(self) -> None:
         parsed = sync._parse_etsy_mail(
@@ -326,7 +324,7 @@ class StoresMailProductMappingTest(unittest.TestCase):
                     expected,
                 )
 
-    def test_real_etsy_full_listing_without_product_code_is_full(self) -> None:
+    def test_code_free_etsy_listing_requires_verified_product_code(self) -> None:
         parsed = sync._parse_etsy_mail(
             "Etsy でのご注文内容の確認：carinenguyen より US$22.80（4149215031）",
             ETSY_REAL_FULL_MAIL_BODY,
@@ -338,7 +336,8 @@ class StoresMailProductMappingTest(unittest.TestCase):
         self.assertIsNotNone(parsed)
         self.assertEqual(parsed["stores_order_no"], "4149215031")
         self.assertEqual(parsed["provider"], "etsy")
-        self.assertEqual(parsed["product_type"], "western_full")
+        self.assertIsNone(parsed["product_type"])
+        self.assertEqual(parsed["line_items"], [])
         self.assertEqual(parsed["payment_status"], "paid")
         self.assertEqual(parsed["amount"], 19)
 
@@ -353,7 +352,7 @@ class StoresMailProductMappingTest(unittest.TestCase):
             ["transaction@etsy.com", "emails@mail.etsy.com"],
         )
 
-    def test_unlabeled_monthly_transit_is_addon_not_event_yaml(self) -> None:
+    def test_unlabeled_monthly_transit_is_not_guessed(self) -> None:
         cases = [
             "月替わりトランジット（指定月・38日分）",
             "38日トランジット追加",
@@ -361,10 +360,7 @@ class StoresMailProductMappingTest(unittest.TestCase):
         ]
         for title in cases:
             with self.subTest(title=title):
-                self.assertEqual(
-                    sync._guess_product_type("", f"商品： {title}"),
-                    "western_31days_transit_addon",
-                )
+                self.assertIsNone(sync._guess_product_type("", f"商品： {title}"))
 
     def test_explicit_transit_yaml_code_stays_event_yaml(self) -> None:
         self.assertEqual(
@@ -755,7 +751,7 @@ class OrderProviderResolutionTest(unittest.TestCase):
             response = client.get(url)
             self.assertEqual(response.status_code, 200)
             self.assertIn('<select name="order_provider"', response.text)
-            self.assertIn('<option value="coconala"', response.text)
+            self.assertNotIn('<option value="coconala"', response.text)
 
     def test_shichu_coconala_link_uses_username_instead_of_stores_order(self) -> None:
         client = TestClient(routes.app)
@@ -770,14 +766,14 @@ class OrderProviderResolutionTest(unittest.TestCase):
         self.assertIn('placeholder="例：nanami_user"', response.text)
         self.assertNotIn('pattern="[0-9]{10}"', response.text)
 
-    def test_shichu_without_provider_keeps_stores_coconala_selector(self) -> None:
+    def test_shichu_without_provider_keeps_stores_selector(self) -> None:
         client = TestClient(routes.app)
         response = client.get("/redeem/shichu?lang=ja")
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('<select name="order_provider" id="order-provider">', response.text)
         self.assertIn('<option value="stores"', response.text)
-        self.assertIn('<option value="coconala"', response.text)
+        self.assertNotIn('<option value="coconala"', response.text)
 
     def test_name_example_matches_selected_language(self) -> None:
         client = TestClient(routes.app)

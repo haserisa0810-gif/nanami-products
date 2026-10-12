@@ -775,7 +775,7 @@ response = requests.post(url, json=payload, headers=headers)</pre>
             <tr><td class="param-name">birth_time</td><td class="param-type">string</td><td><span class="req-badge">required</span></td><td>出生時刻 <code>HH:MM</code></td></tr>
             <tr><td class="param-name">birth_place</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>出生地（表示用）</td></tr>
             <tr><td class="param-name">gender</td><td class="param-type">string</td><td><span class="req-badge">required</span></td><td><code>"male"</code> / <code>"female"</code></td></tr>
-            <tr><td class="param-name">day_boundary</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td><code>"23:00"</code> のみ日替わりを23時扱いにする</td></tr>
+            <tr><td class="param-name">day_boundary</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>現地時刻。省略は <code>"01:00"</code>。<code>"00:00"</code>・<code>"23:00"</code> も明示指定可能</td></tr>
             <tr><td class="param-name">timezone</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>タイムゾーン識別子。例：<code>"Asia/Tokyo"</code>。未指定時は <code>Asia/Tokyo</code></td></tr>
             <tr><td class="param-name">tz_name</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>タイムゾーン名（表示用）。<code>timezone</code> と併用</td></tr>
             <tr><td class="param-name">writing</td><td class="param-type">object</td><td><span class="opt-badge">optional</span></td><td>文章生成トーン指定</td></tr>
@@ -783,7 +783,7 @@ response = requests.post(url, json=payload, headers=headers)</pre>
         </table>
 
         <div class="info-box">
-          <strong>day_boundary の扱い：</strong><code>"23:00"</code> を指定した場合のみ <code>day_change_at_23 = true</code> として処理します。それ以外の値は無効（<code>false</code>）になります。
+          <strong>day_boundary の扱い：</strong>1時は0時台を前日、23時は23時台を翌日、0時は暦日どおりとして計算します。UTC日付や真太陽時では判定しません。性別未指定の大運は未確定として保留します。
         </div>
 
         <div class="warn-box">
@@ -912,7 +912,7 @@ response = requests.post(url, json=payload, headers=headers)</pre>
             <tr><td class="param-name">period</td><td class="param-type">string</td><td><span class="req-badge">required</span></td><td><code>"day"</code> または <code>"month"</code></td></tr>
             <tr><td class="param-name">name</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>名前（表示用）</td></tr>
             <tr><td class="param-name">birth_place</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>出生地（表示用）</td></tr>
-            <tr><td class="param-name">day_boundary</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td><code>"23:00"</code> のみ有効（四柱推命の日替わり設定）</td></tr>
+            <tr><td class="param-name">day_boundary</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td><code>"01:00"</code>（省略時）・<code>"23:00"</code>・<code>"00:00"</code>。出生地の現地時刻で判定</td></tr>
             <tr><td class="param-name">timezone</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>タイムゾーン識別子。例：<code>"Asia/Tokyo"</code>。未指定時は <code>Asia/Tokyo</code>。Western・Shichu・Transit の三システム全てに反映されます</td></tr>
             <tr><td class="param-name">tz_name</td><td class="param-type">string</td><td><span class="opt-badge">optional</span></td><td>タイムゾーン名（表示用）。<code>timezone</code> と併用</td></tr>
             <tr><td class="param-name">writing</td><td class="param-type">object</td><td><span class="opt-badge">optional</span></td><td>文章生成トーン指定</td></tr>

@@ -1,0 +1,73 @@
+{
+  "project": "nanami-astro",
+  "service": "nanami-products",
+  "region": "asia-northeast1",
+  "latest_ready_revision": "nanami-products-00564-bib",
+  "traffic": [
+    {
+      "revisionName": "nanami-products-00554-lag",
+      "tag": "candidate-a314ca69fe"
+    },
+    {
+      "revisionName": "nanami-products-00556-tow",
+      "tag": "candidate-52503ff0a2"
+    },
+    {
+      "revisionName": "nanami-products-00558-kic",
+      "tag": "candidate-5f90f26005"
+    },
+    {
+      "revisionName": "nanami-products-00560-keh",
+      "tag": "candidate-b07dacaae4"
+    },
+    {
+      "revisionName": "nanami-products-00562-wec",
+      "percent": 100,
+      "tag": "candidate-8c25fc0a59"
+    },
+    {
+      "revisionName": "nanami-products-00564-bib",
+      "tag": "candidate-cb92cfffa2"
+    }
+  ],
+  "settings_declared_only": {
+    "DATABASE_URL": true,
+    "API_KEY_ADMIN_TOKEN": true,
+    "STORES_MAIL_SYNC_TOKEN": true,
+    "STORES_MAIL_BACKEND": true,
+    "ORDER_HOLD_NOTIFY_TO": false,
+    "ORDER_HOLD_NOTIFY_FROM": false,
+    "ORDER_HOLD_SMTP_HOST": false,
+    "ORDER_HOLD_SMTP_PORT": false,
+    "ORDER_HOLD_SMTP_USERNAME": false,
+    "ORDER_HOLD_SMTP_PASSWORD": false,
+    "ORDER_HOLD_SMTP_SECURITY": false
+  },
+  "note": "Environment values and secret contents were not saved or printed. Declared means present, not valid/configured.",
+  "database_access": false,
+  "serving_revision_settings": [
+    {
+      "revision": "nanami-products-00562-wec",
+      "percent": 100,
+      "settings_declared_only": {
+        "DATABASE_URL": true,
+        "API_KEY_ADMIN_TOKEN": true,
+        "STORES_MAIL_SYNC_TOKEN": true,
+        "STORES_MAIL_BACKEND": true,
+        "ORDER_HOLD_NOTIFY_TO": false,
+        "ORDER_HOLD_NOTIFY_FROM": false,
+        "ORDER_HOLD_SMTP_HOST": false,
+        "ORDER_HOLD_SMTP_PORT": false,
+        "ORDER_HOLD_SMTP_USERNAME": false,
+        "ORDER_HOLD_SMTP_PASSWORD": false,
+        "ORDER_HOLD_SMTP_SECURITY": false
+      }
+    }
+  ],
+  "scheduler_jobs": {
+    "unavailable": true,
+    "exit_code": 1
+  },
+  "observation_date": "2026-10-11",
+  "operations": "read-only Cloud Run service/revision describe and Scheduler list attempt; no DB access"
+}

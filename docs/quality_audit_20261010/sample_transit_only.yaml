@@ -1,0 +1,143 @@
+version: nanami-products-yaml-v1
+product:
+  type: transit_only_yaml
+  options:
+    western_natal: false
+    asteroids: false
+    transit: true
+    shichusuimei: false
+    natal_required: false
+event:
+  name: Fictional event
+  date: '2024-04-08'
+  time: '18:00'
+  timezone: UTC
+  location:
+    name: Tokyo
+    latitude: 35.68
+    longitude: 139.76
+  calendar:
+    input_calendar: gregorian
+    normalized_calendar: gregorian
+    note: 歴史日付は諸説あり。必要に応じて検証してください。
+transit:
+  planets:
+    sun:
+      sign: Ari
+      degree: 19.3862
+      longitude: 19.3862
+      retrograde: false
+      house: null
+    moon:
+      sign: Ari
+      degree: 19.183208
+      longitude: 19.183208
+      retrograde: false
+      house: null
+    mercury:
+      sign: Ari
+      degree: 24.8071
+      longitude: 24.8071
+      retrograde: true
+      house: null
+    venus:
+      sign: Ari
+      degree: 4.427207
+      longitude: 4.427207
+      retrograde: false
+      house: null
+    mars:
+      sign: Pis
+      degree: 13.040168
+      longitude: 343.040168
+      retrograde: false
+      house: null
+    jupiter:
+      sign: Tau
+      degree: 19.042551
+      longitude: 49.042551
+      retrograde: false
+      house: null
+    saturn:
+      sign: Pis
+      degree: 14.453689
+      longitude: 344.453689
+      retrograde: false
+      house: null
+    uranus:
+      sign: Tau
+      degree: 21.170385
+      longitude: 51.170385
+      retrograde: false
+      house: null
+    neptune:
+      sign: Pis
+      degree: 28.189632
+      longitude: 358.189632
+      retrograde: false
+      house: null
+    pluto:
+      sign: Aqu
+      degree: 1.967495
+      longitude: 301.967495
+      retrograde: false
+      house: null
+  lunar:
+    phase: new_moon
+    illumination: 0.0
+    elongation: 359.797
+  aspects:
+  - planet1: sun
+    planet2: moon
+    aspect: conjunction
+    orb: 0.2
+  - planet1: mars
+    planet2: saturn
+    aspect: conjunction
+    orb: 1.41
+  - planet1: jupiter
+    planet2: uranus
+    aspect: conjunction
+    orb: 2.13
+  - planet1: venus
+    planet2: pluto
+    aspect: sextile
+    orb: 2.46
+  - planet1: neptune
+    planet2: pluto
+    aspect: sextile
+    orb: 3.78
+  - planet1: sun
+    planet2: mercury
+    aspect: conjunction
+    orb: 5.42
+  - planet1: moon
+    planet2: mercury
+    aspect: conjunction
+    orb: 5.62
+  - planet1: venus
+    planet2: neptune
+    aspect: conjunction
+    orb: 6.24
+metadata:
+  generated_at: '2026-10-10T08:36:03.763940+00:00'
+  engine: swisseph
+  ephemeris:
+    ephe_dir: C:\Users\haser\nanami-products\tmp\prompt-separation\ephe
+    ephe_dir_exists: true
+    ephe_files:
+    - README.txt
+    - README_timeout_fix.txt
+    - seas_18.se1
+    - seasnam.txt
+    - sefstars.txt
+    - semo_18.se1
+    - sepl_18.se1
+    has_se1: true
+    resolved_ephe_dir: C:\Users\haser\nanami-products\tmp\prompt-separation\ephe
+    searched_ephe_dirs:
+    - C:\Users\haser\nanami-products\tmp\prompt-separation\ephe
+    - \app\ephe
+    env_sweph_ephe_path: null
+  format: transit-only-yaml-v1
+  disclaimer: このログは天文計算データであり、歴史解釈や占断はAI側で行います。

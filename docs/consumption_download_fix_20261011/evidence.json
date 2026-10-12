@@ -1,0 +1,59 @@
+{
+  "base_commit": "a7bd9463522158916d15b8d4ebd553c5eb7fc728",
+  "application_changes": [
+    "services/order_holds.py",
+    "services/pg_store.py",
+    "services/stores_mail_sync.py"
+  ],
+  "modified_existing_tests": [
+    "tests/test_addon_idempotency.py",
+    "tests/test_multi_purchase_entitlements.py"
+  ],
+  "new_tests": [
+    "tests/test_consumption_download_safety.py",
+    "tests/test_consumption_download_postgres.py"
+  ],
+  "local_full_regression": {
+    "passed": 2194,
+    "skipped": 64,
+    "failed": 0,
+    "subtests_passed": 161,
+    "seconds": 116.51,
+    "command": "python -m pytest tests -q --tb=short"
+  },
+  "local_final_safety": {
+    "passed": 16,
+    "failed": 0,
+    "note": "Full regression collected 15 safety tests; the sync counter regression was added and all final 16 safety tests passed afterwards."
+  },
+  "isolated_postgres": {
+    "passed": 60,
+    "failed": 0,
+    "existing": 13,
+    "new": 47,
+    "version": "16.15",
+    "loopback_only": true,
+    "synthetic_data_only": true
+  },
+  "remaining_unverified": {
+    "external_smtp": true,
+    "isolated_smtp_not_rerun_this_change": true
+  },
+  "source_sha256": {
+    "services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "services/chart_policy.py": "6312aa32dcab08107acae37c590046048df9fc267c399ef65c10edf39f01db5f",
+    "services/pg_store.py": "cac8f1b8bbd66b14a985a7e0a0b8329c4c238765c19c99963fa37d5f3978a575",
+    "services/order_holds.py": "b1b647ab5b04fa9a4921ed42b874ac3bc76dd083467348d06fb4c014384f834c",
+    "services/order_review.py": "f85a9040fd0e27316c01441bcc1d19ea6d48742ccb33aeb05b66dd1bf50a2dee",
+    "services/product_catalog.py": "9fa6f48496531bc69b8522a099168471aef38c186bffb71c54332c34456e3728",
+    "services/purchase_mail_items.py": "b8840afc569e2b300c0d19a087369558d422a3ad8e3784aa91a8e5e07d23774a",
+    "services/stores_mail_sync.py": "0700b8b723ab8fd9a4c5f9d3d96020b1a42df71197d93392a19a22aeaaf9946b",
+    "tests/test_purchase_notifications_postgres.py": "c97ec60f7a09e49915cb70cc0369c307bc02d4a3cc533cb2dc07613a4c6a70f8",
+    "tests/test_consumption_download_postgres.py": "8f28d99ed686f0f4f70128a08fe7c0fa1c6ddefdae9f08444f6aba97197d5831"
+  },
+  "production_access": false,
+  "push": false,
+  "deploy": false,
+  "commit": false,
+  "worktree": "C:/Users/haser/nanami-products/tmp/prompt-separation"
+}

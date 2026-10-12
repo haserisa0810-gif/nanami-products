@@ -1,0 +1,8 @@
+{
+  "postgres_stopped": true,
+  "remaining_test_schemas": 0,
+  "temporary_password_file_removed": true,
+  "data_path": "/tmp/np-order-verify-20261011/pgdata",
+  "production_access": false,
+  "remaining_files": "Stopped temporary cluster and nonsecret results retained in Cloud Shell /tmp"
+}

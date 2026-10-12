@@ -1,0 +1,4795 @@
+version: nanami-products-yaml-v1
+meta:
+  schema_version: '2.0'
+  product_type: personal_ai_astrology_yaml
+  profile_id: profile_930724cc7e188d38
+  chart_id: chart_9945bbf3e3b83a50
+  generated_at: '2026-10-10T07:46:18.775987+09:00'
+  data_role: base_chart
+  yaml_variant: full
+base: null
+product:
+  type: personal_ai_astrology_yaml
+  options:
+    western_natal: false
+    asteroids: false
+    transit: false
+    shichusuimei: true
+generated_at: '2026-10-10T07:46:18.775987+09:00'
+calculation:
+  engine: nanami-products shichusuimei
+  zodiac: null
+  house_system: null
+  timezone: Asia/Tokyo
+  location_source: input
+  ephemeris_version: null
+birth_time:
+  input_value: null
+  calculation_time: '12:00'
+  accuracy: unknown
+  note: 出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。
+interpretation_flags:
+  allow_house_interpretation: false
+  allow_asc_mc_interpretation: false
+  house_reliability: low
+  moon_reliability: medium
+  use_houses_as_reference_only: true
+assets:
+  horoscope_svg:
+    available: false
+    file_name: horoscope.svg
+    generated_from_chart_id: chart_9945bbf3e3b83a50
+  shichusuimei_svg:
+    available: true
+    file_name: shichusuimei-chart.svg
+    generated_from_chart_id: chart_9945bbf3e3b83a50
+  yaml_lite:
+    available: false
+  yaml_detail:
+    available: false
+  yaml_full:
+    available: true
+input:
+  title: 架空検証用 summer_unknown
+  birth_date: '2000-07-07'
+  birth_time: unknown
+  calculation_time: '12:00'
+  birth_time_accuracy: unknown
+  birth_time_note: 出生時刻不明のため12:00で仮計算しています。ハウス・ASC・MCは参考値です。
+  prefecture: 東京都
+  birth_place_kind: domestic
+  birth_place: 東京
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
+  gender: female
+usage_note:
+  for_ai: このYAMLは計算済みデータです。AIに解釈させる場合、生年月日から再計算させず、この値を根拠にしてください。
+  not_included: 鑑定本文は含みません。AI解釈用の構造化データです。
+  continuous_use: このYAMLはAIに一度読み込ませて継続的に使える基礎データです。今後、月ごとのトランジット追加データと組み合わせて使うこともできます。
+systems:
+  western: null
+  shichusuimei:
+    module: shichusuimei
+    system: shichusuimei
+    ephemeris:
+      ephe_dir: C:\Users\haser\nanami-products\ephe
+      ephe_dir_exists: true
+      ephe_files:
+      - README.txt
+      - README_timeout_fix.txt
+      - seas_18.se1
+      - seasnam.txt
+      - sefstars.txt
+      - semo_18.se1
+      - sepl_18.se1
+      has_se1: true
+      resolved_ephe_dir: C:\Users\haser\nanami-products\ephe
+      searched_ephe_dirs:
+      - C:\Users\haser\nanami-products\ephe
+      - \app\ephe
+      env_sweph_ephe_path: null
+    engine_version: 0.4.0
+    generated_at: '2026-10-10T07:46:18.776020+09:00'
+    input:
+      raw:
+        year: 2000
+        month: 7
+        day: 7
+        hour: 12
+        minute: 0
+        gender: female
+        city: null
+        lat: null
+        lng: null
+      assumptions:
+        tz_name: Asia/Tokyo
+        day_change_at_23: false
+        day_boundary_rule: 00:00切替
+        year_boundary_rule: lichun(315deg)
+        month_boundary_rule: solar_terms(315deg+30deg_step)
+        daiun_start_mode: approx_days_to_years
+        birth_time_accuracy: unknown
+        structural_time_basis: three_pillars_hour_excluded
+    unknowns:
+    - 出生時刻が未入力のため 12:00 を仮置きして計算
+    - 日替わり境界は 00:00 切替設定を使用
+    - 大運開始年齢は簡易換算（3日=1年, 1日=4ヶ月）
+    - 構造分析は時柱を除外。従来キーの時柱・五行・身強スコアは仮置き／推定時刻の参考値
+    normalized_data:
+      pillars:
+        year:
+          stem: 庚
+          branch: 辰
+          kanshi: 庚辰
+        month:
+          stem: 癸
+          branch: 未
+          kanshi: 癸未
+        day:
+          stem: 丙
+          branch: 寅
+          kanshi: 丙寅
+        hour:
+          stem: 甲
+          branch: 午
+          kanshi: 甲午
+      hidden_stems: &id018
+        year:
+        - 戊
+        - 乙
+        - 癸
+        month:
+        - 己
+        - 丁
+        - 乙
+        day:
+        - 甲
+        - 丙
+        - 戊
+        hour:
+        - 丁
+        - 己
+      main_hidden_stems: &id019
+        year: 戊
+        month: 己
+        day: 甲
+        hour: 丁
+      ten_gods: &id011
+        day_master: 丙
+        pillars:
+          year:
+            stem: 庚
+            ten_god: 偏財
+          month:
+            stem: 癸
+            ten_god: 正官
+          hour:
+            stem: 甲
+            ten_god: 偏印
+        hidden_stems:
+          year:
+          - stem: 戊
+            ten_god: 食神
+          - stem: 乙
+            ten_god: 印綬
+          - stem: 癸
+            ten_god: 正官
+          month:
+          - stem: 己
+            ten_god: 傷官
+          - stem: 丁
+            ten_god: 劫財
+          - stem: 乙
+            ten_god: 印綬
+          day:
+          - stem: 甲
+            ten_god: 偏印
+          - stem: 丙
+            ten_god: 比肩
+          - stem: 戊
+            ten_god: 食神
+          hour:
+          - stem: 丁
+            ten_god: 劫財
+          - stem: 己
+            ten_god: 傷官
+      five_elements: &id010
+        visible:
+          木: 2
+          火: 2
+          土: 2
+          金: 1
+          水: 1
+        with_hidden_stems:
+          木: 5
+          火: 5
+          土: 6
+          金: 1
+          水: 2
+        display_policy: visible
+      twelve_fortune: &id012
+        year: 冠帯
+        month: 衰
+        day: 長生
+        hour: 帝旺
+      kubo: &id020
+        day_kanshi: 丙寅
+        jun_index: 0
+        jun_label: 甲子旬
+        empty_branches:
+        - 戌
+        - 亥
+        hits:
+          year: false
+          month: false
+          day: false
+          hour: false
+        hit_pillars: []
+        pillars:
+          year:
+            kanshi: 庚辰
+            branch: 辰
+          month:
+            kanshi: 癸未
+            branch: 未
+          day:
+            kanshi: 丙寅
+            branch: 寅
+          hour:
+            kanshi: 甲午
+            branch: 午
+      daiun: &id014
+        direction: reverse
+        gender: female
+        start_age:
+          years: 0
+          months: 1
+        start_age_text: 0年1ヶ月
+        items:
+        - index: 1
+          kanshi: 壬午
+          age_from: 0.08
+          age_to: 10.08
+          approx_start_year: 2000
+          approx_start_at: '2000-08-07T12:00:00+09:00'
+          approx_end_at: '2010-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 壬午
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 偏官
+            branch_ten_gods:
+            - 劫財
+            - 傷官
+            interactions_with_natal:
+              branch_relations:
+              - type: six_harmony
+                type_ja: 六合
+                element: 火
+                detail: 午未合
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 火局
+                branches:
+                - 寅
+                - 午
+                pillars:
+                - name: luck
+                  kanshi: 壬午
+                - name: day
+                  kanshi: 丙寅
+              three_punishments: []
+              combination_screening:
+              - type: six_harmony
+                pillars:
+                - luck
+                - month
+                candidate_element: 火
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules:
+                - 六合の化五行は流派差あり（午未は火・土）
+              - type: triad
+                pillars:
+                - luck
+                - day
+                candidate_element: 火
+                status: conditions_incomplete
+                partial_form: half_with_center
+                checks:
+                  all_three_present: false
+                  center_present: true
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generated_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: same_element
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controls_target
+            exposed_natal_hidden_stems: []
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:2
+                match: same_element
+                weight: 0.06
+              luck_roots: []
+            activated_ten_gods:
+              劫財:
+                score: 0.7
+                placements:
+                - stem: 丁
+                  layer: hidden
+                  weight: 0.7
+                  rank: 0
+              傷官:
+                score: 0.45
+                placements:
+                - stem: 己
+                  layer: hidden
+                  weight: 0.45
+                  rank: 1
+              偏官:
+                score: 0.6
+                placements:
+                - stem: 壬
+                  layer: visible
+                  weight: 0.6
+            added_elements:
+              stem: 水
+              hidden:
+              - 火
+              - 土
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0.7
+                土: 0.45
+                金: 0
+                水: 0.6
+              combined_scores:
+                木: 0.84
+                火: 2.45
+                土: 2.85
+                金: 1.2
+                水: 1.26
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 2
+          kanshi: 辛巳
+          age_from: 10.08
+          age_to: 20.08
+          approx_start_year: 2010
+          approx_start_at: '2010-08-07T12:00:00+09:00'
+          approx_end_at: '2020-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 辛巳
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 正財
+            branch_ten_gods:
+            - 比肩
+            - 食神
+            - 偏財
+            interactions_with_natal:
+              branch_relations:
+              - type: harm
+                type_ja: 害
+                detail: 巳寅害
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              stem_relations:
+              - type: stem_combination
+                type_ja: 干合
+                element: 水
+                detail: 辛丙合
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              triads: []
+              three_punishments:
+              - type: three_punishment
+                type_ja: 三刑
+                level: partial
+                detail: 無恩の刑
+                branches:
+                - 寅
+                - 巳
+                pillars:
+                - name: luck
+                  kanshi: 辛巳
+                - name: day
+                  kanshi: 丙寅
+              combination_screening:
+              - type: stem_combination
+                pillars:
+                - luck
+                - day
+                candidate_element: 水
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: same_element
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generates_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controlled_by_target
+            exposed_natal_hidden_stems: []
+            incoming_rooting:
+              natal_roots: []
+              luck_roots:
+              - stem: 庚
+                rank: 2
+                match: same_element
+                weight: 0.12
+            activated_ten_gods:
+              比肩:
+                score: 0.6
+                placements:
+                - stem: 丙
+                  layer: hidden
+                  weight: 0.6
+                  rank: 0
+              食神:
+                score: 0.45
+                placements:
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.45
+                  rank: 1
+              偏財:
+                score: 0.12
+                placements:
+                - stem: 庚
+                  layer: hidden
+                  weight: 0.12
+                  rank: 2
+              正財:
+                score: 1.2
+                placements:
+                - stem: 辛
+                  layer: visible
+                  weight: 1.2
+            added_elements:
+              stem: 金
+              hidden:
+              - 火
+              - 土
+              - 金
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0.6
+                土: 0.45
+                金: 1.32
+                水: 0
+              combined_scores:
+                木: 0.84
+                火: 2.35
+                土: 2.85
+                金: 2.52
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 3
+          kanshi: 庚辰
+          age_from: 20.08
+          age_to: 30.08
+          approx_start_year: 2020
+          approx_start_at: '2020-08-07T12:00:00+09:00'
+          approx_end_at: '2030-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 庚辰
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 偏財
+            branch_ten_gods:
+            - 食神
+            - 印綬
+            - 正官
+            interactions_with_natal:
+              branch_relations:
+              - type: self_punishment
+                type_ja: 自刑
+                detail: 辰辰
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              stem_relations: []
+              triads: []
+              three_punishments: []
+              combination_screening: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: same_element
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generates_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controlled_by_target
+            exposed_natal_hidden_stems: []
+            incoming_rooting:
+              natal_roots: []
+              luck_roots: []
+            activated_ten_gods:
+              食神:
+                score: 0.9
+                placements:
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.9
+                  rank: 0
+              偏財:
+                score: 1.2
+                placements:
+                - stem: 庚
+                  layer: visible
+                  weight: 1.2
+              正官:
+                score: 0.06
+                placements:
+                - stem: 癸
+                  layer: hidden
+                  weight: 0.06
+                  rank: 2
+              印綬:
+                score: 0.24
+                placements:
+                - stem: 乙
+                  layer: hidden
+                  weight: 0.24
+                  rank: 1
+            added_elements:
+              stem: 金
+              hidden:
+              - 土
+              - 木
+              - 水
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0.24
+                火: 0
+                土: 0.9
+                金: 1.2
+                水: 0.06
+              combined_scores:
+                木: 1.08
+                火: 1.75
+                土: 3.3
+                金: 2.4
+                水: 0.72
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 4
+          kanshi: 己卯
+          age_from: 30.08
+          age_to: 40.08
+          approx_start_year: 2030
+          approx_start_at: '2030-08-07T12:00:00+09:00'
+          approx_end_at: '2040-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 己卯
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 傷官
+            branch_ten_gods:
+            - 印綬
+            interactions_with_natal:
+              branch_relations:
+              - type: harm
+                type_ja: 害
+                detail: 卯辰害
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 木局
+                branches:
+                - 卯
+                - 未
+                pillars:
+                - name: luck
+                  kanshi: 己卯
+                - name: month
+                  kanshi: 癸未
+              three_punishments: []
+              combination_screening:
+              - type: triad
+                pillars:
+                - luck
+                - month
+                candidate_element: 木
+                status: conditions_incomplete
+                partial_form: half_with_center
+                checks:
+                  all_three_present: false
+                  center_present: true
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generates_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controls_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generated_by_target
+            exposed_natal_hidden_stems:
+            - evidence_id: month:hidden:0
+              pillar: month
+              stem: 己
+              ten_god: 傷官
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:0
+                match: same_element
+                weight: 0.9
+              - evidence_id: day:hidden:2
+                match: same_element
+                weight: 0.15
+              - evidence_id: month:hidden:0
+                match: same_stem
+                weight: 1.35
+              luck_roots: []
+            activated_ten_gods:
+              傷官:
+                score: 1.5
+                placements:
+                - stem: 己
+                  layer: visible
+                  weight: 1.5
+              印綬:
+                score: 0.8
+                placements:
+                - stem: 乙
+                  layer: hidden
+                  weight: 0.8
+                  rank: 0
+            added_elements:
+              stem: 土
+              hidden:
+              - 木
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0.8
+                火: 0
+                土: 1.5
+                金: 0
+                水: 0
+              combined_scores:
+                木: 1.64
+                火: 1.75
+                土: 3.9
+                金: 1.2
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 5
+          kanshi: 戊寅
+          age_from: 40.08
+          age_to: 50.08
+          approx_start_year: 2040
+          approx_start_at: '2040-08-07T12:00:00+09:00'
+          approx_end_at: '2050-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 戊寅
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 食神
+            branch_ten_gods:
+            - 偏印
+            - 比肩
+            - 食神
+            interactions_with_natal:
+              branch_relations: []
+              stem_relations:
+              - type: stem_combination
+                type_ja: 干合
+                element: 火
+                detail: 戊癸合
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              triads: []
+              three_punishments: []
+              combination_screening:
+              - type: stem_combination
+                pillars:
+                - luck
+                - month
+                candidate_element: 火
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generates_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controls_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generated_by_target
+            exposed_natal_hidden_stems:
+            - evidence_id: year:hidden:0
+              pillar: year
+              stem: 戊
+              ten_god: 食神
+            - evidence_id: day:hidden:2
+              pillar: day
+              stem: 戊
+              ten_god: 食神
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:0
+                match: same_stem
+                weight: 0.9
+              - evidence_id: day:hidden:2
+                match: same_stem
+                weight: 0.15
+              - evidence_id: month:hidden:0
+                match: same_element
+                weight: 1.35
+              luck_roots:
+              - stem: 戊
+                rank: 2
+                match: same_stem
+                weight: 0.15
+            activated_ten_gods:
+              比肩:
+                score: 0.3
+                placements:
+                - stem: 丙
+                  layer: hidden
+                  weight: 0.3
+                  rank: 1
+              食神:
+                score: 1.65
+                placements:
+                - stem: 戊
+                  layer: visible
+                  weight: 1.5
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.15
+                  rank: 2
+              偏印:
+                score: 0.48
+                placements:
+                - stem: 甲
+                  layer: hidden
+                  weight: 0.48
+                  rank: 0
+            added_elements:
+              stem: 土
+              hidden:
+              - 木
+              - 火
+              - 土
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0.48
+                火: 0.3
+                土: 1.65
+                金: 0
+                水: 0
+              combined_scores:
+                木: 1.32
+                火: 2.05
+                土: 4.05
+                金: 1.2
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 6
+          kanshi: 丁丑
+          age_from: 50.08
+          age_to: 60.08
+          approx_start_year: 2050
+          approx_start_at: '2050-08-07T12:00:00+09:00'
+          approx_end_at: '2060-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 丁丑
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 劫財
+            branch_ten_gods:
+            - 傷官
+            - 正官
+            - 正財
+            interactions_with_natal:
+              branch_relations:
+              - type: destruction
+                type_ja: 破
+                detail: 丑辰破
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              - type: clash
+                type_ja: 冲
+                detail: 丑未冲
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads: []
+              three_punishments:
+              - type: three_punishment
+                type_ja: 三刑
+                level: partial
+                detail: 持勢の刑
+                branches:
+                - 丑
+                - 未
+                pillars:
+                - name: luck
+                  kanshi: 丁丑
+                - name: month
+                  kanshi: 癸未
+              combination_screening: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controls_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controlled_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: same_element
+            exposed_natal_hidden_stems:
+            - evidence_id: month:hidden:1
+              pillar: month
+              stem: 丁
+              ten_god: 劫財
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:1
+                match: same_element
+                weight: 0.3
+              - evidence_id: month:hidden:1
+                match: same_stem
+                weight: 0.45
+              luck_roots: []
+            activated_ten_gods:
+              劫財:
+                score: 1.0
+                placements:
+                - stem: 丁
+                  layer: visible
+                  weight: 1.0
+              傷官:
+                score: 0.9
+                placements:
+                - stem: 己
+                  layer: hidden
+                  weight: 0.9
+                  rank: 0
+              正財:
+                score: 0.12
+                placements:
+                - stem: 辛
+                  layer: hidden
+                  weight: 0.12
+                  rank: 2
+              正官:
+                score: 0.18
+                placements:
+                - stem: 癸
+                  layer: hidden
+                  weight: 0.18
+                  rank: 1
+            added_elements:
+              stem: 火
+              hidden:
+              - 土
+              - 水
+              - 金
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 1.0
+                土: 0.9
+                金: 0.12
+                水: 0.18
+              combined_scores:
+                木: 0.84
+                火: 2.75
+                土: 3.3
+                金: 1.32
+                水: 0.84
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 7
+          kanshi: 丙子
+          age_from: 60.08
+          age_to: 70.08
+          approx_start_year: 2060
+          approx_start_at: '2060-08-07T12:00:00+09:00'
+          approx_end_at: '2070-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 丙子
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 比肩
+            branch_ten_gods:
+            - 正官
+            interactions_with_natal:
+              branch_relations:
+              - type: harm
+                type_ja: 害
+                detail: 子未害
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 水局
+                branches:
+                - 子
+                - 辰
+                pillars:
+                - name: luck
+                  kanshi: 丙子
+                - name: year
+                  kanshi: 庚辰
+              three_punishments: []
+              combination_screening:
+              - type: triad
+                pillars:
+                - luck
+                - year
+                candidate_element: 水
+                status: conditions_incomplete
+                partial_form: half_with_center
+                checks:
+                  all_three_present: false
+                  center_present: true
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controls_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controlled_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: same_element
+            exposed_natal_hidden_stems:
+            - evidence_id: day:hidden:1
+              pillar: day
+              stem: 丙
+              ten_god: 比肩
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:1
+                match: same_stem
+                weight: 0.3
+              - evidence_id: month:hidden:1
+                match: same_element
+                weight: 0.45
+              luck_roots: []
+            activated_ten_gods:
+              比肩:
+                score: 1.0
+                placements:
+                - stem: 丙
+                  layer: visible
+                  weight: 1.0
+              正官:
+                score: 0.6
+                placements:
+                - stem: 癸
+                  layer: hidden
+                  weight: 0.6
+                  rank: 0
+            added_elements:
+              stem: 火
+              hidden:
+              - 水
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 1.0
+                土: 0
+                金: 0
+                水: 0.6
+              combined_scores:
+                木: 0.84
+                火: 2.75
+                土: 2.4
+                金: 1.2
+                水: 1.26
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 8
+          kanshi: 乙亥
+          age_from: 70.08
+          age_to: 80.08
+          approx_start_year: 2070
+          approx_start_at: '2070-08-07T12:00:00+09:00'
+          approx_end_at: '2080-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 乙亥
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 印綬
+            branch_ten_gods:
+            - 偏官
+            - 偏印
+            interactions_with_natal:
+              branch_relations:
+              - type: six_harmony
+                type_ja: 六合
+                element: 木
+                detail: 亥寅合
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              - type: destruction
+                type_ja: 破
+                detail: 亥寅破
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              stem_relations:
+              - type: stem_combination
+                type_ja: 干合
+                element: 金
+                detail: 乙庚合
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 木局
+                branches:
+                - 未
+                - 亥
+                pillars:
+                - name: luck
+                  kanshi: 乙亥
+                - name: month
+                  kanshi: 癸未
+              three_punishments: []
+              combination_screening:
+              - type: stem_combination
+                pillars:
+                - luck
+                - year
+                candidate_element: 金
+                checks:
+                  month_element_supports_target: true
+                  target_visible: true
+                  target_rooted: false
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: candidate_materials_only
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              - type: six_harmony
+                pillars:
+                - luck
+                - day
+                candidate_element: 木
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              - type: triad
+                pillars:
+                - luck
+                - month
+                candidate_element: 木
+                status: conditions_incomplete
+                partial_form: arching_without_center
+                checks:
+                  all_three_present: false
+                  center_present: false
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controlled_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generated_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generates_target
+            exposed_natal_hidden_stems:
+            - evidence_id: year:hidden:1
+              pillar: year
+              stem: 乙
+              ten_god: 印綬
+            - evidence_id: month:hidden:2
+              pillar: month
+              stem: 乙
+              ten_god: 印綬
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:0
+                match: same_element
+                weight: 0.48
+              - evidence_id: year:hidden:1
+                match: same_stem
+                weight: 0.24
+              - evidence_id: month:hidden:2
+                match: same_stem
+                weight: 0.12
+              luck_roots:
+              - stem: 甲
+                rank: 1
+                match: same_element
+                weight: 0.24
+            activated_ten_gods:
+              偏官:
+                score: 0.42
+                placements:
+                - stem: 壬
+                  layer: hidden
+                  weight: 0.42
+                  rank: 0
+              偏印:
+                score: 0.24
+                placements:
+                - stem: 甲
+                  layer: hidden
+                  weight: 0.24
+                  rank: 1
+              印綬:
+                score: 0.8
+                placements:
+                - stem: 乙
+                  layer: visible
+                  weight: 0.8
+            added_elements:
+              stem: 木
+              hidden:
+              - 水
+              - 木
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 1.04
+                火: 0
+                土: 0
+                金: 0
+                水: 0.42
+              combined_scores:
+                木: 1.88
+                火: 1.75
+                土: 2.4
+                金: 1.2
+                水: 1.08
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 9
+          kanshi: 甲戌
+          age_from: 80.08
+          age_to: 90.08
+          approx_start_year: 2080
+          approx_start_at: '2080-08-07T12:00:00+09:00'
+          approx_end_at: '2090-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 甲戌
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 偏印
+            branch_ten_gods:
+            - 食神
+            - 正財
+            - 劫財
+            interactions_with_natal:
+              branch_relations:
+              - type: clash
+                type_ja: 冲
+                detail: 戌辰冲
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              - type: destruction
+                type_ja: 破
+                detail: 戌未破
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 火局
+                branches:
+                - 寅
+                - 戌
+                pillars:
+                - name: luck
+                  kanshi: 甲戌
+                - name: day
+                  kanshi: 丙寅
+              three_punishments:
+              - type: three_punishment
+                type_ja: 三刑
+                level: partial
+                detail: 持勢の刑
+                branches:
+                - 未
+                - 戌
+                pillars:
+                - name: luck
+                  kanshi: 甲戌
+                - name: month
+                  kanshi: 癸未
+              combination_screening:
+              - type: triad
+                pillars:
+                - luck
+                - day
+                candidate_element: 火
+                status: conditions_incomplete
+                partial_form: arching_without_center
+                checks:
+                  all_three_present: false
+                  center_present: false
+                  competition_status: not_assessed
+                  clashed_pillars:
+                  - luck
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controlled_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generated_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generates_target
+            exposed_natal_hidden_stems:
+            - evidence_id: day:hidden:0
+              pillar: day
+              stem: 甲
+              ten_god: 偏印
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:0
+                match: same_stem
+                weight: 0.48
+              - evidence_id: year:hidden:1
+                match: same_element
+                weight: 0.24
+              - evidence_id: month:hidden:2
+                match: same_element
+                weight: 0.12
+              luck_roots: []
+            activated_ten_gods:
+              劫財:
+                score: 0.1
+                placements:
+                - stem: 丁
+                  layer: hidden
+                  weight: 0.1
+                  rank: 2
+              食神:
+                score: 0.9
+                placements:
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.9
+                  rank: 0
+              正財:
+                score: 0.36
+                placements:
+                - stem: 辛
+                  layer: hidden
+                  weight: 0.36
+                  rank: 1
+              偏印:
+                score: 0.8
+                placements:
+                - stem: 甲
+                  layer: visible
+                  weight: 0.8
+            added_elements:
+              stem: 木
+              hidden:
+              - 土
+              - 金
+              - 火
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0.8
+                火: 0.1
+                土: 0.9
+                金: 0.36
+                水: 0
+              combined_scores:
+                木: 1.64
+                火: 1.85
+                土: 3.3
+                金: 1.56
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        - index: 10
+          kanshi: 癸酉
+          age_from: 90.08
+          age_to: 100.08
+          approx_start_year: 2090
+          approx_start_at: '2090-08-07T12:00:00+09:00'
+          approx_end_at: '2100-08-07T12:00:00+09:00'
+          structural_analysis:
+            pillar: 癸酉
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 正官
+            branch_ten_gods:
+            - 正財
+            interactions_with_natal:
+              branch_relations:
+              - type: six_harmony
+                type_ja: 六合
+                element: 金
+                detail: 酉辰合
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              stem_relations: []
+              triads: []
+              three_punishments: []
+              combination_screening:
+              - type: six_harmony
+                pillars:
+                - luck
+                - year
+                candidate_element: 金
+                checks:
+                  month_element_supports_target: true
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: candidate_materials_only
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generated_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: same_element
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controls_target
+            exposed_natal_hidden_stems:
+            - evidence_id: year:hidden:2
+              pillar: year
+              stem: 癸
+              ten_god: 正官
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:2
+                match: same_stem
+                weight: 0.06
+              luck_roots: []
+            activated_ten_gods:
+              正財:
+                score: 1.2
+                placements:
+                - stem: 辛
+                  layer: hidden
+                  weight: 1.2
+                  rank: 0
+              正官:
+                score: 0.6
+                placements:
+                - stem: 癸
+                  layer: visible
+                  weight: 0.6
+            added_elements:
+              stem: 水
+              hidden:
+              - 金
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0
+                土: 0
+                金: 1.2
+                水: 0.6
+              combined_scores:
+                木: 0.84
+                火: 1.75
+                土: 2.4
+                金: 2.4
+                水: 1.26
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+        timing_method: birth_plus_approx_start_age_calendar_months
+        debug: &id008
+          gender: female
+          birth_local: '2000-07-07T12:00:00+09:00'
+          year_stem: 庚
+          year_stem_yang: true
+          direction_rule: year_stem_yinyang_x_birth_gender
+          jieqi_ref_utc: '2000-07-06T19:13:56.455277+00:00'
+          delta_days: 0.323652
+        calc_mode: approx
+      interactions: &id016
+        branch_relations: []
+        stem_relations: []
+        triads: []
+        three_punishments: []
+        time_basis: three_pillars_hour_excluded
+      annual_fortune: &id015
+        year: 2026
+        effective_year: 2026
+        kanshi: 丙午
+        stem: 丙
+        branch: 午
+        ten_god_to_day_master: 比肩
+        twelve_fortune_to_day_master: 帝旺
+        current_daiun:
+          index: 3
+          kanshi: 庚辰
+          age_from: 20.08
+          age_to: 30.08
+          approx_start_year: 2020
+          approx_start_at: '2020-08-07T12:00:00+09:00'
+          approx_end_at: '2030-08-07T12:00:00+09:00'
+          current_age_approx: 26.2598
+          selection_basis: approx_calendar_interval
+        natal_time_basis: three_pillars_hour_excluded
+        relations:
+          branch_relations:
+          - left: &id001
+              name: annual
+              kanshi: 丙午
+              stem: 丙
+              branch: 午
+            right:
+              name: month
+              kanshi: 癸未
+              stem: 癸
+              branch: 未
+            type: six_harmony
+            type_ja: 六合
+            element: 火
+            detail: 午未合
+          stem_relations: []
+          triads_with_natal:
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 火局
+            branches:
+            - 寅
+            - 午
+            pillars:
+            - *id001
+            - &id002
+              name: day
+              kanshi: 丙寅
+              stem: 丙
+              branch: 寅
+          triads_with_natal_and_daiun:
+          - type: triad
+            type_ja: 半会
+            level: partial
+            group: 火局
+            branches:
+            - 寅
+            - 午
+            pillars:
+            - *id001
+            - *id002
+          three_punishments_with_natal: []
+          three_punishments_with_natal_and_daiun: []
+        debug:
+          calculated_at: '2026-10-10T07:46:18.776020+09:00'
+          lichun_local: '2026-02-04T05:02:09.089356+09:00'
+          year_boundary_rule: lichun(315deg)
+        structural_analysis:
+          pillar: 丙午
+          time_basis: three_pillars_hour_excluded
+          stem_ten_god: 比肩
+          branch_ten_gods:
+          - 劫財
+          - 傷官
+          interactions_with_natal:
+            branch_relations:
+            - type: six_harmony
+              type_ja: 六合
+              element: 火
+              detail: 午未合
+              left:
+                name: luck
+              right:
+                name: month
+                kanshi: 癸未
+              target_ten_gods:
+                stem: 正官
+                hidden:
+                - 傷官
+                - 劫財
+                - 印綬
+            stem_relations: []
+            triads:
+            - type: triad
+              type_ja: 半会
+              level: partial
+              group: 火局
+              branches:
+              - 寅
+              - 午
+              pillars:
+              - name: luck
+                kanshi: 丙午
+              - name: day
+                kanshi: 丙寅
+            three_punishments: []
+            combination_screening:
+            - type: six_harmony
+              pillars:
+              - luck
+              - month
+              candidate_element: 火
+              checks:
+                month_element_supports_target: false
+                target_visible: true
+                target_rooted: true
+                adjacent_in_natal: null
+                competing_partners: []
+                clashed_pillars: []
+              status: conditions_incomplete
+              confirmed: false
+              element_change_applied: false
+              conflicting_rules:
+              - 六合の化五行は流派差あり（午未は火・土）
+            - type: triad
+              pillars:
+              - luck
+              - day
+              candidate_element: 火
+              status: conditions_incomplete
+              partial_form: half_with_center
+              checks:
+                all_three_present: false
+                center_present: true
+                competition_status: not_assessed
+                clashed_pillars: []
+                month_element_supports_target: false
+              confirmed: false
+              element_change_applied: false
+            policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+          stem_actions:
+          - target:
+              pillar: year
+              kanshi: 庚辰
+              ten_god: 偏財
+            relation: controls_target
+          - target:
+              pillar: month
+              kanshi: 癸未
+              ten_god: 正官
+            relation: controlled_by_target
+          - target:
+              pillar: day
+              kanshi: 丙寅
+              ten_god: 比肩
+            relation: same_element
+          - target:
+              pillar: current_daiun
+              kanshi: 庚辰
+              ten_god: 偏財
+            relation: controls_target
+          exposed_natal_hidden_stems:
+          - evidence_id: day:hidden:1
+            pillar: day
+            stem: 丙
+            ten_god: 比肩
+          incoming_rooting:
+            natal_roots:
+            - evidence_id: day:hidden:1
+              match: same_stem
+              weight: 0.3
+            - evidence_id: month:hidden:1
+              match: same_element
+              weight: 0.45
+            luck_roots:
+            - stem: 丁
+              rank: 0
+              match: same_element
+              weight: 0.7
+          activated_ten_gods:
+            比肩:
+              score: 1.0
+              placements:
+              - stem: 丙
+                layer: visible
+                weight: 1.0
+            劫財:
+              score: 0.7
+              placements:
+              - stem: 丁
+                layer: hidden
+                weight: 0.7
+                rank: 0
+            傷官:
+              score: 0.45
+              placements:
+              - stem: 己
+                layer: hidden
+                weight: 0.45
+                rank: 1
+          added_elements:
+            stem: 火
+            hidden:
+            - 火
+            - 土
+          element_changes:
+            method: additive_materials_fixed_natal_season
+            incoming_scores:
+              木: 0
+              火: 1.7
+              土: 0.45
+              金: 0
+              水: 0
+            combined_scores:
+              木: 1.08
+              火: 3.45
+              土: 3.75
+              金: 2.4
+              水: 0.72
+            note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+          concurrent_daiun: 庚辰
+          transformation_status: not_assessed_no_element_conversion
+      shinsatsu: &id017
+        calc_policy:
+          tenotsu_kijin: day_stem_to_branch
+          bunsho: day_stem_to_branch
+          tentoku: month_branch_to_stem_or_branch
+          note: 神殺は流派差があるため、代表的な表に基づく補助情報として扱う
+        stars:
+        - name: tenotsu_kijin
+          name_ja: 天乙貴人
+          basis:
+            type: day_stem
+            value: 丙
+          targets:
+          - type: branch
+            value: 亥
+          - type: branch
+            value: 酉
+          hits: []
+          hit: false
+        - name: bunsho
+          name_ja: 文昌
+          basis:
+            type: day_stem
+            value: 丙
+          targets:
+          - type: branch
+            value: 申
+          hits: []
+          hit: false
+        - &id003
+          name: tentoku
+          name_ja: 天徳
+          basis:
+            type: month_branch
+            value: 未
+          targets:
+          - type: stem
+            value: 甲
+          hits:
+          - pillar: hour
+            kanshi: 甲午
+            stem: 甲
+          hit: true
+        hit_stars:
+        - *id003
+      structural_analysis:
+        methodology:
+          version: structural_heuristic_v1
+          hidden_weights:
+            '1':
+            - 1.0
+            '2':
+            - 0.7
+            - 0.3
+            '3':
+            - 0.6
+            - 0.3
+            - 0.1
+          visible_weight: 1
+          month_hidden_multiplier: 1.5
+          seasonal_multipliers:
+            土: 1.5
+            金: 1.2
+            火: 1.0
+            木: 0.8
+            水: 0.6
+          time_basis: three_pillars_hour_excluded
+          limitations:
+          - 固定蔵干重み。節入り後の日数・司令は未評価
+          - 五行強度は相対指標で吉凶や確率ではない
+          - 月令代表五行による季節近似。寒暖燥湿の調候は未評価
+          - 格の成敗・従格・専旺格は未確定
+          - 合化で五行・十神・根を変更しない。冲で蔵干が消えるとは扱わない
+          - 三合の争合・競合は未評価
+          - 時柱を除外。年・月・日柱は仮置き／推定時刻に基づき、節入り・日替わり付近では要再確認
+        roots_and_exposure:
+          rooting:
+          - pillar: year
+            stem: 庚
+            roots: []
+            root_score: 0
+            own_branch_root: false
+            affected_root_pillars: []
+          - pillar: month
+            stem: 癸
+            roots:
+            - id: year:hidden:2
+              pillar: year
+              branch: 辰
+              layer: hidden
+              stem: 癸
+              element: 水
+              ten_god: 正官
+              rank: 2
+              role: residual
+              base_weight: 0.1
+              weight: 0.06
+              match: same_stem
+            root_score: 0.06
+            own_branch_root: false
+            affected_root_pillars: []
+          - pillar: day
+            stem: 丙
+            roots:
+            - id: month:hidden:1
+              pillar: month
+              branch: 未
+              layer: hidden
+              stem: 丁
+              element: 火
+              ten_god: 劫財
+              rank: 1
+              role: secondary
+              base_weight: 0.3
+              weight: 0.45
+              match: same_element
+            - id: day:hidden:1
+              pillar: day
+              branch: 寅
+              layer: hidden
+              stem: 丙
+              element: 火
+              ten_god: 比肩
+              rank: 1
+              role: secondary
+              base_weight: 0.3
+              weight: 0.3
+              match: same_stem
+            root_score: 0.75
+            own_branch_root: true
+            affected_root_pillars: []
+          exposure:
+          - id: year:hidden:0
+            pillar: year
+            branch: 辰
+            layer: hidden
+            stem: 戊
+            element: 土
+            ten_god: 食神
+            rank: 0
+            role: main
+            base_weight: 0.6
+            weight: 0.9
+            visible_pillars: []
+            is_day_master_stem: false
+          - id: year:hidden:1
+            pillar: year
+            branch: 辰
+            layer: hidden
+            stem: 乙
+            element: 木
+            ten_god: 印綬
+            rank: 1
+            role: secondary
+            base_weight: 0.3
+            weight: 0.24
+            visible_pillars: []
+            is_day_master_stem: false
+          - id: year:hidden:2
+            pillar: year
+            branch: 辰
+            layer: hidden
+            stem: 癸
+            element: 水
+            ten_god: 正官
+            rank: 2
+            role: residual
+            base_weight: 0.1
+            weight: 0.06
+            visible_pillars:
+            - month
+            is_day_master_stem: false
+          - id: month:hidden:0
+            pillar: month
+            branch: 未
+            layer: hidden
+            stem: 己
+            element: 土
+            ten_god: 傷官
+            rank: 0
+            role: main
+            base_weight: 0.6
+            weight: 1.35
+            visible_pillars: []
+            is_day_master_stem: false
+          - id: month:hidden:1
+            pillar: month
+            branch: 未
+            layer: hidden
+            stem: 丁
+            element: 火
+            ten_god: 劫財
+            rank: 1
+            role: secondary
+            base_weight: 0.3
+            weight: 0.45
+            visible_pillars: []
+            is_day_master_stem: false
+          - id: month:hidden:2
+            pillar: month
+            branch: 未
+            layer: hidden
+            stem: 乙
+            element: 木
+            ten_god: 印綬
+            rank: 2
+            role: residual
+            base_weight: 0.1
+            weight: 0.12
+            visible_pillars: []
+            is_day_master_stem: false
+          - id: day:hidden:0
+            pillar: day
+            branch: 寅
+            layer: hidden
+            stem: 甲
+            element: 木
+            ten_god: 偏印
+            rank: 0
+            role: main
+            base_weight: 0.6
+            weight: 0.48
+            visible_pillars: []
+            is_day_master_stem: false
+          - id: day:hidden:1
+            pillar: day
+            branch: 寅
+            layer: hidden
+            stem: 丙
+            element: 火
+            ten_god: 比肩
+            rank: 1
+            role: secondary
+            base_weight: 0.3
+            weight: 0.3
+            visible_pillars: []
+            is_day_master_stem: true
+          - id: day:hidden:2
+            pillar: day
+            branch: 寅
+            layer: hidden
+            stem: 戊
+            element: 土
+            ten_god: 食神
+            rank: 2
+            role: residual
+            base_weight: 0.1
+            weight: 0.15
+            visible_pillars: []
+            is_day_master_stem: false
+        ten_god_strength:
+          比肩:
+            score: 0.3
+            share: 0.0513
+            placements:
+            - id: day:hidden:1
+              pillar: day
+              branch: 寅
+              layer: hidden
+              stem: 丙
+              element: 火
+              ten_god: 比肩
+              rank: 1
+              role: secondary
+              base_weight: 0.3
+              weight: 0.3
+            visible_count: 0
+            hidden_count: 1
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          劫財:
+            score: 0.45
+            share: 0.0769
+            placements:
+            - id: month:hidden:1
+              pillar: month
+              branch: 未
+              layer: hidden
+              stem: 丁
+              element: 火
+              ten_god: 劫財
+              rank: 1
+              role: secondary
+              base_weight: 0.3
+              weight: 0.45
+            visible_count: 0
+            hidden_count: 1
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          食神:
+            score: 1.05
+            share: 0.1795
+            placements:
+            - id: year:hidden:0
+              pillar: year
+              branch: 辰
+              layer: hidden
+              stem: 戊
+              element: 土
+              ten_god: 食神
+              rank: 0
+              role: main
+              base_weight: 0.6
+              weight: 0.9
+            - id: day:hidden:2
+              pillar: day
+              branch: 寅
+              layer: hidden
+              stem: 戊
+              element: 土
+              ten_god: 食神
+              rank: 2
+              role: residual
+              base_weight: 0.1
+              weight: 0.15
+            visible_count: 0
+            hidden_count: 2
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          傷官:
+            score: 1.35
+            share: 0.2308
+            placements:
+            - id: month:hidden:0
+              pillar: month
+              branch: 未
+              layer: hidden
+              stem: 己
+              element: 土
+              ten_god: 傷官
+              rank: 0
+              role: main
+              base_weight: 0.6
+              weight: 1.35
+            visible_count: 0
+            hidden_count: 1
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          偏財:
+            score: 1.2
+            share: 0.2051
+            placements:
+            - id: year:visible
+              pillar: year
+              layer: visible
+              stem: 庚
+              element: 金
+              ten_god: 偏財
+              weight: 1.2
+            visible_count: 1
+            hidden_count: 0
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          正財:
+            score: 0
+            share: 0.0
+            placements: []
+            visible_count: 0
+            hidden_count: 0
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          偏官:
+            score: 0
+            share: 0.0
+            placements: []
+            visible_count: 0
+            hidden_count: 0
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          正官:
+            score: 0.66
+            share: 0.1128
+            placements:
+            - id: year:hidden:2
+              pillar: year
+              branch: 辰
+              layer: hidden
+              stem: 癸
+              element: 水
+              ten_god: 正官
+              rank: 2
+              role: residual
+              base_weight: 0.1
+              weight: 0.06
+            - id: month:visible
+              pillar: month
+              layer: visible
+              stem: 癸
+              element: 水
+              ten_god: 正官
+              weight: 0.6
+            visible_count: 1
+            hidden_count: 1
+            visible_root_evidence_ids:
+            - year:hidden:2
+            visible_root_score: 0.06
+          偏印:
+            score: 0.48
+            share: 0.0821
+            placements:
+            - id: day:hidden:0
+              pillar: day
+              branch: 寅
+              layer: hidden
+              stem: 甲
+              element: 木
+              ten_god: 偏印
+              rank: 0
+              role: main
+              base_weight: 0.6
+              weight: 0.48
+            visible_count: 0
+            hidden_count: 1
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+          印綬:
+            score: 0.36
+            share: 0.0615
+            placements:
+            - id: year:hidden:1
+              pillar: year
+              branch: 辰
+              layer: hidden
+              stem: 乙
+              element: 木
+              ten_god: 印綬
+              rank: 1
+              role: secondary
+              base_weight: 0.3
+              weight: 0.24
+            - id: month:hidden:2
+              pillar: month
+              branch: 未
+              layer: hidden
+              stem: 乙
+              element: 木
+              ten_god: 印綬
+              rank: 2
+              role: residual
+              base_weight: 0.1
+              weight: 0.12
+            visible_count: 0
+            hidden_count: 2
+            visible_root_evidence_ids: []
+            visible_root_score: 0
+        ten_god_groups:
+          比劫:
+            score: 0.75
+            visible_count: 0
+            hidden_count: 2
+            root_evidence_ids: []
+          食傷:
+            score: 2.4
+            visible_count: 0
+            hidden_count: 3
+            root_evidence_ids: []
+          財:
+            score: 1.2
+            visible_count: 1
+            hidden_count: 0
+            root_evidence_ids: []
+          官殺:
+            score: 0.66
+            visible_count: 1
+            hidden_count: 1
+            root_evidence_ids:
+            - year:hidden:2
+          印:
+            score: 0.84
+            visible_count: 0
+            hidden_count: 3
+            root_evidence_ids: []
+        ten_god_flow:
+        - label: 食神生財
+          relation: generation
+          source_gods:
+          - 食神
+          target_gods:
+          - 偏財
+          - 正財
+          source_score: 1.05
+          target_score: 1.2
+          source_evidence_ids:
+          - year:hidden:0
+          - day:hidden:2
+          target_evidence_ids:
+          - year:visible
+          status: both_present
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 傷官生財
+          relation: generation
+          source_gods:
+          - 傷官
+          target_gods:
+          - 偏財
+          - 正財
+          source_score: 1.35
+          target_score: 1.2
+          source_evidence_ids:
+          - month:hidden:0
+          target_evidence_ids:
+          - year:visible
+          status: both_present
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 官印相生
+          relation: generation
+          source_gods:
+          - 正官
+          target_gods:
+          - 偏印
+          - 印綬
+          source_score: 0.66
+          target_score: 0.84
+          source_evidence_ids:
+          - year:hidden:2
+          - month:visible
+          target_evidence_ids:
+          - day:hidden:0
+          - year:hidden:1
+          - month:hidden:2
+          status: both_present
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 殺印相生
+          relation: generation
+          source_gods:
+          - 偏官
+          target_gods:
+          - 偏印
+          - 印綬
+          source_score: 0
+          target_score: 0.84
+          source_evidence_ids: []
+          target_evidence_ids:
+          - day:hidden:0
+          - year:hidden:1
+          - month:hidden:2
+          status: missing_endpoint
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 食神制殺
+          relation: control
+          source_gods:
+          - 食神
+          target_gods:
+          - 偏官
+          source_score: 1.05
+          target_score: 0
+          source_evidence_ids:
+          - year:hidden:0
+          - day:hidden:2
+          target_evidence_ids: []
+          status: missing_endpoint
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 傷官見官
+          relation: control
+          source_gods:
+          - 傷官
+          target_gods:
+          - 正官
+          source_score: 1.35
+          target_score: 0.66
+          source_evidence_ids:
+          - month:hidden:0
+          target_evidence_ids:
+          - year:hidden:2
+          - month:visible
+          status: both_present
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 比劫剋財
+          relation: control
+          source_gods:
+          - 比肩
+          - 劫財
+          target_gods:
+          - 偏財
+          - 正財
+          source_score: 0.75
+          target_score: 1.2
+          source_evidence_ids:
+          - day:hidden:1
+          - month:hidden:1
+          target_evidence_ids:
+          - year:visible
+          status: both_present
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        - label: 財剋印
+          relation: control
+          source_gods:
+          - 偏財
+          - 正財
+          target_gods:
+          - 偏印
+          - 印綬
+          source_score: 1.2
+          target_score: 0.84
+          source_evidence_ids:
+          - year:visible
+          target_evidence_ids:
+          - day:hidden:0
+          - year:hidden:1
+          - month:hidden:2
+          status: both_present
+          interpretation: 配置の併存。成格・成功・破財を断定する条件ではない
+        day_master_support:
+          support_ratio: 0.3781
+          label: weak_candidate
+          peer_element: 火
+          resource_element: 木
+          root_score: 0.75
+          root_evidence_ids:
+          - month:hidden:1
+          - day:hidden:1
+          thresholds:
+            weak_below: 0.4
+            strong_above: 0.55
+          special_pattern_review_required: false
+          confidence: low
+          hour_excluded: true
+        pattern_analysis:
+          method: month_hidden_stems_and_exposure
+          candidates: &id007
+          - ten_god: 傷官
+            stem: 己
+            exposed_at: []
+            label: 傷官格候補
+            status: candidate
+            evidence_ids:
+            - month:hidden:0
+            reasons:
+            - 月支本気
+          confidence: low
+          definitive_pattern: null
+          success_failure_status: not_assessed
+          conflicting_rules:
+          - 司令日数を使う方式とは異なる
+          - 月令比劫と特殊格は別条件の検証が必要
+        useful_god_analysis:
+          method: separate_method_candidates_v1
+          confidence: low
+          candidates: []
+          favorable_elements: &id004 []
+          unfavorable_elements: &id005 []
+          reasons: &id006
+          - 日主と印の重み付き支持比率=0.3781
+          - 日主の通根重み=0.75
+          methods:
+          - method: fuyi_weighted_support
+            status: held_for_review
+            favorable_elements: *id004
+            unfavorable_elements: *id005
+            reasons: *id006
+            confidence: low
+            candidate_policy: 扶抑の支持・泄耗圧力方向。個別の用神を確定しない
+          - method: tongguan_control_bridge
+            status: materials_only
+            candidates: []
+          - method: month_pattern
+            status: reference_only
+            candidates: *id007
+            note: 月令用神の意味での格局候補。五行の喜忌に変換しない
+          - method: climate_adjustment
+            status: not_assessed
+          conflicting_rules:
+          - 調候・格の成敗による喜忌は未評価
+          - 月令用神と扶抑の用神は同じ定義として統合しない
+          - 時柱未確定または特殊格の検討が必要なため扶抑の喜忌を保留
+          definitive_useful_god: null
+        element_flow:
+          method: weighted_presence_only
+          element_scores:
+            木: 0.84
+            火: 1.75
+            土: 2.4
+            金: 1.2
+            水: 0.66
+          edges:
+          - source: 木
+            target: 火
+            source_score: 0.84
+            target_score: 1.75
+            status: both_present
+            capacity_proxy: 0.84
+          - source: 火
+            target: 土
+            source_score: 1.75
+            target_score: 2.4
+            status: both_present
+            capacity_proxy: 1.75
+          - source: 土
+            target: 金
+            source_score: 2.4
+            target_score: 1.2
+            status: both_present
+            capacity_proxy: 1.2
+          - source: 金
+            target: 水
+            source_score: 1.2
+            target_score: 0.66
+            status: both_present
+            capacity_proxy: 0.66
+          - source: 水
+            target: 木
+            source_score: 0.66
+            target_score: 0.84
+            status: both_present
+            capacity_proxy: 0.66
+          bottlenecks: []
+          dominant_paths:
+          - elements:
+            - 火
+            - 土
+            - 金
+            status: all_present
+            capacity_proxy: 1.2
+          - elements:
+            - 木
+            - 火
+            - 土
+            status: all_present
+            capacity_proxy: 0.84
+          - elements:
+            - 土
+            - 金
+            - 水
+            status: all_present
+            capacity_proxy: 0.66
+          day_master_output_wealth_path:
+            elements:
+            - 火
+            - 土
+            - 金
+            status: all_present
+          interpretation: 存在・接続の材料。流通成立・現実の財運・吉凶の保証ではない
+        interactions:
+          branch_relations: []
+          stem_relations: []
+          triads: []
+          three_punishments: []
+          combination_screening: []
+          policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+      annual_forecasts:
+        start_effective_year: 2026
+        years: 10
+        items:
+        - effective_year: 2026
+          kanshi: 丙午
+          year_boundary_rule: lichun(315deg)
+          period_start: '2026-02-04T05:02:09.089356+09:00'
+          period_end: '2027-02-04T10:46:19.211426+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 丙午
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 比肩
+            branch_ten_gods:
+            - 劫財
+            - 傷官
+            interactions_with_natal:
+              branch_relations:
+              - type: six_harmony
+                type_ja: 六合
+                element: 火
+                detail: 午未合
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 火局
+                branches:
+                - 寅
+                - 午
+                pillars:
+                - name: luck
+                  kanshi: 丙午
+                - name: day
+                  kanshi: 丙寅
+              three_punishments: []
+              combination_screening:
+              - type: six_harmony
+                pillars:
+                - luck
+                - month
+                candidate_element: 火
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules:
+                - 六合の化五行は流派差あり（午未は火・土）
+              - type: triad
+                pillars:
+                - luck
+                - day
+                candidate_element: 火
+                status: conditions_incomplete
+                partial_form: half_with_center
+                checks:
+                  all_three_present: false
+                  center_present: true
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controls_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controlled_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: same_element
+            exposed_natal_hidden_stems:
+            - evidence_id: day:hidden:1
+              pillar: day
+              stem: 丙
+              ten_god: 比肩
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:1
+                match: same_stem
+                weight: 0.3
+              - evidence_id: month:hidden:1
+                match: same_element
+                weight: 0.45
+              luck_roots:
+              - stem: 丁
+                rank: 0
+                match: same_element
+                weight: 0.7
+            activated_ten_gods:
+              比肩:
+                score: 1.0
+                placements:
+                - stem: 丙
+                  layer: visible
+                  weight: 1.0
+              劫財:
+                score: 0.7
+                placements:
+                - stem: 丁
+                  layer: hidden
+                  weight: 0.7
+                  rank: 0
+              傷官:
+                score: 0.45
+                placements:
+                - stem: 己
+                  layer: hidden
+                  weight: 0.45
+                  rank: 1
+            added_elements:
+              stem: 火
+              hidden:
+              - 火
+              - 土
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 1.7
+                土: 0.45
+                金: 0
+                水: 0
+              combined_scores:
+                木: 0.84
+                火: 3.45
+                土: 2.85
+                金: 1.2
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 3
+            kanshi: 庚辰
+            age_from: 20.08
+            age_to: 30.08
+            overlap_start_approx: '2026-02-04T05:02:09.089356+09:00'
+            overlap_end_approx: '2027-02-04T10:46:19.211426+09:00'
+            analysis:
+              pillar: 丙午
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 庚辰
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 庚辰
+                  ten_god: 偏財
+                relation: controls_target
+              combined_element_scores:
+                木: 1.08
+                火: 3.45
+                土: 3.75
+                金: 2.4
+                水: 0.72
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2027
+          kanshi: 丁未
+          year_boundary_rule: lichun(315deg)
+          period_start: '2027-02-04T10:46:19.211426+09:00'
+          period_end: '2028-02-04T16:31:14.816895+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 丁未
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 劫財
+            branch_ten_gods:
+            - 傷官
+            - 劫財
+            - 印綬
+            interactions_with_natal:
+              branch_relations: []
+              stem_relations: []
+              triads: []
+              three_punishments: []
+              combination_screening: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controls_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controlled_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: same_element
+            exposed_natal_hidden_stems:
+            - evidence_id: month:hidden:1
+              pillar: month
+              stem: 丁
+              ten_god: 劫財
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:1
+                match: same_element
+                weight: 0.3
+              - evidence_id: month:hidden:1
+                match: same_stem
+                weight: 0.45
+              luck_roots:
+              - stem: 丁
+                rank: 1
+                match: same_stem
+                weight: 0.3
+            activated_ten_gods:
+              劫財:
+                score: 1.3
+                placements:
+                - stem: 丁
+                  layer: visible
+                  weight: 1.0
+                - stem: 丁
+                  layer: hidden
+                  weight: 0.3
+                  rank: 1
+              傷官:
+                score: 0.9
+                placements:
+                - stem: 己
+                  layer: hidden
+                  weight: 0.9
+                  rank: 0
+              印綬:
+                score: 0.08
+                placements:
+                - stem: 乙
+                  layer: hidden
+                  weight: 0.08
+                  rank: 2
+            added_elements:
+              stem: 火
+              hidden:
+              - 土
+              - 火
+              - 木
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0.08
+                火: 1.3
+                土: 0.9
+                金: 0
+                水: 0
+              combined_scores:
+                木: 0.92
+                火: 3.05
+                土: 3.3
+                金: 1.2
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 3
+            kanshi: 庚辰
+            age_from: 20.08
+            age_to: 30.08
+            overlap_start_approx: '2027-02-04T10:46:19.211426+09:00'
+            overlap_end_approx: '2028-02-04T16:31:14.816895+09:00'
+            analysis:
+              pillar: 丁未
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 庚辰
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 庚辰
+                  ten_god: 偏財
+                relation: controls_target
+              combined_element_scores:
+                木: 1.16
+                火: 3.05
+                土: 4.2
+                金: 2.4
+                水: 0.72
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2028
+          kanshi: 戊申
+          year_boundary_rule: lichun(315deg)
+          period_start: '2028-02-04T16:31:14.816895+09:00'
+          period_end: '2029-02-03T22:20:47.277833+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 戊申
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 食神
+            branch_ten_gods:
+            - 偏財
+            - 偏官
+            - 食神
+            interactions_with_natal:
+              branch_relations:
+              - type: clash
+                type_ja: 冲
+                detail: 申寅冲
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              stem_relations:
+              - type: stem_combination
+                type_ja: 干合
+                element: 火
+                detail: 戊癸合
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 水局
+                branches:
+                - 辰
+                - 申
+                pillars:
+                - name: luck
+                  kanshi: 戊申
+                - name: year
+                  kanshi: 庚辰
+              three_punishments:
+              - type: three_punishment
+                type_ja: 三刑
+                level: partial
+                detail: 無恩の刑
+                branches:
+                - 寅
+                - 申
+                pillars:
+                - name: luck
+                  kanshi: 戊申
+                - name: day
+                  kanshi: 丙寅
+              combination_screening:
+              - type: stem_combination
+                pillars:
+                - luck
+                - month
+                candidate_element: 火
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars:
+                  - luck
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              - type: triad
+                pillars:
+                - luck
+                - year
+                candidate_element: 水
+                status: conditions_incomplete
+                partial_form: arching_without_center
+                checks:
+                  all_three_present: false
+                  center_present: false
+                  competition_status: not_assessed
+                  clashed_pillars:
+                  - luck
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generates_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controls_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generated_by_target
+            exposed_natal_hidden_stems:
+            - evidence_id: year:hidden:0
+              pillar: year
+              stem: 戊
+              ten_god: 食神
+            - evidence_id: day:hidden:2
+              pillar: day
+              stem: 戊
+              ten_god: 食神
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:0
+                match: same_stem
+                weight: 0.9
+              - evidence_id: day:hidden:2
+                match: same_stem
+                weight: 0.15
+              - evidence_id: month:hidden:0
+                match: same_element
+                weight: 1.35
+              luck_roots:
+              - stem: 戊
+                rank: 2
+                match: same_stem
+                weight: 0.15
+            activated_ten_gods:
+              食神:
+                score: 1.65
+                placements:
+                - stem: 戊
+                  layer: visible
+                  weight: 1.5
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.15
+                  rank: 2
+              偏財:
+                score: 0.72
+                placements:
+                - stem: 庚
+                  layer: hidden
+                  weight: 0.72
+                  rank: 0
+              偏官:
+                score: 0.18
+                placements:
+                - stem: 壬
+                  layer: hidden
+                  weight: 0.18
+                  rank: 1
+            added_elements:
+              stem: 土
+              hidden:
+              - 金
+              - 水
+              - 土
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0
+                土: 1.65
+                金: 0.72
+                水: 0.18
+              combined_scores:
+                木: 0.84
+                火: 1.75
+                土: 4.05
+                金: 1.92
+                水: 0.84
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 3
+            kanshi: 庚辰
+            age_from: 20.08
+            age_to: 30.08
+            overlap_start_approx: '2028-02-04T16:31:14.816895+09:00'
+            overlap_end_approx: '2029-02-03T22:20:47.277833+09:00'
+            analysis:
+              pillar: 戊申
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 庚辰
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations: []
+                triads:
+                - type: triad
+                  type_ja: 半会
+                  level: partial
+                  group: 水局
+                  branches:
+                  - 辰
+                  - 申
+                  pillars:
+                  - name: luck
+                    kanshi: 戊申
+                  - name: year
+                    kanshi: 庚辰
+                  - name: current_daiun
+                    kanshi: 庚辰
+                three_punishments: []
+                combination_screening:
+                - type: triad
+                  pillars:
+                  - luck
+                  - year
+                  - current_daiun
+                  candidate_element: 水
+                  status: conditions_incomplete
+                  partial_form: arching_without_center
+                  checks:
+                    all_three_present: false
+                    center_present: false
+                    competition_status: not_assessed
+                    clashed_pillars:
+                    - luck
+                    month_element_supports_target: false
+                  confirmed: false
+                  element_change_applied: false
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 庚辰
+                  ten_god: 偏財
+                relation: generates_target
+              combined_element_scores:
+                木: 1.08
+                火: 1.75
+                土: 4.95
+                金: 3.12
+                水: 0.9
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2029
+          kanshi: 己酉
+          year_boundary_rule: lichun(315deg)
+          period_start: '2029-02-03T22:20:47.277833+09:00'
+          period_end: '2030-02-04T04:08:28.996583+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 己酉
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 傷官
+            branch_ten_gods:
+            - 正財
+            interactions_with_natal:
+              branch_relations:
+              - type: six_harmony
+                type_ja: 六合
+                element: 金
+                detail: 酉辰合
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              stem_relations: []
+              triads: []
+              three_punishments: []
+              combination_screening:
+              - type: six_harmony
+                pillars:
+                - luck
+                - year
+                candidate_element: 金
+                checks:
+                  month_element_supports_target: true
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: candidate_materials_only
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generates_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: controls_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generated_by_target
+            exposed_natal_hidden_stems:
+            - evidence_id: month:hidden:0
+              pillar: month
+              stem: 己
+              ten_god: 傷官
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:0
+                match: same_element
+                weight: 0.9
+              - evidence_id: day:hidden:2
+                match: same_element
+                weight: 0.15
+              - evidence_id: month:hidden:0
+                match: same_stem
+                weight: 1.35
+              luck_roots: []
+            activated_ten_gods:
+              傷官:
+                score: 1.5
+                placements:
+                - stem: 己
+                  layer: visible
+                  weight: 1.5
+              正財:
+                score: 1.2
+                placements:
+                - stem: 辛
+                  layer: hidden
+                  weight: 1.2
+                  rank: 0
+            added_elements:
+              stem: 土
+              hidden:
+              - 金
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0
+                土: 1.5
+                金: 1.2
+                水: 0
+              combined_scores:
+                木: 0.84
+                火: 1.75
+                土: 3.9
+                金: 2.4
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 3
+            kanshi: 庚辰
+            age_from: 20.08
+            age_to: 30.08
+            overlap_start_approx: '2029-02-03T22:20:47.277833+09:00'
+            overlap_end_approx: '2030-02-04T04:08:28.996583+09:00'
+            analysis:
+              pillar: 己酉
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 庚辰
+              interactions_with_daiun:
+                branch_relations:
+                - type: six_harmony
+                  type_ja: 六合
+                  element: 金
+                  detail: 酉辰合
+                  left:
+                    name: luck
+                  right:
+                    name: current_daiun
+                    kanshi: 庚辰
+                  target_ten_gods:
+                    stem: 偏財
+                    hidden:
+                    - 食神
+                    - 印綬
+                    - 正官
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening:
+                - type: six_harmony
+                  pillars:
+                  - luck
+                  - current_daiun
+                  candidate_element: 金
+                  checks:
+                    month_element_supports_target: true
+                    target_visible: true
+                    target_rooted: true
+                    adjacent_in_natal: null
+                    competing_partners:
+                    - year
+                    clashed_pillars: []
+                  status: conditions_incomplete
+                  confirmed: false
+                  element_change_applied: false
+                  conflicting_rules: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 庚辰
+                  ten_god: 偏財
+                relation: generates_target
+              combined_element_scores:
+                木: 1.08
+                火: 1.75
+                土: 4.8
+                金: 3.6
+                水: 0.72
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2030
+          kanshi: 庚戌
+          year_boundary_rule: lichun(315deg)
+          period_start: '2030-02-04T04:08:28.996583+09:00'
+          period_end: '2031-02-04T09:58:17.937012+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: true
+          natal_analysis:
+            pillar: 庚戌
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 偏財
+            branch_ten_gods:
+            - 食神
+            - 正財
+            - 劫財
+            interactions_with_natal:
+              branch_relations:
+              - type: clash
+                type_ja: 冲
+                detail: 戌辰冲
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              - type: destruction
+                type_ja: 破
+                detail: 戌未破
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 火局
+                branches:
+                - 寅
+                - 戌
+                pillars:
+                - name: luck
+                  kanshi: 庚戌
+                - name: day
+                  kanshi: 丙寅
+              three_punishments:
+              - type: three_punishment
+                type_ja: 三刑
+                level: partial
+                detail: 持勢の刑
+                branches:
+                - 未
+                - 戌
+                pillars:
+                - name: luck
+                  kanshi: 庚戌
+                - name: month
+                  kanshi: 癸未
+              combination_screening:
+              - type: triad
+                pillars:
+                - luck
+                - day
+                candidate_element: 火
+                status: conditions_incomplete
+                partial_form: arching_without_center
+                checks:
+                  all_three_present: false
+                  center_present: false
+                  competition_status: not_assessed
+                  clashed_pillars:
+                  - luck
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: same_element
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generates_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controlled_by_target
+            exposed_natal_hidden_stems: []
+            incoming_rooting:
+              natal_roots: []
+              luck_roots:
+              - stem: 辛
+                rank: 1
+                match: same_element
+                weight: 0.36
+            activated_ten_gods:
+              劫財:
+                score: 0.1
+                placements:
+                - stem: 丁
+                  layer: hidden
+                  weight: 0.1
+                  rank: 2
+              食神:
+                score: 0.9
+                placements:
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.9
+                  rank: 0
+              偏財:
+                score: 1.2
+                placements:
+                - stem: 庚
+                  layer: visible
+                  weight: 1.2
+              正財:
+                score: 0.36
+                placements:
+                - stem: 辛
+                  layer: hidden
+                  weight: 0.36
+                  rank: 1
+            added_elements:
+              stem: 金
+              hidden:
+              - 土
+              - 金
+              - 火
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0.1
+                土: 0.9
+                金: 1.56
+                水: 0
+              combined_scores:
+                木: 0.84
+                火: 1.85
+                土: 3.3
+                金: 2.76
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 3
+            kanshi: 庚辰
+            age_from: 20.08
+            age_to: 30.08
+            overlap_start_approx: '2030-02-04T04:08:28.996583+09:00'
+            overlap_end_approx: '2030-08-07T12:00:00+09:00'
+            analysis:
+              pillar: 庚戌
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 庚辰
+              interactions_with_daiun:
+                branch_relations:
+                - type: clash
+                  type_ja: 冲
+                  detail: 戌辰冲
+                  left:
+                    name: luck
+                  right:
+                    name: current_daiun
+                    kanshi: 庚辰
+                  target_ten_gods:
+                    stem: 偏財
+                    hidden:
+                    - 食神
+                    - 印綬
+                    - 正官
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 庚辰
+                  ten_god: 偏財
+                relation: same_element
+              combined_element_scores:
+                木: 1.08
+                火: 1.85
+                土: 4.2
+                金: 3.96
+                水: 0.72
+              transformation_status: not_assessed_no_element_conversion
+          - index: 4
+            kanshi: 己卯
+            age_from: 30.08
+            age_to: 40.08
+            overlap_start_approx: '2030-08-07T12:00:00+09:00'
+            overlap_end_approx: '2031-02-04T09:58:17.937012+09:00'
+            analysis:
+              pillar: 庚戌
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 己卯
+              interactions_with_daiun:
+                branch_relations:
+                - type: six_harmony
+                  type_ja: 六合
+                  element: 火
+                  detail: 戌卯合
+                  left:
+                    name: luck
+                  right:
+                    name: current_daiun
+                    kanshi: 己卯
+                  target_ten_gods:
+                    stem: 傷官
+                    hidden:
+                    - 印綬
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening:
+                - type: six_harmony
+                  pillars:
+                  - luck
+                  - current_daiun
+                  candidate_element: 火
+                  checks:
+                    month_element_supports_target: false
+                    target_visible: true
+                    target_rooted: true
+                    adjacent_in_natal: null
+                    competing_partners: []
+                    clashed_pillars:
+                    - luck
+                  status: conditions_incomplete
+                  confirmed: false
+                  element_change_applied: false
+                  conflicting_rules: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 己卯
+                  ten_god: 傷官
+                relation: generated_by_target
+              combined_element_scores:
+                木: 1.64
+                火: 1.85
+                土: 4.8
+                金: 2.76
+                水: 0.66
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2031
+          kanshi: 辛亥
+          year_boundary_rule: lichun(315deg)
+          period_start: '2031-02-04T09:58:17.937012+09:00'
+          period_end: '2032-02-04T15:48:56.975099+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 辛亥
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 正財
+            branch_ten_gods:
+            - 偏官
+            - 偏印
+            interactions_with_natal:
+              branch_relations:
+              - type: six_harmony
+                type_ja: 六合
+                element: 木
+                detail: 亥寅合
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              - type: destruction
+                type_ja: 破
+                detail: 亥寅破
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              stem_relations:
+              - type: stem_combination
+                type_ja: 干合
+                element: 水
+                detail: 辛丙合
+                left:
+                  name: luck
+                right:
+                  name: day
+                  kanshi: 丙寅
+                target_ten_gods:
+                  stem: 比肩
+                  hidden:
+                  - 偏印
+                  - 比肩
+                  - 食神
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 木局
+                branches:
+                - 未
+                - 亥
+                pillars:
+                - name: luck
+                  kanshi: 辛亥
+                - name: month
+                  kanshi: 癸未
+              three_punishments: []
+              combination_screening:
+              - type: stem_combination
+                pillars:
+                - luck
+                - day
+                candidate_element: 水
+                checks:
+                  month_element_supports_target: false
+                  target_visible: true
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              - type: six_harmony
+                pillars:
+                - luck
+                - day
+                candidate_element: 木
+                checks:
+                  month_element_supports_target: false
+                  target_visible: false
+                  target_rooted: true
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: conditions_incomplete
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              - type: triad
+                pillars:
+                - luck
+                - month
+                candidate_element: 木
+                status: conditions_incomplete
+                partial_form: arching_without_center
+                checks:
+                  all_three_present: false
+                  center_present: false
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: same_element
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generates_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controlled_by_target
+            exposed_natal_hidden_stems: []
+            incoming_rooting:
+              natal_roots: []
+              luck_roots: []
+            activated_ten_gods:
+              正財:
+                score: 1.2
+                placements:
+                - stem: 辛
+                  layer: visible
+                  weight: 1.2
+              偏官:
+                score: 0.42
+                placements:
+                - stem: 壬
+                  layer: hidden
+                  weight: 0.42
+                  rank: 0
+              偏印:
+                score: 0.24
+                placements:
+                - stem: 甲
+                  layer: hidden
+                  weight: 0.24
+                  rank: 1
+            added_elements:
+              stem: 金
+              hidden:
+              - 水
+              - 木
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0.24
+                火: 0
+                土: 0
+                金: 1.2
+                水: 0.42
+              combined_scores:
+                木: 1.08
+                火: 1.75
+                土: 2.4
+                金: 2.4
+                水: 1.08
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 4
+            kanshi: 己卯
+            age_from: 30.08
+            age_to: 40.08
+            overlap_start_approx: '2031-02-04T09:58:17.937012+09:00'
+            overlap_end_approx: '2032-02-04T15:48:56.975099+09:00'
+            analysis:
+              pillar: 辛亥
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 己卯
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations: []
+                triads:
+                - type: triad
+                  type_ja: 三合
+                  level: full
+                  group: 木局
+                  branches:
+                  - 卯
+                  - 未
+                  - 亥
+                  pillars:
+                  - name: luck
+                    kanshi: 辛亥
+                  - name: month
+                    kanshi: 癸未
+                  - name: current_daiun
+                    kanshi: 己卯
+                three_punishments: []
+                combination_screening:
+                - type: triad
+                  pillars:
+                  - luck
+                  - month
+                  - current_daiun
+                  candidate_element: 木
+                  status: candidate_materials_only
+                  partial_form: null
+                  checks:
+                    all_three_present: true
+                    center_present: true
+                    competition_status: not_assessed
+                    clashed_pillars: []
+                    month_element_supports_target: false
+                  confirmed: false
+                  element_change_applied: false
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 己卯
+                  ten_god: 傷官
+                relation: generated_by_target
+              combined_element_scores:
+                木: 1.88
+                火: 1.75
+                土: 3.9
+                金: 2.4
+                水: 1.08
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2032
+          kanshi: 壬子
+          year_boundary_rule: lichun(315deg)
+          period_start: '2032-02-04T15:48:56.975099+09:00'
+          period_end: '2033-02-03T21:41:35.324708+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 壬子
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 偏官
+            branch_ten_gods:
+            - 正官
+            interactions_with_natal:
+              branch_relations:
+              - type: harm
+                type_ja: 害
+                detail: 子未害
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 水局
+                branches:
+                - 子
+                - 辰
+                pillars:
+                - name: luck
+                  kanshi: 壬子
+                - name: year
+                  kanshi: 庚辰
+              three_punishments: []
+              combination_screening:
+              - type: triad
+                pillars:
+                - luck
+                - year
+                candidate_element: 水
+                status: conditions_incomplete
+                partial_form: half_with_center
+                checks:
+                  all_three_present: false
+                  center_present: true
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generated_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: same_element
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controls_target
+            exposed_natal_hidden_stems: []
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:2
+                match: same_element
+                weight: 0.06
+              luck_roots:
+              - stem: 癸
+                rank: 0
+                match: same_element
+                weight: 0.6
+            activated_ten_gods:
+              偏官:
+                score: 0.6
+                placements:
+                - stem: 壬
+                  layer: visible
+                  weight: 0.6
+              正官:
+                score: 0.6
+                placements:
+                - stem: 癸
+                  layer: hidden
+                  weight: 0.6
+                  rank: 0
+            added_elements:
+              stem: 水
+              hidden:
+              - 水
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0
+                土: 0
+                金: 0
+                水: 1.2
+              combined_scores:
+                木: 0.84
+                火: 1.75
+                土: 2.4
+                金: 1.2
+                水: 1.86
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 4
+            kanshi: 己卯
+            age_from: 30.08
+            age_to: 40.08
+            overlap_start_approx: '2032-02-04T15:48:56.975099+09:00'
+            overlap_end_approx: '2033-02-03T21:41:35.324708+09:00'
+            analysis:
+              pillar: 壬子
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 己卯
+              interactions_with_daiun:
+                branch_relations:
+                - type: punishment
+                  type_ja: 刑
+                  detail: 無礼の刑
+                  left:
+                    name: luck
+                  right:
+                    name: current_daiun
+                    kanshi: 己卯
+                  target_ten_gods:
+                    stem: 傷官
+                    hidden:
+                    - 印綬
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 己卯
+                  ten_god: 傷官
+                relation: controlled_by_target
+              combined_element_scores:
+                木: 1.64
+                火: 1.75
+                土: 3.9
+                金: 1.2
+                水: 1.86
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2033
+          kanshi: 癸丑
+          year_boundary_rule: lichun(315deg)
+          period_start: '2033-02-03T21:41:35.324708+09:00'
+          period_end: '2034-02-04T03:41:10.275880+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 癸丑
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 正官
+            branch_ten_gods:
+            - 傷官
+            - 正官
+            - 正財
+            interactions_with_natal:
+              branch_relations:
+              - type: destruction
+                type_ja: 破
+                detail: 丑辰破
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              - type: clash
+                type_ja: 冲
+                detail: 丑未冲
+                left:
+                  name: luck
+                right:
+                  name: month
+                  kanshi: 癸未
+                target_ten_gods:
+                  stem: 正官
+                  hidden:
+                  - 傷官
+                  - 劫財
+                  - 印綬
+              stem_relations: []
+              triads: []
+              three_punishments:
+              - type: three_punishment
+                type_ja: 三刑
+                level: partial
+                detail: 持勢の刑
+                branches:
+                - 丑
+                - 未
+                pillars:
+                - name: luck
+                  kanshi: 癸丑
+                - name: month
+                  kanshi: 癸未
+              combination_screening: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: generated_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: same_element
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: controls_target
+            exposed_natal_hidden_stems:
+            - evidence_id: year:hidden:2
+              pillar: year
+              stem: 癸
+              ten_god: 正官
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: year:hidden:2
+                match: same_stem
+                weight: 0.06
+              luck_roots:
+              - stem: 癸
+                rank: 1
+                match: same_stem
+                weight: 0.18
+            activated_ten_gods:
+              傷官:
+                score: 0.9
+                placements:
+                - stem: 己
+                  layer: hidden
+                  weight: 0.9
+                  rank: 0
+              正財:
+                score: 0.12
+                placements:
+                - stem: 辛
+                  layer: hidden
+                  weight: 0.12
+                  rank: 2
+              正官:
+                score: 0.78
+                placements:
+                - stem: 癸
+                  layer: visible
+                  weight: 0.6
+                - stem: 癸
+                  layer: hidden
+                  weight: 0.18
+                  rank: 1
+            added_elements:
+              stem: 水
+              hidden:
+              - 土
+              - 水
+              - 金
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 0
+                火: 0
+                土: 0.9
+                金: 0.12
+                水: 0.78
+              combined_scores:
+                木: 0.84
+                火: 1.75
+                土: 3.3
+                金: 1.32
+                水: 1.44
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 4
+            kanshi: 己卯
+            age_from: 30.08
+            age_to: 40.08
+            overlap_start_approx: '2033-02-03T21:41:35.324708+09:00'
+            overlap_end_approx: '2034-02-04T03:41:10.275880+09:00'
+            analysis:
+              pillar: 癸丑
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 己卯
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations: []
+                triads: []
+                three_punishments: []
+                combination_screening: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 己卯
+                  ten_god: 傷官
+                relation: controlled_by_target
+              combined_element_scores:
+                木: 1.64
+                火: 1.75
+                土: 4.8
+                金: 1.32
+                水: 1.44
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2034
+          kanshi: 甲寅
+          year_boundary_rule: lichun(315deg)
+          period_start: '2034-02-04T03:41:10.275880+09:00'
+          period_end: '2035-02-04T09:31:34.152833+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 甲寅
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 偏印
+            branch_ten_gods:
+            - 偏印
+            - 比肩
+            - 食神
+            interactions_with_natal:
+              branch_relations: []
+              stem_relations: []
+              triads: []
+              three_punishments: []
+              combination_screening: []
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controlled_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generated_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generates_target
+            exposed_natal_hidden_stems:
+            - evidence_id: day:hidden:0
+              pillar: day
+              stem: 甲
+              ten_god: 偏印
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:0
+                match: same_stem
+                weight: 0.48
+              - evidence_id: year:hidden:1
+                match: same_element
+                weight: 0.24
+              - evidence_id: month:hidden:2
+                match: same_element
+                weight: 0.12
+              luck_roots:
+              - stem: 甲
+                rank: 0
+                match: same_stem
+                weight: 0.48
+            activated_ten_gods:
+              比肩:
+                score: 0.3
+                placements:
+                - stem: 丙
+                  layer: hidden
+                  weight: 0.3
+                  rank: 1
+              食神:
+                score: 0.15
+                placements:
+                - stem: 戊
+                  layer: hidden
+                  weight: 0.15
+                  rank: 2
+              偏印:
+                score: 1.28
+                placements:
+                - stem: 甲
+                  layer: visible
+                  weight: 0.8
+                - stem: 甲
+                  layer: hidden
+                  weight: 0.48
+                  rank: 0
+            added_elements:
+              stem: 木
+              hidden:
+              - 木
+              - 火
+              - 土
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 1.28
+                火: 0.3
+                土: 0.15
+                金: 0
+                水: 0
+              combined_scores:
+                木: 2.12
+                火: 2.05
+                土: 2.55
+                金: 1.2
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 4
+            kanshi: 己卯
+            age_from: 30.08
+            age_to: 40.08
+            overlap_start_approx: '2034-02-04T03:41:10.275880+09:00'
+            overlap_end_approx: '2035-02-04T09:31:34.152833+09:00'
+            analysis:
+              pillar: 甲寅
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 己卯
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations:
+                - type: stem_combination
+                  type_ja: 干合
+                  element: 土
+                  detail: 甲己合
+                  left:
+                    name: luck
+                  right:
+                    name: current_daiun
+                    kanshi: 己卯
+                  target_ten_gods:
+                    stem: 傷官
+                    hidden:
+                    - 印綬
+                triads: []
+                three_punishments: []
+                combination_screening:
+                - type: stem_combination
+                  pillars:
+                  - luck
+                  - current_daiun
+                  candidate_element: 土
+                  checks:
+                    month_element_supports_target: true
+                    target_visible: true
+                    target_rooted: true
+                    adjacent_in_natal: null
+                    competing_partners: []
+                    clashed_pillars: []
+                  status: candidate_materials_only
+                  confirmed: false
+                  element_change_applied: false
+                  conflicting_rules: []
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 己卯
+                  ten_god: 傷官
+                relation: controls_target
+              combined_element_scores:
+                木: 2.92
+                火: 2.05
+                土: 4.05
+                金: 1.2
+                水: 0.66
+              transformation_status: not_assessed_no_element_conversion
+        - effective_year: 2035
+          kanshi: 乙卯
+          year_boundary_rule: lichun(315deg)
+          period_start: '2035-02-04T09:31:34.152833+09:00'
+          period_end: '2036-02-04T15:19:54.763184+09:00'
+          daiun_selection_method: approx_calendar_intervals_intersect_lichun_year
+          daiun_boundary_in_window: false
+          natal_analysis:
+            pillar: 乙卯
+            time_basis: three_pillars_hour_excluded
+            stem_ten_god: 印綬
+            branch_ten_gods:
+            - 印綬
+            interactions_with_natal:
+              branch_relations:
+              - type: harm
+                type_ja: 害
+                detail: 卯辰害
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              stem_relations:
+              - type: stem_combination
+                type_ja: 干合
+                element: 金
+                detail: 乙庚合
+                left:
+                  name: luck
+                right:
+                  name: year
+                  kanshi: 庚辰
+                target_ten_gods:
+                  stem: 偏財
+                  hidden:
+                  - 食神
+                  - 印綬
+                  - 正官
+              triads:
+              - type: triad
+                type_ja: 半会
+                level: partial
+                group: 木局
+                branches:
+                - 卯
+                - 未
+                pillars:
+                - name: luck
+                  kanshi: 乙卯
+                - name: month
+                  kanshi: 癸未
+              three_punishments: []
+              combination_screening:
+              - type: stem_combination
+                pillars:
+                - luck
+                - year
+                candidate_element: 金
+                checks:
+                  month_element_supports_target: true
+                  target_visible: true
+                  target_rooted: false
+                  adjacent_in_natal: null
+                  competing_partners: []
+                  clashed_pillars: []
+                status: candidate_materials_only
+                confirmed: false
+                element_change_applied: false
+                conflicting_rules: []
+              - type: triad
+                pillars:
+                - luck
+                - month
+                candidate_element: 木
+                status: conditions_incomplete
+                partial_form: half_with_center
+                checks:
+                  all_three_present: false
+                  center_present: true
+                  competition_status: not_assessed
+                  clashed_pillars: []
+                  month_element_supports_target: false
+                confirmed: false
+                element_change_applied: false
+              policy: 組合せ・作用対象・条件材料。合化確定や冲による根の削除は行わない
+            stem_actions:
+            - target:
+                pillar: year
+                kanshi: 庚辰
+                ten_god: 偏財
+              relation: controlled_by_target
+            - target:
+                pillar: month
+                kanshi: 癸未
+                ten_god: 正官
+              relation: generated_by_target
+            - target:
+                pillar: day
+                kanshi: 丙寅
+                ten_god: 比肩
+              relation: generates_target
+            exposed_natal_hidden_stems:
+            - evidence_id: year:hidden:1
+              pillar: year
+              stem: 乙
+              ten_god: 印綬
+            - evidence_id: month:hidden:2
+              pillar: month
+              stem: 乙
+              ten_god: 印綬
+            incoming_rooting:
+              natal_roots:
+              - evidence_id: day:hidden:0
+                match: same_element
+                weight: 0.48
+              - evidence_id: year:hidden:1
+                match: same_stem
+                weight: 0.24
+              - evidence_id: month:hidden:2
+                match: same_stem
+                weight: 0.12
+              luck_roots:
+              - stem: 乙
+                rank: 0
+                match: same_stem
+                weight: 0.8
+            activated_ten_gods:
+              印綬:
+                score: 1.6
+                placements:
+                - stem: 乙
+                  layer: visible
+                  weight: 0.8
+                - stem: 乙
+                  layer: hidden
+                  weight: 0.8
+                  rank: 0
+            added_elements:
+              stem: 木
+              hidden:
+              - 木
+            element_changes:
+              method: additive_materials_fixed_natal_season
+              incoming_scores:
+                木: 1.6
+                火: 0
+                土: 0
+                金: 0
+                水: 0
+              combined_scores:
+                木: 2.44
+                火: 1.75
+                土: 2.4
+                金: 1.2
+                水: 0.66
+              note: 運の干支を加えた材料量。合化・冲による減算や喜忌の変更を適用しない
+            concurrent_daiun: null
+            transformation_status: not_assessed_no_element_conversion
+          daiun_contexts:
+          - index: 4
+            kanshi: 己卯
+            age_from: 30.08
+            age_to: 40.08
+            overlap_start_approx: '2035-02-04T09:31:34.152833+09:00'
+            overlap_end_approx: '2036-02-04T15:19:54.763184+09:00'
+            analysis:
+              pillar: 乙卯
+              time_basis: three_pillars_hour_excluded
+              concurrent_daiun: 己卯
+              interactions_with_daiun:
+                branch_relations: []
+                stem_relations: []
+                triads:
+                - type: triad
+                  type_ja: 半会
+                  level: partial
+                  group: 木局
+                  branches:
+                  - 卯
+                  - 未
+                  pillars:
+                  - name: luck
+                    kanshi: 乙卯
+                  - name: month
+                    kanshi: 癸未
+                  - name: current_daiun
+                    kanshi: 己卯
+                three_punishments: []
+                combination_screening:
+                - type: triad
+                  pillars:
+                  - luck
+                  - month
+                  - current_daiun
+                  candidate_element: 木
+                  status: conditions_incomplete
+                  partial_form: half_with_center
+                  checks:
+                    all_three_present: false
+                    center_present: true
+                    competition_status: not_assessed
+                    clashed_pillars: []
+                    month_element_supports_target: false
+                  confirmed: false
+                  element_change_applied: false
+              stem_actions:
+              - target:
+                  pillar: current_daiun
+                  kanshi: 己卯
+                  ten_god: 傷官
+                relation: controls_target
+              combined_element_scores:
+                木: 3.24
+                火: 1.75
+                土: 3.9
+                金: 1.2
+                水: 0.66
+              transformation_status: not_assessed_no_element_conversion
+        note: 流年は立春から翌立春まで。大運は出生日時に近似起運年齢の年月を加えた期間で対応付け。交運日時は近似であり確定しない
+      time_sensitive_reference:
+        birth_time_accuracy: unknown
+        assumed_time: '12:00'
+        valid_for_assertive_interpretation: false
+        reference_only_metrics:
+        - five_elements
+        - features.strength
+        - structure_report.strength_index
+        - structure_report.support_signals
+        hour_reference_only_sections:
+        - pillars.hour
+        - hidden_stems.hour
+        - ten_gods.hidden_stems.hour
+        - ten_gods.pillars.hour
+        - twelve_fortune.hour
+        - kubo
+        - shinsatsu
+        note: 時柱を含む旧集計は参考値。原局・流年の関係と新しい構造分析は時柱を除外
+    structure_report:
+      day_master: 丙
+      day_master_element: 火
+      seasonal_context:
+        month_branch: 未
+        month_element: 土
+        relation_to_day_master: day_master_generates_month
+      strength_index:
+        score: 79
+        label: 強め寄り（目安）
+        breakdown: &id013
+        - name: 得令(中立)
+          delta: 0
+          detail: 月支(未)=土 と日干(丙)=火 の直接関係が弱い
+        - name: 通根
+          delta: 20
+          detail: 同五行の蔵干が 3 件
+          roots:
+          - pillar: month
+            branch: 未
+            hidden_stem: 丁
+          - pillar: day
+            branch: 寅
+            hidden_stem: 丙
+          - pillar: hour
+            branch: 午
+            hidden_stem: 丁
+        - name: 透干
+          delta: 0
+          detail: 同五行の天干は少なめ
+        - name: 十二運(合算目安)
+          delta: 9
+          detail:
+            year: 冠帯
+            month: 衰
+            day: 長生
+            hour: 帝旺
+      support_signals:
+        roots_count: 3
+        visible_same_element_count: 0
+        twelve_fortune_total: 27
+      dominant_features:
+      - visible五行で 土 が相対的に多い (2)
+      - visible五行で 水 が相対的に少ない (1)
+      - 月支は 未 (土)
+      - 大運方向は reverse
+      notes:
+      - 年柱は立春基準、月柱は節入り基準で判定
+      - AI翻訳前の構造材料として整理されたデータ
+    debug:
+      year_month: &id009
+        tz_name: Asia/Tokyo
+        local_datetime: '2000-07-07T12:00:00+09:00'
+        lichun_local: '2000-02-04T21:40:24.133301+09:00'
+        effective_year: 2000
+        sun_lon_deg: 105.308609
+        month_index: 5
+        month_branch: 未
+      daiun: *id008
+    pillars:
+      year: 庚辰
+      month: 癸未
+      day: 丙寅
+      hour: 甲午
+    day_master: 丙
+    raw:
+      pillars:
+        year: 庚辰
+        month: 癸未
+        day: 丙寅
+        hour: 甲午
+      options:
+        tz_name: Asia/Tokyo
+        day_change_at_23: false
+        day_boundary_rule: 00:00切替
+        year_boundary: lichun(315deg)
+        month_boundary: solar_terms(315deg+30deg_step)
+      debug:
+        year_month: *id009
+    features:
+      five_elements: *id010
+      ten_gods: *id011
+      twelve_fortune: *id012
+      strength:
+        score: 79
+        label: 強め寄り（目安）
+        breakdown: *id013
+      daiun: *id014
+      annual_fortune: *id015
+      interactions: *id016
+      shinsatsu: *id017
+      hidden_stems: *id018
+      main_hidden_stems: *id019
+      kubo: *id020
+    summary:
+      year_kanshi: 庚辰
+      month_kanshi: 癸未
+      day_kanshi: 丙寅
+      hour_kanshi: 甲午

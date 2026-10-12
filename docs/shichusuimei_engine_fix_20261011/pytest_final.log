@@ -1,0 +1,138 @@
+..................................................................... [  3%]
+............................................................... [  6%]
+.............................................................. [  9%]
+.............................................................................................................................................. [ 17%]
+........................................................................ [ 20%]
+.......................................................................... [ 24%]
+........................................................................ [ 28%]
+........................................................................................................ [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 47%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+........................................................................ [ 62%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+...................................................................................................................... [ 97%]
+...........................................                              [100%]
+============================== warnings summary ===============================
+..\..\.venv\Lib\site-packages\fastapi\routing.py:211: 126 warnings
+  C:\Users\haser\nanami-products\.venv\Lib\site-packages\fastapi\routing.py:211: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    is_coroutine = asyncio.iscoroutinefunction(dependant.call)
+
+routes.py:2620
+  C:\Users\haser\nanami-products\tmp\prompt-separation\routes.py:2620: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+..\..\.venv\Lib\site-packages\fastapi\applications.py:4495
+  C:\Users\haser\nanami-products\.venv\Lib\site-packages\fastapi\applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+..\..\.venv\Lib\site-packages\starlette\_utils.py:42: 16 warnings
+tests/test_acg_api.py: 15 warnings
+tests/test_acg_english_buyer_surfaces.py: 14 warnings
+tests/test_acg_locales.py: 7 warnings
+tests/test_astro_earth.py: 9 warnings
+tests/test_birth_chart_museum.py: 5 warnings
+tests/test_birth_chart_museum_demo.py: 6 warnings
+tests/test_geocoding.py: 8 warnings
+tests/test_health_endpoint.py: 2 warnings
+tests/test_house_tour.py: 10 warnings
+tests/test_house_tour_architecture.py: 4 warnings
+tests/test_multi_purchase_entitlements.py: 12 warnings
+tests/test_multilingual_review_fixes.py: 29 warnings
+tests/test_neko_demo.py: 43 warnings
+tests/test_order_code_input_forms.py: 56 warnings
+tests/test_order_intake_and_redeem.py: 17 warnings
+tests/test_personal_edition_activation.py: 21 warnings
+tests/test_redeem_overseas_map.py: 7 warnings
+tests/test_shichusuimei_overseas_engine.py: 2 warnings
+tests/test_shichusuimei_year_selection.py: 33 warnings
+tests/test_site_locales.py: 2 warnings
+tests/test_transit_flight.py: 15 warnings
+tests/test_travel_mvp.py: 10 warnings
+tests/test_yaml_v2_time_provisional.py: 3 warnings
+  C:\Users\haser\nanami-products\.venv\Lib\site-packages\starlette\_utils.py:42: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    return asyncio.iscoroutinefunction(obj) or (
+
+..\..\.venv\Lib\site-packages\starlette\_utils.py:43: 16 warnings
+tests/test_acg_api.py: 1 warning
+tests/test_multi_purchase_entitlements.py: 6 warnings
+tests/test_order_intake_and_redeem.py: 6 warnings
+tests/test_shichusuimei_overseas_engine.py: 1 warning
+tests/test_shichusuimei_year_selection.py: 8 warnings
+tests/test_travel_mvp.py: 4 warnings
+tests/test_yaml_v2_time_provisional.py: 1 warning
+  C:\Users\haser\nanami-products\.venv\Lib\site-packages\starlette\_utils.py:43: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    callable(obj) and asyncio.iscoroutinefunction(obj.__call__)
+
+..\..\.venv\Lib\site-packages\httpx\_client.py:690: 16 warnings
+tests/test_acg_api.py: 1 warning
+tests/test_multi_purchase_entitlements.py: 6 warnings
+tests/test_order_intake_and_redeem.py: 6 warnings
+tests/test_shichusuimei_overseas_engine.py: 1 warning
+tests/test_shichusuimei_year_selection.py: 8 warnings
+tests/test_travel_mvp.py: 4 warnings
+tests/test_yaml_v2_time_provisional.py: 1 warning
+  C:\Users\haser\nanami-products\.venv\Lib\site-packages\httpx\_client.py:690: DeprecationWarning: The 'app' shortcut is now deprecated. Use the explicit style 'transport=WSGITransport(app=...)' instead.
+    warnings.warn(message, DeprecationWarning)
+
+tests/test_acg_english_buyer_surfaces.py: 12 warnings
+tests/test_acg_locales.py: 7 warnings
+tests/test_addon_generate_product_mismatch.py: 1 warning
+tests/test_admin_yaml_basic_auth.py: 3 warnings
+tests/test_astro_earth.py: 5 warnings
+tests/test_birth_chart_museum.py: 4 warnings
+tests/test_birth_chart_museum_demo.py: 6 warnings
+tests/test_house_tour.py: 10 warnings
+tests/test_house_tour_architecture.py: 4 warnings
+tests/test_multi_purchase_entitlements.py: 6 warnings
+tests/test_multilingual_review_fixes.py: 25 warnings
+tests/test_neko_demo.py: 21 warnings
+tests/test_order_code_input_forms.py: 56 warnings
+tests/test_order_intake_and_redeem.py: 11 warnings
+tests/test_personal_edition_activation.py: 8 warnings
+tests/test_redeem_overseas_map.py: 7 warnings
+tests/test_shichusuimei_overseas_engine.py: 1 warning
+tests/test_shichusuimei_year_selection.py: 4 warnings
+tests/test_site_locales.py: 2 warnings
+tests/test_transit_flight.py: 8 warnings
+tests/test_travel_mvp.py: 3 warnings
+tests/test_yaml_v2_time_provisional.py: 2 warnings
+  C:\Users\haser\nanami-products\.venv\Lib\site-packages\starlette\templating.py:178: DeprecationWarning: The `name` is not the first parameter anymore. The first parameter should be the `Request` instance.
+  Replace `TemplateResponse(name, {"request": request})` by `TemplateResponse(request, name)`.
+    warnings.warn(
+
+tests/test_api_sandbox_demo.py: 2 warnings
+tests/test_neko_demo.py: 8 warnings
+tests/test_planner_ai.py: 32 warnings
+tests/test_planner_delivery.py: 74 warnings
+tests/test_shichusuimei_overseas_engine.py: 6 warnings
+tests/test_transit_addon_prompt_equivalence.py: 3672 warnings
+tests/test_western_w0_products.py: 5 warnings
+tests/test_yaml_integrity.py: 1046 warnings
+tests/test_yaml_v2_time_provisional.py: 11 warnings
+  C:\Users\haser\nanami-products\tmp\prompt-separation\services\western_calc.py:344: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "generated_at": datetime.utcnow().isoformat(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1971 passed, 5622 warnings, 160 subtests passed in 149.23s (0:02:29)

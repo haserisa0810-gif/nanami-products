@@ -1,0 +1,13 @@
+{
+  "services/shichusuimei_calc.py": "bdcf3e6deff03327fe64e4e1af3c763cf25ac5aa9f1ad294fe7824ae59e4645b",
+  "services/shichusuimei_structure.py": "c473729273ae8d637d52024dd4faa71f1a547df3480ef6b40ab795dcf0bbe936",
+  "services/western_calc.py": "51aec127c259f9f6f26c842c6e613015ae8917da63d9e174450c97a10b18fbec",
+  "services/western_core.py": "88aeb17272cc7fec401a3a67f98740bcbab215a993c68d080ff409adcdbef31c",
+  "services/transit_builder.py": "213cf73ab6c85cdb0cb0111b457b6eaea3b7130bf0073705b0fe82a01df9ad35",
+  "services/asteroid_provider.py": "41cdcfc443c599a7b6ab9757b49c678786296426252af4b17750fdfd46b01f64",
+  "services/transit_yaml.py": "b56c8acf0ecfb236fc0137c576ca67e49118b4da929d932655ca5795ecf2e7a0",
+  "services/long_term_transit_yaml.py": "884d91e5e7cfbce40bda9b5e9e645687f10057b34e020ea4c560964986b1f8f2",
+  "services/yaml_exporter.py": "47f9b140cf4d55660b099cc2c5cbd894ade733ba1b66a6ad05767b5f3e0717ab",
+  "services/location.py": "03d549bcccbf9a62eab394507b3b0530cf81a81ce6e6ba684fbc4b34c86d2652",
+  "services/shichusuimei_year_selection.py": "fb57954cc5805a7e9d37a21512d19c8ce73a42fb15b6d254d3a0eb4b34161195"
+}

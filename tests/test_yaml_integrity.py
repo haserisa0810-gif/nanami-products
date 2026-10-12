@@ -74,10 +74,10 @@ class YamlIntegrityTest(unittest.TestCase):
         self.assertIn("natal_house", without_asteroids)
         self.assertIn("mundane_house", without_asteroids)
 
-    def test_all_generated_prompts_include_acg_consultation_guidance(self) -> None:
+    def test_western_generated_prompts_keep_acg_consultation_guidance(self) -> None:
         prompts = (
             build_prompt(),
-            build_prompt(include_shichusuimei=True),
+            build_prompt(include_shichusuimei=True, include_western=True),
             build_prompt(include_transit=True),
             build_prompt(include_asteroids=True, include_transit=True),
         )
@@ -91,6 +91,8 @@ class YamlIntegrityTest(unittest.TestCase):
             self.assertIn("ACGアプリから出力されたYAMLを会話へ貼り付けて", prompt)
             self.assertIn("出生図・現在のトランジット・相談内容", prompt)
             self.assertEqual(prompt.count("https://chart.nanami-astro.com/acg"), 1)
+
+        self.assertNotIn("ACG", build_prompt(include_shichusuimei=True))
 
     def test_light_detail_full_variants_preserve_addon_role_and_variant(self) -> None:
         _full_yaml, _prompt_text, full_doc = build_product_yaml(

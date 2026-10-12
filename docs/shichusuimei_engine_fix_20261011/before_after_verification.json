@@ -1,0 +1,2778 @@
+{
+  "p0_isolated_rule00_comparison": [
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Asia/Tokyo",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Asia/Seoul",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Europe/London",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Europe/London",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Europe/London",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Europe/London",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "America/New_York",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "America/New_York",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "America/New_York",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "America/New_York",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "America/Los_Angeles",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Pacific/Honolulu",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Australia/Sydney",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "UTC",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "UTC",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "UTC",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "UTC",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "甲子",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "癸亥",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "丙寅",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Pacific/Kiritimati",
+      "before": "己巳",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T00:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T01:01:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T22:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2000-01-07T23:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "乙丑",
+      "after": "甲子",
+      "independent_expected": "甲子",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T00:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T01:01:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T22:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:30:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-02-29T23:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "甲子",
+      "after": "癸亥",
+      "independent_expected": "癸亥",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T00:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T01:01:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T22:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:30:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-07-01T23:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "丁卯",
+      "after": "丙寅",
+      "independent_expected": "丙寅",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T00:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T01:01:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T22:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:00:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:30:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    },
+    {
+      "local": "2024-12-31T23:59:00",
+      "timezone": "Pacific/Pago_Pago",
+      "before": "庚午",
+      "after": "己巳",
+      "independent_expected": "己巳",
+      "after_matches": true
+    }
+  ],
+  "p0_summary": {
+    "cases": 320,
+    "before_mismatch": 184,
+    "after_mismatch": 0
+  },
+  "japanese_daytime_regression": [
+    {
+      "payload": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 12,
+        "minute": 30,
+        "gender": "female"
+      },
+      "day_change_at_23": false,
+      "normalized_data_unchanged_except_new_status": true
+    },
+    {
+      "payload": {
+        "year": 1990,
+        "month": 5,
+        "day": 15,
+        "hour": 12,
+        "minute": 30,
+        "gender": "female"
+      },
+      "day_change_at_23": true,
+      "normalized_data_unchanged_except_new_status": true
+    },
+    {
+      "payload": {
+        "year": 2000,
+        "month": 1,
+        "day": 7,
+        "hour": 8,
+        "minute": 0,
+        "gender": "male"
+      },
+      "day_change_at_23": false,
+      "normalized_data_unchanged_except_new_status": true
+    },
+    {
+      "payload": {
+        "year": 2000,
+        "month": 1,
+        "day": 7,
+        "hour": 8,
+        "minute": 0,
+        "gender": "male"
+      },
+      "day_change_at_23": true,
+      "normalized_data_unchanged_except_new_status": true
+    },
+    {
+      "payload": {
+        "year": 2024,
+        "month": 2,
+        "day": 29,
+        "hour": 20,
+        "minute": 41,
+        "gender": "female"
+      },
+      "day_change_at_23": false,
+      "normalized_data_unchanged_except_new_status": true
+    },
+    {
+      "payload": {
+        "year": 2024,
+        "month": 2,
+        "day": 29,
+        "hour": 20,
+        "minute": 41,
+        "gender": "female"
+      },
+      "day_change_at_23": true,
+      "normalized_data_unchanged_except_new_status": true
+    }
+  ],
+  "japanese_boundary_changes": [
+    {
+      "local": "2000-01-07T00:30:00",
+      "day_change_at_23": false,
+      "before": {
+        "day": "甲子",
+        "hour": "甲子"
+      },
+      "after": {
+        "day": "癸亥",
+        "hour": "壬子"
+      }
+    },
+    {
+      "local": "2000-01-07T00:30:00",
+      "day_change_at_23": true,
+      "before": {
+        "day": "癸亥",
+        "hour": "壬子"
+      },
+      "after": {
+        "day": "甲子",
+        "hour": "甲子"
+      }
+    },
+    {
+      "local": "2000-01-07T01:30:00",
+      "day_change_at_23": false,
+      "before": {
+        "day": "甲子",
+        "hour": "乙丑"
+      },
+      "after": {
+        "day": "甲子",
+        "hour": "乙丑"
+      }
+    },
+    {
+      "local": "2000-01-07T01:30:00",
+      "day_change_at_23": true,
+      "before": {
+        "day": "甲子",
+        "hour": "乙丑"
+      },
+      "after": {
+        "day": "甲子",
+        "hour": "乙丑"
+      }
+    },
+    {
+      "local": "2000-01-07T22:30:00",
+      "day_change_at_23": false,
+      "before": {
+        "day": "甲子",
+        "hour": "乙亥"
+      },
+      "after": {
+        "day": "甲子",
+        "hour": "乙亥"
+      }
+    },
+    {
+      "local": "2000-01-07T22:30:00",
+      "day_change_at_23": true,
+      "before": {
+        "day": "甲子",
+        "hour": "乙亥"
+      },
+      "after": {
+        "day": "甲子",
+        "hour": "乙亥"
+      }
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "day_change_at_23": false,
+      "before": {
+        "day": "甲子",
+        "hour": "甲子"
+      },
+      "after": {
+        "day": "甲子",
+        "hour": "甲子"
+      }
+    },
+    {
+      "local": "2000-01-07T23:30:00",
+      "day_change_at_23": true,
+      "before": {
+        "day": "甲子",
+        "hour": "甲子"
+      },
+      "after": {
+        "day": "乙丑",
+        "hour": "丙子"
+      }
+    }
+  ],
+  "western_regression": [
+    {
+      "timezone": "Asia/Tokyo",
+      "combined": false,
+      "western_block_unchanged": true
+    },
+    {
+      "timezone": "Asia/Tokyo",
+      "combined": true,
+      "western_block_unchanged": true
+    },
+    {
+      "timezone": "America/Los_Angeles",
+      "combined": false,
+      "western_block_unchanged": true
+    },
+    {
+      "timezone": "America/Los_Angeles",
+      "combined": true,
+      "western_block_unchanged": true
+    }
+  ],
+  "changed_application_files": [
+    "routes.py",
+    "services/api_calc.py",
+    "services/api_tags.py",
+    "services/prompt_builder.py",
+    "services/shichusuimei_annual_report.py",
+    "services/shichusuimei_calc.py",
+    "services/shichu_chart.py",
+    "services/yaml_exporter.py",
+    "templates/addon_form.html",
+    "templates/nanami_api_spec.html",
+    "templates/redeem.html",
+    "templates/redeem_shichu.html"
+  ],
+  "western_engine_sources_unchanged": true
+}

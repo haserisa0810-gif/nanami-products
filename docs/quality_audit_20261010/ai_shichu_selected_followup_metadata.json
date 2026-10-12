@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-10-10T08:29:36.661924+00:00",
+  "requested_model": "claude-opus-5-5",
+  "reported_models": [
+    "claude-opus-5-5"
+  ],
+  "verified": true,
+  "returncode": 0,
+  "tools_enabled": false,
+  "input_sha256": "0034a5ffddfb635e5596de3927db79de1294b719c9d609d72a7f490fc2c12527"
+}

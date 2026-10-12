@@ -118,7 +118,7 @@
               <option value="male"
                 {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>
             </select>
-            <small>四柱推命の大運計算に使用します。不明な場合は「指定なし」のまま送信できます。</small>
+            <small>大運の順逆に使用します。「指定なし」では命式・原局と流年を計算し、大運・起運は未確定として保留します。</small>
           </label>
           {% else %}
           {# ホロスコープは性別不要。hidden で unknown を送信 #}
@@ -185,7 +185,7 @@
               <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>1時（丑の刻）— 標準</option>
               <option value="true"  {% if form and form.day_change_at_23 %}selected{% endif %}>23時</option>
             </select>
-            <small>23時切替の流派で見る場合のみ「23時」を選択してください。</small>
+            <small>出生地の現地時刻で判定します。1時：0時台は前日、23時：23時台は翌日の日柱。真太陽時補正は行いません。</small>
           </label>
         </div>
         {% endif %}

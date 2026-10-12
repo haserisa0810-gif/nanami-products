@@ -1,0 +1,418 @@
+version: nanami-products-yaml-v1
+meta:
+  schema_version: '2.0'
+  product_type: personal_ai_astrology_yaml
+  profile_id: profile_61e636cc6babbcc9
+  chart_id: chart_0ec04731fbc7fa27
+  generated_at: '2026-10-10T17:36:01.164146+09:00'
+  data_role: base_chart
+  yaml_variant: full
+base: null
+product:
+  type: personal_ai_astrology_yaml
+  options:
+    western_natal: true
+    asteroids: false
+    transit: false
+    shichusuimei: false
+generated_at: '2026-10-10T17:36:01.164146+09:00'
+calculation:
+  engine: Swiss Ephemeris
+  zodiac: tropical
+  house_system: P
+  timezone: Asia/Tokyo
+  location_source: input
+  ephemeris_version: null
+birth_time:
+  input_value: '12:30'
+  calculation_time: '12:30'
+  accuracy: exact
+  note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+interpretation_flags:
+  allow_house_interpretation: true
+  allow_asc_mc_interpretation: true
+  house_reliability: high
+  moon_reliability: high
+  use_houses_as_reference_only: false
+assets:
+  horoscope_svg:
+    available: true
+    file_name: horoscope.svg
+    generated_from_chart_id: chart_0ec04731fbc7fa27
+  shichusuimei_svg:
+    available: false
+    file_name: shichusuimei-chart.svg
+    generated_from_chart_id: chart_0ec04731fbc7fa27
+  yaml_lite:
+    available: false
+  yaml_detail:
+    available: false
+  yaml_full:
+    available: true
+input:
+  title: Quality audit fictional A
+  birth_date: '1990-05-15'
+  birth_time: '12:30'
+  calculation_time: '12:30'
+  birth_time_accuracy: exact
+  birth_time_note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+  prefecture: 東京都
+  birth_place_kind: domestic
+  birth_place: 東京
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
+  gender: female
+usage_note:
+  for_ai: このYAMLは計算済みデータです。AIに解釈させる場合、生年月日から再計算させず、この値を根拠にしてください。
+  not_included: 鑑定本文は含みません。AI解釈用の構造化データです。
+  continuous_use: このYAMLはAIに一度読み込ませて継続的に使える基礎データです。今後、月ごとのトランジット追加データと組み合わせて使うこともできます。
+systems:
+  western:
+    natal:
+      engine: Swiss Ephemeris
+      house_system: P
+      subject:
+        datetime: '1990-05-15T12:30:00+09:00'
+        location:
+          lat: 35.6895
+          lng: 139.6917
+          city: 東京
+      bodies:
+        Sun:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 24.0546
+          absolute_longitude: 54.0546
+          house: 9
+          retrograde: false
+        Moon:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 22.8005
+          absolute_longitude: 292.8005
+          house: 5
+          retrograde: false
+        Mercury:
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 8.0598
+          absolute_longitude: 38.0598
+          house: 9
+          retrograde: true
+        Venus:
+          sign: Ari
+          sign_ja: 牡羊座
+          degree: 12.4144
+          absolute_longitude: 12.4144
+          house: 8
+          retrograde: false
+        Mars:
+          sign: Pis
+          sign_ja: 魚座
+          degree: 18.0708
+          absolute_longitude: 348.0708
+          house: 7
+          retrograde: false
+        Jupiter:
+          sign: Can
+          sign_ja: 蟹座
+          degree: 9.4748
+          absolute_longitude: 99.4748
+          house: 10
+          retrograde: false
+        Saturn:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 25.2553
+          absolute_longitude: 295.2553
+          house: 5
+          retrograde: true
+        Uranus:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 9.1925
+          absolute_longitude: 279.1925
+          house: 4
+          retrograde: true
+        Neptune:
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 14.3581
+          absolute_longitude: 284.3581
+          house: 5
+          retrograde: true
+        Pluto:
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 16.1772
+          absolute_longitude: 226.1772
+          house: 3
+          retrograde: true
+        North Node:
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 10.2681
+          absolute_longitude: 310.2681
+          house: 5
+          retrograde: true
+        South Node:
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 10.2681
+          absolute_longitude: 130.2681
+          house: 11
+          retrograde: true
+        ASC:
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 9.1143
+          absolute_longitude: 159.1143
+          house: 1
+          retrograde: false
+        MC:
+          sign: Gem
+          sign_ja: 双子座
+          degree: 6.6478
+          absolute_longitude: 66.6478
+          house: 10
+          retrograde: false
+      houses:
+        '1':
+          sign: Vir
+          sign_ja: 乙女座
+          degree: 9.1143
+          absolute_longitude: 159.1143
+        '2':
+          sign: Lib
+          sign_ja: 天秤座
+          degree: 4.3304
+          absolute_longitude: 184.3304
+        '3':
+          sign: Sco
+          sign_ja: 蠍座
+          degree: 3.9084
+          absolute_longitude: 213.9084
+        '4':
+          sign: Sag
+          sign_ja: 射手座
+          degree: 6.6478
+          absolute_longitude: 246.6478
+        '5':
+          sign: Cap
+          sign_ja: 山羊座
+          degree: 9.8703
+          absolute_longitude: 279.8703
+        '6':
+          sign: Aqu
+          sign_ja: 水瓶座
+          degree: 11.0473
+          absolute_longitude: 311.0473
+        '7':
+          sign: Pis
+          sign_ja: 魚座
+          degree: 9.1143
+          absolute_longitude: 339.1143
+        '8':
+          sign: Ari
+          sign_ja: 牡羊座
+          degree: 4.3304
+          absolute_longitude: 4.3304
+        '9':
+          sign: Tau
+          sign_ja: 牡牛座
+          degree: 3.9084
+          absolute_longitude: 33.9084
+        '10':
+          sign: Gem
+          sign_ja: 双子座
+          degree: 6.6478
+          absolute_longitude: 66.6478
+        '11':
+          sign: Can
+          sign_ja: 蟹座
+          degree: 9.8703
+          absolute_longitude: 99.8703
+        '12':
+          sign: Leo
+          sign_ja: 獅子座
+          degree: 11.0473
+          absolute_longitude: 131.0473
+      aspects:
+      - body1: North Node
+        body2: South Node
+        aspect: opposition
+        orb: 0.0
+      - body1: Uranus
+        body2: ASC
+        aspect: trine
+        orb: 0.08
+      - body1: Jupiter
+        body2: Uranus
+        aspect: opposition
+        orb: 0.28
+      - body1: Jupiter
+        body2: ASC
+        aspect: sextile
+        orb: 0.36
+      - body1: Lilith
+        body2: MC
+        aspect: opposition
+        orb: 0.48
+      - body1: Venus
+        body2: Chiron
+        aspect: square
+        orb: 0.77
+      - body1: Mercury
+        body2: ASC
+        aspect: trine
+        orb: 1.05
+      - body1: Mercury
+        body2: Uranus
+        aspect: trine
+        orb: 1.13
+      - body1: Neptune
+        body2: Chiron
+        aspect: opposition
+        orb: 1.17
+      - body1: Sun
+        body2: Saturn
+        aspect: trine
+        orb: 1.2
+      - body1: Sun
+        body2: Moon
+        aspect: trine
+        orb: 1.25
+      - body1: Mercury
+        body2: Jupiter
+        aspect: sextile
+        orb: 1.42
+      - body1: Neptune
+        body2: Pluto
+        aspect: sextile
+        orb: 1.82
+      - body1: Mars
+        body2: Pluto
+        aspect: trine
+        orb: 1.89
+      - body1: Venus
+        body2: Neptune
+        aspect: square
+        orb: 1.94
+      - body1: Venus
+        body2: North Node
+        aspect: sextile
+        orb: 2.15
+      - body1: Venus
+        body2: South Node
+        aspect: trine
+        orb: 2.15
+      - body1: Mercury
+        body2: North Node
+        aspect: square
+        orb: 2.21
+      - body1: Mercury
+        body2: South Node
+        aspect: square
+        orb: 2.21
+      - body1: Moon
+        body2: Saturn
+        aspect: conjunction
+        orb: 2.45
+      - body1: ASC
+        body2: MC
+        aspect: square
+        orb: 2.47
+      - body1: Lilith
+        body2: ASC
+        aspect: square
+        orb: 2.94
+      - body1: Venus
+        body2: Jupiter
+        aspect: square
+        orb: 2.94
+      - body1: Pluto
+        body2: Chiron
+        aspect: trine
+        orb: 2.99
+      - body1: Venus
+        body2: Uranus
+        aspect: square
+        orb: 3.22
+      - body1: North Node
+        body2: MC
+        aspect: trine
+        orb: 3.62
+      - body1: South Node
+        body2: MC
+        aspect: sextile
+        orb: 3.62
+      - body1: Jupiter
+        body2: Chiron
+        aspect: conjunction
+        orb: 3.71
+      - body1: Mars
+        body2: Neptune
+        aspect: sextile
+        orb: 3.71
+      - body1: Uranus
+        body2: Chiron
+        aspect: opposition
+        orb: 3.99
+      - body1: South Node
+        body2: Lilith
+        aspect: trine
+        orb: 4.1
+      - body1: Jupiter
+        body2: Neptune
+        aspect: opposition
+        orb: 4.88
+      - body1: Mars
+        body2: Chiron
+        aspect: trine
+        orb: 4.89
+      - body1: Uranus
+        body2: Neptune
+        aspect: conjunction
+        orb: 5.17
+      - body1: Neptune
+        body2: ASC
+        aspect: trine
+        orb: 5.24
+      - body1: Pluto
+        body2: North Node
+        aspect: square
+        orb: 5.91
+      - body1: Pluto
+        body2: South Node
+        aspect: square
+        orb: 5.91
+      - body1: Sun
+        body2: Pluto
+        aspect: opposition
+        orb: 7.88
+      summary:
+        elements:
+          fire: 1
+          earth: 6
+          air: 0
+          water: 3
+        modes:
+          cardinal: 6
+          fixed: 3
+          mutable: 1
+        dominant_signs:
+        - sign: Cap
+          sign_ja: 山羊座
+          count: 4
+        - sign: Tau
+          sign_ja: 牡牛座
+          count: 2
+        - sign: Ari
+          sign_ja: 牡羊座
+          count: 1
+      skipped_bodies: []
+    asteroids: null
+    transit: null
+  shichusuimei: null

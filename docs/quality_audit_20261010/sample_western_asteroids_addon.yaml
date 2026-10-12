@@ -1,0 +1,128 @@
+version: nanami-products-yaml-addon-v1
+meta:
+  schema_version: '2.0'
+  product_type: western_asteroids_addon
+  profile_id: profile_61e636cc6babbcc9
+  chart_id: chart_c4dfa1d3ca129f29
+  generated_at: '2026-10-10T17:36:02.918776+09:00'
+  data_role: addon
+  yaml_variant: full
+  addon_type: western_asteroids
+  source_logic: western_full_asteroid_calculation
+base:
+  target_product_type: western_basic
+  target_system: western
+  merge_path: systems.western.asteroids
+  compatible_with:
+  - western_basic
+  - personal_ai_astrology_yaml_natal
+product:
+  type: western_asteroids_addon
+  label: ホロスコープ：小惑星追加
+  options:
+    addon: true
+    western_natal: false
+    asteroids: true
+    transit: false
+    shichusuimei: false
+generated_at: '2026-10-10T17:36:02.918776+09:00'
+calculation:
+  engine: Swiss Ephemeris
+  zodiac: tropical
+  house_system: P
+  timezone: Asia/Tokyo
+  location_source: input
+  ephemeris_version: null
+birth_time:
+  input_value: '12:30'
+  calculation_time: '12:30'
+  accuracy: exact
+  note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+interpretation_flags:
+  allow_house_interpretation: true
+  allow_asc_mc_interpretation: true
+  house_reliability: high
+  moon_reliability: high
+  use_houses_as_reference_only: false
+assets:
+  yaml_addon:
+    available: true
+    merge_path: systems.western.asteroids
+  horoscope_svg:
+    available: false
+  shichusuimei_svg:
+    available: false
+input:
+  title: Quality audit fictional A
+  birth_date: '1990-05-15'
+  birth_time: '12:30'
+  calculation_time: '12:30'
+  birth_time_accuracy: exact
+  birth_time_note: 出生時刻あり。ハウス・ASC・MCを通常通り使用できます。
+  prefecture: 東京都
+  birth_place_kind: domestic
+  birth_place: 東京
+  birth_lat: 35.6895
+  birth_lng: 139.6917
+  timezone: Asia/Tokyo
+  timezone_offset_hours: 9.0
+  gender: female
+usage_note:
+  for_ai: これは追加部品データです。基本版ホロスコープYAMLを土台にし、このYAMLの小惑星データを追加して解釈してください。
+  merge_instruction: systems.western.asteroids を、同じ出生情報で作成済みの基本版YAMLへ追加する想定です。
+  not_included: 出生図全体・トランジット・鑑定本文は含みません。小惑星追加用の計算済みデータです。
+systems:
+  western:
+    natal: null
+    asteroids:
+      Lilith:
+        sign: Sag
+        sign_ja: 射手座
+        degree: 6.1711
+        absolute_longitude: 246.1711
+        house: 3
+        retrograde: false
+      Chiron:
+        sign: Can
+        sign_ja: 蟹座
+        degree: 13.1842
+        absolute_longitude: 103.1842
+        house: 11
+        retrograde: false
+      Ceres:
+        sign: Can
+        sign_ja: 蟹座
+        degree: 15.0501
+        absolute_longitude: 105.0501
+        house: 11
+        retrograde: false
+      Pallas:
+        sign: Tau
+        sign_ja: 牡牛座
+        degree: 28.2549
+        absolute_longitude: 58.2549
+        house: 9
+        retrograde: false
+      Juno:
+        sign: Sco
+        sign_ja: 蠍座
+        degree: 15.7149
+        absolute_longitude: 225.7149
+        house: 3
+        retrograde: true
+      Vesta:
+        sign: Ari
+        sign_ja: 牡羊座
+        degree: 21.4846
+        absolute_longitude: 21.4846
+        house: 8
+        retrograde: false
+      Vertex:
+        sign: Aqu
+        sign_ja: 水瓶座
+        degree: 2.9788
+        absolute_longitude: 302.9788
+        house: 5
+        retrograde: false
+    transit: null
+  shichusuimei: null

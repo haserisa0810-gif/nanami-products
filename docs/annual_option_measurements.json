@@ -1,0 +1,296 @@
+{
+  "measurement": {
+    "tiktoken_version": "0.14.0",
+    "encodings": [
+      "o200k_base",
+      "cl100k_base"
+    ],
+    "counted_text": "UTF-8 YAML only; combined text includes a YAML document separator",
+    "model_independent": true,
+    "chat_message_overhead_included": false,
+    "ai_prompt_overhead_included": false,
+    "fictional_cases": [
+      {
+        "name": "spring_exact",
+        "birth_date": "1990-05-15",
+        "birth_time": "08:30",
+        "gender": "female",
+        "birth_time_accuracy": "exact"
+      },
+      {
+        "name": "winter_exact",
+        "birth_date": "1984-01-25",
+        "birth_time": "23:40",
+        "gender": "male",
+        "birth_time_accuracy": "exact"
+      },
+      {
+        "name": "summer_unknown",
+        "birth_date": "2000-07-07",
+        "birth_time": null,
+        "gender": "female",
+        "birth_time_accuracy": "unknown"
+      }
+    ],
+    "generated_at": "2026-10-09T22:46:44.056176+00:00"
+  },
+  "base_full_yaml": [
+    {
+      "case": "spring_exact",
+      "bytes_utf8": 169154,
+      "characters": 158594,
+      "tokens_o200k_base": 38000,
+      "tokens_cl100k_base": 41092
+    },
+    {
+      "case": "winter_exact",
+      "bytes_utf8": 166035,
+      "characters": 155707,
+      "tokens_o200k_base": 37447,
+      "tokens_cl100k_base": 40352
+    },
+    {
+      "case": "summer_unknown",
+      "bytes_utf8": 152645,
+      "characters": 142627,
+      "tokens_o200k_base": 34599,
+      "tokens_cl100k_base": 37423
+    }
+  ],
+  "annual_addon": [
+    {
+      "case": "spring_exact",
+      "years": 5,
+      "layout": "shared",
+      "bytes_utf8": 21511,
+      "characters": 19795,
+      "lossless_years_verified": 5,
+      "file": "spring_exact_5years_shared.yaml",
+      "tokens_o200k_base": 5613,
+      "combined_tokens_o200k_base": 43614,
+      "tokens_cl100k_base": 6125,
+      "combined_tokens_cl100k_base": 47218
+    },
+    {
+      "case": "spring_exact",
+      "years": 5,
+      "layout": "expanded",
+      "bytes_utf8": 40718,
+      "characters": 37192,
+      "lossless_years_verified": 5,
+      "file": "spring_exact_5years_expanded.yaml",
+      "tokens_o200k_base": 10351,
+      "combined_tokens_o200k_base": 48352,
+      "tokens_cl100k_base": 11390,
+      "combined_tokens_cl100k_base": 52483
+    },
+    {
+      "case": "spring_exact",
+      "years": 10,
+      "layout": "shared",
+      "bytes_utf8": 39637,
+      "characters": 36959,
+      "lossless_years_verified": 10,
+      "file": "spring_exact_10years_shared.yaml",
+      "tokens_o200k_base": 10340,
+      "combined_tokens_o200k_base": 48341,
+      "tokens_cl100k_base": 11187,
+      "combined_tokens_cl100k_base": 52280
+    },
+    {
+      "case": "spring_exact",
+      "years": 10,
+      "layout": "expanded",
+      "bytes_utf8": 81451,
+      "characters": 74811,
+      "lossless_years_verified": 10,
+      "file": "spring_exact_10years_expanded.yaml",
+      "tokens_o200k_base": 20676,
+      "combined_tokens_o200k_base": 58677,
+      "tokens_cl100k_base": 22666,
+      "combined_tokens_cl100k_base": 63759
+    },
+    {
+      "case": "spring_exact",
+      "years": 20,
+      "layout": "shared",
+      "bytes_utf8": 71408,
+      "characters": 67084,
+      "lossless_years_verified": 20,
+      "file": "spring_exact_20years_shared.yaml",
+      "tokens_o200k_base": 18656,
+      "combined_tokens_o200k_base": 56657,
+      "tokens_cl100k_base": 20100,
+      "combined_tokens_cl100k_base": 61193
+    },
+    {
+      "case": "spring_exact",
+      "years": 20,
+      "layout": "expanded",
+      "bytes_utf8": 158451,
+      "characters": 145861,
+      "lossless_years_verified": 20,
+      "file": "spring_exact_20years_expanded.yaml",
+      "tokens_o200k_base": 40208,
+      "combined_tokens_o200k_base": 78209,
+      "tokens_cl100k_base": 43934,
+      "combined_tokens_cl100k_base": 85027
+    },
+    {
+      "case": "winter_exact",
+      "years": 5,
+      "layout": "shared",
+      "bytes_utf8": 23024,
+      "characters": 21242,
+      "lossless_years_verified": 5,
+      "file": "winter_exact_5years_shared.yaml",
+      "tokens_o200k_base": 6059,
+      "combined_tokens_o200k_base": 43507,
+      "tokens_cl100k_base": 6608,
+      "combined_tokens_cl100k_base": 46961
+    },
+    {
+      "case": "winter_exact",
+      "years": 5,
+      "layout": "expanded",
+      "bytes_utf8": 39474,
+      "characters": 36074,
+      "lossless_years_verified": 5,
+      "file": "winter_exact_5years_expanded.yaml",
+      "tokens_o200k_base": 10124,
+      "combined_tokens_o200k_base": 47572,
+      "tokens_cl100k_base": 11123,
+      "combined_tokens_cl100k_base": 51476
+    },
+    {
+      "case": "winter_exact",
+      "years": 10,
+      "layout": "shared",
+      "bytes_utf8": 37132,
+      "characters": 34626,
+      "lossless_years_verified": 10,
+      "file": "winter_exact_10years_shared.yaml",
+      "tokens_o200k_base": 9773,
+      "combined_tokens_o200k_base": 47221,
+      "tokens_cl100k_base": 10586,
+      "combined_tokens_cl100k_base": 50939
+    },
+    {
+      "case": "winter_exact",
+      "years": 10,
+      "layout": "expanded",
+      "bytes_utf8": 75092,
+      "characters": 68908,
+      "lossless_years_verified": 10,
+      "file": "winter_exact_10years_expanded.yaml",
+      "tokens_o200k_base": 19198,
+      "combined_tokens_o200k_base": 56646,
+      "tokens_cl100k_base": 21031,
+      "combined_tokens_cl100k_base": 61384
+    },
+    {
+      "case": "winter_exact",
+      "years": 20,
+      "layout": "shared",
+      "bytes_utf8": 71751,
+      "characters": 67409,
+      "lossless_years_verified": 20,
+      "file": "winter_exact_20years_shared.yaml",
+      "tokens_o200k_base": 18729,
+      "combined_tokens_o200k_base": 56177,
+      "tokens_cl100k_base": 20234,
+      "combined_tokens_cl100k_base": 60587
+    },
+    {
+      "case": "winter_exact",
+      "years": 20,
+      "layout": "expanded",
+      "bytes_utf8": 156732,
+      "characters": 144312,
+      "lossless_years_verified": 20,
+      "file": "winter_exact_20years_expanded.yaml",
+      "tokens_o200k_base": 39780,
+      "combined_tokens_o200k_base": 77228,
+      "tokens_cl100k_base": 43494,
+      "combined_tokens_cl100k_base": 83847
+    },
+    {
+      "case": "summer_unknown",
+      "years": 5,
+      "layout": "shared",
+      "bytes_utf8": 20446,
+      "characters": 18840,
+      "lossless_years_verified": 5,
+      "file": "summer_unknown_5years_shared.yaml",
+      "tokens_o200k_base": 5464,
+      "combined_tokens_o200k_base": 40064,
+      "tokens_cl100k_base": 5915,
+      "combined_tokens_cl100k_base": 43339
+    },
+    {
+      "case": "summer_unknown",
+      "years": 5,
+      "layout": "expanded",
+      "bytes_utf8": 34794,
+      "characters": 31694,
+      "lossless_years_verified": 5,
+      "file": "summer_unknown_5years_expanded.yaml",
+      "tokens_o200k_base": 9042,
+      "combined_tokens_o200k_base": 43642,
+      "tokens_cl100k_base": 9880,
+      "combined_tokens_cl100k_base": 47304
+    },
+    {
+      "case": "summer_unknown",
+      "years": 10,
+      "layout": "shared",
+      "bytes_utf8": 34524,
+      "characters": 32204,
+      "lossless_years_verified": 10,
+      "file": "summer_unknown_10years_shared.yaml",
+      "tokens_o200k_base": 9158,
+      "combined_tokens_o200k_base": 43758,
+      "tokens_cl100k_base": 9848,
+      "combined_tokens_cl100k_base": 47272
+    },
+    {
+      "case": "summer_unknown",
+      "years": 10,
+      "layout": "expanded",
+      "bytes_utf8": 68027,
+      "characters": 62303,
+      "lossless_years_verified": 10,
+      "file": "summer_unknown_10years_expanded.yaml",
+      "tokens_o200k_base": 17546,
+      "combined_tokens_o200k_base": 52146,
+      "tokens_cl100k_base": 19103,
+      "combined_tokens_cl100k_base": 56527
+    },
+    {
+      "case": "summer_unknown",
+      "years": 20,
+      "layout": "shared",
+      "bytes_utf8": 64391,
+      "characters": 60549,
+      "lossless_years_verified": 20,
+      "file": "summer_unknown_20years_shared.yaml",
+      "tokens_o200k_base": 17026,
+      "combined_tokens_o200k_base": 51626,
+      "tokens_cl100k_base": 18274,
+      "combined_tokens_cl100k_base": 55698
+    },
+    {
+      "case": "summer_unknown",
+      "years": 20,
+      "layout": "expanded",
+      "bytes_utf8": 134130,
+      "characters": 123184,
+      "lossless_years_verified": 20,
+      "file": "summer_unknown_20years_expanded.yaml",
+      "tokens_o200k_base": 34515,
+      "combined_tokens_o200k_base": 69115,
+      "tokens_cl100k_base": 37579,
+      "combined_tokens_cl100k_base": 75003
+    }
+  ]
+}

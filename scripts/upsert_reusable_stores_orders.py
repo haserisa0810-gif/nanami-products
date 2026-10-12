@@ -14,6 +14,7 @@ TEST_ORDERS = [
     ("9000000002", "western_full", "reusable", "reusable [NP-WF] order", "stores"),
     ("9000000003", "shichu", "reusable", "reusable [NP-SC] order", "stores"),
     ("9000000004", "transit_yaml", "reusable", "reusable [NP-TY] transit yaml order", "stores"),
+    ("9000000005", "shichu_full", "reusable", "reusable [NP-SCF] order", "stores"),
 ]
 
 # addon（追加部品）のテストは、この表ではなく登録済みの permanent 番号を使う。

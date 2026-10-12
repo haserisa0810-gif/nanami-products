@@ -34,6 +34,8 @@ from email.header import decode_header as _decode_header_raw
 from email.message import Message
 from typing import Any
 import psycopg2
+from services import product_catalog, order_holds
+from services.purchase_mail_items import analyze_purchase_items
 from psycopg2.extras import RealDictCursor
 
 # ── 定数 ──────────────────────────────────────────────────────────
@@ -62,70 +64,8 @@ _ORDER_NO_RE = re.compile(r"\b(\d{10})\b")
 _SUBJECT_ORDER_NO_RE = re.compile(
     r"[（(]\s*(?:オーダー番号|注文番号)\s*[：:]\s*([0-9]{10})\s*[)）]"
 )
-# 商品名コードからフォーム種別を判定する。STORESの商品名に
-# [NP-WB] / [NP-WF] / [NP-WA] / [NP-WT] / [NP-SF] / [NP-SC] / [NP-TY] を入れておく前提。
-# Payhip商品は [NP-AA]（小惑星addon）/ [NP-TA]（31日トランジットaddon）も使う
-# （routes.PAYHIP_PRODUCTS と対応させること）。
-_PRODUCT_CODE_PATTERNS = [
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?ACG\s*[\]］】]?", re.I), "acg_bundle"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WBA\s*[\]］】]?", re.I), "western_asteroids"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WBT\s*[\]］】]?", re.I), "western_transit"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WB\s*[\]］】]?", re.I), "western_basic"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WF\s*[\]］】]?", re.I), "western_full"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WA\s*[\]］】]?", re.I), "western_asteroids_addon"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?AA\s*[\]］】]?", re.I), "western_asteroids_addon"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WT\s*[\]］】]?", re.I), "western_31days_transit_addon"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?TA\s*[\]］】]?", re.I), "western_31days_transit_addon"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?WL\s*[\]］】]?", re.I), "western_long_term_transits_addon"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?SF\s*[\]］】]?", re.I), "shichu_fortune_cycles_addon"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?SC\s*[\]］】]?", re.I), "shichu"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?TY\s*[\]］】]?", re.I), "transit_yaml"),
-    (re.compile(r"[\[［【]?\s*NP[-_ ]?API\s*[\]］】]?", re.I), "api_key"),
-]
-_PRODUCT_CODE_CAPTURE_RE = re.compile(
-    r"\bNP[-_ ]?(ACG|WBA|WBT|API|WB|WF|WA|AA|WT|TA|WL|SF|SC|TY)"
-    r"(?:[-_ ]?(JA|EN|ES|DE))?\b",
-    re.I,
-)
-_QUANTITY_RE = re.compile(
-    r"(?:個数|数量|Qty|Quantity)\s*[：:]?\s*([0-9]+)",
-    re.I,
-)
-# 旧商品名や手動テスト用の補助判定。通常運用では商品名コードを使う。
-_PRODUCT_TYPE_PATTERNS = [
-    (re.compile(r"ACG\s*(?:bundle|バンドル)|アストロカートグラフィ.*(?:bundle|バンドル)|astrocartography.*(?:bundle|premium)", re.I), "acg_bundle"),
-    (re.compile(r"(?:基本|basic|core).*(?:小惑星|asteroids?)|(?:小惑星|asteroids?).*(?:基本|basic|core)", re.I), "western_asteroids"),
-    (re.compile(r"(?:基本|basic|core).*(?:トランジット|transit)|(?:トランジット|transit).*(?:基本|basic|core)", re.I), "western_transit"),
-    (re.compile(
-        r"(?=[\s\S]*(?:birth\s+chart|natal\s+chart|出生図|ホロスコープ))"
-        r"(?=[\s\S]*(?:transits?|トランジット))"
-        r"(?=[\s\S]*(?:asteroids?|小惑星))",
-        re.I,
-    ), "western_full"),
-    (re.compile(r"FULL|フル|プレミアム|premium", re.I), "western_full"),
-    (re.compile(r"小惑星.*追加|追加.*小惑星|asteroids? addon|asteroids?追加", re.I), "western_asteroids_addon"),
-    # STORESの商品コードが通知本文に含まれない場合でも、38日／月替わりの
-    # トランジット追加商品を、イベント単発の transit_yaml と取り違えない。
-    (re.compile(
-        r"(?:38\s*日|３８\s*日|月替わり|指定月|38[- ]?day).*(?:トランジット|transit)"
-        r"|(?:トランジット|transit).*(?:38\s*日|３８\s*日|月替わり|指定月|38[- ]?day)"
-        r"|(?:トランジット|transit).*(?:追加|add[- ]?on)"
-        r"|(?:追加|add[- ]?on).*(?:トランジット|transit)",
-        re.I,
-    ), "western_31days_transit_addon"),
-    (re.compile(r"(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット).*追加|追加.*(31日|３１日|1ヶ月|１ヶ月|一ヶ月|トランジット)|transit.*addon", re.I), "western_31days_transit_addon"),
-    (re.compile(r"(大運|流年).*追加|追加.*(大運|流年)|fortune cycles? addon", re.I), "shichu_fortune_cycles_addon"),
-    (re.compile(r"四柱|しちゅう|シチュウ"), "shichu"),
-    # 単に Transits を含む出生図商品をイベント用 transit_yaml にしない。
-    # コードなし旧商品は、イベント／歴史／YAML版だと明示された場合だけ受け付ける。
-    (re.compile(
-        r"(?:トランジット|transit).*(?:YAML|イベント|歴史|特定日時)"
-        r"|(?:イベント|歴史|特定日時).*(?:トランジット|transit)",
-        re.I,
-    ), "transit_yaml"),
-    (re.compile(r"API|クレジット|credits?", re.I), "api_key"),
-    (re.compile(r"ライト|基本|ホロスコープ|western|basic", re.I), "western_basic"),
-]
+# Product identity is shared with Payhip and issuance checks.
+_QUANTITY_RE = re.compile(r"(?:個数|数量|Qty|Quantity)\s*[：:]?\s*([0-9]+)", re.I)
 # ── DB接続（pg_store.py と同じ方式） ──────────────────────────────
 
 def _get_conn():
@@ -203,6 +143,7 @@ def ensure_table() -> None:
             cur.execute(STORES_ORDERS_DDL)
             cur.execute(MARKETPLACE_ORDERS_DDL)
             cur.execute(ORDER_ENTITLEMENTS_DDL)
+            cur.execute(order_holds.DDL)
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS product_type TEXT")
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS provider TEXT")
             cur.execute(f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS buyer_reference TEXT")
@@ -267,35 +208,28 @@ def _decode_header(value: str | None) -> str:
 
 
 def _extract_text(msg: Message) -> str:
-    texts: list[str] = []
-    if msg.is_multipart():
-        for part in msg.walk():
-            ct = (part.get_content_type() or "").lower()
-            disp = (part.get("Content-Disposition") or "").lower()
-            if "attachment" in disp:
-                continue
-            payload = part.get_payload(decode=True)
-            if payload is None:
-                continue
-            charset = part.get_content_charset() or "utf-8"
-            content = payload.decode(charset, errors="replace")
-            if ct == "text/plain":
-                texts.append(content)
-            elif ct == "text/html" and not texts:
-                content = re.sub(r"<br\s*/?>", "\n", content, flags=re.I)
-                content = re.sub(r"</p\s*>", "\n", content, flags=re.I)
-                content = re.sub(r"<[^>]+>", " ", content)
-                texts.append(html.unescape(content))
+    # MIME alternatives are representations of one purchase, not two items.
+    plain_parts, html_parts = [], []
+    for part in (msg.walk() if msg.is_multipart() else [msg]):
+        ct = (part.get_content_type() or "").lower()
+        disp = (part.get("Content-Disposition") or "").lower()
+        if "attachment" in disp or ct not in {"text/plain", "text/html"}:
+            continue
+        payload = part.get_payload(decode=True)
+        if payload is None:
+            continue
+        content = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+        (plain_parts if ct == "text/plain" else html_parts).append(content)
+    if plain_parts:
+        body = plain_parts[0]
+    elif html_parts:
+        body = re.sub(r"<(script|style)\b[^>]*>.*?</\1\s*>", "", html_parts[0], flags=re.I | re.S)
+        body = re.sub(r"<br\s*/?>|</(?:p|div|tr|li|h[1-6])\s*>", "\n", body, flags=re.I)
+        body = html.unescape(re.sub(r"<[^>]+>", " ", body))
     else:
-        payload = msg.get_payload(decode=True)
-        if payload:
-            charset = msg.get_content_charset() or "utf-8"
-            texts.append(payload.decode(charset, errors="replace"))
-
-    body = "\n".join(x for x in texts if x).strip()
+        body = ""
     body = body.replace("\r\n", "\n").replace("\r", "\n")
-    body = re.sub(r"\n{3,}", "\n\n", body)
-    return body
+    return re.sub(r"\n{3,}", "\n\n", body).strip()
 
 
 def _parse_datetime(raw: str | None) -> datetime | None:
@@ -352,118 +286,20 @@ def _etsy_sender_filters(configured: str | None = None) -> list[str]:
 
 
 def _guess_product_type(subject: str, body: str) -> str | None:
-    text = f"{subject}\n{body}"
-    if re.search(r"[\[［【]?\s*NP[-_ ]?API\s*[\]］】]?", text, re.I):
-        if re.search(r"お試し|trial|try|starter|ライト", text, re.I):
-            return "api_key_trial"
-        if re.search(r"standard|スタンダード|通常|APIクレジット|クレジット", text, re.I):
-            return "api_key_standard"
-        return "api_key"
-    for pattern, product_type in _PRODUCT_CODE_PATTERNS:
-        if pattern.search(text):
-            return product_type
-    for pattern, product_type in _PRODUCT_TYPE_PATTERNS:
-        if pattern.search(text):
-            return product_type
-    return None
+    return product_catalog.resolve_text(f"{subject}\n{body}")
 
 
 def _normalize_sku(value: str) -> str:
-    """商品コードを ``NP-WF-ES`` 形式へ正規化する（言語制限には使わない）。"""
-    match = _PRODUCT_CODE_CAPTURE_RE.search(value or "")
-    if not match:
-        return ""
-    parts = ["NP", match.group(1).upper()]
-    if match.group(2):
-        parts.append(match.group(2).upper())
-    return "-".join(parts)
+    return product_catalog.sku_from_text(value) or ""
 
 
 def _extract_line_items(subject: str, body: str) -> list[dict[str, object]]:
-    """通知本文から商品明細と数量を抽出する。
-
-    SKU の言語サフィックスは発行権の識別情報として保持するが、フォームの
-    表示言語を制限する用途には使わない。メール形式に明細情報がない場合は、
-    従来の商品判定結果を数量1の明細として補完する。
-    """
-    lines = [re.sub(r"\s+", " ", line).strip() for line in body.splitlines()]
-    lines = [line for line in lines if line]
-    candidates: list[dict[str, object]] = []
-
-    for index, line in enumerate(lines):
-        sku = _normalize_sku(line)
-        product_type = _guess_product_type("", line)
-        is_labeled_product = bool(
-            re.match(r"^(?:商品|商品名|アイテム|アイテム名|Product|Item)\s*[：:]", line, re.I)
-        )
-        # SKU、明示的な商品行、または既知の現行商品名を候補とする。
-        if not sku and not is_labeled_product:
-            if not re.search(
-                r"Personalized Birth Chart Bundle|Personalized Astrology Planner|"
-                r"Astrocartography|AI-Readable (?:Natal|Astrology|Asteroid|Transit)",
-                line,
-                re.I,
-            ):
-                continue
-        if not product_type:
-            continue
-
-        quantity = None
-        for nearby in lines[index : min(len(lines), index + 5)]:
-            quantity_match = _QUANTITY_RE.search(nearby)
-            if quantity_match:
-                quantity = int(quantity_match.group(1))
-                break
-            if nearby is not line and (
-                _normalize_sku(nearby)
-                or re.match(r"^(?:商品|商品名|アイテム|アイテム名|Product|Item)\s*[：:]", nearby, re.I)
-            ):
-                break
-        quantity = max(1, min(quantity or 1, 100))
-        candidates.append(
-            {
-                "sku": sku or None,
-                "product_type": product_type,
-                "quantity": quantity,
-            }
-        )
-
-    if not candidates:
-        product_type = _guess_product_type(subject, body)
-        if product_type:
-            quantity_match = _QUANTITY_RE.search(body)
-            candidates.append(
-                {
-                    "sku": _normalize_sku(f"{subject}\n{body}") or None,
-                    "product_type": product_type,
-                    "quantity": max(1, min(int(quantity_match.group(1)) if quantity_match else 1, 100)),
-                }
-            )
-
-    # 同じ商品行をHTML/plain text双方から拾った場合でも、出現順を安定キーにする。
-    occurrences: dict[str, int] = {}
-    result: list[dict[str, object]] = []
-    for item in candidates:
-        identity = str(item.get("sku") or item.get("product_type") or "unknown")
-        occurrences[identity] = occurrences.get(identity, 0) + 1
-        result.append(
-            {
-                **item,
-                "line_item_key": f"{identity}:{occurrences[identity]}",
-            }
-        )
-    return result
+    """Compatibility helper: only explicitly labeled purchase fields are accepted."""
+    return analyze_purchase_items("generic", subject, body)["line_items"]
 
 
 def _etsy_product_type(subject: str, body: str) -> str | None:
-    product_type = _guess_product_type(subject, body)
-    if product_type:
-        return product_type
-    # Etsyの実注文を使うE2E試験専用。商品行が「テスト」完全一致の場合だけ
-    # 基本版として扱い、「テストを含む」一般商品には波及させない。
-    if re.search(r"^\s*(?:商品|Product)\s*[：:]\s*テスト\s*$", body, re.I | re.M):
-        return "western_basic"
-    return None
+    return _guess_product_type(subject, body)
 
 
 def _parse_stores_mail(
@@ -514,8 +350,7 @@ def _parse_stores_mail(
     return {
         "stores_order_no": order_no,
         "provider": "stores",
-        "product_type": _guess_product_type(subject, body),
-        "line_items": _extract_line_items(subject, body),
+        **analyze_purchase_items("stores", subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
@@ -556,13 +391,12 @@ def _parse_payhip_mail(
     return {
         "stores_order_no": order_id,
         "provider": "payhip",
-        "product_type": _guess_product_type(subject, body),
-        "line_items": _extract_line_items(subject, body),
+        **analyze_purchase_items("payhip", subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
         "mail_received_at": received_at,
-        "payment_status": "paid",
+        "payment_status": "ordered" if re.search(r"been\s+downloaded|requested a download", f"{subject}\n{body}", re.I) else "paid",
     }
 
 
@@ -597,8 +431,7 @@ def _parse_etsy_mail(
     return {
         "stores_order_no": order_no,
         "provider": "etsy",
-        "product_type": _etsy_product_type(subject, body),
-        "line_items": _extract_line_items(subject, body),
+        **analyze_purchase_items("etsy", subject, body),
         "amount": _extract_amount(body),
         "mail_subject": subject,
         "raw_message_id": message_id,
@@ -644,8 +477,7 @@ def _parse_coconala_mail(
     return {
         "stores_order_no": order_no,
         "provider": "coconala",
-        "product_type": _guess_product_type(subject, title),
-        "line_items": _extract_line_items(subject, title),
+        **analyze_purchase_items("coconala", subject, title),
         "amount": _extract_amount(body),
         "buyer_reference": buyer_reference,
         "mail_subject": subject,
@@ -667,6 +499,57 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
     if not provider or not order_code:
         return False
 
+    if provider == "payhip" and parsed.get("hold_reason") == "non_purchase_notification":
+        # Download events are observations, never purchase/approval evidence.
+        order_holds.audit_download_notice(order_code=order_code, source_id=parsed.get("raw_message_id"))
+        parsed["_ignored_notice"] = True
+        return False
+
+    with con.cursor() as cur:
+        order_holds.lock_order(cur, provider=provider, order_code=order_code, schema=SCHEMA)
+    if not order_holds.remember_notice(con, parsed):
+        return False
+    review = order_holds.get_review(con, provider=provider, order_code=order_code)
+
+    if parsed.get("hold_reason"):
+        # Do not rewrite an existing order or any previously issued entitlement.
+        # New unverified orders remain visible but cannot acquire purchase rights.
+        with con.cursor() as cur:
+            cur.execute(f"""
+                INSERT INTO {SCHEMA}.marketplace_orders
+                    (provider, order_code, payment_status)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (provider, order_code) DO NOTHING
+                RETURNING order_code
+            """, (provider, order_code, parsed.get("payment_status", "ordered")))
+            inserted = cur.fetchone() is not None
+        parsed["_new_hold"] = order_holds.record_hold(
+            con, provider=provider, order_code=order_code, reason=parsed["hold_reason"])
+        order_holds.save_candidate(con, parsed)
+        return inserted
+
+    if review and review.get("status") == "held":
+        # A corrected notice is evidence for review, never an approval.
+        order_holds.save_candidate(con, parsed)
+        parsed["hold_reason"] = review["reason"]
+        return False
+
+    if parsed.get("purchase_evidence"):
+        with con.cursor() as cur:
+            cur.execute(f"SELECT line_item_key, sku, product_type, unit_index "
+                        f"FROM {SCHEMA}.order_entitlements WHERE provider = %s AND order_code = %s",
+                        (provider, order_code))
+            saved = {(row["line_item_key"], row["sku"], row["product_type"], row["unit_index"])
+                     for row in cur.fetchall()}
+        incoming = {(item["line_item_key"], item["sku"], item["product_type"], unit)
+                    for item in parsed["line_items"] for unit in range(1, item["quantity"] + 1)}
+        if saved and incoming != saved:
+            parsed["hold_reason"] = "purchase_details_conflict"
+            parsed["_new_hold"] = order_holds.record_hold(
+                con, provider=provider, order_code=order_code, reason=parsed["hold_reason"])
+            order_holds.save_candidate(con, parsed)
+            return False
+
     values = (
         provider,
         order_code,
@@ -686,7 +569,7 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
                  mail_subject, raw_message_id, buyer_reference, mail_received_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (provider, order_code) DO UPDATE SET
-                product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.marketplace_orders.product_type),
+                product_type     = COALESCE({SCHEMA}.marketplace_orders.product_type, EXCLUDED.product_type),
                 amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.marketplace_orders.amount),
                 payment_status   = CASE
                     WHEN {SCHEMA}.marketplace_orders.payment_status
@@ -717,7 +600,7 @@ def _upsert_order(con, parsed: dict[str, Any]) -> bool:
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (stores_order_no) DO UPDATE SET
                 provider         = COALESCE({SCHEMA}.stores_orders.provider, EXCLUDED.provider),
-                product_type     = COALESCE(EXCLUDED.product_type,     {SCHEMA}.stores_orders.product_type),
+                product_type     = COALESCE({SCHEMA}.stores_orders.product_type, EXCLUDED.product_type),
                 amount           = COALESCE(EXCLUDED.amount,           {SCHEMA}.stores_orders.amount),
                 payment_status   = CASE
                     WHEN {SCHEMA}.stores_orders.payment_status
@@ -770,13 +653,7 @@ def _upsert_order_entitlements(con, parsed: dict[str, Any]) -> None:
                         (provider, order_code, line_item_key, sku, product_type, unit_index)
                     VALUES (%s, %s, %s, %s, %s, %s)
                     ON CONFLICT (provider, order_code, line_item_key, unit_index)
-                    DO UPDATE SET
-                        sku = COALESCE(EXCLUDED.sku, {SCHEMA}.order_entitlements.sku),
-                        product_type = COALESCE(
-                            EXCLUDED.product_type,
-                            {SCHEMA}.order_entitlements.product_type
-                        ),
-                        updated_at = NOW()
+                    DO NOTHING
                     """,
                     (
                         provider,
@@ -900,7 +777,8 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
         os.getenv("COCONALA_MAIL_FROM_FILTER", COCONALA_FROM_DEFAULT) or ""
     ).strip()
 
-    counters = dict(fetched=0, parsed=0, inserted=0, skipped=0, errors=0)
+    counters = dict(fetched=0, parsed=0, inserted=0, skipped=0, errors=0, held=0, new_holds=0)
+    hold_notices = []
 
     con_db = None
     try:
@@ -966,18 +844,35 @@ def sync(*, limit: int = 100) -> dict[str, Any]:
             counters["parsed"] += 1
 
             is_new = _upsert_order(con_db, parsed)
+            if parsed.get("_ignored_notice"):
+                counters["skipped"] += 1
+                continue
+            if parsed.get("hold_reason"):
+                counters["held"] += 1
+                if parsed.get("_new_hold"):
+                    counters["new_holds"] += 1
+                    hold_notices.append({"provider": parsed["provider"],
+                        "order_code": parsed["stores_order_no"], "reason": parsed["hold_reason"]})
             if is_new:
                 counters["inserted"] += 1
             else:
                 counters["skipped"] += 1
 
         con_db.commit()
-        return {**counters, "ok": True, "message": ""}
+        for notice in hold_notices:
+            order_holds.notify_operator(**notice)
+        try:
+            notification_delivery = order_holds.dispatch_pending_notices(con_db)
+        except Exception as exc:
+            con_db.rollback()
+            notification_delivery = {"status": "failed", "sent": 0, "failed": 1,
+                                     "error_type": type(exc).__name__}
+        return {**counters, "ok": True, "message": "", "notification_delivery": notification_delivery}
 
     except Exception as e:
         if con_db:
             con_db.rollback()
-        return {**counters, "ok": False, "message": str(e)}
+        return {**counters, "ok": False, "message": type(e).__name__}
     finally:
         if con_db:
             con_db.close()

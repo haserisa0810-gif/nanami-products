@@ -29,7 +29,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
-from services import pg_store, stores_mail_sync
+from services import pg_store, stores_mail_sync, product_catalog, order_holds, order_review
+from services.chart_policy import CHART_EXPIRES_DAYS
 from services.personal_edition_delivery import (
     build_free_museum_zip,
     build_personal_acg_html,
@@ -101,6 +102,17 @@ from services.shichu_chart import (
     render_shichusuimei_png_from_svg,
 )
 from services.svg_optimize import optimize_svg
+from services.shichusuimei_editions import (
+    edition_for_product_type, is_full_chart_product, is_legacy_shichu_doc, is_shichu_product,
+    legacy_companion_prompt, legacy_reading_prompt,
+)
+from services.shichusuimei_years_addon import (
+    YEARS_ADDON_TYPES, YearsAddonError, addon_label as years_addon_label,
+    build_years_addon, full_base_info, merge_years_into_full,
+)
+from services.shichusuimei_year_selection import (
+    YearSelectionError, build_year_selection, selection_info,
+)
 from services.transit_yaml import build_transit_only_yaml
 from services.yaml_exporter import (
     build_31days_transit_addon_yaml,
@@ -147,6 +159,11 @@ def _public_error_message(exc: Exception, *, fallback: str = "処理に失敗し
     if _is_transient_error(exc):
         return USER_TRANSIENT_ERROR_MESSAGE
     return fallback
+
+
+def _buyer_save_error(exc: Exception, lang: str) -> str:
+    message = redeem_error(lang, "save_failed")
+    return _public_error_message(exc, fallback=message) if lang == "ja" else message
 
 
 def _mark_no_store(response: Response) -> Response:
@@ -551,6 +568,21 @@ PRODUCT_CONFIG = {
         "include_shichusuimei": True,
         "include_transit": False,
     },
+    "shichu_full": {
+        "label": "四柱推命FULL版",
+        "description": "四柱推命の基本データに、大運10期それぞれの詳しい作用・10年分の年運予測・命式の構造分析を加えたデータを生成します。発行後は鑑定したい年を選んでAI用データを取り出せます。",
+        "features": [
+            "四柱推命の命式データ（基本版の内容をすべて含む）",
+            "大運10期それぞれの詳しい作用",
+            "10年分の年運予測（立春基準）",
+            "命式の構造分析",
+            "鑑定したい年を選んで取り出せる",
+            "日替わり境界を選択可能",
+        ],
+        "include_asteroids": False,
+        "include_shichusuimei": True,
+        "include_transit": False,
+    },
     "transit_yaml": {
         "label": "トランジットYAML版",
         "description": "歴史イベント・特定日時・特定場所の、その瞬間の天体配置だけをYAML化します。",
@@ -574,10 +606,10 @@ PRODUCT_SLUGS = {
     "acg_bundle": "acg-bundle",
     "western_asteroids_addon": "western-asteroids-addon",
     "shichu": "shichu",
+    "shichu_full": "shichu-full",
     "transit_yaml": "transit-yaml",
 }
 PRODUCT_TYPES_BY_SLUG = {slug: product_type for product_type, slug in PRODUCT_SLUGS.items()}
-CHART_EXPIRES_DAYS = 90
 NO_EXPIRY_CHART_POLICY = "no_expiry"
 SUPPORTED_LANGS = {"ja", "en", "es", "de"}
 
@@ -594,12 +626,14 @@ I18N = {
             "acg_bundle": "ACGバンドル",
             "western_asteroids_addon": "ホロスコープ：小惑星追加",
             "shichu": "四柱推命鑑定",
+            "shichu_full": "四柱推命FULL版",
             "transit_yaml": "トランジットYAML版",
         },
         "product_leads": {
             "western_basic": "注文番号と出生情報を入力してください。",
             "western_full": "小惑星・トランジット（1ヶ月）を含む出生図データを作成します。<br>注文番号と出生情報を入力してください。",
             "shichu": "四柱推命に必要な情報を入力してください。<br>日替わり境界は、標準の1時（丑の刻）または23時から選択できます。",
+            "shichu_full": "四柱推命FULL版のデータを作成します。<br>日替わり境界は、標準の1時（丑の刻）または23時から選択できます。",
         },
         "start_title_suffix": "鑑定データ作成",
         "start_notice_title": "登録前に必ず確認してください",
@@ -701,11 +735,11 @@ I18N = {
         "gender_unknown": "指定なし",
         "gender_female": "女性",
         "gender_male": "男性",
-        "gender_help": "四柱推命の大運計算に使用します。不明な場合は「指定なし」のまま送信できます。",
+        "gender_help": "大運の順逆に使用します。「指定なし」では命式・原局と流年を計算し、大運・起運は未確定として保留します。",
         "shichu_settings": "四柱推命設定",
         "day_change": "日替わり境界",
         "standard_1am": "1時（丑の刻）— 標準",
-        "day_change_help": "23時切替の流派で見る場合のみ「23時」を選択してください。",
+        "day_change_help": "現地時刻で判定。1時：0時台は前日、23時：23時台は翌日の日柱。真太陽時補正は行いません。",
         "final_check": "最終確認",
         "final_check_hint": "送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。",
         "final_agree": "入力内容を確認しました。送信後に変更できないことに同意します。",
@@ -748,7 +782,7 @@ I18N = {
         "place": "場所",
         "birth_place": "出生地",
         "unknown": "不明",
-        "page_expiry": "このページはURLを知っている人が開けます。有効期限は{expires_label}（発行から90日間）です。",
+        "page_expiry": "このページはURLを知っている人が開けます。有効期限は{expires_label}（通常は発行から365日間）です。",
         "page_no_expiry": "このページはURLを知っている人が開けます。有効期限はありません。",
         "steps_title": "3ステップで鑑定をはじめる",
         "step1_title": "データをAIに渡す",
@@ -918,7 +952,7 @@ I18N = {
         "addon_usage_items": [
             "STORESの購入確認メールに記載された注文番号を入力してください。",
             "小惑星追加は、基本版の出生データを土台に生成します。",
-            "基本版YAML または 90日以内の前回鑑定URLを入力してください。",
+            "基本版YAML または 有効な前回鑑定URLを入力してください。",
             "生成されたaddon YAMLは、基本版YAMLと一緒にAIへ渡して使います。",
             "YAML単体でも、AI鑑定用の全文コピペに追加しても使えます。",
             "貼り付けたYAMLは保存しません。",
@@ -936,7 +970,7 @@ I18N = {
         "base_data_title": "基本データ入力",
         "base_data_hint_transit": "38日トランジット追加は、基本版の出生データを土台に生成します。",
         "base_data_hint_standard": "基本版YAMLまたは前回鑑定URLから出生情報を読み取り、追加部品YAMLだけを生成します。",
-        "previous_chart_url_label": "90日以内の前回鑑定URL",
+        "previous_chart_url_label": "有効な前回鑑定URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
         "previous_chart_url_hint": "前回の鑑定結果ページURLから、ネイタル情報を引き継げます。",
         "base_yaml_label": "YAML貼り付け欄",
@@ -978,12 +1012,14 @@ I18N = {
             "acg_bundle": "Astrocartography (ACG) bundle",
             "western_asteroids_addon": "Horoscope asteroid add-on",
             "shichu": "Four Pillars data",
+            "shichu_full": "Four Pillars FULL data",
             "transit_yaml": "Transit YAML",
         },
         "product_leads": {
             "western_basic": "Enter your order number and birth information.",
             "western_full": "Create birth chart data including asteroids and one-month transits.<br>Enter your order number and birth information.",
             "shichu": "Enter the information needed to create Four Pillars data.<br>You can choose the day-change boundary: standard 1:00 AM or 11:00 PM.",
+            "shichu_full": "Create Four Pillars FULL data.<br>You can choose the day-change boundary: standard 1:00 AM or 11:00 PM.",
             "transit_yaml": "Create YAML for the planetary positions at a specific event, date, and place.<br>Birth information is not used.",
         },
         "start_title_suffix": "Create AI-readable astrology data",
@@ -1133,7 +1169,7 @@ I18N = {
         "place": "Place",
         "birth_place": "Place of birth",
         "unknown": "Unknown",
-        "page_expiry": "Anyone with this URL can open the page. It expires on {expires_label} (90 days after issue).",
+        "page_expiry": "Anyone with this URL can open the page. It expires on {expires_label} (normally 365 days after issue).",
         "page_no_expiry": "Anyone with this URL can open the page. It does not expire.",
         "steps_title": "Start in 3 steps",
         "step1_title": "Send the data to AI",
@@ -1303,7 +1339,7 @@ I18N = {
         "addon_usage_items": [
             "Enter the order number shown in the STORES purchase confirmation email.",
             "The asteroid add-on is generated on top of the basic birth data.",
-            "Enter either the basic YAML or a previous chart URL from the last 90 days.",
+            "Enter either the basic YAML or a valid previous chart URL.",
             "The generated add-on YAML is used together with the basic YAML when sending it to AI.",
             "You can use the YAML on its own or append it to a full AI-reading prompt.",
             "The pasted YAML is not saved.",
@@ -1321,7 +1357,7 @@ I18N = {
         "base_data_title": "Base data input",
         "base_data_hint_transit": "Transit add-ons are generated on top of the basic birth data.",
         "base_data_hint_standard": "The basic YAML or previous chart URL is used to read the birth data and generate only the add-on YAML.",
-        "previous_chart_url_label": "Previous chart URL within 90 days",
+        "previous_chart_url_label": "Valid previous chart URL",
         "previous_chart_url_placeholder": "https://.../chart/...",
         "previous_chart_url_hint": "You can carry over natal information from the previous chart page URL.",
         "base_yaml_label": "Paste YAML here",
@@ -1474,6 +1510,7 @@ def _localized_product(product_type: str, lang: str) -> dict:
             "western_full": "Includes asteroids and a 31-day transit set. The transits also unlock a one-year Transit Planner (PDF). No selection is required from the buyer.",
             "western_asteroids_addon": "Creates the asteroid add-on YAML to use with the basic version.",
             "shichu": "Creates Four Pillars data. The day-change boundary can be set to the standard 1:00 AM or 11:00 PM.",
+            "shichu_full": "Creates the Four Pillars basic data plus a detailed analysis of all ten luck cycles, a 10-year annual forecast and a structural analysis of the chart. After issue you can choose the years to send to your AI.",
             "transit_yaml": "Creates YAML for the planetary positions at a specific event, date, and place. Birth information is not used.",
         }
         english_features = {
@@ -1501,6 +1538,13 @@ def _localized_product(product_type: str, lang: str) -> dict:
                 "Standard 1:00 AM option",
                 "No asteroid or transit data",
             ],
+            "shichu_full": [
+                "Everything in the Four Pillars basic data",
+                "Detailed effects of all ten luck cycles",
+                "10-year annual forecast (Lichun-based)",
+                "Structural analysis of the chart",
+                "Choose years for AI reading after issue",
+            ],
             "transit_yaml": [
                 "Planetary positions for an event, date, and place",
                 "No birth information required",
@@ -1517,9 +1561,19 @@ def _product_label_for_lang(product_type: object, lang: str) -> str:
     product_key = str(product_type or "").strip()
     if lang == "ja":
         return _product_label(product_key or None)
+    addon_label = next(
+        (item["label"] for item in _localized_addon_options(lang) if item["value"] == product_key),
+        None,
+    )
+    if addon_label:
+        return addon_label
     if product_key in PRODUCT_CONFIG:
         return str(_localized_product(product_key, lang)["label"])
-    return product_key or "product"
+    return {
+        "en": "purchased product",
+        "es": "producto comprado",
+        "de": "gekauftes Produkt",
+    }.get(lang, "purchased product")
 
 
 def _provider_label_for_lang(provider: str | None, lang: str) -> str:
@@ -1545,7 +1599,7 @@ def _i18n_context(request: Request) -> dict:
 
 def _chart_i18n_context(request: Request, product_type: str | None) -> dict:
     context = _i18n_context(request)
-    if product_type != "shichu":
+    if not is_shichu_product(product_type):
         return context
     t = dict(context["t"])
     shichu_copy = {
@@ -1615,7 +1669,7 @@ def _build_chart_artifacts(
             horoscope_svg = optimize_svg(build_horoscope_svg_from_yaml(yaml_text, doc=doc))
         except Exception:
             horoscope_svg = None
-    if product_type == "shichu":
+    if is_shichu_product(product_type):
         try:
             shichusuimei_svg = optimize_svg(build_shichusuimei_svg_from_yaml(yaml_text, doc=doc))
         except Exception:
@@ -1641,6 +1695,14 @@ def _truthy(value: str | None) -> bool:
     return str(value).strip().lower() in {"1", "true", "on", "yes", "23"}
 
 
+def _parse_birth_fold(value: str) -> int | None:
+    if not value.strip():
+        return None
+    if value.strip() not in {"0", "1"}:
+        raise ValueError("夏時間の重複時刻は未選択・1回目・2回目から指定してください。")
+    return int(value)
+
+
 ORDER_CODE_RE = re.compile(r"[A-Za-z0-9=_-]+")
 ORDER_PROVIDERS = {"stores", "gumroad", "payhip", "etsy", "coconala"}
 # Gumroad relaxed（サーバー照合なし）を許す商品。Gumroadで販売しているのは西洋2種のみで、
@@ -1655,24 +1717,7 @@ ORDER_CHECK_POLICIES = {
     "etsy": {"strict": True},
     "coconala": {"strict": True},
 }
-PAYHIP_PRODUCTS = {
-    "NP-WB": {
-        "label": "NP-WB / AI-Readable Natal Data Core Pack",
-        "product_type": "western_basic",
-    },
-    "NP-WF": {
-        "label": "NP-WF / AI-Readable Astrology Data Full Version",
-        "product_type": "western_full",
-    },
-    "NP-AA": {
-        "label": "NP-AA / AI-Readable Asteroid Data Add-on",
-        "product_type": "western_asteroids_addon",
-    },
-    "NP-TA": {
-        "label": "NP-TA / AI-Readable Transit Data Add-on",
-        "product_type": "western_31days_transit_addon",
-    },
-}
+PAYHIP_PRODUCTS = product_catalog.payhip_products()
 
 
 def _normalize_stores_order_no(value: str) -> str:
@@ -1729,6 +1774,8 @@ def _payhip_metadata_from_form(
     if not _is_valid_order_code(optional_order_id):
         return {}, redeem_error(lang, "payhip_order_format")
     product = PAYHIP_PRODUCTS.get(product_code_clean)
+    if product_code_clean and product is None:
+        return {}, redeem_error(lang, "product_unverified")
     selected_product_type = str(product["product_type"]) if product else expected_product_type
     metadata = {
         "provider": "payhip",
@@ -1870,6 +1917,11 @@ def _check_payhip_order_row_for_redeem(
     payment_status = str((order_row or {}).get("payment_status") or "").lower()
 
     purchased_type = order_row.get("product_type")
+    if (
+        payment_status not in {"reusable", "test", "permanent"}
+        and not product_catalog.verified_identity(purchased_type, order_row.get("sku"))
+    ):
+        return "product_unverified", order_row, redeem_error(lang, "product_unverified"), 409
     if enforce_product_type and purchased_type and purchased_type != product_type:
         return (
             "product_mismatch",
@@ -1902,39 +1954,6 @@ def _log_order_check(
         strict_check,
         check_result,
         reason,
-    )
-
-
-def _warn_unverified_product_type(
-    *,
-    provider: str | None,
-    order_id: str,
-    issued_as: str,
-    context: str,
-) -> None:
-    """
-    商品種別を判定できない注文を、発行は止めずに警告として残す。
-
-    product_type が NULL の注文は商品種別チェックを素通りする。
-    安い注文番号で高い商品を発行できてしまうため、
-    運用で気づけるように warning で記録する。
-    主因は商品コードの判定漏れなので、対処先も一緒に出す。
-    """
-    logger.warning(
-        "order_product_unverified provider=%s order_id=%s issued_as=%s context=%s "
-        "hint=%s に商品コードを追加してください",
-        provider or "unknown",
-        order_id,
-        issued_as,
-        context,
-        "services/stores_mail_sync.py の _PRODUCT_CODE_PATTERNS",
-    )
-    _log_order_check(
-        provider=provider,
-        order_id=order_id,
-        strict_check=True,
-        check_result="product_unverified_allowed",
-        reason=f"order has no product_type; issued {issued_as} without a product check",
     )
 
 
@@ -2166,14 +2185,8 @@ def _gumroad_product_name_from_order(order_row: dict | None) -> str:
 
 
 def _gumroad_product_type_from_name(product_name: str) -> str | None:
-    normalized = (product_name or "").upper()
-    has_basic = "[NP-WB]" in normalized
-    has_full = "[NP-WF]" in normalized
-    if has_basic == has_full:
-        return None
-    if has_full:
-        return "western_full"
-    return "western_basic"
+    product_type = product_catalog.resolve_text(product_name)
+    return product_type if product_type in {"western_basic", "western_full"} else None
 
 
 def _verify_gumroad_order_product(
@@ -2388,28 +2401,11 @@ def _check_order_for_redeem(
         return status, order_row, None, 200
 
     purchased_type = (order_row or {}).get("product_type")
-    if enforce_product_type and provider == "etsy" and not purchased_type:
-        _log_order_check(
-            provider=provider,
-            order_id=order_id,
-            strict_check=True,
-            check_result="product_unverified",
-            reason="Etsy notification did not contain a recognized product code or title",
-        )
-        return (
-            "product_unverified",
-            order_row,
-            redeem_error(lang, "etsy_product_unverified"),
-            409,
-        )
-    # Etsy以外は未分類でも発行を止めない。ただし商品チェックが効いていないので警告を残す。
-    if enforce_product_type and not purchased_type and status != "reusable":
-        _warn_unverified_product_type(
-            provider=provider,
-            order_id=order_id,
-            issued_as=product_type,
-            context="redeem",
-        )
+    if (
+        status != "reusable"
+        and not product_catalog.verified_identity(purchased_type, (order_row or {}).get("sku"))
+    ):
+        return "product_unverified", order_row, redeem_error(lang, "product_unverified"), 409
     if (
         enforce_product_type
         and purchased_type
@@ -2456,6 +2452,7 @@ def _product_label(product_type: str | None) -> str:
         "western_31days_transit_addon": "ホロスコープ：38日トランジット追加",
         "western_long_term_transits_addon": "ホロスコープ：長期トランジット追加",
         "shichu_fortune_cycles_addon": "四柱推命：大運・流年追加",
+        **{addon_type: years_addon_label(addon_type, "ja") for addon_type in YEARS_ADDON_TYPES},
     }
     if product_type in addon_labels:
         return addon_labels[str(product_type)]
@@ -2561,6 +2558,8 @@ def _build_birth_location(
     pref_name = prefecture.strip()
     if not pref_name:
         raise ValueError(buyer_error(lang, "prefecture_required"))
+    if pref_name not in PREFECTURE_OPTIONS:
+        raise ValueError(buyer_error(lang, "prefecture_invalid"))
     if birth_place_overseas.strip() or birth_timezone.strip():
         raise ValueError(buyer_error(lang, "domestic_overseas_fields"))
     lat = _parse_optional_float(birth_lat, buyer_error(lang, "latitude"), lang)
@@ -2700,6 +2699,77 @@ def _sync_stores_orders_for_lookup() -> dict[str, object] | None:
     except ValueError:
         submit_limit = 100
     return stores_mail_sync.sync(limit=submit_limit)
+
+
+@app.get("/internal/orders/holds")
+def internal_order_holds(request: Request, limit: int = 100, offset: int = 0):
+    error = _admin_access_error(request)
+    if error:
+        return error
+    if not 1 <= limit <= 200 or offset < 0:
+        return _api_error("INVALID_INPUT", "invalid limit or offset", 400)
+    con = None
+    try:
+        con = stores_mail_sync._get_conn()
+        rows = order_holds.list_holds(con, limit=limit, offset=offset)
+        return JSONResponse(jsonable_encoder({"ok": True, "holds": rows,
+                                             "limit": limit, "offset": offset}))
+    except Exception:
+        return _api_error("HOLD_LOOKUP_FAILED", "保留注文を取得できませんでした", 503)
+    finally:
+        if con is not None:
+            con.close()
+
+
+@app.get("/internal/orders/holds/{provider}/{order_code}")
+def internal_order_hold_review(request: Request, provider: str, order_code: str):
+    error = _admin_access_error(request)
+    if error:
+        return error
+    con = None
+    try:
+        con = stores_mail_sync._get_conn()
+        review, rights = order_review.load_locked_review(con, provider, order_code)
+        con.commit()
+        return JSONResponse(jsonable_encoder({"ok": True, "provider": provider, "order_code": order_code,
+                                             "review": review, "existing_rights": rights}))
+    except order_review.ReviewError as exc:
+        if con is not None:
+            con.rollback()
+        return _api_error(exc.code, "保留注文の識別情報を確認してください", exc.status)
+    except Exception:
+        if con is not None:
+            con.rollback()
+        return _api_error("HOLD_LOOKUP_FAILED", "保留注文を取得できませんでした", 503)
+    finally:
+        if con is not None:
+            con.close()
+
+
+@app.post("/internal/orders/holds/{provider}/{order_code}/approve")
+def internal_approve_order_hold(request: Request, provider: str, order_code: str,
+                                payload: dict[str, object] = Body(default={})):
+    # Unlike read-only local tooling, approval always requires a configured token.
+    if not _admin_token_from_env():
+        return _api_error("ADMIN_NOT_CONFIGURED", "管理者認証の設定が必要です", 503)
+    error = _admin_access_error(request)
+    if error:
+        return error
+    if payload.get("confirm_order_code") != order_code or type(payload.get("review_version")) is not int:
+        return _api_error("INVALID_APPROVAL", "注文IDと確認した内容の版を指定してください", 400)
+    con = None
+    try:
+        con = stores_mail_sync._get_conn()
+        result = order_review.approve(con, provider=provider, order_code=order_code,
+                                       expected_version=payload["review_version"])
+        return JSONResponse(result)
+    except order_review.ReviewError as exc:
+        return _api_error(exc.code, "承認できません。最新の明細と既存の発行権を確認してください", exc.status)
+    except Exception:
+        return _api_error("APPROVAL_FAILED", "承認処理に失敗しました。状態を再確認してください", 503)
+    finally:
+        if con is not None:
+            con.close()
 
 
 @app.post("/internal/api-keys")
@@ -3804,6 +3874,22 @@ def _museum_demo_context(request: Request) -> dict:
     }
 
 
+def _validate_exact_birth_time(value: str, lang: str = "ja") -> None:
+    """Validate only values the existing YAML calculation cannot consume.
+
+    Keep the historical acceptance of one-digit hours/minutes and additional
+    colon-separated fields because the calculation has always used the first
+    two components.
+    """
+    try:
+        parts = value.strip().split(":")
+        hour, minute = int(parts[0]), int(parts[1])
+    except (IndexError, TypeError, ValueError) as exc:
+        raise ValueError(buyer_error(lang, "exact_time_invalid")) from exc
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        raise ValueError(buyer_error(lang, "exact_time_invalid"))
+
+
 @app.get("/birth-chart-museum/demo", response_class=HTMLResponse)
 def birth_chart_museum_demo(request: Request):
     """無料デモ（抽象版）。URLを開けばサンプル出生図で即体験できる。
@@ -4859,7 +4945,9 @@ def internal_mail_sync(request: Request):
         limit = 100
 
     result = stores_mail_sync.sync(limit=limit)
-    print(f"[mail-sync] {result}")
+    logger.info("mail_sync_result ok=%s fetched=%s parsed=%s held=%s new_holds=%s errors=%s",
+                result.get("ok"), result.get("fetched"), result.get("parsed"),
+                result.get("held", 0), result.get("new_holds", 0), result.get("errors"))
     return JSONResponse(result)
 
 
@@ -5155,6 +5243,7 @@ def redeem_post(
     gender: str = Form("unknown"),
     product_type: str = Form("western_basic"),
     day_change_at_23: str | None = Form(None),
+    birth_fold: str = Form(""),
     event_name: str = Form(""),
     event_date: str = Form(""),
     event_time: str = Form(""),
@@ -5183,7 +5272,8 @@ def redeem_post(
     # 商品ごとに強制制御します。
     # western_basic / western_full では日替わり境界UIを出さず、必ず False。
     # shichu は購入者が 23時 / 1時 を選択できます。未選択時は 1時（False）を標準にします。
-    day_change_at_23_bool = _truthy(day_change_at_23) if product_type == "shichu" else False
+    day_change_at_23_bool = _truthy(day_change_at_23) if is_shichu_product(product_type) else False
+    birth_fold = birth_fold if isinstance(birth_fold, str) else ""
 
     def _form_err(msg: str, status: int = 400):
         return _mark_no_store(templates.TemplateResponse(
@@ -5216,6 +5306,7 @@ def redeem_post(
                     "gender": gender,
                     "product_type": product_type,
                     "day_change_at_23": day_change_at_23_bool,
+                    "birth_fold": birth_fold,
                     "event_name": event_name,
                     "event_date": event_date,
                     "event_time": event_time,
@@ -5278,6 +5369,14 @@ def redeem_post(
         if not _is_valid_order_code(order_code_clean):
             return _form_err(redeem_error(lang, "order_format"))
         order_provider_clean = _resolve_order_provider(order_code_clean, order_provider)
+    if product_type == "shichu_full" and order_provider_clean != "stores":
+        # 四柱推命FULL版は STORES 専売（2026-10-12 決定）。他の販売先の注文で発行しない。
+        return _form_err({
+            "ja": "四柱推命FULL版は STORES でご購入いただいた注文番号でのみ発行できます。",
+            "en": "Four Pillars FULL data can only be issued for orders purchased on STORES.",
+            "es": "Los datos de Cuatro Pilares FULL solo se emiten para pedidos comprados en STORES.",
+            "de": "Vier-Säulen-FULL-Daten werden nur für Bestellungen aus STORES ausgestellt.",
+        }.get(lang, "四柱推命FULL版は STORES でご購入いただいた注文番号でのみ発行できます。"))
     if not agree_final:
         return _form_err(redeem_error(lang, "confirmation_required"))
 
@@ -5405,7 +5504,7 @@ def redeem_post(
             )
             if existing:
                 return existing
-            return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
+            return _form_err(_buyer_save_error(e, lang), status=503)
 
         if not ok:
             existing = _existing_chart_response(
@@ -5446,6 +5545,8 @@ def redeem_post(
             birth_time=birth_time,
             lang=lang,
         )
+        if str(birth_time_info["accuracy"]) == "exact":
+            _validate_exact_birth_time(str(birth_time_info["birth_time"]), lang)
     except Exception as e:
         return _form_err(str(e))
     if product_type == "acg_bundle" and str(birth_time_info["accuracy"]) != "exact":
@@ -5533,6 +5634,8 @@ def redeem_post(
                 include_shichusuimei=include_shichusuimei,
                 include_transit=include_transit,
                 day_change_at_23=day_change_at_23_bool,
+                **({"birth_fold": _parse_birth_fold(birth_fold)} if include_shichusuimei else {}),
+                **({"shichusuimei_edition": edition_for_product_type(product_type)} if include_shichusuimei else {}),
                 lang=lang,
             )
     except Exception as e:
@@ -5604,7 +5707,7 @@ def redeem_post(
         )
         if existing:
             return existing
-        return _form_err(_public_error_message(e, fallback="保存に失敗しました。時間をおいて再試行してください。"), status=503)
+        return _form_err(_buyer_save_error(e, lang), status=503)
 
     if not ok:
         existing = _existing_chart_response(
@@ -5639,6 +5742,69 @@ def redeem_post(
 
 
 # ─── チャートページ（ルート順に注意） ──────────────────────────────
+
+def _current_lichun_year(now: datetime | None = None) -> int:
+    """日本時間で、いま属している立春年（立春前なら前年）。"""
+    from services.shichusuimei_calc import _lichun_utc_for_year
+
+    now = (now or datetime.now(timezone.utc)).astimezone(ZoneInfo("Asia/Tokyo"))
+    lichun = _lichun_utc_for_year(now.year, "Asia/Tokyo").astimezone(ZoneInfo("Asia/Tokyo"))
+    return now.year if now >= lichun else now.year - 1
+
+
+def _split_shichu_picker_years(
+    years: list[int], *, now: datetime | None = None,
+) -> tuple[list[dict[str, object]], list[int]]:
+    """年選択を「よく使う3年（今年・来年・再来年）」と「ほかの年」に分ける。
+
+    今年がデータに含まれない場合は、今年以降で最も近い3年（なければ最後の3年）を上に出す。
+    """
+    if not years:
+        return [], []
+    current = _current_lichun_year(now)
+    labels = {current: "this_year", current + 1: "next_year", current + 2: "year_after_next"}
+    upcoming = [y for y in years if y >= current]
+    quick = (upcoming or years[-3:])[:3]
+    quick_items = [{"year": y, "label": labels.get(y, "")} for y in quick]
+    return quick_items, [y for y in years if y not in quick]
+
+
+def _shichu_selection_chart(token: str) -> dict:
+    chart = _load_chart_or_404(token, include_svgs=False)
+    if not is_full_chart_product(_chart_product_type(chart.get("options") or {})):
+        raise HTTPException(status_code=404, detail="four pillars FULL chart required")
+    return chart
+
+
+@app.get("/chart/{token}/year-selection", response_class=HTMLResponse)
+def chart_year_selection(request: Request, token: str):
+    chart = _shichu_selection_chart(token)
+    try:
+        info = selection_info(chart["yaml_text"])
+    except YearSelectionError:
+        raise HTTPException(status_code=422, detail="四柱推命Fullの保存データを確認できません。")
+    lang = _resolve_lang(request)
+    response = templates.TemplateResponse("shichusuimei_year_selection.html", {
+        "request": request, "lang": lang, **info,
+        "chart_url": f"/chart/{quote(token, safe='')}?lang={lang}",
+        "extract_url": f"/chart/{quote(token, safe='')}/year-selection",
+        "original_url": f"/chart/{quote(token, safe='')}.yaml",
+    })
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return _mark_no_store(response)
+
+
+@app.post("/chart/{token}/year-selection")
+def chart_extract_years(token: str, payload: dict = Body(...)):
+    chart = _shichu_selection_chart(token)
+    try:
+        result = build_year_selection(chart["yaml_text"], payload)
+        response = JSONResponse(result)
+    except YearSelectionError as exc:
+        response = JSONResponse({"error": {"code": exc.code, "message": str(exc)}}, status_code=422)
+    _apply_public_chart_headers(response, chart, max_age=0)
+    return _mark_no_store(response)
+
 
 @app.get("/chart/{token}.yaml", response_class=PlainTextResponse)
 def chart_yaml(token: str):
@@ -5780,15 +5946,22 @@ def _build_personal_planner_pdf(
     seconds). This is intentionally separate from Personal Edition ZIP creation
     so saving the ZIP never waits for the large planner PDF to render.
     """
-    # Only reuse the stored chart when it actually carries long-term transits;
-    # most charts store `transit_long_term: null`, which would render a planner
-    # with an empty personal layer instead of falling through to a fresh
-    # calculation from the birth inputs below.
+    # Refresh the transit period even when the chart already has long-term data.
+    # Reusing that stored period would freeze the annual update benefit at the
+    # first download. Keep the natal positions, and calculate this month's layer.
     try:
         detail_yaml = build_detail_astrology_yaml(chart["yaml_text"])
         if has_long_term_transits(yaml_text=detail_yaml):
+            planner_yaml = build_planner_yaml_from_natal_yaml(
+                chart_yaml=chart["yaml_text"],
+                lang=lang,
+                months=12,
+                transit_start_date=datetime.now(timezone.utc).replace(
+                    day=1, hour=0, minute=0, second=0, microsecond=0
+                ),
+            )
             return build_planner_pdf_from_yaml(
-                yaml_text=detail_yaml,
+                yaml_text=planner_yaml,
                 lang=lang,
                 months=12,
                 chart_url=chart_url,
@@ -6085,6 +6258,20 @@ def chart_download_zip(request: Request, token: str):
                 "es": ("URL privada de tu carta", "Esta URL tiene fecha de caducidad. Ábrela antes de que caduque.", "Los datos de este ZIP seguirán disponibles después de que caduque la URL."),
                 "de": ("Private Horoskop-URL", "Diese URL hat ein Ablaufdatum. Öffne sie bitte rechtzeitig.", "Die Horoskopdaten in dieser ZIP bleiben nach Ablauf der URL verfügbar."),
             }[lang]
+            if _chart_has_no_expiry(chart):
+                no_expiry_copy = {
+                    "ja": "この鑑定ページURLに有効期限はありません。",
+                    "en": "This private chart URL does not expire.",
+                    "es": "Esta URL privada de la carta no caduca.",
+                    "de": "Diese private Horoskop-URL läuft nicht ab.",
+                }[lang]
+                local_copy = {
+                    "ja": "このZIP内の鑑定データは、端末に保存して利用できます。",
+                    "en": "Save the chart files in this ZIP to your device for local use.",
+                    "es": "Guarda los datos de este ZIP en tu dispositivo para utilizarlos localmente.",
+                    "de": "Speichere die Horoskopdaten dieser ZIP zur lokalen Nutzung auf deinem Gerät.",
+                }[lang]
+                chart_url_copy = (chart_url_copy[0], no_expiry_copy, local_copy)
             zf.writestr(
                 "CHART-PAGE-URL.txt",
                 f"{chart_url_copy[0]}\n"
@@ -6153,7 +6340,15 @@ def chart_page(request: Request, token: str):
         can_continue_with_transit = full_like_western
         has_yaml_mode_selector = full_like_western or asteroid_like_western or long_term_like_western
         has_horoscope_svg = has_western_natal
-        has_shichusuimei_svg = product_type == "shichu"
+        has_shichusuimei_svg = is_shichu_product(product_type)
+        has_shichu_year_selection = is_full_chart_product(product_type)
+        shichu_available_years: list[int] = []
+        if has_shichu_year_selection:
+            try:
+                shichu_available_years = selection_info(chart["yaml_text"])["available_years"]
+            except YearSelectionError:
+                shichu_available_years = []
+        shichu_quick_years, shichu_other_years = _split_shichu_picker_years(shichu_available_years)
         timings["display判定_ms"] = _elapsed_ms(step_start)
         chart["prompt_text"] = _chart_prompt_for_yaml_text(
             chart, str(chart.get("yaml_text") or ""), fallback_doc=chart_doc, lang=lang
@@ -6245,13 +6440,26 @@ def chart_page(request: Request, token: str):
                 "has_yaml_mode_selector": has_yaml_mode_selector,
                 "has_horoscope_svg": has_horoscope_svg,
                 "has_shichusuimei_svg": has_shichusuimei_svg,
+                "has_shichu_year_selection": has_shichu_year_selection,
+                "shichu_available_years": shichu_available_years,
+                "shichu_quick_years": shichu_quick_years,
+                "shichu_other_years": shichu_other_years,
+                "year_selection_url": (
+                    f"/chart/{quote(token, safe='')}/year-selection" if has_shichu_year_selection else ""
+                ),
                 "has_asteroid_svg_data": has_asteroids,
                 "birth_time_notice": birth_time_notice,
                 "share_yaml_text": share_yaml_text,
                 "share_prompt_text": share_prompt_text,
-                "chart_companion_prompt": build_chart_companion_prompt(
-                    lang=lang,
-                    include_shichusuimei=product_type == "shichu",
+                "chart_companion_prompt": (
+                    # 既存購入者の旧原本は本番 8c25fc0 と同じ相談モード指示文に固定する。
+                    legacy_companion_prompt(lang)
+                    if is_legacy_shichu_doc(chart_doc)
+                    else build_chart_companion_prompt(
+                        lang=lang,
+                        include_shichusuimei=bool(((chart_doc or {}).get("systems") or {}).get("shichusuimei")),
+                        include_western=bool(((chart_doc or {}).get("systems") or {}).get("western")),
+                    )
                 ),
                 "asteroid_yaml_text": asteroid_yaml_text,
                 "chart_url": chart_url,
@@ -7014,7 +7222,10 @@ def yaml_generate(
             include_asteroids=bool(include_asteroids),
             include_shichusuimei=bool(include_shichusuimei),
             include_transit=effective_include_transit,
-            day_change_at_23=bool(day_change_at_23),
+            day_change_at_23=_truthy(day_change_at_23),
+            # 管理画面の四柱推命単独サンプルは基本版（product_type "shichu"）として発行する。
+            shichusuimei_edition="basic" if (include_shichusuimei and not include_asteroids
+                                             and not effective_include_transit) else "full",
         )
     except Exception as e:
         return templates.TemplateResponse(
@@ -7118,6 +7329,12 @@ ADDON_FORM_OPTIONS = [
     {"value": "western_31days_transit_addon", "label": "38日トランジット追加"},
     {"value": "western_long_term_transits_addon", "label": "長期トランジット（1年）追加"},
 ]
+# 四柱推命の年運アドオンは、商品台帳に登録した年数（販売中のもの）だけを選択肢に出す。
+ADDON_FORM_OPTIONS += [
+    {"value": addon_type, "label": years_addon_label(addon_type, "ja")}
+    for addon_type in YEARS_ADDON_TYPES
+    if addon_type in product_catalog.REGISTERED_PRODUCT_TYPES
+]
 ADDON_ORDER_PROVIDERS = ("stores", "etsy", "payhip", "coconala")
 
 
@@ -7145,6 +7362,8 @@ def _localized_addon_options(lang: str) -> list[dict[str, str]]:
         },
     }
     labels = labels_by_lang.get(lang, labels_by_lang["en"])
+    for addon_type in YEARS_ADDON_TYPES:
+        labels.setdefault(addon_type, years_addon_label(addon_type, lang if lang in labels_by_lang else "en"))
     return [{"value": item["value"], "label": labels.get(item["value"], item["label"])} for item in ADDON_FORM_OPTIONS]
 
 
@@ -7181,6 +7400,7 @@ def _addon_form_response(
                 "base_yaml": "",
                 "previous_chart_url": "",
                 "transit_start_date": today_jst.isoformat(),
+                "annual_start_year": "",
             },
             "result_yaml": result_yaml,
             "transit_result_url": transit_result_url,
@@ -7221,6 +7441,7 @@ def _addon_initial_form_from_request(request: Request) -> dict[str, str]:
         "base_yaml": "",
         "previous_chart_url": previous_chart_url,
         "transit_start_date": today_jst,
+        "annual_start_year": "",
     }
 
 
@@ -7323,7 +7544,7 @@ def _auto_resolve_addon_purchase(
     return "", "", redeem_error(lang, "addon_reference_not_found"), 400, []
 
 
-def _load_addon_base_yaml(base_yaml: str) -> dict:
+def _load_addon_base_yaml(base_yaml: str, lang: str = "ja") -> dict:
     raw_yaml = base_yaml.strip()
     fenced = re.search(r"```(?:yaml|yml)?\s*(.*?)```", raw_yaml, flags=re.I | re.S)
     if fenced:
@@ -7335,12 +7556,9 @@ def _load_addon_base_yaml(base_yaml: str) -> dict:
     try:
         doc = yaml.safe_load(raw_yaml) or {}
     except yaml.YAMLError as exc:
-        raise ValueError(
-            "YAMLとして読み込めません。"
-            "プロンプト文ではなく、version: から始まるYAML本文だけを貼り付けてください。"
-        ) from exc
+        raise ValueError(redeem_error(lang, "addon_yaml_unreadable")) from exc
     if not isinstance(doc, dict):
-        raise ValueError("YAMLの最上位はオブジェクト形式である必要があります。")
+        raise ValueError(redeem_error(lang, "addon_yaml_root_invalid"))
     return doc
 
 
@@ -7353,14 +7571,14 @@ def _float_or_none(value: object) -> float | None:
         return None
 
 
-def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
+def _addon_args_from_base_doc(doc: dict, lang: str = "ja") -> dict[str, object]:
     input_block = doc.get("input") or {}
     if not isinstance(input_block, dict):
-        raise ValueError("YAML内の input 情報が不正です。")
+        raise ValueError(redeem_error(lang, "addon_yaml_input_invalid"))
 
     birth_date = str(input_block.get("birth_date") or "").strip()
     if not birth_date:
-        raise ValueError("YAML内に input.birth_date がありません。")
+        raise ValueError(redeem_error(lang, "addon_yaml_birth_date_missing"))
 
     calculation_time = str(input_block.get("calculation_time") or "").strip()
     birth_time_value = input_block.get("birth_time")
@@ -7376,7 +7594,7 @@ def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
     if birth_place_kind == "overseas":
         prefecture = ""
     if not prefecture and (lat is None or lng is None):
-        raise ValueError("海外出生または都道府県なしのYAMLでは input.birth_lat / input.birth_lng が必要です。")
+        raise ValueError(redeem_error(lang, "addon_yaml_coordinates_missing"))
 
     birth_time_block = doc.get("birth_time") or {}
     if not isinstance(birth_time_block, dict):
@@ -7398,24 +7616,50 @@ def _addon_args_from_base_doc(doc: dict) -> dict[str, object]:
     }
 
 
-def _validate_addon_base_doc(doc: dict, addon_type: str) -> None:
+def _validate_addon_base_doc(doc: dict, addon_type: str, lang: str = "ja") -> None:
     systems = doc.get("systems") or {}
     if not isinstance(systems, dict):
-        raise ValueError("YAML内の systems 情報が不正です。")
+        raise ValueError(redeem_error(lang, "addon_yaml_systems_invalid"))
     western = systems.get("western") or {}
     shichu = systems.get("shichusuimei") or {}
 
     if addon_type in {"western_asteroids_addon", "western_31days_transit_addon", "western_long_term_transits_addon"}:
         if not isinstance(western, dict) or not isinstance(western.get("natal"), dict):
-            raise ValueError("western addon には western の基本版YAMLが必要です。")
+            raise ValueError(redeem_error(lang, "addon_yaml_western_required"))
         return
 
-    if addon_type == "shichu_fortune_cycles_addon":
+    if addon_type == "shichu_fortune_cycles_addon" or addon_type in YEARS_ADDON_TYPES:
         if not isinstance(shichu, dict) or not isinstance(shichu.get("normalized_data"), dict):
-            raise ValueError("shichu addon には shichusuimei の基本版YAMLが必要です。")
+            raise ValueError(redeem_error(lang, "addon_yaml_shichu_required"))
         return
 
-    raise ValueError("未対応のaddon種別です。")
+    raise ValueError(redeem_error(lang, "addon_unsupported"))
+
+
+def _shichu_engine_args_from_base(doc: dict, args: dict[str, object]) -> dict[str, object]:
+    """保存済み四柱推命原本が実際に採用した計算設定（日替わり・fold・UTCオフセット）を引き継ぐ。"""
+    args = dict(args)
+    shichu = ((doc.get("systems") or {}).get("shichusuimei") or {})
+    assumptions = ((shichu.get("input") or {}).get("assumptions") or {})
+    # Respect the actual rule saved by the old engine, not the old UI label.
+    # This creates a separate add-on; never migrates the purchased base chart.
+    if "day_boundary_hour" in assumptions:
+        boundary = assumptions["day_boundary_hour"]
+    elif assumptions.get("day_boundary_rule") == "00:00切替":
+        boundary = 0
+    elif "子刻後半" in str(assumptions.get("day_boundary_rule") or ""):
+        boundary = 1
+    else:
+        boundary = 1 if assumptions.get("day_change_at_23") else 0
+    args["day_boundary_hour"] = boundary
+    args["day_change_at_23"] = boundary == 23
+    context = (shichu.get("input") or {}).get("time_context") or {}
+    if context:
+        args["birth_fold"] = context.get("fold")
+        args["birth_utc_offset_hours"] = context.get("utc_offset_hours")
+    elif (doc.get("input") or {}).get("timezone_offset_hours") is not None:
+        args["birth_utc_offset_hours"] = doc["input"]["timezone_offset_hours"]
+    return args
 
 
 def _build_addon_yaml_from_base(
@@ -7423,9 +7667,10 @@ def _build_addon_yaml_from_base(
     addon_type: str,
     *,
     transit_start_date: datetime | None = None,
+    lang: str = "ja",
 ) -> str:
-    _validate_addon_base_doc(doc, addon_type)
-    args = _addon_args_from_base_doc(doc)
+    _validate_addon_base_doc(doc, addon_type, lang)
+    args = _addon_args_from_base_doc(doc, lang)
     if addon_type == "western_asteroids_addon":
         yaml_text, _prompt_text, _addon_doc = build_asteroid_addon_yaml(**args)
         return yaml_text
@@ -7437,9 +7682,18 @@ def _build_addon_yaml_from_base(
         return yaml_text
 
     shichu = ((doc.get("systems") or {}).get("shichusuimei") or {})
-    assumptions = ((shichu.get("input") or {}).get("assumptions") or {})
-    args["day_change_at_23"] = bool(assumptions.get("day_change_at_23"))
+    args = _shichu_engine_args_from_base(doc, args)
     yaml_text, _prompt_text, _addon_doc = build_shichu_fortune_cycles_addon_yaml(**args)
+    original_day = ((shichu.get("normalized_data") or {}).get("pillars") or {}).get("day") or {}
+    original_day = original_day.get("kanshi") if isinstance(original_day, dict) else original_day
+    if not original_day:
+        original_day = (shichu.get("pillars") or {}).get("day") or (shichu.get("summary") or {}).get("day_kanshi")
+        original_day = original_day.get("kanshi") if isinstance(original_day, dict) else original_day
+    new_day = (((_addon_doc.get("systems") or {}).get("shichusuimei") or {}).get("reference") or {}).get("day_kanshi")
+    if not original_day or not new_day:
+        raise ValueError("保存済み命式の日柱を照合できないため、追加データを統合できません。完全原本はそのまま保存してください。")
+    if original_day != new_day:
+        raise ValueError("保存済み命式の日柱と修正後の計算が異なるため、追加データを統合できません。完全原本はそのまま保存してください。")
     return yaml_text
 
 
@@ -7455,9 +7709,9 @@ ASTEROID_ADDON_CHART_PROMPT = """あなたは西洋占星術の鑑定者です�
 """
 
 
-def _build_asteroid_addon_from_base(doc: dict) -> tuple[str, str, dict, str, str, dict]:
-    _validate_addon_base_doc(doc, "western_asteroids_addon")
-    args = _addon_args_from_base_doc(doc)
+def _build_asteroid_addon_from_base(doc: dict, lang: str = "ja") -> tuple[str, str, dict, str, str, dict]:
+    _validate_addon_base_doc(doc, "western_asteroids_addon", lang)
+    args = _addon_args_from_base_doc(doc, lang)
     addon_yaml_text, addon_prompt_text, addon_doc = build_asteroid_addon_yaml(**args)
 
     chart_doc = copy.deepcopy(doc)
@@ -7504,9 +7758,10 @@ def _build_transit_addon_from_base(
     extra_meta: dict[str, object] | None = None,
     extra_options: dict[str, object] | None = None,
     extra_root: dict[str, object] | None = None,
+    lang: str = "ja",
 ) -> tuple[str, str, dict, str, str, dict]:
-    _validate_addon_base_doc(doc, "western_31days_transit_addon")
-    args = _addon_args_from_base_doc(doc)
+    _validate_addon_base_doc(doc, "western_31days_transit_addon", lang)
+    args = _addon_args_from_base_doc(doc, lang)
     addon_yaml_text, addon_prompt_text, addon_doc = build_31days_transit_addon_yaml(
         **args,
         transit_start_date=transit_start_date,
@@ -7588,9 +7843,10 @@ def _build_long_term_transits_addon_from_base(
     doc: dict,
     *,
     transit_start_date: datetime,
+    lang: str = "ja",
 ) -> tuple[str, str, dict, str, str, dict]:
-    _validate_addon_base_doc(doc, "western_long_term_transits_addon")
-    args = _addon_args_from_base_doc(doc)
+    _validate_addon_base_doc(doc, "western_long_term_transits_addon", lang)
+    args = _addon_args_from_base_doc(doc, lang)
     _full_yaml_text, _prompt_text, full_doc = build_product_yaml(
         **args,
         include_asteroids=False,
@@ -7759,54 +8015,60 @@ def _shift_years(value: date, years: int) -> date:
         return value.replace(month=2, day=28, year=value.year + years)
 
 
-def _parse_transit_start_date(value: str) -> datetime:
+def _parse_transit_start_date(value: str, lang: str = "ja") -> datetime:
     raw = (value or "").strip()
     if not raw:
-        raise ValueError("開始日を入力してください。現在日から前後5年以内の日付を指定できます。")
+        raise ValueError(redeem_error(lang, "addon_start_date_required"))
     try:
         selected = date.fromisoformat(raw)
     except ValueError as exc:
-        raise ValueError("開始日の形式が不正です。YYYY-MM-DD で入力してください。") from exc
+        raise ValueError(redeem_error(lang, "addon_start_date_format")) from exc
 
     today_jst = datetime.now(ZoneInfo("Asia/Tokyo")).date()
     min_date = _shift_years(today_jst, -5)
     max_date = _shift_years(today_jst, 5)
     if not (min_date <= selected <= max_date):
-        raise ValueError(
-            f"開始日は現在日から前後5年以内で指定してください。"
-            f"{min_date.isoformat()}〜{max_date.isoformat()} の範囲で選び直してください。"
-        )
+        raise ValueError(redeem_error(
+            lang,
+            "addon_start_date_range",
+            min_date=min_date.isoformat(),
+            max_date=max_date.isoformat(),
+        ))
     return datetime(selected.year, selected.month, selected.day, tzinfo=ZoneInfo("Asia/Tokyo"))
 
 
-def _load_addon_base_doc_from_previous_chart_url(previous_chart_url: str, addon_type: str = "western_31days_transit_addon") -> dict:
+def _load_addon_base_doc_from_previous_chart_url(
+    previous_chart_url: str,
+    addon_type: str = "western_31days_transit_addon",
+    lang: str = "ja",
+) -> dict:
     raw_url = (previous_chart_url or "").strip()
     try:
         parsed = urlparse(raw_url)
     except ValueError as exc:
-        raise ValueError("前回鑑定URLを読み取れません。鑑定結果ページのURLをそのまま貼り付けてください。") from exc
+        raise ValueError(redeem_error(lang, "addon_url_unreadable")) from exc
 
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("前回鑑定URLが不正です。https:// から始まる鑑定結果ページのURLを貼り付けてください。")
+        raise ValueError(redeem_error(lang, "addon_url_invalid"))
 
     token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\.yaml)?/?", parsed.path or "")
     if not token_match:
-        raise ValueError("前回鑑定URLが不正です。鑑定結果ページのURLをそのまま貼り付けてください。")
+        raise ValueError(redeem_error(lang, "addon_url_path_invalid"))
 
     token = token_match.group(1)
     chart = pg_store.get_chart(token, include_svgs=False)
     if not chart:
-        raise ValueError("前回鑑定URLが見つかりません。90日以内の有効な鑑定結果URLを入力してください。")
+        raise ValueError(redeem_error(lang, "addon_url_not_found"))
 
     expires_at = _chart_expiry(chart)
     if expires_at and datetime.now(timezone.utc) >= expires_at:
-        raise ValueError("前回鑑定URLの有効期限が切れています。基本版YAMLを貼り付けるか、90日以内の鑑定結果URLを入力してください。")
+        raise ValueError(redeem_error(lang, "addon_url_expired"))
 
-    doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""))
+    doc = _load_addon_base_yaml(str(chart.get("yaml_text") or ""), lang)
     try:
-        _validate_addon_base_doc(doc, addon_type)
+        _validate_addon_base_doc(doc, addon_type, lang)
     except ValueError as exc:
-        raise ValueError("このURLにはaddonに使えるネイタル情報がありません。基本版ホロスコープのYAMLまたはURLを入力してください。") from exc
+        raise ValueError(redeem_error(lang, "addon_url_incompatible")) from exc
     return doc
 
 
@@ -8225,14 +8487,11 @@ def _redeem_and_save_transit_addon_or_raise(
         )
 
         if status == "ok":
-            if not (order_row or {}).get("product_type") and not _order_row_skips_product_check(order_row):
-                _warn_unverified_product_type(
-                    provider=order_provider_clean,
-                    order_id=order_code_clean,
-                    issued_as=addon_type,
-                    context="addon",
-                )
+            if not product_catalog.verified_identity((order_row or {}).get("product_type"), (order_row or {}).get("sku")) and not _order_row_skips_product_check(order_row):
+                raise ValueError(redeem_error(lang, "product_unverified"))
             return token, expires_at
+        if status == "product_unverified":
+            raise ValueError(redeem_error(lang, "product_unverified"))
         if status == "not_found":
             raise ValueError(redeem_error(
                 lang, "order_not_found", order_code=order_code_clean
@@ -8353,14 +8612,11 @@ def _redeem_and_save_chart_addon_or_raise(
         )
 
         if status == "ok":
-            if not (order_row or {}).get("product_type") and not _order_row_skips_product_check(order_row):
-                _warn_unverified_product_type(
-                    provider=order_provider_clean,
-                    order_id=order_code_clean,
-                    issued_as=addon_type,
-                    context="addon",
-                )
+            if not product_catalog.verified_identity((order_row or {}).get("product_type"), (order_row or {}).get("sku")) and not _order_row_skips_product_check(order_row):
+                raise ValueError(redeem_error(lang, "product_unverified"))
             return token, expires_at
+        if status == "product_unverified":
+            raise ValueError(redeem_error(lang, "product_unverified"))
         if status == "not_found":
             raise ValueError(redeem_error(
                 lang, "order_not_found", order_code=order_code_clean
@@ -8395,6 +8651,94 @@ def _redeem_and_save_chart_addon_or_raise(
             message = _public_error_message(last_exc, fallback=message)
         raise ValueError(message) from last_exc
     raise ValueError(redeem_error(lang, "addon_save_failed"))
+
+
+YEARS_ADDON_STORES_ONLY_MESSAGES = {
+    "ja": "四柱推命の年運アドオンは STORES でご購入いただいた注文番号でのみ発行できます。",
+    "en": "The Four Pillars annual add-on can only be issued for orders purchased on STORES.",
+    "es": "El complemento anual de Cuatro Pilares solo se emite para pedidos comprados en STORES.",
+    "de": "Das Vier-Säulen-Jahres-Add-on wird nur für Bestellungen aus STORES ausgestellt.",
+}
+
+
+def _parse_annual_start_year(value: str, info: dict) -> int:
+    raw = (value or "").strip()
+    if not raw:
+        if info.get("default_start_year") is None:
+            raise YearsAddonError("開始年を西暦で入力してください。")
+        return int(info["default_start_year"])
+    if not re.fullmatch(r"\d{4}", raw):
+        raise YearsAddonError("開始年は西暦4桁で入力してください（例：2036）。")
+    return int(raw)
+
+
+def _years_addon_chart_payload(*, chart_doc: dict, addon_type: str) -> dict[str, object]:
+    """「FULL版＋追加した年」の鑑定ページとして保存する内容（ホロスコープのアドオンと同じ形）。"""
+    input_block = chart_doc.get("input") or {}
+    yaml_text = yaml.safe_dump(chart_doc, allow_unicode=True, sort_keys=False, width=120)
+    try:
+        shichusuimei_svg = optimize_svg(build_shichusuimei_svg_from_yaml(yaml_text, doc=chart_doc))
+    except Exception:
+        shichusuimei_svg = None
+    return {
+        "buyer_name": str(input_block.get("title") or "").strip() or None,
+        "birth_date": str(input_block.get("birth_date") or "").strip(),
+        "birth_time": str(input_block.get("birth_time") or input_block.get("calculation_time") or "").strip() or None,
+        "birth_place": str(input_block.get("birth_place") or input_block.get("prefecture") or "").strip() or None,
+        "options": {**((chart_doc.get("product") or {}).get("options") or {}), "product_type": addon_type},
+        "yaml_text": yaml_text,
+        "prompt_text": build_prompt_for_doc(chart_doc, include_shichusuimei=True),
+        "share_yaml_text": yaml_text,
+        "horoscope_svg": None,
+        "shichusuimei_svg": shichusuimei_svg,
+    }
+
+
+def _issue_shichu_years_addon(
+    request: Request,
+    *,
+    form: dict[str, str],
+    addon_type: str,
+    order_code: str,
+    order_provider: str,
+    payhip_metadata: dict[str, str],
+    lang: str,
+):
+    """四柱推命 年運アドオン：FULL版原本から計算・照合し、成功したときだけ注文を消込して保存する。"""
+    base_yaml = form.get("base_yaml") or ""
+    previous_chart_url = form.get("previous_chart_url") or ""
+    if not base_yaml.strip() and not previous_chart_url.strip():
+        return _addon_form_response(request, form=form, error=redeem_error(lang, "addon_base_required"), status_code=400)
+    order_provider_clean = _resolve_order_provider(_normalize_stores_order_no(order_code), order_provider)
+    if order_provider_clean != "stores":
+        # FULL版と同じく STORES 専売（2026-10-12 決定）。
+        return _addon_form_response(
+            request, form=form, status_code=400,
+            error=YEARS_ADDON_STORES_ONLY_MESSAGES.get(lang, YEARS_ADDON_STORES_ONLY_MESSAGES["ja"]),
+        )
+    doc = (
+        _load_addon_base_yaml(base_yaml, lang)
+        if base_yaml.strip()
+        else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
+    )
+    _validate_addon_base_doc(doc, addon_type, lang)
+    info = full_base_info(doc)
+    start_year = _parse_annual_start_year(form.get("annual_start_year") or "", info)
+    engine_args = _shichu_engine_args_from_base(doc, _addon_args_from_base_doc(doc, lang))
+    # 計算・元の FULL 版との照合・統合はここで完了させ、失敗したら注文を消込しない。
+    _addon_yaml, _addon_prompt, addon_doc = build_years_addon(doc, addon_type, start_year, engine_args=engine_args)
+    chart_doc = merge_years_into_full(doc, addon_doc, addon_type)
+    chart_payload = _years_addon_chart_payload(chart_doc=chart_doc, addon_type=addon_type)
+    chart_payload["options"] = {
+        **dict(chart_payload["options"]),
+        "order_provider": order_provider_clean,
+        "order_strict_check": _get_order_check_policy(order_provider_clean)["strict"],
+        **payhip_metadata,
+    }
+    token, _expires_at = _redeem_and_save_chart_addon_or_raise(
+        order_code, order_provider, addon_type, chart_payload=chart_payload, lang=lang,
+    )
+    return RedirectResponse(_chart_redirect_url(token, lang=lang), status_code=303)
 
 
 def _redeem_addon_order_or_raise(
@@ -8470,14 +8814,11 @@ def _redeem_addon_order_or_raise(
     )
 
     if status == "ok":
-        if not (order_row or {}).get("product_type") and not _order_row_skips_product_check(order_row):
-            _warn_unverified_product_type(
-                provider=order_provider_clean,
-                order_id=order_code_clean,
-                issued_as=addon_type,
-                context="addon",
-            )
+        if not product_catalog.verified_identity((order_row or {}).get("product_type"), (order_row or {}).get("sku")) and not _order_row_skips_product_check(order_row):
+            raise ValueError(redeem_error(lang, "product_unverified"))
         return order_code_clean
+    if status == "product_unverified":
+        raise ValueError(redeem_error(lang, "product_unverified"))
     if status == "not_found":
         raise ValueError(redeem_error(
             lang, "order_not_found", order_code=order_code_clean
@@ -8520,6 +8861,7 @@ def addon_generate(
     base_yaml: str = Form(""),
     previous_chart_url: str = Form(""),
     transit_start_date: str = Form(""),
+    annual_start_year: str = Form(""),
 ):
     # Real ASGI requests always include query_string. Some established unit
     # tests call this handler with a minimal Request scope, so retain the
@@ -8535,9 +8877,12 @@ def addon_generate(
         "base_yaml": base_yaml,
         "previous_chart_url": previous_chart_url,
         "transit_start_date": transit_start_date,
+        "annual_start_year": annual_start_year,
     }
     if addon_type not in {item["value"] for item in ADDON_FORM_OPTIONS}:
-        return _addon_form_response(request, form=form, error="addon種別が不正です。", status_code=400)
+        return _addon_form_response(
+            request, form=form, error=redeem_error(lang, "addon_type_invalid"), status_code=400
+        )
     requested_provider = (order_provider or "").strip().lower()
     payhip_metadata: dict[str, str] = {}
     order_code_for_redeem = order_code
@@ -8601,18 +8946,28 @@ def addon_generate(
             )
         order_provider_for_redeem = "coconala"
     try:
+        if addon_type in YEARS_ADDON_TYPES:
+            return _issue_shichu_years_addon(
+                request,
+                form=form,
+                addon_type=addon_type,
+                order_code=order_code_for_redeem,
+                order_provider=order_provider_for_redeem,
+                payhip_metadata=payhip_metadata,
+                lang=lang,
+            )
         if addon_type == "western_asteroids_addon":
             if not base_yaml.strip() and not previous_chart_url.strip():
                 return _addon_form_response(
                     request,
                     form=form,
-                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    error=redeem_error(lang, "addon_base_required"),
                     status_code=400,
                 )
             doc = (
-                _load_addon_base_yaml(base_yaml)
+                _load_addon_base_yaml(base_yaml, lang)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
             )
             (
                 _addon_yaml_text,
@@ -8621,7 +8976,7 @@ def addon_generate(
                 chart_yaml_text,
                 chart_prompt_text,
                 chart_doc,
-            ) = _build_asteroid_addon_from_base(doc)
+            ) = _build_asteroid_addon_from_base(doc, lang)
             chart_payload = _asteroid_addon_chart_payload(
                 yaml_text=chart_yaml_text,
                 prompt_text=chart_prompt_text,
@@ -8647,15 +9002,15 @@ def addon_generate(
                 return _addon_form_response(
                     request,
                     form=form,
-                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    error=redeem_error(lang, "addon_base_required"),
                     status_code=400,
                 )
             doc = (
-                _load_addon_base_yaml(base_yaml)
+                _load_addon_base_yaml(base_yaml, lang)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
             )
-            start_dt = _parse_transit_start_date(transit_start_date)
+            start_dt = _parse_transit_start_date(transit_start_date, lang)
             (
                 result_yaml,
                 _addon_prompt_text,
@@ -8666,6 +9021,7 @@ def addon_generate(
             ) = _build_transit_addon_from_base(
                 doc,
                 transit_start_date=start_dt,
+                lang=lang,
             )
             chart_payload = _transit_addon_chart_payload(
                 yaml_text=chart_yaml_text,
@@ -8693,15 +9049,15 @@ def addon_generate(
                 return _addon_form_response(
                     request,
                     form=form,
-                    error="基本版YAML または 90日以内の前回鑑定URLを入力してください。入力後、もう一度生成してください。",
+                    error=redeem_error(lang, "addon_base_required"),
                     status_code=400,
                 )
             doc = (
-                _load_addon_base_yaml(base_yaml)
+                _load_addon_base_yaml(base_yaml, lang)
                 if base_yaml.strip()
-                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type)
+                else _load_addon_base_doc_from_previous_chart_url(previous_chart_url, addon_type, lang)
             )
-            start_dt = _parse_transit_start_date(transit_start_date)
+            start_dt = _parse_transit_start_date(transit_start_date, lang)
             (
                 result_yaml,
                 _addon_prompt_text,
@@ -8712,6 +9068,7 @@ def addon_generate(
             ) = _build_long_term_transits_addon_from_base(
                 doc,
                 transit_start_date=start_dt,
+                lang=lang,
             )
             chart_payload = _long_term_transits_addon_chart_payload(
                 yaml_text=chart_yaml_text,
@@ -8735,9 +9092,11 @@ def addon_generate(
             )
             return RedirectResponse(_chart_redirect_url(token, lang=lang), status_code=303)
         if not base_yaml.strip():
-            return _addon_form_response(request, form=form, error="基本版YAMLを貼り付けてください。", status_code=400)
-        doc = _load_addon_base_yaml(base_yaml)
-        result_yaml = _build_addon_yaml_from_base(doc, addon_type)
+            return _addon_form_response(
+                request, form=form, error=redeem_error(lang, "addon_yaml_required"), status_code=400
+            )
+        doc = _load_addon_base_yaml(base_yaml, lang)
+        result_yaml = _build_addon_yaml_from_base(doc, addon_type, lang=lang)
         _redeem_addon_order_or_raise(
             order_code_for_redeem,
             order_provider_for_redeem,
@@ -8908,7 +9267,7 @@ def _chart_expiry(chart: dict) -> datetime | None:
 
 def _chart_expiry_label(expires_at: datetime | None) -> str:
     if not expires_at:
-        return "発行から90日間"
+        return "発行から365日間"
     dt = expires_at.astimezone(ZoneInfo("Asia/Tokyo"))
     return f"{dt.year}年{dt.month}月{dt.day}日 {dt.hour:02d}:{dt.minute:02d}まで"
 
@@ -8996,8 +9355,15 @@ def _chart_prompt_for_yaml_text(
             effective_lang,
             stored_prompt=str(chart.get("prompt_text") or ""),
         )
+    if is_legacy_shichu_doc(prompt_doc):
+        # 既存購入者の旧原本：本番 8c25fc0 の組み立て（product.options があれば固定の
+        # 四柱推命指示文、なければ保存済みの指示文）をそのまま再現する。
+        if product_options:
+            return legacy_reading_prompt(prompt_doc, effective_lang)
+        return _chart_prompt_text(chart, doc=fallback_doc)
     western = (((prompt_doc.get("systems") or {}).get("western") or {}) if isinstance(prompt_doc, dict) else {})
-    if isinstance(product_options, dict) and isinstance(western, dict) and product_options:
+    systems = prompt_doc.get("systems") or {}
+    if isinstance(systems, dict) and any(k in systems for k in ("western", "shichusuimei")):
         include_transit = bool(
             product_options.get("transit")
             or product_options.get("transit_today")
@@ -9005,13 +9371,12 @@ def _chart_prompt_for_yaml_text(
             or western.get("transit")
         )
         include_asteroids = bool(product_options.get("asteroids") and western.get("asteroids"))
-        include_shichusuimei = bool(product_options.get("shichusuimei"))
-        return build_prompt(
+        include_shichusuimei = bool(systems.get("shichusuimei"))
+        return build_prompt_for_doc(
+            prompt_doc,
             include_shichusuimei=include_shichusuimei,
             include_asteroids=include_asteroids,
             include_transit=include_transit,
-            birth_time_accuracy=str((prompt_doc.get("birth_time") or {}).get("accuracy") or "exact"),
-            interpretation_flags=prompt_doc.get("interpretation_flags") or {},
             lang=effective_lang,
         )
     return _chart_prompt_text(chart, doc=fallback_doc)
@@ -9019,6 +9384,28 @@ def _chart_prompt_for_yaml_text(
 
 def _chart_prompt_text(chart: dict, *, doc: dict | None = None) -> str:
     prompt_text = str(chart.get("prompt_text") or "")
+    chart_doc = doc if isinstance(doc, dict) else None
+    if chart_doc is None and (
+        is_shichu_product(_chart_product_type(chart.get("options") or {}))
+        or bool((chart.get("options") or {}).get("shichusuimei"))
+    ):
+        try:
+            loaded_doc = yaml.safe_load(chart.get("yaml_text") or "") or {}
+            chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+        except Exception:
+            chart_doc = {}
+    systems = (chart_doc or {}).get("systems") or {}
+    if is_legacy_shichu_doc(chart_doc):
+        # 既存購入者の旧原本：本番 8c25fc0 と同じく保存済みの指示文を返す。
+        return prompt_text
+    if isinstance(systems, dict) and systems.get("shichusuimei"):
+        western = systems.get("western") or {}
+        return build_prompt_for_doc(
+            chart_doc, include_shichusuimei=True,
+            include_asteroids=bool(western.get("asteroids")),
+            include_transit=bool(western.get("transit")),
+            lang=str((chart.get("options") or {}).get("product_locale") or "ja"),
+        )
     if str((chart.get("options") or {}).get("product_locale") or "ja") != "ja":
         return prompt_text
     guided_prompt = ensure_transit_date_guidance(prompt_text)
@@ -9044,7 +9431,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
                 "title": "nanami-products chart data archive",
                 "intro": "This ZIP keeps a local copy of your chart data.",
                 "expiry_none": "The private chart URL does not expire.",
-                "expiry": "The private chart URL is available for 90 days after issuance. The files in this ZIP remain usable afterwards.",
+                "expiry": "The private chart URL is normally available for 365 days after issuance. Check the page for its expiration date. The files in this ZIP remain usable afterwards.",
                 "files": "Main files",
                 "items": ["ai_paste.txt — recommended text to paste into an AI", "detail.yaml — compact chart data for ordinary readings", "full.yaml — complete data for storage and verification", "prompt.txt — instructions for interpreting the YAML"],
                 "tip": "For a quick reading, use ai_paste.txt. Use full.yaml when you need every calculated detail.",
@@ -9054,7 +9441,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
                 "title": "Archivo de datos de la carta de nanami-products",
                 "intro": "Este ZIP guarda una copia local de los datos de tu carta.",
                 "expiry_none": "La URL privada de la carta no caduca.",
-                "expiry": "La URL privada de la carta está disponible durante 90 días desde su emisión. Los archivos del ZIP seguirán siendo utilizables después.",
+                "expiry": "La URL privada de la carta suele estar disponible durante 365 días desde su emisión. Consulta la fecha de caducidad en la página. Los archivos del ZIP seguirán siendo utilizables después.",
                 "files": "Archivos principales",
                 "items": ["ai_paste.txt — texto recomendado para pegar en una IA", "detail.yaml — datos compactos para una lectura habitual", "full.yaml — datos completos para guardar y verificar", "prompt.txt — instrucciones para interpretar el YAML"],
                 "tip": "Para una lectura rápida, usa ai_paste.txt. Usa full.yaml cuando necesites todos los detalles calculados.",
@@ -9064,7 +9451,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
                 "title": "nanami-products – Archiv deiner Horoskopdaten",
                 "intro": "Diese ZIP-Datei enthält eine lokale Kopie deiner Horoskopdaten.",
                 "expiry_none": "Die private Horoskop-URL läuft nicht ab.",
-                "expiry": "Die private Horoskop-URL ist 90 Tage ab Ausstellung verfügbar. Die Dateien in dieser ZIP bleiben danach nutzbar.",
+                "expiry": "Die private Horoskop-URL ist normalerweise 365 Tage ab Ausstellung verfügbar. Das Ablaufdatum steht auf der Seite. Die Dateien in dieser ZIP bleiben danach nutzbar.",
                 "files": "Wichtige Dateien",
                 "items": ["ai_paste.txt — empfohlener Text zum Einfügen in eine KI", "detail.yaml — kompakte Daten für gewöhnliche Deutungen", "full.yaml — vollständige Daten zur Aufbewahrung und Prüfung", "prompt.txt — Anweisungen zur Deutung der YAML-Daten"],
                 "tip": "Für eine schnelle Deutung verwende ai_paste.txt. Nutze full.yaml, wenn du alle berechneten Details brauchst.",
@@ -9078,7 +9465,7 @@ def _chart_zip_readme(chart: dict, *, lang: str = "ja") -> str:
     expiry_line = (
         "共有URLに有効期限はありません。"
         if no_expiry
-        else f"共有URLの有効期限は発行から90日間です。{expires_label} を過ぎると、このデータページは開けなくなります。"
+        else f"共有URLの有効期限は通常、発行から365日間です。{expires_label} を過ぎると、このデータページは開けなくなります。"
     )
     options = chart.get("options") or {}
     product_type = _chart_product_type(options)

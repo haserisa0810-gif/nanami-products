@@ -79,7 +79,8 @@ LOCALES: dict[str, dict[str, object]] = {
         ],
         "storage_heading": "鑑定ページと保存",
         "storage": [
-            "発行された鑑定ページは90日間利用できます。",
+            "発行された鑑定ページは365日間利用できます。",
+            "有効期間中は何度でも、作成月から12か月分の最新版Plannerを作れます。",
             "期限後も使えるよう、鑑定ページのURLと保存用ZIPを端末へ保存してください。",
         ],
         "support": "お問い合わせ：Etsyメッセージ",
@@ -119,7 +120,8 @@ LOCALES: dict[str, dict[str, object]] = {
         ],
         "storage_heading": "Chart page and storage",
         "storage": [
-            "The generated chart page stays available for 90 days.",
+            "The generated chart page stays available for 365 days.",
+            "While the URL is valid, create updated planners as often as you like, each covering 12 months from the creation month.",
             "Save the private URL and download the archive ZIP so you can keep the files after that.",
         ],
         "support": "Support: send a message through Etsy",
@@ -159,7 +161,8 @@ LOCALES: dict[str, dict[str, object]] = {
         ],
         "storage_heading": "Página privada y archivos",
         "storage": [
-            "La página privada estará disponible durante 90 días.",
+            "La página privada estará disponible durante 365 días.",
+            "Mientras la URL sea válida, puedes actualizar tu planificador tantas veces como quieras: 12 meses desde el mes de creación.",
             "Guarda la URL privada y descarga el ZIP para conservar los archivos después de ese plazo.",
         ],
         "support": "Ayuda: envía un mensaje por Etsy",
@@ -199,7 +202,8 @@ LOCALES: dict[str, dict[str, object]] = {
         ],
         "storage_heading": "Horoskopseite und Speicherung",
         "storage": [
-            "Die private Horoskopseite bleibt 90 Tage verfügbar.",
+            "Die private Horoskopseite bleibt 365 Tage verfügbar.",
+            "Solange die URL gültig ist, kannst du den Planer beliebig oft aktualisieren: jeweils 12 Monate ab dem Erstellungsmonat.",
             "Speichere die private URL und lade das Archiv-ZIP herunter, damit du die Dateien danach behältst.",
         ],
         "support": "Hilfe: Nachricht über Etsy senden",

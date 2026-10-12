@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-11",
+  "branch": "codex/astrology-prompt-separation",
+  "full_suite": {
+    "passed": 2166,
+    "skipped": 13,
+    "xfailed": 0,
+    "warnings": 5653,
+    "subtests_passed": 161,
+    "seconds": 98.45
+  },
+  "targeted_suite": {
+    "passed": 140,
+    "skipped": 13,
+    "xfailed": 0,
+    "seconds": 0.89
+  },
+  "previous_violation": "Normal regression PASS for stores/payhip/etsy; no XFAIL",
+  "postgres": {
+    "executed": false,
+    "existing_cases": 7,
+    "new_cases": 6,
+    "reason": "No isolated TEST_ORDER_DATABASE_URL configured"
+  },
+  "smtp": {
+    "executed_this_task": false,
+    "application_path_still_unverified": true
+  },
+  "syntax": {
+    "python_ast": "PASS",
+    "javascript_node_check": "PASS",
+    "ddl_matches_definition": "PASS",
+    "postgres_sql_execution": "not executed"
+  },
+  "production_writes": false,
+  "push": false,
+  "deploy": false,
+  "commit": false,
+  "source_sha256": {
+    "services/order_holds.py": "29b7b52fe9cdcabf4f59f7ff746ed35e186c86b130ff4c142bc88bbe77261a5e",
+    "services/order_review.py": "f85a9040fd0e27316c01441bcc1d19ea6d48742ccb33aeb05b66dd1bf50a2dee",
+    "services/stores_mail_sync.py": "b5a66e35e949ae0e2554059c75b98bd49a7ff499ceb96b40e9ee6a78adfd6103",
+    "services/pg_store.py": "7da7ce191c45ecdb984024c032130e853e316fdfa9253f4a556cd290a6cf5923",
+    "routes.py": "0bf37dc09935ab292ae800b106d9df3a461f0952dd92c882d092c069d11e1be7",
+    "templates/test_site.html": "54450dc9b88dada89d9605e1118bb0d2b7f2f51ed4202a2b80e47187675c3c9e",
+    "scripts/sql/create_marketplace_order_holds.sql": "f85e67210ff457f403a940b554c5f3ef134ec86de7113620b973a577bc916f4a",
+    "tests/test_order_hold_retry_audit.py": "740bf0be2731e1f445cc52be0105e93664ea5b1d9d4a984ddd9fabfabf53b9c3",
+    "tests/test_order_hold_approval.py": "43d173cd3692fe1fb00fd8538fc9d697b8011445a2d9c8c34318d3f55d51eec5",
+    "tests/test_purchase_notifications_postgres.py": "c97ec60f7a09e49915cb70cc0369c307bc02d4a3cc533cb2dc07613a4c6a70f8",
+    "tests/test_purchase_notification_safety.py": "55aa1e60350c99427aa6c555cb9d65b323ff2912a6a2dffb10c324844c37e2f5",
+    "tests/test_stores_mail_sync_upsert.py": "d6bcdd1d7321d23f6943f9bcdaffc7f35a42744b0d4bdfd11bde89e4f12f0d55"
+  },
+  "checkpoint_comparison": {
+    "services/order_holds.py": {
+      "before": "cf0120217a5d1abfc49c277bbbd32cd521815309d348c48396ac393be20aaf21",
+      "after": "29b7b52fe9cdcabf4f59f7ff746ed35e186c86b130ff4c142bc88bbe77261a5e"
+    },
+    "services/stores_mail_sync.py": {
+      "before": "cf3304eaec7641a92afd27057a47f4d1d0f05fdbb9c28e8d4322163e088a8f27",
+      "after": "b5a66e35e949ae0e2554059c75b98bd49a7ff499ceb96b40e9ee6a78adfd6103"
+    },
+    "services/pg_store.py": {
+      "before": "bdbc2738be90beae9719e211355f6a353117d93c712445ad9c6a3e27dc46d1bf",
+      "after": "7da7ce191c45ecdb984024c032130e853e316fdfa9253f4a556cd290a6cf5923"
+    },
+    "routes.py": {
+      "before": "93b5ed0d9f6becf3d8b96e94cd90a7b994a50e08113fd38663bf198e18ee75ca",
+      "after": "0bf37dc09935ab292ae800b106d9df3a461f0952dd92c882d092c069d11e1be7"
+    },
+    "templates/test_site.html": {
+      "before": "5dd253bb927b58e936accd4c12c502884445c4542e8fb21627399195ec24cf32",
+      "after": "54450dc9b88dada89d9605e1118bb0d2b7f2f51ed4202a2b80e47187675c3c9e"
+    },
+    "tests/test_order_hold_retry_audit.py": {
+      "before": "989db0daed51e78c30a15fd1bf7a1324fd4c9d7392303a403ca2064362979b2f",
+      "after": "740bf0be2731e1f445cc52be0105e93664ea5b1d9d4a984ddd9fabfabf53b9c3"
+    }
+  }
+}

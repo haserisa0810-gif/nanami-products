@@ -32,12 +32,16 @@ MIGRATION_NAME = "marketplace_order_entitlements_v1"
 
 # Keep the one-time migration deliberately narrower than pg_store.init_db().
 # In particular, it must never alter charts, redemptions, expiry values, or URLs.
-MIGRATION_STATEMENTS = (
-    MARKETPLACE_ORDERS_DDL,
-    ORDER_ENTITLEMENTS_DDL,
+LEGACY_COLUMN_STATEMENTS = (
     f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS product_type TEXT",
     f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS provider TEXT",
     f"ALTER TABLE {SCHEMA}.stores_orders ADD COLUMN IF NOT EXISTS buyer_reference TEXT",
+)
+from services.order_holds import DDL as ORDER_HOLDS_DDL  # noqa: E402
+MIGRATION_STATEMENTS = (
+    MARKETPLACE_ORDERS_DDL,
+    ORDER_ENTITLEMENTS_DDL,
+    ORDER_HOLDS_DDL,
     (
         f"CREATE INDEX IF NOT EXISTS idx_stores_orders_provider_buyer "
         f"ON {SCHEMA}.stores_orders (provider, buyer_reference)"
@@ -116,6 +120,10 @@ def run_migration(con, *, apply: bool) -> dict[str, Any]:
             if not cur.fetchone()["present"]:
                 raise RuntimeError("Expected existing stores_orders table")
 
+            for statement in LEGACY_COLUMN_STATEMENTS:
+                cur.execute(statement)
+            # Count legacy rows after column compatibility, before order copying.
+            # Existing values are unchanged; newly added provider values are NULL.
             report["legacy_orders_before"] = _provider_counts(cur, "stores_orders", "provider")
             for statement in MIGRATION_STATEMENTS:
                 cur.execute(statement)
@@ -139,7 +147,7 @@ def run_migration(con, *, apply: bool) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Safely create marketplace_orders and order_entitlements only."
+        description="Safely migrate orders, entitlements, holds and processed notices only."
     )
     parser.add_argument("--apply", action="store_true", help="Commit instead of rolling back")
     parser.add_argument(

@@ -13,11 +13,20 @@ def test_acg_map_uses_leaflet_tile_providers() -> None:
     template = _template()
 
     assert "var TILE_PROVIDERS = {" in template
-    assert "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" in template
+    assert "https://tile.openstreetmap.org/{z}/{x}/{y}.png" in template
     assert "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png" in template
     assert "World_Topo_Map/MapServer/tile/{z}/{y}/{x}" in template
     assert "L.tileLayer(provider.url, provider.options)" in template
     assert "L.control.layers(baseLayers" in template
+
+
+def test_acg_osm_tiles_send_only_origin_without_overriding_page_policy() -> None:
+    template = _template()
+    osm_provider = template.split("var TILE_PROVIDERS = {", 1)[1].split("gsi: {", 1)[0]
+
+    assert 'referrerPolicy: "strict-origin"' in osm_provider
+    assert template.count("referrerPolicy:") == 1
+    assert '<meta name="referrer"' not in template
 
 
 def test_acg_lines_render_above_tile_map() -> None:

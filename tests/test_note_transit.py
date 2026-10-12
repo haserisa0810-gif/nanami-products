@@ -71,6 +71,33 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(campaign.days, 38)
         self.assertEqual(len(campaign.access_key_hash), 64)
 
+    def test_september_campaign_remains_available(self) -> None:
+        campaign = get_note_transit_campaign("2026-09")
+
+        self.assertIsNotNone(campaign)
+        self.assertTrue(campaign.enabled)
+        self.assertEqual(campaign.campaign_id, "note-2026-09")
+        self.assertEqual(campaign.start_date.isoformat(), "2026-09-01")
+        self.assertEqual(campaign.end_date.isoformat(), "2026-10-08")
+        self.assertEqual(campaign.days, 38)
+        self.assertEqual(campaign.access_key_hash,
+                         "63c4c342eb7b7d0cf5e9b9791df2d8e80e3fa2aef2001c99129992ab397006f0")
+
+    def test_october_campaign_has_fixed_period_and_requires_secret(self) -> None:
+        campaign = get_note_transit_campaign("2026-10")
+
+        self.assertIsNotNone(campaign)
+        self.assertTrue(campaign.enabled)
+        self.assertEqual(campaign.campaign_id, "note-2026-10")
+        self.assertEqual(campaign.target_month, "2026-10")
+        self.assertEqual(campaign.start_date.isoformat(), "2026-10-01")
+        self.assertEqual(campaign.end_date.isoformat(), "2026-11-07")
+        self.assertEqual(campaign.days, 38)
+        self.assertRegex(campaign.access_key_hash, r"^[0-9a-f]{64}$")
+        self.assertIsNone(get_note_transit_campaign_by_access_key("2026-10"))
+        self.assertIsNone(get_note_transit_campaign_by_access_key("note-2026-10"))
+        self.assertIsNone(get_note_transit_campaign_by_access_key("oct-incorrect"))
+
     def test_campaign_is_resolved_by_secret_key_not_month(self) -> None:
         test_key = "unit-test-secret"
         test_campaign = NoteTransitCampaign(

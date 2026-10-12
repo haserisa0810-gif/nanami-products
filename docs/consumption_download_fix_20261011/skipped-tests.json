@@ -1,0 +1,258 @@
+[
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-stores-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-stores-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-stores-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-payhip-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-payhip-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-payhip-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-etsy-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-etsy-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[False-etsy-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-stores-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-stores-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-stores-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-payhip-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-payhip-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-payhip-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-etsy-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-etsy-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_held_addon_cannot_consume_new_or_legacy_rights[True-etsy-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_normal_and_addon_compete_for_same_unit_only_one_wins[plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_normal_and_addon_compete_for_same_unit_only_one_wins[chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_normal_and_addon_compete_for_same_unit_only_one_wins[transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_addon_parallel_consumption_and_repeat_cannot_duplicate[plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_addon_parallel_consumption_and_repeat_cannot_duplicate[chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_addon_parallel_consumption_and_repeat_cannot_duplicate[transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_addon_save_failure_rolls_back_consumption[chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_addon_save_failure_rolls_back_consumption[transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_reset_once_does_not_grant_addon_extra_use[plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_reset_once_does_not_grant_addon_extra_use[chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_reset_once_does_not_grant_addon_extra_use[transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_unpaid_addon_never_consumes_rights[False-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_unpaid_addon_never_consumes_rights[False-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_unpaid_addon_never_consumes_rights[False-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_unpaid_addon_never_consumes_rights[True-plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_unpaid_addon_never_consumes_rights[True-chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_unpaid_addon_never_consumes_rights[True-transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_invalid_entitlement_identity_cannot_use_legacy_fallback",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_approval_and_addon_consumption_share_lock_without_deadlock[plain]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_approval_and_addon_consumption_share_lock_without_deadlock[chart]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_approval_and_addon_consumption_share_lock_without_deadlock[transit]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_normal_reset_once_remains_one_reissue",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_download_never_changes_order_rights_review_or_original[absent]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_download_never_changes_order_rights_review_or_original[paid]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_download_never_changes_order_rights_review_or_original[issued]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_download_never_changes_order_rights_review_or_original[held]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_download_never_changes_order_rights_review_or_original[approved]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_download_and_purchase_same_source_id_still_grants_valid_purchase",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_consumption_download_postgres.test_parallel_download_purchase_does_not_hold_or_expand_order",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_order_notifications_smtp_postgres.test_actual_smtp_failure_retry_and_notice_state_persist[ssl]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_order_notifications_smtp_postgres.test_actual_smtp_failure_retry_and_notice_state_persist[starttls]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_order_notifications_smtp_postgres.test_parallel_actual_smtp_dispatch_sends_one_notice[ssl]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_order_notifications_smtp_postgres.test_parallel_actual_smtp_dispatch_sends_one_notice[starttls]",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_replay_cannot_increase_quantity_or_rewrite_issued_yaml",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_parallel_redemption_creates_only_one_chart",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_multi_product_order_uses_only_each_purchased_unit",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_unknown_order_is_held_and_cannot_use_legacy_first_redemption",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_failed_chart_insert_rolls_back_consumed_right",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_held_resync_preserves_prior_purchase_and_sent_notice",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_changed_replay_does_not_increase_rights",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_valid_resync_of_held_order_requires_manual_approval",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_parallel_approvals_create_only_confirmed_units",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_new_notice_invalidates_previous_review",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_approval_failure_rolls_back_granted_units",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_existing_chart_preserved_and_rights_frozen_until_approved",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  },
+  {
+    "test": "tests.test_purchase_notifications_postgres.test_real_old_source_notifications_do_not_reopen_approved_order",
+    "reason": "未実施: TEST_ORDER_DATABASE_URL is not set; no real PostgreSQL available"
+  }
+]

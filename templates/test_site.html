@@ -46,6 +46,26 @@
     <section class="api-key-issuer">
       <div class="api-test-panel-head">
         <div>
+          <p class="api-test-kicker">Orders</p>
+          <h2>発行を保留した注文</h2>
+        </div>
+        <button type="button" id="loadOrderHoldsButton">確認・更新</button>
+      </div>
+        <p class="hint">再通知では保留を解除しません。購入内容と既存の発行権を確認したうえで、管理者が承認してください。</p>
+      <div id="orderHoldsStatus" class="api-test-status" role="status" aria-live="polite"></div>
+      <pre id="orderHoldsBody"></pre>
+        <button type="button" id="nextOrderHoldsButton" hidden>次の100件</button>
+        <label>確認する注文 <select id="orderHoldSelect"></select></label>
+        <button type="button" id="reviewOrderHoldButton">明細・既存発行権・変更履歴を確認</button>
+        <pre id="orderHoldReviewBody"></pre>
+        <label><input id="orderHoldReviewed" type="checkbox">購入内容と既存の発行権を確認しました</label>
+        <label>承認する注文ID <input id="orderHoldConfirm" type="text" autocomplete="off"></label>
+        <button type="button" id="approveOrderHoldButton" disabled>確認した明細で保留を解除</button>
+    </section>
+
+    <section class="api-key-issuer">
+      <div class="api-test-panel-head">
+        <div>
           <p class="api-test-kicker">API Key</p>
           <h2>テスト用APIキー発行</h2>
         </div>
@@ -152,6 +172,7 @@
             <option value="western_transit">ホロスコープ基本版＋トランジット</option>
             <option value="western_asteroids_addon">ホロスコープ：小惑星追加</option>
             <option value="shichu">四柱推命版</option>
+            <option value="shichu_full">四柱推命FULL版</option>
             <option value="transit_yaml">トランジットYAML版</option>
           </select>
         </label>
@@ -996,6 +1017,103 @@
       }
     }
 
+    let orderHoldsOffset = 0;
+    let orderHoldRows = [];
+    let currentOrderHoldReview = null;
+    const holdSelect = document.getElementById("orderHoldSelect");
+    const holdReviewBody = document.getElementById("orderHoldReviewBody");
+    const holdApproveButton = document.getElementById("approveOrderHoldButton");
+    function clearOrderHoldReview() {
+      currentOrderHoldReview = null;
+      holdReviewBody.textContent = "";
+      holdApproveButton.disabled = true;
+      document.getElementById("orderHoldReviewed").checked = false;
+      document.getElementById("orderHoldConfirm").value = "";
+    }
+    holdSelect.addEventListener("change", clearOrderHoldReview);
+    async function loadOrderHolds(next = false) {
+      const adminToken = requireAdminToken();
+      if (!adminToken) return;
+      const status = document.getElementById("orderHoldsStatus");
+      const body = document.getElementById("orderHoldsBody");
+      const nextButton = document.getElementById("nextOrderHoldsButton");
+      orderHoldsOffset = next ? orderHoldsOffset + 100 : 0;
+      clearOrderHoldReview();
+      orderHoldRows = [];
+      holdSelect.replaceChildren();
+      status.textContent = "取得中";
+      nextButton.hidden = true;
+      try {
+        const response = await fetch(`/internal/orders/holds?limit=100&offset=${orderHoldsOffset}`, {
+          headers: {"X-Admin-Token": adminToken}
+        });
+        const result = await parseResponseBody(response);
+        if (!response.ok || !result.ok) {
+          body.textContent = "";
+          status.textContent = "保留注文を取得できませんでした。管理トークンと接続を確認してください。";
+          return;
+        }
+        const holds = result.holds || [];
+        orderHoldRows = holds;
+        holds.forEach((row, index) => {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = `${row.provider} / ${row.order_code}`;
+          holdSelect.appendChild(option);
+        });
+        status.textContent = holds.length ? `保留注文 ${orderHoldsOffset + 1}件目から ${holds.length}件` : "このページに保留注文はありません";
+        body.textContent = holds.map(row => `${row.provider} / ${row.order_code} / ${row.reason_label} / メール通知: ${row.notification_status === 'sent' ? '送信済み' : '未送信'}`).join("\n");
+        nextButton.hidden = holds.length < 100;
+      } catch (error) {
+        body.textContent = "";
+        status.textContent = "保留注文を取得できませんでした。";
+      }
+    }
+    document.getElementById("loadOrderHoldsButton").addEventListener("click", () => loadOrderHolds());
+    document.getElementById("nextOrderHoldsButton").addEventListener("click", () => loadOrderHolds(true));
+    document.getElementById("reviewOrderHoldButton").addEventListener("click", async () => {
+      const adminToken = requireAdminToken();
+      const row = orderHoldRows[Number(holdSelect.value)];
+      clearOrderHoldReview();
+      if (!adminToken || !row) return;
+      const selected = holdSelect.value;
+      try {
+        const response = await fetch(`/internal/orders/holds/${encodeURIComponent(row.provider)}/${encodeURIComponent(row.order_code)}`, {
+          headers: {"X-Admin-Token": adminToken}
+        });
+        const result = await parseResponseBody(response);
+        if (holdSelect.value !== selected || orderHoldRows[Number(selected)] !== row) return;
+        if (!response.ok || !result.ok) throw new Error("lookup");
+        currentOrderHoldReview = result;
+        holdReviewBody.textContent = JSON.stringify(result, null, 2);
+        holdApproveButton.disabled = result.review.status !== "held" || !result.review.candidate?.purchase_evidence;
+      } catch (error) {
+        holdReviewBody.textContent = "明細を取得できませんでした。";
+      }
+    });
+    holdApproveButton.addEventListener("click", async () => {
+      const adminToken = requireAdminToken();
+      const review = currentOrderHoldReview;
+      const confirmation = document.getElementById("orderHoldConfirm").value.trim();
+      if (!adminToken || !review || !document.getElementById("orderHoldReviewed").checked || confirmation !== review.order_code) {
+        document.getElementById("orderHoldsStatus").textContent = "内容を確認し、承認する注文IDを入力してください。";
+        return;
+      }
+      holdApproveButton.disabled = true;
+      try {
+        const response = await fetch(`/internal/orders/holds/${encodeURIComponent(review.provider)}/${encodeURIComponent(review.order_code)}/approve`, {
+          method: "POST", headers: {"X-Admin-Token": adminToken, "Content-Type": "application/json"},
+          body: JSON.stringify({confirm_order_code: confirmation, review_version: review.review.review_version})
+        });
+        const result = await parseResponseBody(response);
+        if (!response.ok || !result.ok) throw new Error("approval");
+        await loadOrderHolds();
+        document.getElementById("orderHoldsStatus").textContent = "承認しました。既存の発行物は保持しています。";
+      } catch (error) {
+        clearOrderHoldReview();
+        document.getElementById("orderHoldsStatus").textContent = "承認できませんでした。最新の明細と既存発行権を再確認してください。";
+      }
+    });
     endpointSelect.addEventListener("change", loadSample);
     document.getElementById("loadSampleButton").addEventListener("click", loadSample);
     document.getElementById("formatRequestButton").addEventListener("click", formatRequest);

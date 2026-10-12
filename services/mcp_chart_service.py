@@ -11,24 +11,25 @@ from zoneinfo import ZoneInfo
 import yaml
 
 from services import pg_store
+from services.chart_policy import CHART_EXPIRES_DAYS
 from services.long_term_transit_yaml import has_long_term_transits
 
 ALLOWED_CHART_HOST = "chart.nanami-astro.com"
 CHART_ID_RE = re.compile(r"^[A-Za-z0-9_-]{5,128}$")
-CHART_EXPIRES_DAYS = 90
 SUPPORTED_SECTIONS = ("natal", "transit_31days", "long_term", "asteroid", "shichu", "indian")
 DEFAULT_MAX_YAML_BYTES = 4_000_000
 SUPPORTED_PROMPT_PURPOSES = ("today_fortune", "natal_with_transit")
 
 
-WESTERN_TODAY_FORTUNE_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図・小惑星・38日分のトランジットを含む計算済みデータです。
+WESTERN_TODAY_FORTUNE_PROMPT = """あなたは西洋占星術の鑑定者です。以下のYAMLは、出生図・38日分のトランジットと、商品に含まれる場合は小惑星を含む計算済みデータです。
 
 重要ルール:
 - 天体位置・ハウス・アスペクト・トランジットの計算結果は変更しないでください。
 - 生年月日から再計算しないでください。
 - YAML内の計算結果を唯一の根拠として解釈してください。
 - 断定しすぎず、傾向・使い方・活かし方として表現してください。
-- 出生図を土台に、小惑星と今後38日分のトランジットをつなげて読んでください。
+- 出生図を土台に、今後38日分のトランジットをつなげて読んでください。
+- 小惑星はYAML内に実データが存在する場合だけ解釈してください。存在しない、空、nullの場合は、不足の指摘や断り書きをせず、小惑星への言及を省略してください。
 - 月は朝・昼・夜の動きが入っています。日内の変化を読む時に参照してください。
 - transitデータは「現在の流れ」の根拠として使ってください。
 - moon_timepoints は「朝・昼・夜」の日内の使い方の根拠として使ってください。
@@ -353,12 +354,18 @@ def get_astrology_prompt(*, purpose: str = "today_fortune", product_type: str = 
             code="unsupported_prompt_purpose",
         )
     product_value = (product_type or "").strip() or "western_31days_transit_addon"
+    shichu_only = product_value in {"shichu", "shichu_full", "shichusuimei", "shichu_fortune_cycles_addon"}
+    if shichu_only:
+        from services.prompt_builder import build_prompt
+        prompt = build_prompt(include_shichusuimei=True, include_western=False)
+    else:
+        prompt = WESTERN_TODAY_FORTUNE_PROMPT
     return {
         "ok": True,
         "purpose": purpose_value,
         "product_type": product_value,
-        "prompt": WESTERN_TODAY_FORTUNE_PROMPT,
-        "recommended_sections": ["natal", "asteroid", "transit_31days"],
+        "prompt": prompt,
+        "recommended_sections": ["shichu"] if shichu_only else ["natal", "asteroid", "transit_31days"],
         "usage_order": [
             "get_chart_summary_from_url でChart URLの有効期限と含まれるセクションを確認する",
             "get_astrology_prompt で鑑定ルールを取得する",

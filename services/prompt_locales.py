@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from services.shichusuimei_prompt_rules import localized_shichusuimei_rules
 
 
 SUPPORTED_PROMPT_LANGS = {"en", "es", "de"}
@@ -15,7 +16,7 @@ _COPY: dict[str, dict[str, Any]] = {
         "transit_title": "TRANSIT TIMING", "focus_title": "READING FOCUS",
         "style_title": "STYLE AND SAFETY", "acg_title": "ASTROCARTOGRAPHY",
         "priority": [
-            "Do not recalculate, correct, or replace any planetary position, house, aspect, transit, pillar, or cycle.",
+            "Do not recalculate, correct, or replace any planetary position, house, aspect, or transit.",
             "Follow interpretation_flags and time_sensitive_provisional before any other interpretive rule.",
             "Do not infer sections that are not present in the YAML.",
             "Clearly separate what is shown by the astrology data, what the user has said about real life, and your own practical suggestions.",
@@ -41,7 +42,7 @@ _COPY: dict[str, dict[str, Any]] = {
             "Day Master and Five Element balance",
             "Talents, strengths, and recurring difficulties",
             "Work and relationship tendencies",
-            "Major luck cycles and the current annual influence",
+            "Major luck cycles and annual data for the original creation year or the selected included years",
             "Practical ways to use the chart without making deterministic claims",
         ],
         "style": [
@@ -63,7 +64,7 @@ _COPY: dict[str, dict[str, Any]] = {
         "transit_title": "TIEMPOS Y TRÁNSITOS", "focus_title": "ENFOQUE DE LA LECTURA",
         "style_title": "ESTILO Y SEGURIDAD", "acg_title": "ASTROCARTOGRAFÍA",
         "priority": [
-            "No recalcules, corrijas ni sustituyas posiciones planetarias, casas, aspectos, tránsitos, pilares o ciclos.",
+            "No recalcules, corrijas ni sustituyas posiciones planetarias, casas, aspectos o tránsitos.",
             "Sigue interpretation_flags y time_sensitive_provisional antes que cualquier otra regla interpretativa.",
             "No inventes secciones que no estén presentes en el YAML.",
             "Distingue con claridad entre lo que indican los datos astrológicos, lo que la persona cuenta sobre su vida real y tus sugerencias prácticas.",
@@ -89,7 +90,7 @@ _COPY: dict[str, dict[str, Any]] = {
             "Maestro del Día y equilibrio de los Cinco Elementos",
             "Talentos, fortalezas y dificultades recurrentes",
             "Tendencias profesionales y relacionales",
-            "Grandes ciclos de suerte e influencia anual actual",
+            "Grandes ciclos de suerte y datos del año de creación original o de los años incluidos seleccionados",
             "Formas prácticas de utilizar la carta sin afirmaciones deterministas",
         ],
         "style": [
@@ -111,7 +112,7 @@ _COPY: dict[str, dict[str, Any]] = {
         "transit_title": "TRANSITE UND ZEITQUALITÄT", "focus_title": "SCHWERPUNKTE DER DEUTUNG",
         "style_title": "STIL UND SICHERHEIT", "acg_title": "ASTROKARTOGRAFIE",
         "priority": [
-            "Berechne, korrigiere oder ersetze keine Planetenpositionen, Häuser, Aspekte, Transite, Säulen oder Zyklen.",
+            "Berechne, korrigiere oder ersetze keine Planetenpositionen, Häuser, Aspekte oder Transite.",
             "Befolge interpretation_flags und time_sensitive_provisional vor allen anderen Deutungsregeln.",
             "Ergänze keine Bereiche, die im YAML nicht vorhanden sind.",
             "Trenne klar zwischen Aussagen aus den astrologischen Daten, den realen Angaben der Person und deinen praktischen Vorschlägen.",
@@ -137,7 +138,7 @@ _COPY: dict[str, dict[str, Any]] = {
             "Tagesmeister und Gleichgewicht der Fünf Elemente",
             "Talente, Stärken und wiederkehrende Schwierigkeiten",
             "Tendenzen in Beruf und Beziehungen",
-            "Große Glückszyklen und aktueller Jahreseinfluss",
+            "Große Glückszyklen und enthaltene Jahresdaten der ursprünglichen Erstellung oder der ausgewählten Jahre",
             "Praktische Nutzung ohne deterministische Aussagen",
         ],
         "style": [
@@ -161,13 +162,30 @@ def build_localized_prompt(
     include_asteroids: bool,
     include_transit: bool,
     time_sensitive: bool,
+    include_western: bool | None = None,
 ) -> str:
+    if include_western is None:
+        include_western = not include_shichusuimei or include_asteroids or include_transit
+    if not include_western:
+        include_asteroids = include_transit = False
+    if include_shichusuimei and include_western:
+        return (
+            build_localized_prompt(lang=lang, include_shichusuimei=False, include_western=True,
+                include_asteroids=include_asteroids, include_transit=include_transit, time_sensitive=time_sensitive)
+            + "\n"
+            + build_localized_prompt(lang=lang, include_shichusuimei=True, include_western=False,
+                include_asteroids=False, include_transit=False, time_sensitive=time_sensitive)
+        )
     copy = _COPY[lang]
     role = copy["role_four_pillars"] if include_shichusuimei else copy["role_western"]
     focus = copy["four_pillars_focus"] if include_shichusuimei else copy["western_focus"]
     lines = [role, "", copy["data_intro"], "", f"## {copy['priority_title']}"]
-    lines.extend(f"- {item}" for item in copy["priority"])
-    if time_sensitive:
+    if include_shichusuimei:
+        lines.append(localized_shichusuimei_rules(lang))
+        lines.extend(f"- {item}" for item in copy["priority"][2:])
+    else:
+        lines.extend(f"- {item}" for item in copy["priority"])
+    if time_sensitive and include_western:
         lines.extend(["", f"- {copy['time_warning']}"])
     if include_transit:
         lines.extend(["", f"## {copy['transit_title']}"])

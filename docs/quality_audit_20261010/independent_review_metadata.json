@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-10-10T08:25:04.376552+00:00",
+  "requested_model": "claude-opus-5-5",
+  "reported_models": [
+    "claude-opus-5-5"
+  ],
+  "model_verified": true,
+  "returncode": 0,
+  "is_error": false,
+  "changed_files": [],
+  "tools_enabled": false,
+  "source_files": [
+    "services/shichusuimei_calc.py",
+    "services/shichusuimei_structure.py",
+    "services/western_calc.py",
+    "services/western_core.py",
+    "services/transit_builder.py",
+    "services/asteroid_provider.py",
+    "services/transit_yaml.py",
+    "services/long_term_transit_yaml.py",
+    "services/yaml_exporter.py",
+    "services/location.py",
+    "services/shichusuimei_year_selection.py"
+  ]
+}

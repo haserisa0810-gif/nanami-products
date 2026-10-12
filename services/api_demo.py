@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from services.api_yaml import build_handoff_yaml
+from services.api_yaml import build_handoff_yaml, build_ai_prompt_context
 from services.chart_svg import build_horoscope_svg_from_yaml
 from services.shichu_chart import build_shichusuimei_svg_from_yaml
 from services.yaml_exporter import build_product_yaml
@@ -175,6 +175,9 @@ def build_demo_response(endpoint: str, payload: dict[str, object], *, base_url: 
             "svg_url": f"{base_url}/api/demo/shichusuimei/{DEMO_SHICHU_CHART_ID}/chart.svg",
             "png_url": None,
         }
+    response["ai_prompt_context"] = build_ai_prompt_context(
+        {"systems": {"western": western, "shichusuimei": shichu}}, response["ai_prompt_context"]
+    )
     response["handoff_yaml"] = build_handoff_yaml({key: value for key, value in response.items() if key != "ok"})
     return response
 

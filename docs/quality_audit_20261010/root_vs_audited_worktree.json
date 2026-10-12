@@ -1,0 +1,44 @@
+[
+  {
+    "file": "services/shichusuimei_calc.py",
+    "same_normalized_text": true,
+    "root_sha256": "b15879f1a6efd6dfead92cf8f6b1c3df61f944e823be330b6af5099ab4120a69",
+    "audited_sha256": "b15879f1a6efd6dfead92cf8f6b1c3df61f944e823be330b6af5099ab4120a69"
+  },
+  {
+    "file": "services/shichusuimei_structure.py",
+    "same_normalized_text": true,
+    "root_sha256": "785e2429e6acc4bda8f927bddcd3441a60fc00fc323977eed7938135851799e9",
+    "audited_sha256": "785e2429e6acc4bda8f927bddcd3441a60fc00fc323977eed7938135851799e9"
+  },
+  {
+    "file": "services/western_core.py",
+    "same_normalized_text": true,
+    "root_sha256": "2e0f82fabd9722a50a7e1dcea1a4443b5bac7a905f93af6f26590ff327d94a0c",
+    "audited_sha256": "2e0f82fabd9722a50a7e1dcea1a4443b5bac7a905f93af6f26590ff327d94a0c"
+  },
+  {
+    "file": "services/western_calc.py",
+    "same_normalized_text": true,
+    "root_sha256": "b2fe4c8d934de21df5c6fcf5c65cf519265ee68f4decb19d23438ea5c20d937a",
+    "audited_sha256": "b2fe4c8d934de21df5c6fcf5c65cf519265ee68f4decb19d23438ea5c20d937a"
+  },
+  {
+    "file": "services/yaml_exporter.py",
+    "same_normalized_text": false,
+    "root_sha256": "755e9c1111fa36d21998ab838cd2762a07bcf0910431054e6f944249c682af73",
+    "audited_sha256": "70ef384161e0cec705c41f45776a05af9b0bd52649d3972eea912730cfbef6ad"
+  },
+  {
+    "file": "services/prompt_builder.py",
+    "same_normalized_text": false,
+    "root_sha256": "bce5c3b73d9c7a6497a3545d0346d870c0edb79aae3d41553d1a83591924b921",
+    "audited_sha256": "c9b18aa6a20f95a555d7520107d97073ed6fbb9a25cbe0ae5c041cdf5ece38d8"
+  },
+  {
+    "file": "routes.py",
+    "same_normalized_text": false,
+    "root_sha256": "cf55a1b95fcc383f49228fa4f43d1526cea0e4c3989c5fb8b400725d1ffd69c3",
+    "audited_sha256": "ac76032edf16448e9ae8ca105a35a6e078ae5abd4b8c14db1799b08761b3d691"
+  }
+]

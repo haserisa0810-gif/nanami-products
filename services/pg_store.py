@@ -12,6 +12,8 @@ from typing import Any, Generator
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 from psycopg2.pool import ThreadedConnectionPool
+from services.chart_policy import CHART_EXPIRES_DAYS
+from services import product_catalog, order_holds
 
 SCHEMA = "nanami_products"
 _pool: ThreadedConnectionPool | None = None
@@ -197,7 +199,7 @@ def init_db() -> None:
             """)
             cur.execute(f"""
                 UPDATE {SCHEMA}.charts
-                SET expires_at = created_at + INTERVAL '90 days'
+                SET expires_at = created_at + INTERVAL '{CHART_EXPIRES_DAYS} days'
                 WHERE expires_at IS NULL
                   AND COALESCE(options->>'expires_policy', '') <> 'no_expiry'
             """)
@@ -472,7 +474,7 @@ def _insert_chart(
         if isinstance(options, dict) and options.get("expires_policy") == "no_expiry":
             placeholders.append("%s")
         else:
-            placeholders.append("COALESCE(%s, NOW() + INTERVAL '90 days')")
+            placeholders.append(f"COALESCE(%s, NOW() + INTERVAL '{CHART_EXPIRES_DAYS} days')")
         values.append(expires_at)
 
     conflict_clause = " ON CONFLICT (token) DO NOTHING" if on_conflict_do_nothing else ""
@@ -1186,50 +1188,13 @@ def _claim_direct_addon_entitlement(
     order_code = str(order.get("stores_order_no") or "").strip()
     if provider not in {"stores", "payhip", "etsy"} or not order_code:
         return False, None
-    cur.execute("SELECT to_regclass(%s) AS table_name", (f"{SCHEMA}.order_entitlements",))
-    table_row = cur.fetchone()
-    if not table_row or not table_row.get("table_name"):
-        return False, None
-    cur.execute(
-        f"""
-        SELECT id, provider, order_code, line_item_key, sku, product_type, unit_index
-        FROM {SCHEMA}.order_entitlements
-        WHERE provider = %s
-          AND order_code = %s
-          AND product_type = %s
-          AND status = 'available'
-        ORDER BY id
-        FOR UPDATE SKIP LOCKED
-        LIMIT 1
-        """,
-        (provider, order_code, addon_type),
+    entitlement_mode, entitlement = _claim_order_entitlement(
+        cur, order_code=order_code, provider=provider, product_type=addon_type,
+        chart_token=chart_token, allow_reset_once=False, product_scoped_legacy=True,
     )
-    entitlement = cur.fetchone()
     if entitlement:
-        cur.execute(
-            f"""
-            UPDATE {SCHEMA}.order_entitlements
-            SET status = 'redeemed', chart_token = %s,
-                redeemed_at = NOW(), updated_at = NOW()
-            WHERE id = %s AND status = 'available'
-            RETURNING id
-            """,
-            (chart_token, entitlement["id"]),
-        )
-        if cur.fetchone():
-            return True, dict(entitlement)
-        return True, None
-    cur.execute(
-        f"""
-        SELECT id FROM {SCHEMA}.order_entitlements
-        WHERE provider = %s AND order_code = %s AND product_type = %s
-        LIMIT 1
-        """,
-        (provider, order_code, addon_type),
-    )
-    # 同じaddon商品の発行権行がある場合だけ新方式。発行権のない旧注文は、
-    # 下流で保存済みの商品種別とaddon種別を完全一致させる。
-    return (cur.fetchone() is not None), None
+        entitlement.pop("payment_status", None)
+    return entitlement_mode, entitlement
 
 
 def _select_marketplace_order_for_update(
@@ -1237,6 +1202,9 @@ def _select_marketplace_order_for_update(
 ) -> dict[str, Any] | None:
     """Lock the provider-scoped order, with a legacy STORES fallback."""
     provider_clean = (provider or "stores").strip().lower()
+    blocked, _ = _purchase_consumption_context(
+        cur, provider=provider_clean, order_code=order_code
+    )
     cur.execute(
         "SELECT to_regclass(%s) AS table_name",
         (f"{SCHEMA}.marketplace_orders",),
@@ -1266,7 +1234,12 @@ def _select_marketplace_order_for_update(
             (order_code, provider_clean, provider_clean),
         )
     row = cur.fetchone()
-    return dict(row) if row else None
+    if not row:
+        return None
+    order = dict(row)
+    if blocked:
+        order["_consumption_blocked"] = True
+    return order
 
 
 def redeem_addon_order(
@@ -1284,7 +1257,11 @@ def redeem_addon_order(
             )
             if not order:
                 return "not_found", None
+            if order.pop("_consumption_blocked", False):
+                return "held", order
             payment_status = str(order.get("payment_status") or "").lower()
+            if payment_status not in {"paid", "reset_once", "reusable", "test", "permanent"}:
+                return "unpaid", order
 
             if payment_status in {"reusable", "test", "permanent"}:
                 return "ok", order
@@ -1293,9 +1270,13 @@ def redeem_addon_order(
                 cur, order=order, addon_type=addon_type, chart_token=None
             )
             if entitlement_mode:
+                if entitlement:
+                    order = {**order, "product_type": entitlement["product_type"], "sku": entitlement.get("sku")}
                 return ("ok", order) if entitlement else ("already_used", order)
 
             purchased_type = order.get("product_type")
+            if not product_catalog.verified_identity(purchased_type, order.get("sku")):
+                return "product_unverified", order
             if purchased_type and str(purchased_type) != addon_type:
                 return "product_mismatch", order
 
@@ -1334,7 +1315,11 @@ def redeem_addon_order_and_save_chart(
             )
             if not order:
                 return "not_found", None
+            if order.pop("_consumption_blocked", False):
+                return "held", order
             payment_status = str(order.get("payment_status") or "").lower()
+            if payment_status not in {"paid", "reset_once", "reusable", "test", "permanent"}:
+                return "unpaid", order
 
             if payment_status not in {"reusable", "test", "permanent"}:
                 entitlement_mode, entitlement = _claim_direct_addon_entitlement(
@@ -1342,8 +1327,12 @@ def redeem_addon_order_and_save_chart(
                 )
                 if entitlement_mode and not entitlement:
                     return "already_used", order
+                if entitlement:
+                    order = {**order, "product_type": entitlement["product_type"], "sku": entitlement.get("sku")}
                 if not entitlement_mode:
                     purchased_type = order.get("product_type")
+                    if not product_catalog.verified_identity(purchased_type, order.get("sku")):
+                        return "product_unverified", order
                     if purchased_type and str(purchased_type) != addon_type:
                         return "product_mismatch", order
                     cur.execute(
@@ -1404,7 +1393,11 @@ def redeem_addon_order_and_save_transit_link(
             )
             if not order:
                 return "not_found", None
+            if order.pop("_consumption_blocked", False):
+                return "held", order
             payment_status = str(order.get("payment_status") or "").lower()
+            if payment_status not in {"paid", "reset_once", "reusable", "test", "permanent"}:
+                return "unpaid", order
 
             if payment_status not in {"reusable", "test", "permanent"}:
                 entitlement_mode, entitlement = _claim_direct_addon_entitlement(
@@ -1412,8 +1405,12 @@ def redeem_addon_order_and_save_transit_link(
                 )
                 if entitlement_mode and not entitlement:
                     return "already_used", order
+                if entitlement:
+                    order = {**order, "product_type": entitlement["product_type"], "sku": entitlement.get("sku")}
                 if not entitlement_mode:
                     purchased_type = order.get("product_type")
+                    if not product_catalog.verified_identity(purchased_type, order.get("sku")):
+                        return "product_unverified", order
                     if purchased_type and str(purchased_type) != addon_type:
                         return "product_mismatch", order
                     cur.execute(
@@ -1695,13 +1692,33 @@ def reset_redemption_by_order_code(
     }
 
 
+def _purchase_consumption_context(cur, *, provider: str, order_code: str):
+    """Lock before any order/entitlement row lock; inspect the shared hold gate."""
+    provider_clean = provider
+    order_holds.lock_order(cur, provider=provider_clean, order_code=order_code, schema=SCHEMA)
+    cur.execute(
+        "SELECT to_regclass(%s) AS entitlement_table, "
+        "to_regclass(%s) AS marketplace_table, to_regclass(%s) AS hold_table",
+        (f"{SCHEMA}.order_entitlements", f"{SCHEMA}.marketplace_orders", f"{SCHEMA}.marketplace_order_holds"),
+    )
+    table_row = cur.fetchone()
+    if table_row and table_row.get("hold_table"):
+        cur.execute(f"SELECT 1 FROM {SCHEMA}.marketplace_order_holds WHERE provider = %s "
+                    "AND order_code = %s AND status = 'held'", (provider_clean, order_code))
+        if cur.fetchone():
+            return True, table_row
+    return False, table_row
+
+
 def _claim_order_entitlement(
     cur,
     *,
     order_code: str,
     provider: str | None,
     product_type: str | None,
-    chart_token: str,
+    chart_token: str | None,
+    allow_reset_once: bool = True,
+    product_scoped_legacy: bool = False,
 ) -> tuple[bool, dict[str, Any] | None]:
     """対象注文に発行権があれば1枠を原子的に消し込む。
 
@@ -1711,12 +1728,11 @@ def _claim_order_entitlement(
     provider_clean = (provider or "").strip().lower()
     if provider_clean not in {"stores", "payhip", "etsy"} or not product_type:
         return False, None
-    cur.execute(
-        "SELECT to_regclass(%s) AS entitlement_table, "
-        "to_regclass(%s) AS marketplace_table",
-        (f"{SCHEMA}.order_entitlements", f"{SCHEMA}.marketplace_orders"),
+    blocked, table_row = _purchase_consumption_context(
+        cur, provider=provider_clean, order_code=order_code
     )
-    table_row = cur.fetchone()
+    if blocked:
+        return True, None
     if not table_row or not table_row.get("entitlement_table"):
         return False, None
     if table_row.get("marketplace_table"):
@@ -1743,6 +1759,8 @@ def _claim_order_entitlement(
             f"OR (o.provider IS NULL AND {SCHEMA}.order_entitlements.provider = 'stores')) "
             "AND o.payment_status = 'reset_once'"
         )
+    reset_selection = "OR (o.payment_status = 'reset_once' AND e.status = 'redeemed')" if allow_reset_once else ""
+    reset_update = f"OR (status = 'redeemed' AND EXISTS ({reset_lookup}))" if allow_reset_once else ""
     cur.execute(
         f"""
         SELECT e.id, e.provider, e.order_code, e.line_item_key, e.sku,
@@ -1752,9 +1770,10 @@ def _claim_order_entitlement(
         WHERE e.order_code = %s
           AND e.provider = %s
           AND e.product_type = %s
+          AND o.payment_status IN ('paid', 'reset_once', 'reusable', 'test', 'permanent')
           AND (
               e.status = 'available'
-              OR (o.payment_status = 'reset_once' AND e.status = 'redeemed')
+              {reset_selection}
           )
         ORDER BY
           CASE WHEN o.payment_status = 'reset_once' AND e.status = 'redeemed' THEN 0 ELSE 1 END,
@@ -1766,6 +1785,8 @@ def _claim_order_entitlement(
     )
     entitlement = cur.fetchone()
     if entitlement:
+        if not product_catalog.verified_identity(entitlement.get("product_type"), entitlement.get("sku")):
+            return True, None
         cur.execute(
             f"""
             UPDATE {SCHEMA}.order_entitlements
@@ -1774,12 +1795,7 @@ def _claim_order_entitlement(
             WHERE id = %s
               AND (
                   status = 'available'
-                  OR (
-                      status = 'redeemed'
-                      AND EXISTS (
-                          {reset_lookup}
-                      )
-                  )
+                  {reset_update}
               )
             RETURNING id
             """,
@@ -1788,12 +1804,34 @@ def _claim_order_entitlement(
         if cur.fetchone():
             return True, dict(entitlement)
         return True, None
+    legacy_scope = " AND product_type = %s" if product_scoped_legacy else ""
+    legacy_params = (provider_clean, order_code, product_type) if product_scoped_legacy else (provider_clean, order_code)
     cur.execute(
         f"""SELECT id FROM {SCHEMA}.order_entitlements
-            WHERE provider = %s AND order_code = %s LIMIT 1""",
-        (provider_clean, order_code),
+            WHERE provider = %s AND order_code = %s{legacy_scope} LIMIT 1""",
+        legacy_params,
     )
-    return (cur.fetchone() is not None), None
+    if cur.fetchone() is not None:
+        return True, None
+    # A newly held/unclassified order has no entitlement. It must not fall
+    # through to the legacy "first redemption" path and acquire one there.
+    if table_row.get("marketplace_table"):
+        cur.execute(f"SELECT product_type, payment_status FROM {SCHEMA}.marketplace_orders "
+                    "WHERE provider = %s AND order_code = %s", (provider_clean, order_code))
+    else:
+        cur.execute(f"SELECT product_type, payment_status FROM {SCHEMA}.stores_orders "
+                    "WHERE stores_order_no = %s AND "
+                    "(LOWER(provider) = %s OR (provider IS NULL AND %s = 'stores'))",
+                    (order_code, provider_clean, provider_clean))
+    legacy_order = cur.fetchone()
+    if legacy_order and str(legacy_order.get("payment_status") or "").lower() not in {
+        "reusable", "test", "permanent"
+    }:
+        if (not product_catalog.verified_identity(legacy_order.get("product_type"))
+                or (not product_scoped_legacy and legacy_order.get("product_type") != product_type)
+                or legacy_order.get("payment_status") not in {"paid", "reset_once"}):
+            return True, None
+    return False, None
 
 
 def redeem_and_save(

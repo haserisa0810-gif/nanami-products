@@ -1,0 +1,216 @@
+{
+  "date": "2026-10-11",
+  "recorded_utc": "2026-10-11T07:04:36.456631+00:00",
+  "branch": "codex/astrology-prompt-separation",
+  "tested_order_commit": "f8656b9840b9d2200c29f578b4fd9a30f77fceef",
+  "environment": {
+    "PostgreSQL": "16.15",
+    "Python": "3.12",
+    "psycopg2-binary": "2.9.13",
+    "pytest": "9.1.1",
+    "aiosmtpd": "1.4.6",
+    "isolation": "new Cloud Shell /tmp cluster, loopback only"
+  },
+  "initial_postgres": {
+    "passed": 8,
+    "failed": 5,
+    "cases": [
+      {
+        "name": "test_real_replay_cannot_increase_quantity_or_rewrite_issued_yaml",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_parallel_redemption_creates_only_one_chart",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_multi_product_order_uses_only_each_purchased_unit",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_unknown_order_is_held_and_cannot_use_legacy_first_redemption",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_failed_chart_insert_rolls_back_consumed_right",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_held_resync_preserves_prior_purchase_and_sent_notice",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_changed_replay_does_not_increase_rights",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_valid_resync_of_held_order_requires_manual_approval",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "FAIL"
+      },
+      {
+        "name": "test_real_parallel_approvals_create_only_confirmed_units",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "FAIL"
+      },
+      {
+        "name": "test_real_new_notice_invalidates_previous_review",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_approval_failure_rolls_back_granted_units",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "FAIL"
+      },
+      {
+        "name": "test_real_existing_chart_preserved_and_rights_frozen_until_approved",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "FAIL"
+      },
+      {
+        "name": "test_real_old_source_notifications_do_not_reopen_approved_order",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "FAIL"
+      }
+    ]
+  },
+  "after_fix": {
+    "postgres_passed": 13,
+    "smtp_sink_passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "test_real_replay_cannot_increase_quantity_or_rewrite_issued_yaml",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_parallel_redemption_creates_only_one_chart",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_multi_product_order_uses_only_each_purchased_unit",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_unknown_order_is_held_and_cannot_use_legacy_first_redemption",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_failed_chart_insert_rolls_back_consumed_right",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_held_resync_preserves_prior_purchase_and_sent_notice",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_changed_replay_does_not_increase_rights",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_valid_resync_of_held_order_requires_manual_approval",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_parallel_approvals_create_only_confirmed_units",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_new_notice_invalidates_previous_review",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_approval_failure_rolls_back_granted_units",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_existing_chart_preserved_and_rights_frozen_until_approved",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_real_old_source_notifications_do_not_reopen_approved_order",
+        "class": "tests.test_purchase_notifications_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_actual_smtp_failure_retry_and_notice_state_persist[ssl]",
+        "class": "tests.test_order_notifications_smtp_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_actual_smtp_failure_retry_and_notice_state_persist[starttls]",
+        "class": "tests.test_order_notifications_smtp_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_parallel_actual_smtp_dispatch_sends_one_notice[ssl]",
+        "class": "tests.test_order_notifications_smtp_postgres",
+        "status": "PASS"
+      },
+      {
+        "name": "test_parallel_actual_smtp_dispatch_sends_one_notice[starttls]",
+        "class": "tests.test_order_notifications_smtp_postgres",
+        "status": "PASS"
+      }
+    ],
+    "warnings": 5,
+    "seconds": 5.6
+  },
+  "local_full_regression": {
+    "passed": 2179,
+    "skipped": 17,
+    "failed": 0,
+    "subtests_passed": 161,
+    "warnings": 5653,
+    "seconds": 118.67,
+    "log": "local-full-results.txt"
+  },
+  "external_smtp_delivery": {
+    "status": "未実施",
+    "reason": "Operator SMTP configuration not provided"
+  },
+  "cleanup": {
+    "postgres_stopped": true,
+    "remaining_test_schemas": 0,
+    "temporary_password_file_removed": true,
+    "data_path": "/tmp/np-order-verify-20261011/pgdata",
+    "production_access": false,
+    "remaining_files": "Stopped temporary cluster and nonsecret results retained in Cloud Shell /tmp"
+  },
+  "source_sha256": {
+    "services/order_holds.py": "b8ec7c3b277f0f8fb8d22fd9ee955153675cb0f549216219d719bac23b0de09f",
+    "services/order_review.py": "f85a9040fd0e27316c01441bcc1d19ea6d48742ccb33aeb05b66dd1bf50a2dee",
+    "services/pg_store.py": "7da7ce191c45ecdb984024c032130e853e316fdfa9253f4a556cd290a6cf5923",
+    "services/product_catalog.py": "9fa6f48496531bc69b8522a099168471aef38c186bffb71c54332c34456e3728",
+    "services/purchase_mail_items.py": "b8840afc569e2b300c0d19a087369558d422a3ad8e3784aa91a8e5e07d23774a",
+    "services/stores_mail_sync.py": "b5a66e35e949ae0e2554059c75b98bd49a7ff499ceb96b40e9ee6a78adfd6103",
+    "tests/test_purchase_notifications_postgres.py": "c97ec60f7a09e49915cb70cc0369c307bc02d4a3cc533cb2dc07613a4c6a70f8",
+    "tests/test_order_notifications_smtp_postgres.py": "acdc443d80daa84ecbda62244cf8f53320bda3cace4bb0aed775865e6dfa0866",
+    "tests/test_order_hold_approval.py": "cba2b6f66d77f950643547bf2ef352adc26be9a25e2c16484bce4642c087d8a1"
+  },
+  "production_access": false,
+  "push": false,
+  "deploy": false,
+  "publication": "保留"
+}

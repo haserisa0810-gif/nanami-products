@@ -1,0 +1,239 @@
+{
+  "original_mail_count": 15,
+  "database_access": false,
+  "mail_mutations": false,
+  "results": [
+    {
+      "provider": "payhip",
+      "sample": 1,
+      "expected_codes": [
+        "NP-WB"
+      ],
+      "actual_codes": [
+        "NP-WB"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 2,
+      "expected_codes": [
+        "NP-WB"
+      ],
+      "actual_codes": [
+        "NP-WB"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 3,
+      "expected_codes": [
+        "NP-WF"
+      ],
+      "actual_codes": [
+        "NP-WF"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 4,
+      "expected_codes": [
+        "NP-AA"
+      ],
+      "actual_codes": [
+        "NP-AA"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 5,
+      "expected_codes": [
+        "NP-AA"
+      ],
+      "actual_codes": [
+        "NP-AA"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 6,
+      "expected_codes": [
+        "NP-WF",
+        "NP-WB",
+        "NP-AA",
+        "NP-TA"
+      ],
+      "actual_codes": [
+        "NP-WF",
+        "NP-WB",
+        "NP-AA",
+        "NP-TA"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row",
+        "payhip_purchased_item_price_row",
+        "payhip_purchased_item_price_row",
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 7,
+      "expected_codes": [
+        "NP-WF",
+        "NP-WB",
+        "NP-WA",
+        "NP-WT"
+      ],
+      "actual_codes": [
+        "NP-WF",
+        "NP-WB",
+        "NP-WA",
+        "NP-WT"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "payhip_purchased_item_price_row",
+        "payhip_purchased_item_price_row",
+        "payhip_purchased_item_price_row",
+        "payhip_purchased_item_price_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "payhip",
+      "sample": 8,
+      "expected_codes": [],
+      "actual_codes": [],
+      "hold_reason": "non_purchase_notification",
+      "evidence": [],
+      "pass": true
+    },
+    {
+      "provider": "stores",
+      "sample": 1,
+      "expected_codes": [
+        "NP-WF"
+      ],
+      "actual_codes": [
+        "NP-WF"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "stores_numbered_item_price_quantity_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "stores",
+      "sample": 2,
+      "expected_codes": [
+        "NP-WB"
+      ],
+      "actual_codes": [
+        "NP-WB"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "stores_numbered_item_price_quantity_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "stores",
+      "sample": 3,
+      "expected_codes": [
+        "NP-WB"
+      ],
+      "actual_codes": [
+        "NP-WB"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "stores_numbered_item_price_quantity_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "stores",
+      "sample": 4,
+      "expected_codes": [
+        "NP-SC"
+      ],
+      "actual_codes": [
+        "NP-SC"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "stores_numbered_item_price_quantity_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "stores",
+      "sample": 5,
+      "expected_codes": [
+        "NP-SC"
+      ],
+      "actual_codes": [
+        "NP-SC"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "stores_numbered_item_price_quantity_row"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "stores",
+      "sample": 6,
+      "expected_codes": [
+        "NP-SC"
+      ],
+      "actual_codes": [
+        "NP-SC"
+      ],
+      "hold_reason": null,
+      "evidence": [
+        "stores_order_product_field"
+      ],
+      "pass": true
+    },
+    {
+      "provider": "etsy",
+      "sample": 1,
+      "expected_codes": [],
+      "actual_codes": [],
+      "hold_reason": "product_code_missing",
+      "evidence": [],
+      "pass": true
+    }
+  ],
+  "pass": true
+}

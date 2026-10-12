@@ -1,4 +1,14 @@
-# nanami-products 計算結果API 仕様書 v1.0
+# nanami-products 計算結果API 仕様書（四柱・複合 v1.1／西洋・トランジット v1.0）
+
+## 2026-10-11 四柱API v1.1の変更
+
+`shichu`・`combined`の`meta.api_version`は1.1。四柱エンジンは0.5.0。省略／falseの日替わりは1時、true／23は23時に統一したため、0時台・23時台では旧APIの実計算と結果が変わる。明示的な0時方式は`day_boundary: "00:00"`を使用する。旧保存YAMLや購入IDを読み替えない。西洋・トランジット単独のAPI版は1.0を維持する。
+
+- UTCオフセットが0以下の出生地では、境界時刻以外も旧日柱の1日進みを修正する（例：LA 2000-01-07 12:00、旧乙丑→新甲子）。時干・十神などの派生値も変わる。
+- `gender`省略／unknownは女性に補完しない。大運の順逆・起運を未確定としitemsは空、命式と原局×流年は維持する。
+- 海外出生でIANAタイムゾーンが省略・空・不正な型なら400 `INVALID_TIMEZONE`。国内都道府県のJST既定値は維持する。
+- 不正な日替わりは400 `INVALID_DAY_BOUNDARY`、不存在／未解決の重複日時は400 `INVALID_BIRTH_DATETIME`。重複は`birth_fold: 0/1`または`birth_utc_offset_hours`で指定する。
+- `day_boundary`のJSON falseは1時、数値0は0時として区別する。時刻を文字列`"01:00"`・`"00:00"`・`"23:00"`で指定すると意味が明確になる。
 
 ## 概要
 
@@ -236,7 +246,9 @@ DATABASE_URL=postgresql://... python scripts/create_api_key.py --label test --cr
 
 ### 実装上の扱い
 
-- `day_boundary == "23:00"` の場合のみ `day_change_at_23 = true`
+- `day_boundary` は出生地の現地暦日の切替規則。省略／`"01:00"` は1時（0時台は前日）、`"23:00"` は23時（23時台は翌日）、`"00:00"` は暦日0時。UTC日付・真太陽時は使わない。新規四柱エンジンは0.5.0、旧保存YAMLは再計算しない。
+- 夏時間の重複時刻には `birth_fold: 0 | 1` または `birth_utc_offset_hours` を指定する。不存在時刻・未選択の重複時刻は拒否する。ホロスコープ単独の従来日時仕様は今回変更しない。
+- `gender: "unknown"` は大運未確定。命式と原局×流年は計算し、大運は `status: undetermined_gender`、`direction: null`、`items: []` とする。
 - それ以外は `false`
 - 西洋占星術は含めない
 - トランジットは含めない

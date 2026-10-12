@@ -308,6 +308,7 @@ def test_reset_once_can_reissue_a_redeemed_entitlement() -> None:
 def test_direct_addon_quantity_uses_entitlement_instead_of_order_level_lock() -> None:
     cursor = _Cursor(
         [
+            {"entitlement_table": "nanami_products.order_entitlements", "marketplace_table": "nanami_products.marketplace_orders"},
             {"table_name": "nanami_products.marketplace_orders"},
             {
                 "stores_order_no": "PayhipAddon2",
@@ -315,7 +316,7 @@ def test_direct_addon_quantity_uses_entitlement_instead_of_order_level_lock() ->
                 "payment_status": "paid",
                 "product_type": "western_asteroids_addon",
             },
-            {"table_name": "nanami_products.order_entitlements"},
+            {"entitlement_table": "nanami_products.order_entitlements", "marketplace_table": "nanami_products.marketplace_orders"},
             {
                 "id": 31,
                 "provider": "payhip",
@@ -356,6 +357,7 @@ def test_direct_addon_quantity_uses_entitlement_instead_of_order_level_lock() ->
 def test_full_entitlement_does_not_authorize_a_separately_sold_addon() -> None:
     cursor = _Cursor(
         [
+            {"entitlement_table": "nanami_products.order_entitlements", "marketplace_table": "nanami_products.marketplace_orders"},
             {"table_name": "nanami_products.marketplace_orders"},
             {
                 "stores_order_no": "ETSY-FULL-ONLY",
@@ -363,9 +365,10 @@ def test_full_entitlement_does_not_authorize_a_separately_sold_addon() -> None:
                 "payment_status": "paid",
                 "product_type": "western_full",
             },
-            {"table_name": "nanami_products.order_entitlements"},
+            {"entitlement_table": "nanami_products.order_entitlements", "marketplace_table": "nanami_products.marketplace_orders"},
             None,  # no entitlement for the selected addon
             None,  # no historical entitlement for the selected addon
+            {"product_type": "western_full", "payment_status": "paid"},
         ]
     )
     with patch.object(pg_store, "_conn", return_value=_Connection(cursor)):

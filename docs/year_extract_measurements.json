@@ -1,0 +1,1525 @@
+{
+  "conditions": {
+    "encoding": "o200k_base",
+    "tiktoken_version": "0.14.0",
+    "text_encoding": "UTF-8 no BOM LF",
+    "serialization": "ordinary YAML dict/list; no anchors or table markers; complete uses saved bytes",
+    "comparison": "sending scope selection, not lossless compression",
+    "external_ai_calls": false,
+    "engine_calls": false,
+    "chat_and_answer_overhead_included": false
+  },
+  "base_variants": [
+    {
+      "case": "spring_exact",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 169154,
+      "characters": 158594,
+      "tokens_o200k_base": 38000,
+      "tokens_with_usage": 38057,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 105801,
+      "characters": 98653,
+      "tokens_o200k_base": 23277,
+      "tokens_with_usage": 23591,
+      "sending_scope_token_reduction_percent": 38.74
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 103148,
+      "characters": 96060,
+      "tokens_o200k_base": 23016,
+      "tokens_with_usage": 23330,
+      "sending_scope_token_reduction_percent": 39.43
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 120707,
+      "characters": 112477,
+      "tokens_o200k_base": 27971,
+      "tokens_with_usage": 28285,
+      "sending_scope_token_reduction_percent": 26.39
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "nonconsecutive",
+      "requested_years": "[2027, 2030, 2033]",
+      "bytes_utf8": 115890,
+      "characters": 107962,
+      "tokens_o200k_base": 26637,
+      "tokens_with_usage": 26951,
+      "sending_scope_token_reduction_percent": 29.9
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "transition_year",
+      "requested_years": "[2033]",
+      "bytes_utf8": 105787,
+      "characters": 98631,
+      "tokens_o200k_base": 23724,
+      "tokens_with_usage": 24038,
+      "sending_scope_token_reduction_percent": 37.57
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 166035,
+      "characters": 155707,
+      "tokens_o200k_base": 37447,
+      "tokens_with_usage": 37504,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 106888,
+      "characters": 99696,
+      "tokens_o200k_base": 23562,
+      "tokens_with_usage": 23876,
+      "sending_scope_token_reduction_percent": 37.08
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 105387,
+      "characters": 98217,
+      "tokens_o200k_base": 23608,
+      "tokens_with_usage": 23922,
+      "sending_scope_token_reduction_percent": 36.96
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 122202,
+      "characters": 113946,
+      "tokens_o200k_base": 28403,
+      "tokens_with_usage": 28717,
+      "sending_scope_token_reduction_percent": 24.15
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "nonconsecutive",
+      "requested_years": "[2027, 2030, 2033]",
+      "bytes_utf8": 117191,
+      "characters": 109263,
+      "tokens_o200k_base": 26991,
+      "tokens_with_usage": 27305,
+      "sending_scope_token_reduction_percent": 27.92
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "transition_year",
+      "requested_years": "[2030]",
+      "bytes_utf8": 105025,
+      "characters": 97917,
+      "tokens_o200k_base": 23573,
+      "tokens_with_usage": 23887,
+      "sending_scope_token_reduction_percent": 37.05
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 152645,
+      "characters": 142627,
+      "tokens_o200k_base": 34599,
+      "tokens_with_usage": 34656,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 93878,
+      "characters": 87004,
+      "tokens_o200k_base": 20902,
+      "tokens_with_usage": 21216,
+      "sending_scope_token_reduction_percent": 39.59
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 89975,
+      "characters": 83273,
+      "tokens_o200k_base": 20351,
+      "tokens_with_usage": 20665,
+      "sending_scope_token_reduction_percent": 41.18
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 108146,
+      "characters": 100282,
+      "tokens_o200k_base": 25434,
+      "tokens_with_usage": 25748,
+      "sending_scope_token_reduction_percent": 26.49
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "nonconsecutive",
+      "requested_years": "[2027, 2030, 2033]",
+      "bytes_utf8": 100996,
+      "characters": 93502,
+      "tokens_o200k_base": 23549,
+      "tokens_with_usage": 23863,
+      "sending_scope_token_reduction_percent": 31.94
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "transition_year",
+      "requested_years": "[2030]",
+      "bytes_utf8": 93253,
+      "characters": 86367,
+      "tokens_o200k_base": 21205,
+      "tokens_with_usage": 21519,
+      "sending_scope_token_reduction_percent": 38.71
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 165633,
+      "characters": 155177,
+      "tokens_o200k_base": 37329,
+      "tokens_with_usage": 37386,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 104844,
+      "characters": 97718,
+      "tokens_o200k_base": 23105,
+      "tokens_with_usage": 23419,
+      "sending_scope_token_reduction_percent": 38.1
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 103120,
+      "characters": 96034,
+      "tokens_o200k_base": 23001,
+      "tokens_with_usage": 23315,
+      "sending_scope_token_reduction_percent": 38.38
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "transition_year",
+      "requested_years": "[2023]",
+      "bytes_utf8": 103917,
+      "characters": 96825,
+      "tokens_o200k_base": 23253,
+      "tokens_with_usage": 23567,
+      "sending_scope_token_reduction_percent": 37.71
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 171862,
+      "characters": 161276,
+      "tokens_o200k_base": 38524,
+      "tokens_with_usage": 38581,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 108638,
+      "characters": 101422,
+      "tokens_o200k_base": 23798,
+      "tokens_with_usage": 24112,
+      "sending_scope_token_reduction_percent": 38.23
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 103154,
+      "characters": 96068,
+      "tokens_o200k_base": 23007,
+      "tokens_with_usage": 23321,
+      "sending_scope_token_reduction_percent": 40.28
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "transition_year",
+      "requested_years": "[2033]",
+      "bytes_utf8": 105793,
+      "characters": 98639,
+      "tokens_o200k_base": 23715,
+      "tokens_with_usage": 24029,
+      "sending_scope_token_reduction_percent": 38.44
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 169159,
+      "characters": 158601,
+      "tokens_o200k_base": 38000,
+      "tokens_with_usage": 38057,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 105806,
+      "characters": 98660,
+      "tokens_o200k_base": 23271,
+      "tokens_with_usage": 23585,
+      "sending_scope_token_reduction_percent": 38.76
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 103153,
+      "characters": 96067,
+      "tokens_o200k_base": 23010,
+      "tokens_with_usage": 23324,
+      "sending_scope_token_reduction_percent": 39.45
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "transition_year",
+      "requested_years": "[2033]",
+      "bytes_utf8": 105792,
+      "characters": 98638,
+      "tokens_o200k_base": 23718,
+      "tokens_with_usage": 24032,
+      "sending_scope_token_reduction_percent": 37.58
+    },
+    {
+      "case": "old_saved_format",
+      "purpose": "complete",
+      "requested_years": "[]",
+      "bytes_utf8": 14433,
+      "characters": 13161,
+      "tokens_o200k_base": 4255,
+      "tokens_with_usage": 4312,
+      "sending_scope_token_reduction_percent": 0.0
+    },
+    {
+      "case": "old_saved_format",
+      "purpose": "basic",
+      "requested_years": "[]",
+      "bytes_utf8": 17978,
+      "characters": 16446,
+      "tokens_o200k_base": 4914,
+      "tokens_with_usage": 5228,
+      "sending_scope_token_reduction_percent": -15.49
+    }
+  ],
+  "annual_variants": [
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 5,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 104724,
+      "characters": 97394,
+      "tokens_o200k_base": 23709,
+      "tokens_with_usage": 24023,
+      "whole_full_plus_annual_tokens": 43614,
+      "sending_scope_reduction_vs_whole_percent": 45.64,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 5,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 123978,
+      "characters": 114800,
+      "tokens_o200k_base": 29818,
+      "tokens_with_usage": 30132,
+      "whole_full_plus_annual_tokens": 43614,
+      "sending_scope_reduction_vs_whole_percent": 31.63,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 10,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 104835,
+      "characters": 97505,
+      "tokens_o200k_base": 23773,
+      "tokens_with_usage": 24087,
+      "whole_full_plus_annual_tokens": 48341,
+      "sending_scope_reduction_vs_whole_percent": 50.82,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 10,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 124089,
+      "characters": 114911,
+      "tokens_o200k_base": 29882,
+      "tokens_with_usage": 30196,
+      "whole_full_plus_annual_tokens": 48341,
+      "sending_scope_reduction_vs_whole_percent": 38.18,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 20,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 105055,
+      "characters": 97725,
+      "tokens_o200k_base": 23886,
+      "tokens_with_usage": 24200,
+      "whole_full_plus_annual_tokens": 56657,
+      "sending_scope_reduction_vs_whole_percent": 57.84,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 20,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 124309,
+      "characters": 115131,
+      "tokens_o200k_base": 29995,
+      "tokens_with_usage": 30309,
+      "whole_full_plus_annual_tokens": 56657,
+      "sending_scope_reduction_vs_whole_percent": 47.06,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 20,
+      "purpose": "cross_base_range",
+      "requested_years": "[2034, 2035, 2036, 2037]",
+      "bytes_utf8": 122866,
+      "characters": 113808,
+      "tokens_o200k_base": 29555,
+      "tokens_with_usage": 29869,
+      "whole_full_plus_annual_tokens": 56657,
+      "sending_scope_reduction_vs_whole_percent": 47.84,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "spring_exact",
+      "saved_annual_years": 20,
+      "purpose": "single_outside_base",
+      "requested_years": "[2036]",
+      "bytes_utf8": 105287,
+      "characters": 97943,
+      "tokens_o200k_base": 23963,
+      "tokens_with_usage": 24277,
+      "whole_full_plus_annual_tokens": 56657,
+      "sending_scope_reduction_vs_whole_percent": 57.71,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 5,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 105716,
+      "characters": 98342,
+      "tokens_o200k_base": 23987,
+      "tokens_with_usage": 24301,
+      "whole_full_plus_annual_tokens": 43507,
+      "sending_scope_reduction_vs_whole_percent": 44.87,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 5,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 123938,
+      "characters": 114848,
+      "tokens_o200k_base": 29865,
+      "tokens_with_usage": 30179,
+      "whole_full_plus_annual_tokens": 43507,
+      "sending_scope_reduction_vs_whole_percent": 31.36,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 10,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 105827,
+      "characters": 98453,
+      "tokens_o200k_base": 24045,
+      "tokens_with_usage": 24359,
+      "whole_full_plus_annual_tokens": 47221,
+      "sending_scope_reduction_vs_whole_percent": 49.08,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 10,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 124049,
+      "characters": 114959,
+      "tokens_o200k_base": 29923,
+      "tokens_with_usage": 30237,
+      "whole_full_plus_annual_tokens": 47221,
+      "sending_scope_reduction_vs_whole_percent": 36.63,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 20,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 106047,
+      "characters": 98673,
+      "tokens_o200k_base": 24163,
+      "tokens_with_usage": 24477,
+      "whole_full_plus_annual_tokens": 56177,
+      "sending_scope_reduction_vs_whole_percent": 56.99,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 20,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 124269,
+      "characters": 115179,
+      "tokens_o200k_base": 30041,
+      "tokens_with_usage": 30355,
+      "whole_full_plus_annual_tokens": 56177,
+      "sending_scope_reduction_vs_whole_percent": 46.52,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 20,
+      "purpose": "cross_base_range",
+      "requested_years": "[2034, 2035, 2036, 2037]",
+      "bytes_utf8": 124859,
+      "characters": 115691,
+      "tokens_o200k_base": 30173,
+      "tokens_with_usage": 30487,
+      "whole_full_plus_annual_tokens": 56177,
+      "sending_scope_reduction_vs_whole_percent": 46.29,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "winter_exact",
+      "saved_annual_years": 20,
+      "purpose": "single_outside_base",
+      "requested_years": "[2036]",
+      "bytes_utf8": 106022,
+      "characters": 98664,
+      "tokens_o200k_base": 24176,
+      "tokens_with_usage": 24490,
+      "whole_full_plus_annual_tokens": 56177,
+      "sending_scope_reduction_vs_whole_percent": 56.96,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 5,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 91203,
+      "characters": 84293,
+      "tokens_o200k_base": 20858,
+      "tokens_with_usage": 21172,
+      "whole_full_plus_annual_tokens": 40064,
+      "sending_scope_reduction_vs_whole_percent": 47.94,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 5,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 108895,
+      "characters": 100297,
+      "tokens_o200k_base": 26567,
+      "tokens_with_usage": 26881,
+      "whole_full_plus_annual_tokens": 40064,
+      "sending_scope_reduction_vs_whole_percent": 33.69,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 10,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 91314,
+      "characters": 84404,
+      "tokens_o200k_base": 20906,
+      "tokens_with_usage": 21220,
+      "whole_full_plus_annual_tokens": 43758,
+      "sending_scope_reduction_vs_whole_percent": 52.22,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 10,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 109006,
+      "characters": 100408,
+      "tokens_o200k_base": 26615,
+      "tokens_with_usage": 26929,
+      "whole_full_plus_annual_tokens": 43758,
+      "sending_scope_reduction_vs_whole_percent": 39.18,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 20,
+      "purpose": "single_2027",
+      "requested_years": "[2027]",
+      "bytes_utf8": 91534,
+      "characters": 84624,
+      "tokens_o200k_base": 21033,
+      "tokens_with_usage": 21347,
+      "whole_full_plus_annual_tokens": 51626,
+      "sending_scope_reduction_vs_whole_percent": 59.26,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 20,
+      "purpose": "four_2027_2030",
+      "requested_years": "[2027, 2028, 2029, 2030]",
+      "bytes_utf8": 109226,
+      "characters": 100628,
+      "tokens_o200k_base": 26742,
+      "tokens_with_usage": 27056,
+      "whole_full_plus_annual_tokens": 51626,
+      "sending_scope_reduction_vs_whole_percent": 48.2,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 20,
+      "purpose": "cross_base_range",
+      "requested_years": "[2034, 2035, 2036, 2037]",
+      "bytes_utf8": 107389,
+      "characters": 98923,
+      "tokens_o200k_base": 26125,
+      "tokens_with_usage": 26439,
+      "whole_full_plus_annual_tokens": 51626,
+      "sending_scope_reduction_vs_whole_percent": 49.4,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    },
+    {
+      "case": "summer_unknown",
+      "saved_annual_years": 20,
+      "purpose": "single_outside_base",
+      "requested_years": "[2036]",
+      "bytes_utf8": 92427,
+      "characters": 85439,
+      "tokens_o200k_base": 21315,
+      "tokens_with_usage": 21629,
+      "whole_full_plus_annual_tokens": 51626,
+      "sending_scope_reduction_vs_whole_percent": 58.71,
+      "expanded_saved_years_equal": true,
+      "is_purchase_authorization_check": false
+    }
+  ],
+  "comparison_summary": [
+    {
+      "case": "spring_exact",
+      "effective_year": 2026,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 21,
+        "base_only": 78,
+        "comparison_pending": 177,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2027,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 79,
+        "comparison_pending": 201,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2028,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 108,
+        "comparison_pending": 235,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2029,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 112,
+        "comparison_pending": 248,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2030,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 77,
+        "comparison_pending": 224,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2031,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 49,
+        "comparison_pending": 172,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2032,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 21,
+        "base_only": 96,
+        "comparison_pending": 214,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2033,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 28,
+        "base_only": 119,
+        "comparison_pending": 314,
+        "addon_only": 7
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2034,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 72,
+        "comparison_pending": 218,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "spring_exact",
+      "effective_year": 2035,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 25,
+        "base_only": 119,
+        "comparison_pending": 192,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2026,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 22,
+        "base_only": 72,
+        "comparison_pending": 158,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2027,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 22,
+        "base_only": 109,
+        "comparison_pending": 209,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2028,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 88,
+        "comparison_pending": 177,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2029,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 78,
+        "comparison_pending": 183,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2030,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 26,
+        "base_only": 91,
+        "comparison_pending": 286,
+        "addon_only": 7
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2031,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 55,
+        "comparison_pending": 163,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2032,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 85,
+        "comparison_pending": 192,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2033,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 21,
+        "base_only": 101,
+        "comparison_pending": 172,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2034,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 21,
+        "base_only": 92,
+        "comparison_pending": 219,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "winter_exact",
+      "effective_year": 2035,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 21,
+        "base_only": 75,
+        "comparison_pending": 191,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2026,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 18,
+        "base_only": 80,
+        "comparison_pending": 157,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2027,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 17,
+        "base_only": 55,
+        "comparison_pending": 131,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2028,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 109,
+        "comparison_pending": 210,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2029,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 78,
+        "comparison_pending": 136,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2030,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 27,
+        "base_only": 92,
+        "comparison_pending": 264,
+        "addon_only": 7
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2031,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 20,
+        "base_only": 104,
+        "comparison_pending": 228,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2032,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 56,
+        "comparison_pending": 172,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2033,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 60,
+        "comparison_pending": 176,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2034,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 18,
+        "base_only": 73,
+        "comparison_pending": 151,
+        "addon_only": 5
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "effective_year": 2035,
+      "shared_period_and_contexts_checked": true,
+      "category_counts_not_quality_scores": {
+        "same_meaning": 19,
+        "base_only": 97,
+        "comparison_pending": 186,
+        "addon_only": 5
+      }
+    }
+  ],
+  "base_validation": [
+    {
+      "case": "spring_exact",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 4186,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "single_2027",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 3956,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "four_2027_2030",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 4496,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "nonconsecutive",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 4343,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "spring_exact",
+      "purpose": "transition_year",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 4038,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 5773,
+      "retained_source_leaves_verified": 4160,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "single_2027",
+      "complete_byte_match": null,
+      "source_leaves": 5773,
+      "retained_source_leaves_verified": 3960,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "four_2027_2030",
+      "complete_byte_match": null,
+      "source_leaves": 5773,
+      "retained_source_leaves_verified": 4463,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "nonconsecutive",
+      "complete_byte_match": null,
+      "source_leaves": 5773,
+      "retained_source_leaves_verified": 4318,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "winter_exact",
+      "purpose": "transition_year",
+      "complete_byte_match": null,
+      "source_leaves": 5773,
+      "retained_source_leaves_verified": 3948,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 5199,
+      "retained_source_leaves_verified": 3662,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "single_2027",
+      "complete_byte_match": null,
+      "source_leaves": 5199,
+      "retained_source_leaves_verified": 3404,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "four_2027_2030",
+      "complete_byte_match": null,
+      "source_leaves": 5199,
+      "retained_source_leaves_verified": 3942,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "nonconsecutive",
+      "complete_byte_match": null,
+      "source_leaves": 5199,
+      "retained_source_leaves_verified": 3735,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "summer_unknown",
+      "purpose": "transition_year",
+      "complete_byte_match": null,
+      "source_leaves": 5199,
+      "retained_source_leaves_verified": 3500,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 5772,
+      "retained_source_leaves_verified": 4148,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "single_2027",
+      "complete_byte_match": null,
+      "source_leaves": 5772,
+      "retained_source_leaves_verified": 3956,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "daiun_boundary",
+      "purpose": "transition_year",
+      "complete_byte_match": null,
+      "source_leaves": 5772,
+      "retained_source_leaves_verified": 3979,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 6027,
+      "retained_source_leaves_verified": 4334,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "single_2027",
+      "complete_byte_match": null,
+      "source_leaves": 6027,
+      "retained_source_leaves_verified": 3956,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_before",
+      "purpose": "transition_year",
+      "complete_byte_match": null,
+      "source_leaves": 6027,
+      "retained_source_leaves_verified": 4038,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 4186,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "single_2027",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 3956,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "lichun_after",
+      "purpose": "transition_year",
+      "complete_byte_match": null,
+      "source_leaves": 5878,
+      "retained_source_leaves_verified": 4038,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "old_saved_format",
+      "purpose": "complete",
+      "complete_byte_match": true,
+      "source_leaves": 0,
+      "retained_source_leaves_verified": null,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    },
+    {
+      "case": "old_saved_format",
+      "purpose": "basic",
+      "complete_byte_match": null,
+      "source_leaves": 749,
+      "retained_source_leaves_verified": 749,
+      "no_engine_calls": true,
+      "all_daiun_retained": true
+    }
+  ],
+  "expected_errors": [
+    {
+      "case": "spring_exact",
+      "request": [
+        2036
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2036
+        ],
+        "available_years": [
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ]
+      }
+    },
+    {
+      "case": "spring_exact",
+      "request": [
+        2027,
+        2036
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2036
+        ],
+        "available_years": [
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ]
+      }
+    },
+    {
+      "case": "spring_exact",
+      "request": [],
+      "code": "invalid_years",
+      "detail": "空でない整数の年一覧が必要です。"
+    },
+    {
+      "case": "spring_exact",
+      "request": [
+        2027,
+        2027
+      ],
+      "code": "duplicate_request",
+      "detail": "要求年の重複は明示エラーにします。"
+    },
+    {
+      "case": "spring_exact",
+      "request": [
+        2027.0
+      ],
+      "code": "invalid_years",
+      "detail": "bool・文字列・小数は年指定として受け付けません。"
+    },
+    {
+      "case": "winter_exact",
+      "request": [
+        2036
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2036
+        ],
+        "available_years": [
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ]
+      }
+    },
+    {
+      "case": "winter_exact",
+      "request": [
+        2027,
+        2036
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2036
+        ],
+        "available_years": [
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ]
+      }
+    },
+    {
+      "case": "winter_exact",
+      "request": [],
+      "code": "invalid_years",
+      "detail": "空でない整数の年一覧が必要です。"
+    },
+    {
+      "case": "winter_exact",
+      "request": [
+        2027,
+        2027
+      ],
+      "code": "duplicate_request",
+      "detail": "要求年の重複は明示エラーにします。"
+    },
+    {
+      "case": "winter_exact",
+      "request": [
+        2027.0
+      ],
+      "code": "invalid_years",
+      "detail": "bool・文字列・小数は年指定として受け付けません。"
+    },
+    {
+      "case": "summer_unknown",
+      "request": [
+        2036
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2036
+        ],
+        "available_years": [
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ]
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "request": [
+        2027,
+        2036
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2036
+        ],
+        "available_years": [
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ]
+      }
+    },
+    {
+      "case": "summer_unknown",
+      "request": [],
+      "code": "invalid_years",
+      "detail": "空でない整数の年一覧が必要です。"
+    },
+    {
+      "case": "summer_unknown",
+      "request": [
+        2027,
+        2027
+      ],
+      "code": "duplicate_request",
+      "detail": "要求年の重複は明示エラーにします。"
+    },
+    {
+      "case": "summer_unknown",
+      "request": [
+        2027.0
+      ],
+      "code": "invalid_years",
+      "detail": "bool・文字列・小数は年指定として受け付けません。"
+    },
+    {
+      "case": "old_saved_format",
+      "request": [
+        2027
+      ],
+      "code": "years_not_saved",
+      "detail": {
+        "missing_years": [
+          2027
+        ],
+        "available_years": []
+      }
+    }
+  ]
+}

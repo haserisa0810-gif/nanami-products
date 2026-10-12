@@ -1,0 +1,12 @@
+.................                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_order_notifications_smtp_postgres.py::test_actual_smtp_failure_retry_and_notice_state_persist[ssl]
+tests/test_order_notifications_smtp_postgres.py::test_actual_smtp_failure_retry_and_notice_state_persist[ssl]
+tests/test_order_notifications_smtp_postgres.py::test_actual_smtp_failure_retry_and_notice_state_persist[ssl]
+tests/test_order_notifications_smtp_postgres.py::test_parallel_actual_smtp_dispatch_sends_one_notice[ssl]
+tests/test_order_notifications_smtp_postgres.py::test_parallel_actual_smtp_dispatch_sends_one_notice[ssl]
+  /tmp/np-order-verify-20261011/.venv/lib/python3.12/site-packages/aiosmtpd/smtp.py:372: UserWarning: Requiring AUTH while not requiring TLS can lead to security vulnerabilities!
+    warn("Requiring AUTH while not requiring TLS "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+17 passed, 5 warnings in 5.60s

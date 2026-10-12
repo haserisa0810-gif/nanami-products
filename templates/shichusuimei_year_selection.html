@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if lang == 'en' %}Choose reading years{% else %}鑑定する年を選ぶ{% endif %} | nanami-products</title>
+  <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+  <style>
+    .selection-options { display: grid; gap: 12px; margin: 20px 0; }
+    .selection-options label, .year-grid label { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
+    .selection-options input, .year-grid input { appearance: auto; -webkit-appearance: auto; width: 18px; height: 18px; min-height: 18px; padding: 0; border: 0; border-radius: 0; background: transparent; flex: none; accent-color: var(--gold); }
+    .selection-options label:has(input:checked), .year-grid label:has(input:checked) { border-color: var(--gold); background: var(--gold-bg); }
+    .selection-options label:has(input:disabled) { opacity: .6; cursor: not-allowed; }
+    .selection-options input:focus-visible, .year-grid input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    fieldset { border: 0; min-width: 0; }
+    legend { margin-bottom: 12px; font-weight: 500; }
+    .year-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 20px; }
+    .selection-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+    .selection-actions button { flex: 1 1 180px; }
+    .selection-result { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 24px; }
+    .selection-result textarea { width: 100%; min-height: 220px; font-family: monospace; font-size: 12px; margin-top: 12px; }
+    button:disabled { opacity: .55; cursor: wait; }
+    #selection-status { min-height: 2em; overflow-wrap: anywhere; }
+    #selection-status[data-error="true"] { color: var(--danger); }
+    .selection-footer { margin-top: 24px; }
+  </style>
+  {% include "_head_icons.html" %}
+  <script src="{{ asset_url('shichusuimei_year_selection.js') }}" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <div class="card buyer-card product-shichu">
+      <p class="eyebrow">nanami-products</p>
+      <h1>{% if lang == 'en' %}Choose reading years{% else %}鑑定する年を選ぶ{% endif %}</h1>
+      <p class="lead">{% if lang == 'en' %}Create data for AI reading from your issued Four Pillars Full YAML. Your natal chart, all major luck cycles and the full details of each chosen year are included.{% else %}発行済みの四柱推命Fullから、AI鑑定に使う情報を取り出します。原局・全大運と、選んだ年の詳細を含みます。{% endif %}</p>
+      <section class="notice-box warn" id="selection-accuracy-notice">
+        {% if lang == 'en' %}
+        <p><strong>Choose a few years at a time.</strong> Giving the AI many years at once makes missed details and mixed-up years more likely, so the reading becomes less accurate. We recommend 1–3 years per conversation; ask about other years in a new conversation.</p>
+        {% else %}
+        <p><strong>年は少しずつ選ぶのがおすすめです。</strong>一度にたくさんの年をAIに読ませると、読み落としや年の取り違えが起きやすくなり、鑑定の精度が下がります。1回の相談では1〜3年を目安に選び、別の年は新しい会話で聞いてください。</p>
+        {% endif %}
+      </section>
+      <form id="year-selection-form">
+        <fieldset class="selection-options">
+          <legend>{% if lang == 'en' %}What would you like to read?{% else %}鑑定に使う範囲{% endif %}</legend>
+          <label><input type="radio" name="mode" value="basic" checked><span>{% if lang == 'en' %}Basic reading — natal chart and all major luck cycles{% else %}基本鑑定：原局・全大運を中心に読む{% endif %}</span></label>
+          <label><input type="radio" name="mode" value="selected" {% if not year_selection_available %}disabled{% endif %}><span>{% if lang == 'en' %}Basic chart + chosen years (one or more){% else %}基本＋選択年：1年の鑑定・複数年の比較{% endif %}</span></label>
+          <label><input type="radio" name="mode" value="years_only" {% if not year_selection_available %}disabled{% endif %}><span>{% if lang == 'en' %}Chosen years only — continue a conversation where the chart data was already sent{% else %}選択年のデータだけ：命式つきのデータを渡した会話に続けて貼る（軽量）{% endif %}</span></label>
+          <label><input type="radio" name="mode" value="complete"><span>{% if lang == 'en' %}Complete original — all saved information{% else %}完全原本：保存されている情報をすべて使う{% endif %}</span></label>
+        </fieldset>
+        <fieldset id="year-choices" hidden disabled>
+          <legend>{% if lang == 'en' %}Choose saved years{% else %}収録年から選択（複数選択可）{% endif %}</legend>
+          <div class="year-grid">
+            {% for year in available_years %}
+            <label><input type="checkbox" name="years" value="{{ year }}"><span>{{ year }}{% if lang != 'en' %}年{% endif %}</span></label>
+            {% endfor %}
+          </div>
+          <p class="hint">{% if lang == 'en' %}A year follows the saved period from Start of Spring to the following Start of Spring. Nonconsecutive years can also be compared.{% else %}各年は保存データの立春〜翌立春の期間です。連続していない年も選べます。{% endif %}</p>
+        </fieldset>
+        {% if not year_selection_available %}
+        <p class="hint">{% if lang == 'en' %}No selectable annual records are available in this saved chart. Basic reading and the complete original are available.{% else %}この保存データには選択できる年別予測がありません。基本鑑定と完全原本を利用できます。{% endif %}</p>
+        {% endif %}
+        <p class="hint" id="selection-warning" role="status" hidden></p>
+        <div class="selection-actions"><button type="submit" id="create-selection">{% if lang == 'en' %}Prepare reading data{% else %}鑑定用データを作成{% endif %}</button></div>
+      </form>
+      <p class="hint">{% if lang == 'en' %}Basic reading keeps the single annual fortune from when the original was created. Choosing years uses only those annual records. Unsaved years are never calculated here.{% else %}基本鑑定には原本作成時の単一流年を残します。年を選んだ場合は、その年の予測だけを使います。未収録年の再計算は行いません。{% endif %}</p>
+      <p id="selection-status" role="status" aria-live="polite"></p>
+      <section id="selection-result" class="selection-result" hidden aria-labelledby="selection-result-title">
+        <h2 id="selection-result-title">{% if lang == 'en' %}Your reading data{% else %}作成した鑑定用データ{% endif %}</h2>
+        <p id="selection-summary"></p>
+        <div class="selection-actions">
+          <button type="button" data-action="copy-ai">{% if lang == 'en' %}Copy AI text{% else %}AI用テキストをコピー{% endif %}</button>
+          <button type="button" data-action="save-ai">{% if lang == 'en' %}Save AI text (.txt){% else %}AI用テキストを保存（TXT）{% endif %}</button>
+          <button type="button" data-action="share-ai">{% if lang == 'en' %}Share AI text{% else %}AI用テキストを共有{% endif %}</button>
+        </div>
+        <p class="hint">{% if lang == 'en' %}The AI text contains instructions and YAML. Paste it into the AI you use, then ask about your chosen years.{% else %}AI用テキストには読み取り指示とYAMLが含まれます。利用するAIに渡してから、選んだ年について質問してください。{% endif %}</p>
+        <details>
+          <summary>{% if lang == 'en' %}View or save YAML only{% else %}YAMLだけを確認・保存{% endif %}</summary>
+          <textarea id="selection-yaml" readonly spellcheck="false" aria-label="YAML"></textarea>
+          <div class="selection-actions">
+            <button type="button" data-action="copy-yaml">{% if lang == 'en' %}Copy YAML{% else %}YAMLをコピー{% endif %}</button>
+            <button type="button" data-action="save-yaml">{% if lang == 'en' %}Save YAML{% else %}YAMLを保存{% endif %}</button>
+          </div>
+          <p class="hint">{% if lang == 'en' %}Use the complete original when importing into another app. The chosen-year YAML is for AI reading.{% else %}他のアプリへの読み込みには完全原本を使ってください。選択年のYAMLはAI鑑定用です。{% endif %}</p>
+        </details>
+      </section>
+      <div class="selection-footer">
+        <p><a href="{{ chart_url }}">{% if lang == 'en' %}Back to your chart{% else %}鑑定データのページへ戻る{% endif %}</a></p>
+        <p><a href="{{ original_url }}" download="nanami-shichusuimei-full.yaml">{% if lang == 'en' %}Download the complete original{% else %}完全原本をダウンロード{% endif %}</a></p>
+      </div>
+      <noscript>{% if lang == 'en' %}Enable JavaScript to choose years. You can download the complete original above.{% else %}年の選択にはJavaScriptを有効にしてください。上のリンクから完全原本を取得できます。{% endif %}</noscript>
+    </div>
+  </main>
+  <script type="application/json" id="selection-config">{{ {"extractUrl": extract_url, "lang": lang} | tojson }}</script>
+</body>
+</html>

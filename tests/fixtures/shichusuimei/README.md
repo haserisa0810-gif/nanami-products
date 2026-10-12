@@ -1,0 +1,1 @@
+These saved YAML fixtures contain fictional birth data only. They preserve the exact saved-data extraction and lossless reconstruction tests without relying on ignored local tmp files. No real customer data is included.

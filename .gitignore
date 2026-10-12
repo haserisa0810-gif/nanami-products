@@ -1,5 +1,7 @@
 *.pyc
 __pycache__/
+/.venv/
+/.pytest_cache/
 .env
 .env.*
 deploy.env.yaml
@@ -17,3 +19,7 @@ work/
 
 # Generated PDFs, images, videos, bundles, and personalized artifacts
 output/
+
+# 本番環境の調査資料（DB識別子・権限の分析など）はローカル保管のみ。公開リポジトリに入れない
+docs/order_operational_checks_*/
+docs/o03_*/

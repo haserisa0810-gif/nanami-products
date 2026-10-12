@@ -217,7 +217,8 @@ class ChartYamlCopyTest(unittest.TestCase):
         self.assertIn("四柱推命の計算済みデータ", SHICHUSUIMEI_CHART_COMPANION_PROMPT)
         self.assertNotIn("西洋占星術", SHICHUSUIMEI_CHART_COMPANION_PROMPT)
         self.assertNotIn("https://chart.nanami-astro.com/acg", SHICHUSUIMEI_CHART_COMPANION_PROMPT)
-        self.assertIn("if product_type == \"shichu\"", Path("routes.py").read_text(encoding="utf-8"))
+        full_context = _chart_i18n_context(request, "shichu_full")
+        self.assertEqual(full_context["t"]["chart_companion_lead"], context["t"]["chart_companion_lead"])
 
     def test_language_urls_drop_one_time_zip_download_flag(self) -> None:
         request = Request({

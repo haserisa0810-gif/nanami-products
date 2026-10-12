@@ -1,0 +1,127 @@
+<svg class="shichu-chart-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1280" width="1080" height="1280" role="img" aria-label="四柱推命 命式図">
+<defs>
+<style>.shichu-chart-svg text{font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif}.title{font-size:42px;font-weight:700}.meta{font-size:21px;letter-spacing:.03em}.small{font-size:19px}.cell-label{font-size:20px;font-weight:700}.pillar-head{font-size:24px;font-weight:700}.kanshi,.cell-main,.cell-sub{font-size:23px;font-weight:600}.footer{font-size:18px;letter-spacing:.04em}</style>
+<radialGradient id="shichuBg" cx="50%" cy="42%" r="72%"><stop offset="0%" stop-color="#fffaf2"/><stop offset="66%" stop-color="#f3eadc"/><stop offset="100%" stop-color="#e7d5bd"/></radialGradient>
+</defs>
+<rect x="0.00" y="0.00" width="1080.00" height="1280.00" fill="url(#shichuBg)"/>
+<rect x="52.00" y="52.00" width="976.00" height="1176.00" rx="36" fill="none" stroke="#b79b74" stroke-width="2"/>
+<text x="540.00" y="112.00" fill="#3b2b1d" text-anchor="middle" class="title">Quality audit fictional Aさん</text>
+<text x="540.00" y="152.00" fill="#80684a" text-anchor="middle" class="meta">四柱推命 命式図 / 1990-05-15 12:30 / 東京</text>
+<text x="540.00" y="188.00" fill="#8a5c24" text-anchor="middle" font-size="24" font-weight="700">日主: 庚</text>
+<rect x="74.00" y="216.00" width="932.00" height="470.00" rx="18" fill="rgba(255,255,255,.5)" stroke="#9d7c54" stroke-width="2"/>
+<rect x="74.00" y="216.00" width="160.00" height="62.00" fill="#ead8bd" stroke="#c1a077" stroke-width="1"/>
+<rect x="234.00" y="216.00" width="193.00" height="62.00" fill="#ead8bd" stroke="#c1a077" stroke-width="1"/>
+<text x="330.50" y="254.00" fill="#4a321f" text-anchor="middle" class="pillar-head">年柱</text>
+<rect x="427.00" y="216.00" width="193.00" height="62.00" fill="#ead8bd" stroke="#c1a077" stroke-width="1"/>
+<text x="523.50" y="254.00" fill="#4a321f" text-anchor="middle" class="pillar-head">月柱</text>
+<rect x="620.00" y="216.00" width="193.00" height="62.00" fill="#ead8bd" stroke="#c1a077" stroke-width="1"/>
+<text x="716.50" y="254.00" fill="#4a321f" text-anchor="middle" class="pillar-head">日柱</text>
+<rect x="813.00" y="216.00" width="193.00" height="62.00" fill="#ead8bd" stroke="#c1a077" stroke-width="1"/>
+<text x="909.50" y="254.00" fill="#4a321f" text-anchor="middle" class="pillar-head">時柱</text>
+<rect x="74.00" y="278.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="310.50" fill="#74563a" text-anchor="middle" class="cell-label">干支</text>
+<rect x="234.00" y="278.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="310.50" fill="#3c2a1a" text-anchor="middle" class="kanshi">庚午</text>
+<rect x="427.00" y="278.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="310.50" fill="#3c2a1a" text-anchor="middle" class="kanshi">辛巳</text>
+<rect x="620.00" y="278.00" width="193.00" height="51.00" fill="#f3dfb7" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="310.50" fill="#3c2a1a" text-anchor="middle" class="kanshi">庚辰</text>
+<rect x="813.00" y="278.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="310.50" fill="#3c2a1a" text-anchor="middle" class="kanshi">壬午</text>
+<rect x="74.00" y="329.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="361.50" fill="#74563a" text-anchor="middle" class="cell-label">天干</text>
+<rect x="234.00" y="329.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="361.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">庚</text>
+<rect x="427.00" y="329.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="361.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">辛</text>
+<rect x="620.00" y="329.00" width="193.00" height="51.00" fill="#f3dfb7" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="361.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">庚</text>
+<rect x="813.00" y="329.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="361.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">壬</text>
+<rect x="74.00" y="380.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="412.50" fill="#74563a" text-anchor="middle" class="cell-label">地支</text>
+<rect x="234.00" y="380.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="412.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">午</text>
+<rect x="427.00" y="380.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="412.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">巳</text>
+<rect x="620.00" y="380.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="412.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">辰</text>
+<rect x="813.00" y="380.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="412.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">午</text>
+<rect x="74.00" y="431.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="463.50" fill="#74563a" text-anchor="middle" class="cell-label">蔵干</text>
+<rect x="234.00" y="431.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="463.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">丁・己</text>
+<rect x="427.00" y="431.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="463.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">丙・戊・庚</text>
+<rect x="620.00" y="431.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="463.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">戊・乙・癸</text>
+<rect x="813.00" y="431.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="463.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">丁・己</text>
+<rect x="74.00" y="482.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="514.50" fill="#74563a" text-anchor="middle" class="cell-label">通変星</text>
+<rect x="234.00" y="482.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="514.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">比肩</text>
+<rect x="427.00" y="482.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="514.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">劫財</text>
+<rect x="620.00" y="482.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="514.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">日主</text>
+<rect x="813.00" y="482.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="514.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">食神</text>
+<rect x="74.00" y="533.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="565.50" fill="#74563a" text-anchor="middle" class="cell-label">蔵干通変</text>
+<rect x="234.00" y="533.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="565.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">丁正官 / 己印綬</text>
+<rect x="427.00" y="533.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="565.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">丙偏官 / 戊偏印 / 庚比肩</text>
+<rect x="620.00" y="533.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="565.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">戊偏印 / 乙正財 / 癸傷官</text>
+<rect x="813.00" y="533.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="565.50" fill="#3c2a1a" text-anchor="middle" class="cell-sub">丁正官 / 己印綬</text>
+<rect x="74.00" y="584.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="616.50" fill="#74563a" text-anchor="middle" class="cell-label">十二運</text>
+<rect x="234.00" y="584.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="616.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">沐浴</text>
+<rect x="427.00" y="584.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="616.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">長生</text>
+<rect x="620.00" y="584.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="616.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">養</text>
+<rect x="813.00" y="584.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="616.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">沐浴</text>
+<rect x="74.00" y="635.00" width="160.00" height="51.00" fill="#f5ead8" stroke="#d3b991" stroke-width="1"/>
+<text x="154.00" y="667.50" fill="#74563a" text-anchor="middle" class="cell-label">空亡</text>
+<rect x="234.00" y="635.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="330.50" y="667.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">なし</text>
+<rect x="427.00" y="635.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="523.50" y="667.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">なし</text>
+<rect x="620.00" y="635.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="716.50" y="667.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">なし</text>
+<rect x="813.00" y="635.00" width="193.00" height="51.00" fill="#fffaf2" stroke="#d3b991" stroke-width="1"/>
+<text x="909.50" y="667.50" fill="#3c2a1a" text-anchor="middle" class="cell-main">なし</text>
+<text x="74.00" y="722.00" fill="#705235" class="small">空亡: 申・酉</text>
+<text x="74.00" y="770.00" fill="#3b2b1d" font-size="28" font-weight="700">五行バランス</text>
+<text x="74.00" y="828.00" fill="#4a321f" font-size="24" font-weight="700">木</text>
+<rect x="118.00" y="808.00" width="812.00" height="24.00" rx="12" fill="#eadbc6" stroke="#d2b991" stroke-width="1"/>
+<rect x="118.00" y="808.00" width="135.33" height="24.00" rx="12" fill="#6f8f4f"/>
+<text x="952.00" y="828.00" fill="#4a321f" text-anchor="middle" font-size="20">1</text>
+<text x="74.00" y="873.00" fill="#4a321f" font-size="24" font-weight="700">火</text>
+<rect x="118.00" y="853.00" width="812.00" height="24.00" rx="12" fill="#eadbc6" stroke="#d2b991" stroke-width="1"/>
+<rect x="118.00" y="853.00" width="812.00" height="24.00" rx="12" fill="#b65b44"/>
+<text x="952.00" y="873.00" fill="#4a321f" text-anchor="middle" font-size="20">6</text>
+<text x="74.00" y="918.00" fill="#4a321f" font-size="24" font-weight="700">土</text>
+<rect x="118.00" y="898.00" width="812.00" height="24.00" rx="12" fill="#eadbc6" stroke="#d2b991" stroke-width="1"/>
+<rect x="118.00" y="898.00" width="676.67" height="24.00" rx="12" fill="#a98349"/>
+<text x="952.00" y="918.00" fill="#4a321f" text-anchor="middle" font-size="20">5</text>
+<text x="74.00" y="963.00" fill="#4a321f" font-size="24" font-weight="700">金</text>
+<rect x="118.00" y="943.00" width="812.00" height="24.00" rx="12" fill="#eadbc6" stroke="#d2b991" stroke-width="1"/>
+<rect x="118.00" y="943.00" width="541.33" height="24.00" rx="12" fill="#9a8b73"/>
+<text x="952.00" y="963.00" fill="#4a321f" text-anchor="middle" font-size="20">4</text>
+<text x="74.00" y="1008.00" fill="#4a321f" font-size="24" font-weight="700">水</text>
+<rect x="118.00" y="988.00" width="812.00" height="24.00" rx="12" fill="#eadbc6" stroke="#d2b991" stroke-width="1"/>
+<rect x="118.00" y="988.00" width="270.67" height="24.00" rx="12" fill="#517c9b"/>
+<text x="952.00" y="1008.00" fill="#4a321f" text-anchor="middle" font-size="20">2</text>
+<text x="74.00" y="1069.00" fill="#3b2b1d" font-size="24" font-weight="700">大運（先頭のみ）</text>
+<text x="74.00" y="1103.00" fill="#705235" class="small">歳 庚辰 / 歳 己卯 / 歳 戊寅 / 歳 丁丑 / 歳 丙子</text>
+<text x="540.00" y="1158.00" fill="#8a6c45" text-anchor="middle" class="meta">nanami astro</text>
+<text x="540.00" y="1188.00" fill="#a88d6b" text-anchor="middle" class="footer">Four pillars chart from calculated data</text>
+</svg>

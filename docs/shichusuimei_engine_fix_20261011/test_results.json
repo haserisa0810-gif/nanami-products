@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "pytest_total": 1971,
+  "existing_tests": 891,
+  "new_tests": 1080,
+  "warnings": 5622,
+  "subtests": 160,
+  "seconds": 149.23,
+  "javascript_tests": 6,
+  "command": "python -m pytest tests -q -p no:cacheprovider --basetemp=<local temporary directory>",
+  "fixture_reference": "lunar_python 1.4.8 plus independent offsets/hour arithmetic and NAOJ 2026 Lichun",
+  "database": "mocks only; no production or buyer database validation",
+  "push": false,
+  "deploy": false
+}
