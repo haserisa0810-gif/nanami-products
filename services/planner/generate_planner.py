@@ -1128,7 +1128,7 @@ class Planner:
             self._section_label(S(lang, "profile_head"), 55, y - 27)
             pdf.setFillColor(NAVY)
             pdf.setFont("Times-Bold", 18)
-            pdf.drawString(55, y - 55, profile.get("display_name", ""))
+            pdf.drawString(55, y - 55, profile.get("display_name") or "")
             details = [
                 S(lang, "birth_label", value=f"{profile.get('birth_display', '')} ({profile.get('birth_timezone', '')})"),
                 S(lang, "place_label", value=profile.get("birthplace_label", "")),
@@ -1318,8 +1318,9 @@ class Planner:
         if self.mode != "personal":
             self._draw_personal_month_sample(spec)
             return
-        name = self.personal["profile"].get("display_name", "")
-        y = self._page_title(spec.title, S(lang, "personal_month_eyebrow", name=name))
+        name = self.personal["profile"].get("display_name") or ""
+        eyebrow = S(lang, "personal_month_eyebrow", name=name) if name else S(lang, "personal_eyebrow")
+        y = self._page_title(spec.title, eyebrow)
         prefix = f"{year:04d}-{month:02d}"
         focus = [(day, window) for day, windows in sorted(self.personal_dates.items()) if day.startswith(prefix) for window in windows]
         active = [w for w in self.personal["windows"] if w["start_date"] <= f"{prefix}-31" and w["end_date"] >= f"{prefix}-01"]

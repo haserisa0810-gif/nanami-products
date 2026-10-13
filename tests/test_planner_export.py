@@ -78,6 +78,36 @@ class PlannerExportTest(unittest.TestCase):
             data,
         )
 
+    def test_pdf_renders_when_optional_name_is_null(self) -> None:
+        # The buyer name is optional and an empty field is stored as null.
+        import tempfile
+
+        yaml_text = self.yaml_text.replace("  title: Sample\n", "  title: null\n", 1)
+        self.assertIn("  title: null\n", yaml_text)
+        out = Path(tempfile.mkdtemp()) / "null-name.pdf"
+        pdf = render_personal_planner(
+            yaml_text=yaml_text, lang="ja", months=1, out_path=out
+        )
+        self.assertTrue(pdf.read_bytes().startswith(b"%PDF"))
+
+    def test_profile_turns_null_optional_fields_into_blank_text(self) -> None:
+        import tempfile
+
+        from services.planner.compute_ephemeris import personal_from_yaml
+
+        yaml_text = (
+            self.yaml_text.replace("  title: Sample\n", "  title: null\n", 1)
+            .replace("  birth_time: '20:41'\n", "  birth_time: null\n", 1)
+            .replace("  birth_place: 東京都\n", "  birth_place: null\n", 1)
+        )
+        path = Path(tempfile.mkdtemp()) / "null-fields.yaml"
+        path.write_text(yaml_text, encoding="utf-8")
+        profile = personal_from_yaml(path)["profile"]
+        self.assertEqual(profile["display_name"], "")
+        self.assertEqual(profile["birth_display"], "1976-08-10")
+        self.assertEqual(profile["birthplace_label"], "")
+        self.assertEqual(profile["birth_timezone"], "Asia/Tokyo")
+
     def test_rejects_unknown_lang(self) -> None:
         with self.assertRaises(ValueError):
             render_personal_planner(yaml_text=self.yaml_text, lang="fr")
