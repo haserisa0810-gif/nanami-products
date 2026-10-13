@@ -1,0 +1,72 @@
+[
+  {
+    "product": "shichu_full_current",
+    "yaml_bytes": 158495,
+    "display_ms": {
+      "before": 553.21,
+      "after": 54.05
+    },
+    "html_bytes": {
+      "before": 484797,
+      "after": 300454
+    },
+    "context_equal": true,
+    "html_equal_except_duplicate_literal": true
+  },
+  {
+    "product": "shichu_full",
+    "yaml_bytes": 158451,
+    "display_ms": {
+      "before": 578.89,
+      "after": 84.87
+    },
+    "html_bytes": {
+      "before": 484705,
+      "after": 300408
+    },
+    "context_equal": true,
+    "html_equal_except_duplicate_literal": true
+  },
+  {
+    "product": "shichu",
+    "yaml_bytes": 152645,
+    "display_ms": {
+      "before": 463.82,
+      "after": 23.07
+    },
+    "html_bytes": {
+      "before": 435703,
+      "after": 262320
+    },
+    "context_equal": true,
+    "html_equal_except_duplicate_literal": true
+  },
+  {
+    "product": "western_full",
+    "yaml_bytes": 89781,
+    "display_ms": {
+      "before": 210.31,
+      "after": 20.43
+    },
+    "html_bytes": {
+      "before": 116093,
+      "after": 116093
+    },
+    "context_equal": true,
+    "html_equal_except_duplicate_literal": true
+  },
+  {
+    "product": "western_basic",
+    "yaml_bytes": 6440,
+    "display_ms": {
+      "before": 22.38,
+      "after": 4.49
+    },
+    "html_bytes": {
+      "before": 102655,
+      "after": 102655
+    },
+    "context_equal": true,
+    "html_equal_except_duplicate_literal": true
+  }
+]

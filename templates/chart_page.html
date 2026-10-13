@@ -1272,7 +1272,7 @@
     const DETAIL_YAML_URL = {{ detail_yaml_url | tojson }};
     const HOROSCOPE_SVG_URL = {{ horoscope_svg_url | tojson }};
     const SHICHU_SVG_URL = {{ shichusuimei_svg_url | tojson }};
-    const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% else %}{{ chart.yaml_text | tojson }}{% endif %};
+    const FULL_YAML_INLINE = {% if has_yaml_mode_selector %}""{% elif share_yaml_text == chart.yaml_text %}SHARE_YAML{% else %}{{ chart.yaml_text | tojson }}{% endif %};
     const UI_TEXT = {
       copied: {{ t.copied | tojson }},
       modeFull: {{ t["mode_full"] | tojson }},
