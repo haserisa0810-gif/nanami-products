@@ -588,16 +588,23 @@ def personal_from_yaml(path: Path) -> dict[str, object]:
         windows.append(window)
     windows.sort(key=lambda entry: entry["start_date"])
 
-    profile_input = source.get("input", {})
-    birth_display = f"{profile_input.get('birth_date', '')} {profile_input.get('birth_time', '')}".strip()
-    tz_name = profile_input.get("timezone", PERIOD.tz_name)
+    # Optional buyer fields (name, birth time, place) are stored as null when
+    # left blank, so every profile value is coerced to a string here.
+    profile_input = source.get("input") or {}
+
+    def text(key: str) -> str:
+        value = profile_input.get(key)
+        return "" if value is None else str(value).strip()
+
+    birth_display = f"{text('birth_date')} {text('birth_time')}".strip()
+    tz_name = text("timezone") or PERIOD.tz_name
     return {
         "source": "yaml",
         "profile": {
-            "display_name": profile_input.get("title", ""),
+            "display_name": text("title"),
             "birth_display": birth_display,
             "birth_timezone": tz_name,
-            "birthplace_label": profile_input.get("birth_place", ""),
+            "birthplace_label": text("birth_place"),
             "zodiac": "Tropical",
             "house_system": "Placidus",
         },
