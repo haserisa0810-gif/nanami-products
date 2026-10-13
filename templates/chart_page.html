@@ -1539,7 +1539,12 @@
         ? (en ? `Selected: ${years.join(', ')}${continuation ? ' (years only)' : ''}`
               : `選択中：${years.join('・')}年${continuation ? '（年のデータだけ）' : ''}`)
         : (en ? 'Selected: none (basic reading)' : '選択中：なし（命式と大運の基本鑑定）'));
-      if (button) button.disabled = true;
+      if (button) {
+        // 押せない理由が分かるよう、準備中はボタンの文字も変える。
+        button.dataset.readyLabel ||= button.textContent;
+        button.textContent = en ? 'Preparing…' : '準備中…';
+        button.disabled = true;
+      }
       setText('shichu-year-picker-status', en ? 'Preparing the data for your AI…' : 'AI用データを準備しています…');
       try {
         const response = await fetch(SHICHU_YEAR_SELECTION_URL, {
@@ -1575,7 +1580,10 @@
           ? 'Could not prepare the chosen years. The button will send all data instead.'
           : '選んだ年のデータを準備できませんでした。このままボタンを押すと全データを送ります。');
       } finally {
-        if (revision === shichuSelectionRevision && button) button.disabled = false;
+        if (revision === shichuSelectionRevision && button) {
+          button.disabled = false;
+          if (button.dataset.readyLabel) button.textContent = button.dataset.readyLabel;
+        }
       }
     }
 

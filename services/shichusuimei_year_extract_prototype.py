@@ -9,7 +9,7 @@ import hashlib
 import yaml
 
 from services.shichusuimei_full_prototype import (
-    load_saved_full, _typed_tree, walk, pointer, _get, _pointer_parts,
+    load_saved_full, safe_load_fast, _typed_tree, walk, pointer, _get, _pointer_parts,
 )
 from services.shichusuimei_annual_prototype import expand_shared_year, PROTOTYPE_PRODUCT_TYPE
 
@@ -33,7 +33,8 @@ def semantic_tree(value):
 
 
 def dump_extraction(doc: dict) -> bytes:
-    class PlainDumper(yaml.SafeDumper):
+    # libyaml があれば C 実装で書く（出力は Python 実装と同一であることを確認済み）。
+    class PlainDumper(getattr(yaml, "CSafeDumper", yaml.SafeDumper)):
         def ignore_aliases(self, data):
             return True
     return yaml.dump(doc, Dumper=PlainDumper, allow_unicode=True, sort_keys=False, width=120).encode("utf-8")
@@ -148,7 +149,7 @@ def _finish(raw, doc, output, aliases, excluded, destinations):
             if _typed_tree(a) != _typed_tree(b):
                 raise ExtractionError("retention_mismatch", r["source"])
     serialized = dump_extraction(output)
-    if _typed_tree(yaml.safe_load(serialized)) != _typed_tree(output):
+    if _typed_tree(safe_load_fast(serialized)) != _typed_tree(output):
         raise ExtractionError("serialization_mismatch", "通常の辞書・一覧の型・対象位置が変化しました。")
     return serialized, {"base_sha256": hashlib.sha256(raw).hexdigest(), "output_sha256": hashlib.sha256(serialized).hexdigest(),
                         "base_item_mapping": mapping, "retained_leaves_verified": sum(r["destination"] is not None for r in mapping),

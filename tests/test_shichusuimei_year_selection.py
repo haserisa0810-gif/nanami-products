@@ -316,3 +316,26 @@ def test_reading_guidance_covers_personality_layers_in_all_languages():
         rules = localized_shichusuimei_rules(lang)
         for term in ("main_hidden_stems.month", "roots_and_exposure", "ten_god_flow", "chart_id", "unselected_years"):
             assert term in rules, (lang, term)
+
+
+def test_repeated_selection_is_cached_and_callers_cannot_mutate_cache(chart, monkeypatch):
+    import services.shichusuimei_year_selection as selection
+    selection._cache.clear()
+    calls = []
+    original = selection._build_year_selection
+    monkeypatch.setattr(selection, "_build_year_selection", lambda *a: calls.append(1) or original(*a))
+    first = build_year_selection(chart["yaml_text"], {"mode": "selected", "years": [2027]})
+    first["included_years"].append(9999)
+    second = build_year_selection(chart["yaml_text"], {"mode": "selected", "years": [2027]})
+    assert len(calls) == 1 and second["included_years"] == [2027]
+    assert second["yaml_text"] == first["yaml_text"]
+    build_year_selection(chart["yaml_text"], {"mode": "selected", "years": [2030]})
+    assert len(calls) == 2
+    with pytest.raises(YearSelectionError):
+        build_year_selection(chart["yaml_text"], {"mode": "selected", "years": [2045]})
+    selection._cache.clear()
+
+
+def test_chart_page_shows_preparing_label_on_ai_button(client):
+    page = client.get("/chart/fictional").text
+    assert "'準備中…'" in page and "readyLabel" in page

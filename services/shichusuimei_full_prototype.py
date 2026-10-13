@@ -18,11 +18,17 @@ import yaml
 
 PILLAR_NAMES = {"year", "month", "day", "hour"}
 SHICHU_PATH = ("systems", "shichusuimei")
+# libyaml があれば C 実装で読む（同じ安全なローダー。本番で1回数秒かかっていたため）。
+_SAFE_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+def safe_load_fast(text):
+    return yaml.load(text, Loader=_SAFE_LOADER)
 
 
 def load_saved_full(raw: bytes) -> dict:
     try:
-        doc = yaml.safe_load(raw.decode("utf-8-sig"))
+        doc = safe_load_fast(raw.decode("utf-8-sig"))
     except (UnicodeError, yaml.YAMLError) as exc:
         raise ValueError("保存済みFull YAMLを読み取れません。") from exc
     if not isinstance(doc, dict) or not isinstance((doc.get("systems") or {}).get("shichusuimei"), dict):

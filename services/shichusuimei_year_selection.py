@@ -5,12 +5,13 @@ annual-option prototype, or purchase flow is invoked here.
 """
 from __future__ import annotations
 
+from collections import OrderedDict
 import hashlib
-import yaml
+import threading
 from services.output_metadata import customer_output_doc
 from services.yaml_exporter import build_prompt_for_doc
 
-from services.shichusuimei_full_prototype import load_saved_full
+from services.shichusuimei_full_prototype import load_saved_full, safe_load_fast
 from services.shichusuimei_year_extract_prototype import (
     _base_index, dump_extraction, extract_base, extraction_prompt,
 )
@@ -123,8 +124,35 @@ CONTINUATION_PROMPT = """あなたは四柱推命の鑑定者です。以下のY
 """
 
 
+# 同じ原本・同じ選択の結果を少数だけ保持する（年の付け外しを繰り返しても待たせない）。
+_CACHE_SIZE = 32
+_cache: "OrderedDict[tuple, dict]" = OrderedDict()
+_cache_lock = threading.Lock()
+
+
+def _copy_result(result: dict) -> dict:
+    return {k: (list(v) if isinstance(v, list) else v) for k, v in result.items()}
+
+
 def build_year_selection(yaml_text: str, payload: dict) -> dict:
     """Return YAML and its matching prompt without modifying the saved original."""
+    if isinstance(payload, dict) and isinstance(payload.get("mode"), str) and isinstance(payload.get("years", []), list)             and all(type(y) is int for y in payload.get("years", [])) and not set(payload) - {"mode", "years"}:
+        key = (hashlib.sha256(yaml_text.encode("utf-8")).hexdigest(), payload["mode"], tuple(payload.get("years", [])))
+        with _cache_lock:
+            cached = _cache.get(key)
+            if cached is not None:
+                _cache.move_to_end(key)
+                return _copy_result(cached)
+        result = _build_year_selection(yaml_text, payload)
+        with _cache_lock:
+            _cache[key] = result
+            while len(_cache) > _CACHE_SIZE:
+                _cache.popitem(last=False)
+        return _copy_result(result)
+    return _build_year_selection(yaml_text, payload)
+
+
+def _build_year_selection(yaml_text: str, payload: dict) -> dict:
     if not isinstance(payload, dict) or set(payload) - {"mode", "years"}:
         raise YearSelectionError("invalid_request", "用途と対象年を指定してください。")
     mode = payload.get("mode")
@@ -148,7 +176,7 @@ def build_year_selection(yaml_text: str, payload: dict) -> dict:
     else:
         try:
             selected, _ = extract_base(raw, years if needs_years else None)
-            doc = yaml.safe_load(selected)  # Emitted and verified by extract_base.
+            doc = safe_load_fast(selected)  # Emitted and verified by extract_base.
             trace = doc.pop("local_year_extraction")
             trace["schema_version"] = "1.0"
             trace["source_kind"] = "issued_shichusuimei_full"
