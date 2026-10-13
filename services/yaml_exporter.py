@@ -128,6 +128,10 @@ def build_prompt_for_doc(
         from services.shichusuimei_editions import is_legacy_shichu_doc, legacy_reading_prompt
         if is_legacy_shichu_doc(doc):
             return legacy_reading_prompt(doc, lang)
+        # FULL版は深掘りを章立てにした専用の指示文（日本語のみ。基本版は共通の指示文のまま）。
+        from services.shichusuimei_full_prompt import build_full_shichu_prompt, is_full_shichu_doc
+        if lang == "ja" and not include_western and is_full_shichu_doc(doc):
+            return build_full_shichu_prompt(doc)
     return build_prompt(
         include_shichusuimei=include_shichusuimei,
         include_asteroids=include_asteroids,
@@ -827,6 +831,10 @@ def build_product_yaml(
         lang=lang,
         include_western=include_western,
     )
+    if include_shichusuimei and not include_western and lang == "ja":
+        from services.shichusuimei_full_prompt import build_full_shichu_prompt, is_full_shichu_doc
+        if is_full_shichu_doc(doc):
+            prompt_text = build_full_shichu_prompt(doc)
     return yaml_text, prompt_text, doc
 
 

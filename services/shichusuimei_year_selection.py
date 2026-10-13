@@ -11,6 +11,7 @@ import threading
 from services.output_metadata import customer_output_doc
 from services.yaml_exporter import build_prompt_for_doc
 
+from services.shichusuimei_full_prompt import build_full_shichu_prompt, is_full_shichu_doc
 from services.shichusuimei_full_prototype import load_saved_full, safe_load_fast
 from services.shichusuimei_year_extract_prototype import (
     _base_index, dump_extraction, extract_base, extraction_prompt,
@@ -194,15 +195,20 @@ def _build_year_selection(yaml_text: str, payload: dict) -> dict:
             # Do not expose source paths, chart IDs, raw data, or exception text.
             raise YearSelectionError("invalid_saved_data", "保存データの整合性を確認できませんでした。完全原本をご利用ください。") from exc
     summary = content_summary(base_doc, mode, years, info["available_years"])
+    full_prompt = is_full_shichu_doc(base_doc)
     if mode == "years_only":
         prompt = summary + "\n" + CONTINUATION_PROMPT
+    elif full_prompt:
+        # FULL版：章立て（7章が選んだ年）と、この命式に当てはまる注意だけの専用指示文。
+        prompt = summary + "\n" + build_full_shichu_prompt(base_doc, years_mode=mode, years=years) + "\n"
     else:
         prompt = summary + "\n" + build_prompt_for_doc(base_doc, include_shichusuimei=True) + "\n" + prompt
     if needs_years:
         prompt += (f"解釈対象年: {', '.join(map(str, years))}。このファイルにない年は推測・再計算しないでください。"
                    f"ただし、同じ会話で先に渡した同じ原本（chart_id: {_chart_id(base_doc)}）の年データは使えます。"
                    "どのデータの年かを示して組み合わせてください。\n")
-    prompt += "吉凶を一律に決めず、計算結果と占術的解釈を区別してください。\n"
+    if mode == "years_only" or not full_prompt:
+        prompt += "吉凶を一律に決めず、計算結果と占術的解釈を区別してください。\n"
     filename_part = {"selected": "years-", "years_only": "more-years-"}.get(mode)
     return {"mode": mode, "included_years": years, "available_years": info["available_years"],
             "yaml_text": output, "prompt_text": prompt, "content_summary": summary.strip(),
