@@ -6323,7 +6323,7 @@ def chart_page(request: Request, token: str):
         chart_doc = None
         if not is_transit_yaml:
             try:
-                loaded_doc = yaml.safe_load(chart["yaml_text"]) or {}
+                loaded_doc = _load_chart_display_yaml(chart["yaml_text"]) or {}
                 chart_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
             except Exception:
                 chart_doc = None
@@ -6350,9 +6350,12 @@ def chart_page(request: Request, token: str):
                 shichu_available_years = []
         shichu_quick_years, shichu_other_years = _split_shichu_picker_years(shichu_available_years)
         timings["display判定_ms"] = _elapsed_ms(step_start)
+        step_start = time.perf_counter()
         chart["prompt_text"] = _chart_prompt_for_yaml_text(
-            chart, str(chart.get("yaml_text") or ""), fallback_doc=chart_doc, lang=lang
+            chart, str(chart.get("yaml_text") or ""),
+            fallback_doc=chart_doc, parsed_doc=chart_doc, lang=lang,
         )
+        timings["prompt_build_ms"] = _elapsed_ms(step_start)
 
         has_asteroids = False
         step_start = time.perf_counter()
@@ -6374,7 +6377,9 @@ def chart_page(request: Request, token: str):
                 birth_time_notice = {"show": False}
         share_yaml_text = _chart_share_yaml_text(chart, doc=chart_doc)
         share_prompt_text = _chart_prompt_for_yaml_text(
-            chart, share_yaml_text, fallback_doc=chart_doc, lang=lang
+            chart, share_yaml_text, fallback_doc=chart_doc,
+            parsed_doc=chart_doc if share_yaml_text == chart["yaml_text"] else None,
+            lang=lang,
         )
         asteroid_yaml_text = None
         expires_at = _chart_expiry(chart)
@@ -9321,18 +9326,28 @@ def _chart_ai_paste_text(
     return "\n".join(parts).rstrip() + "\n"
 
 
+def _load_chart_display_yaml(yaml_text: str):
+    # Keep this loader local to the display path; do not change global YAML behavior.
+    return yaml.load(yaml_text, Loader=getattr(yaml, "CSafeLoader", yaml.SafeLoader))
+
+
 def _chart_prompt_for_yaml_text(
     chart: dict,
     yaml_text: str,
     *,
     fallback_doc: dict | None = None,
+    parsed_doc: dict | None = None,
     lang: str | None = None,
 ) -> str:
-    try:
-        loaded_doc = yaml.safe_load(yaml_text) or {}
-        prompt_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
-    except Exception:
-        prompt_doc = fallback_doc if isinstance(fallback_doc, dict) else {}
+    # Only pass parsed_doc when it was parsed from this exact yaml_text.
+    if isinstance(parsed_doc, dict):
+        prompt_doc = parsed_doc
+    else:
+        try:
+            loaded_doc = _load_chart_display_yaml(yaml_text) or {}
+            prompt_doc = loaded_doc if isinstance(loaded_doc, dict) else {}
+        except Exception:
+            prompt_doc = fallback_doc if isinstance(fallback_doc, dict) else {}
     product_options = ((prompt_doc.get("product") or {}).get("options") or {}) if isinstance(prompt_doc, dict) else {}
     product = (prompt_doc.get("product") or {}) if isinstance(prompt_doc, dict) else {}
     meta = (prompt_doc.get("meta") or {}) if isinstance(prompt_doc, dict) else {}
