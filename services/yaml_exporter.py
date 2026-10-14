@@ -529,6 +529,7 @@ def build_product_yaml(
     shichusuimei_edition: str = "full",
     shichusuimei_as_of: datetime | None = None,
     shichusuimei_annual_years: int = 10,
+    shichusuimei_annual_start_year: int | None = None,
 ) -> tuple[str, str, dict[str, Any]]:
     include_western = not (include_shichusuimei and not include_asteroids and not include_transit)
     if birth_time_accuracy == "auto":
@@ -692,6 +693,7 @@ def build_product_yaml(
             day_boundary_hour=day_boundary_hour,
             as_of=shichusuimei_as_of,
             annual_years=shichusuimei_annual_years,
+            annual_start_year=shichusuimei_annual_start_year,
         )
         # エンジンの戻り値は変更せず、コピーに販売版の出力範囲を適用する。
         from copy import deepcopy

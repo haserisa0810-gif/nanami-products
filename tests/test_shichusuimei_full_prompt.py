@@ -56,3 +56,27 @@ def test_year_selection_uses_full_prompt_with_year_chapter():
     assert "7. 原本作成時の年のテーマ" in basic
     complete = build_year_selection(text, {"mode": "complete"})["prompt_text"]
     assert "7. 年ごとの運勢" in complete and "common の中" not in complete
+
+
+def test_full_annual_start_year_shifts_only_forecasts():
+    _, _, now_doc = build_product_yaml(**ARGS, shichusuimei_edition="full")
+    _, _, past = build_product_yaml(**ARGS, shichusuimei_edition="full", shichusuimei_annual_start_year=2007)
+    nd_now = now_doc["systems"]["shichusuimei"]["normalized_data"]
+    nd = past["systems"]["shichusuimei"]["normalized_data"]
+    years = [i["effective_year"] for i in nd["annual_forecasts"]["items"]]
+    assert years == list(range(2007, 2017)) and nd["annual_forecasts"]["start_effective_year"] == 2007
+    # 原本作成時の流年・現在の大運・命式は発行日のまま
+    assert nd["annual_fortune"]["effective_year"] == nd_now["annual_fortune"]["effective_year"]
+    assert nd["annual_fortune"]["current_daiun"] == nd_now["annual_fortune"]["current_daiun"]
+    assert nd["pillars"] == nd_now["pillars"] and nd["daiun"] == nd_now["daiun"]
+    # 2007年は壬辰大運が始まる年：大運の切り替わりを含む
+    assert nd["annual_forecasts"]["items"][0]["daiun_boundary_in_window"] in (True, False)
+    assert "振り返り" in build_full_shichu_prompt(past)
+
+
+def test_full_annual_start_year_rejects_invalid_values():
+    import pytest
+    from services.shichusuimei_calc import calc_shichusuimei_from_payload
+    with pytest.raises(ValueError):
+        calc_shichusuimei_from_payload({"year": 1990, "month": 5, "day": 10, "hour": 10, "minute": 0,
+                                        "gender": "female"}, annual_start_year=1700)

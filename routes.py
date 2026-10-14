@@ -574,7 +574,7 @@ PRODUCT_CONFIG = {
         "features": [
             "四柱推命の命式データ（基本版の内容をすべて含む）",
             "大運10期それぞれの詳しい作用",
-            "10年分の年運予測（立春基準）",
+            "10年分の年運予測（立春基準・開始年を選べます。過去の10年も可）",
             "命式の構造分析",
             "鑑定したい年を選んで取り出せる",
             "日替わり境界を選択可能",
@@ -5255,6 +5255,7 @@ def redeem_post(
     calendar_note: str = Form(""),
     agree_final: str | None = Form(None),
     issue_next: str | None = Form(None),
+    annual_start_year: str = Form(""),
 ):
     if product_slug:
         product_type = _product_type_from_slug(product_slug)
@@ -5297,6 +5298,7 @@ def redeem_post(
                     "birth_time": birth_time,
                     "birth_time_accuracy": birth_time_accuracy,
                     "prefecture": prefecture,
+                    "annual_start_year": annual_start_year,
                     "birth_place_kind": birth_place_kind,
                     "birth_place_overseas": birth_place_overseas,
                     "birth_place_city": birth_place_city,
@@ -5377,6 +5379,11 @@ def redeem_post(
             "es": "Los datos de Cuatro Pilares FULL solo se emiten para pedidos comprados en STORES.",
             "de": "Vier-Säulen-FULL-Daten werden nur für Bestellungen aus STORES ausgestellt.",
         }.get(lang, "四柱推命FULL版は STORES でご購入いただいた注文番号でのみ発行できます。"))
+    full_annual_start_year = None
+    if product_type == "shichu_full":
+        full_annual_start_year, start_year_error = _parse_full_annual_start_year(annual_start_year, birth_date, lang)
+        if start_year_error:
+            return _form_err(start_year_error)
     if not agree_final:
         return _form_err(redeem_error(lang, "confirmation_required"))
 
@@ -5636,6 +5643,7 @@ def redeem_post(
                 day_change_at_23=day_change_at_23_bool,
                 **({"birth_fold": _parse_birth_fold(birth_fold)} if include_shichusuimei else {}),
                 **({"shichusuimei_edition": edition_for_product_type(product_type)} if include_shichusuimei else {}),
+                **({"shichusuimei_annual_start_year": full_annual_start_year} if full_annual_start_year else {}),
                 lang=lang,
             )
     except Exception as e:
@@ -8659,6 +8667,34 @@ YEARS_ADDON_STORES_ONLY_MESSAGES = {
     "es": "El complemento anual de Cuatro Pilares solo se emite para pedidos comprados en STORES.",
     "de": "Das Vier-Säulen-Jahres-Add-on wird nur für Bestellungen aus STORES ausgestellt.",
 }
+
+
+FULL_ANNUAL_START_MAX_OFFSET = 100  # 年運アドオンと同じ（生まれ年〜生まれ年＋100年）
+
+
+def _parse_full_annual_start_year(value: str, birth_date: str, lang: str) -> tuple[int | None, str | None]:
+    """四柱推命FULL版の年運の開始年。空欄は今年から（従来どおり）。"""
+    raw = (value or "").strip()
+    if not raw:
+        return None, None
+    messages = {
+        "format": {"ja": "年運の開始年は西暦4桁で入力してください（例：2026）。",
+                   "en": "Enter the first forecast year as four digits (e.g. 2026)."},
+        "range": {"ja": "年運の開始年は {lo}年〜{hi}年の範囲で入力してください。",
+                  "en": "Choose a first forecast year between {lo} and {hi}."},
+    }
+    pick = lambda key: messages[key].get(lang) or messages[key]["en"]
+    if not re.fullmatch(r"\d{4}", raw):
+        return None, pick("format")
+    year = int(raw)
+    try:
+        birth_year = int(str(birth_date or "").strip()[:4])
+    except ValueError:
+        return year, None  # 生年月日の誤りは既存の入力検査で知らせる
+    lo, hi = birth_year, birth_year + FULL_ANNUAL_START_MAX_OFFSET
+    if not lo <= year <= hi:
+        return None, pick("range").format(lo=lo, hi=hi)
+    return year, None
 
 
 def _parse_annual_start_year(value: str, info: dict) -> int:

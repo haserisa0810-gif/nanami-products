@@ -50,7 +50,8 @@ def _has_special_relations(nd: dict[str, Any]) -> bool:
 
 def year_section(mode: str, years: list[int] | None = None) -> str:
     """7章（年の運勢）の指示。mode は complete / basic / selected。"""
-    common = "annual_fortune は原本作成時の流年で、会話時点の「今年」に置き換えないでください。"
+    common = ("annual_fortune は原本作成時の流年で、会話時点の「今年」に置き換えないでください。"
+              "すでに過ぎた年は、予測ではなく振り返りとして、本人の記憶と照らし合わせる形で読んでください。")
     if mode == "basic":
         return ("7. 原本作成時の年のテーマ — common の annual_fortune（effective_year の年）を、命式・その年の大運との"
                 f"関係から読む。{common}年ごとの詳しい年運はこのデータに含まれていません（鑑定ページで年を選ぶと追加できます）。")

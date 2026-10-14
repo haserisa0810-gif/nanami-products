@@ -347,3 +347,36 @@ def test_picker_layout_quick_chips_and_folded_others(client_for):
     assert '<details class="shichu-year-more" id="shichu-year-more">' in page
     assert "ほかの年を選ぶ（" in page
     assert "選択中：なし（命式と大運の基本鑑定）" in page
+
+
+def test_full_redeem_start_year_parser():
+    import routes
+    assert routes._parse_full_annual_start_year("", "1976-08-10", "ja") == (None, None)
+    assert routes._parse_full_annual_start_year("2007", "1976-08-10", "ja") == (2007, None)
+    assert routes._parse_full_annual_start_year("1975", "1976-08-10", "ja")[1].startswith("年運の開始年は 1976年〜2076年")
+    assert routes._parse_full_annual_start_year("20xx", "1976-08-10", "ja")[1].startswith("年運の開始年は西暦4桁")
+    assert routes._parse_full_annual_start_year("2077", "1976-08-10", "en")[1] == "Choose a first forecast year between 1976 and 2076."
+
+
+def test_full_redeem_uses_chosen_start_year_and_rejects_bad_one_before_issue(monkeypatch):
+    saved = {}
+    monkeypatch.setattr(routes, "_check_order_for_redeem",
+                        lambda **kw: ("ok", {"product_type": kw["product_type"], "payment_status": "paid"}, None, 200))
+    monkeypatch.setattr(routes.pg_store, "redeem_and_save", lambda **kw: saved.update(kw) or True)
+    monkeypatch.setattr(routes.pg_store, "init_db", lambda *a, **kw: None)
+    data = {"order_code": "1234567890", "order_provider": "stores", "birth_date": "1990-05-10",
+            "birth_time": "10:00", "prefecture": "東京都", "gender": "male",
+            "day_change_at_23": "false", "agree_final": "1"}
+    client = TestClient(routes.app)
+    response = client.post("/redeem/shichu-full?lang=ja", data={**data, "annual_start_year": "2012"},
+                           follow_redirects=False)
+    assert response.status_code == 303
+    forecasts = yaml.safe_load(saved["yaml_text"])["systems"]["shichusuimei"]["normalized_data"]["annual_forecasts"]
+    assert [i["effective_year"] for i in forecasts["items"]] == list(range(2012, 2022))
+    saved.clear()
+    bad = client.post("/redeem/shichu-full?lang=ja", data={**data, "annual_start_year": "1980"})
+    assert "年運の開始年は 1990年〜2090年" in bad.text and 'value="1980"' in bad.text
+    assert not saved
+    page = client.get("/redeem/shichu-full").text
+    assert 'name="annual_start_year"' in page and "confirm-annual-start-year" in page
+    assert 'name="annual_start_year"' not in client.get("/redeem/shichu").text

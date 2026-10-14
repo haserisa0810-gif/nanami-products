@@ -175,6 +175,11 @@
             </select>
             <small>出生地の現地時刻で判定します。1時：0時台は前日、23時：23時台は翌日の日柱。真太陽時補正は行いません。</small>
           </label>
+          <label>年運の開始年<span class="optional">任意</span>
+            <input type="text" name="annual_start_year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+                   placeholder="空欄なら今年から" value="{{ form.annual_start_year if form and form.annual_start_year else '' }}">
+            <small>ここで選んだ年から10年分の年運を作ります（各年は立春から翌年の立春まで）。空欄なら今年からです。来年から、過去の気になる10年など、生まれた年以降なら自由に選べます。</small>
+          </label>
         </div>
 
         <div class="notice-box warn final-check" id="final-check">
@@ -207,6 +212,7 @@
             <div class="confirm-item" id="confirm-timezone-wrap" hidden><dt>タイムゾーン</dt><dd id="confirm-timezone"></dd></div>
             <div class="confirm-item"><dt>性別</dt><dd id="confirm-gender"></dd></div>
             <div class="confirm-item"><dt>日替わり境界</dt><dd id="confirm-day-change"></dd></div>
+            <div class="confirm-item"><dt>年運の開始年</dt><dd id="confirm-annual-start-year"></dd></div>
           </dl>
           <div class="confirm-actions">
             <button type="button" class="secondary-action" id="confirm-edit">修正する</button>
@@ -379,6 +385,8 @@
       }
       document.getElementById('confirm-gender').textContent = buildConfirmValue(gender?.selectedOptions?.[0]?.textContent);
       document.getElementById('confirm-day-change').textContent = buildConfirmValue(dayChange?.selectedOptions?.[0]?.textContent);
+      const annualStart = (document.querySelector('[name="annual_start_year"]')?.value || '').trim();
+      document.getElementById('confirm-annual-start-year').textContent = annualStart ? `${annualStart}年から10年分` : '今年から10年分';
 
       confirmModal.hidden = false;
       document.getElementById('confirm-create')?.focus();

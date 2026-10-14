@@ -1653,6 +1653,7 @@ def calc_shichusuimei_from_payload(
     as_of: datetime | None = None,
     annual_years: int = 10,
     day_boundary_hour: int | None = None,
+    annual_start_year: int | None = None,
 ) -> dict[str, Any]:
     """routes.py の payload から四柱推命結果を作る。
 
@@ -1661,6 +1662,8 @@ def calc_shichusuimei_from_payload(
     """
     if not isinstance(annual_years, int) or isinstance(annual_years, bool) or not 1 <= annual_years <= 20:
         raise ValueError("annual_years must be an integer between 1 and 20")
+    if annual_start_year is not None and (type(annual_start_year) is not int or not 1800 <= annual_start_year <= 2399):
+        raise ValueError("annual_start_year must be an integer between 1800 and 2399")
     boundary = resolve_day_boundary_hour(day_change_at_23, day_boundary_hour)
     day_change_at_23 = boundary == 23
     current_dt = as_of or datetime.now(ZoneInfo(tz_name))
@@ -1808,7 +1811,8 @@ def calc_shichusuimei_from_payload(
         scope="ryunen_daiun",
     ) if current_daiun.get("kanshi") else []
     forecasts = []
-    first_year = annual_fortune["effective_year"]
+    # 年別予測の開始年だけを指定できる。原本作成時の流年・現在の大運は as_of（発行日）のまま。
+    first_year = annual_start_year if annual_start_year is not None else annual_fortune["effective_year"]
     # D-1: 年柱・月柱が未確定の場合、大運対応と月令依存の分析を含む年別予測は生成しない。
     forecast_years = [] if undetermined_pillars else list(range(first_year, first_year + annual_years))
     boundaries = {year: _lichun_utc_for_year(year, tz_name).astimezone(ZoneInfo(tz_name))
@@ -1851,7 +1855,7 @@ def calc_shichusuimei_from_payload(
             } for item in contexts],
         })
     annual_forecasts = {
-        "start_effective_year": annual_fortune["effective_year"], "years": annual_years,
+        "start_effective_year": first_year, "years": annual_years,
         "items": forecasts,
         "daiun_direction_status": daiun["status"],
         "note": (
