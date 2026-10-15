@@ -219,10 +219,16 @@ def test_full_and_basic_have_separate_redeem_pages():
     assert client.get("/start/shichu-full").status_code == 200
 
 
-def test_basic_redeem_template_is_unchanged_from_production():
+def test_basic_redeem_template_preserves_production_except_wait_notice():
     import hashlib
     text = (Path(__file__).parents[1] / "templates/redeem_shichu.html").read_bytes().replace(b"\r\n", b"\n")
-    # 47896d0 時点の基本版申込画面（改行はLFに正規化）。FULL版の追加でこのファイルを変えない。
+    # 2026-10-15: explicitly approved waiting notice is the only allowed change.
+    notice = '        <p class="hint" id="generation-wait-notice">{{ t.submit_loading_desc }}</p>\n'.encode("utf-8")
+    modal_desc = b"desc: {{ t.submit_loading_desc | tojson }},"
+    assert text.count(notice) == 1
+    assert text.count(modal_desc) == 1
+    text = text.replace(notice, b"").replace(modal_desc, "desc: '完了までしばらくお待ちください。',".encode("utf-8"))
+    # Keep the original production hash after removing only the approved copy changes.
     assert hashlib.sha256(text).hexdigest() == "c183fb79353156242fac0f34c37be31713bd7573408fefb8231c6dafe6030b77"
 
 
