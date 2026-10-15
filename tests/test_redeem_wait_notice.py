@@ -40,6 +40,10 @@ class RedeemWaitNoticeTest(unittest.TestCase):
                 source = (ROOT / "templates" / name).read_text(encoding="utf-8")
                 self.assertIn("desc: {{ t.submit_loading_desc | tojson }}", source)
                 self.assertIn("aria-live", source)
+                actions = source.split('<div class="confirm-actions">', 1)[1].split('</div>', 1)[0]
+                self.assertIn('id="confirm-wait-notice"', actions)
+                self.assertIn('{{ t.submit_loading_desc }}', actions)
+                self.assertLess(actions.index('id="confirm-wait-notice"'), actions.index('id="confirm-create"'))
 
 
 def test_four_pillars_full_renders_wait_notice(monkeypatch):

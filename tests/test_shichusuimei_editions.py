@@ -224,6 +224,9 @@ def test_basic_redeem_template_preserves_production_except_wait_notice():
     text = (Path(__file__).parents[1] / "templates/redeem_shichu.html").read_bytes().replace(b"\r\n", b"\n")
     # 2026-10-15: explicitly approved waiting notice is the only allowed change.
     notice = '        <p class="hint" id="generation-wait-notice">{{ t.submit_loading_desc }}</p>\n'.encode("utf-8")
+    confirm_notice = '            <p class="confirm-lead confirm-wait-notice" id="confirm-wait-notice">{{ t.submit_loading_desc }}</p>\n'.encode("utf-8")
+    assert text.count(confirm_notice) == 1
+    text = text.replace(confirm_notice, b"")
     modal_desc = b"desc: {{ t.submit_loading_desc | tojson }},"
     assert text.count(notice) == 1
     assert text.count(modal_desc) == 1
