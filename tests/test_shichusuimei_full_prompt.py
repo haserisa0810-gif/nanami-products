@@ -5,7 +5,7 @@ from services.yaml_exporter import build_product_yaml, build_prompt_for_doc
 
 ARGS = dict(title=None, birth_date="1976-08-10", birth_time="20:41", prefecture="東京都", gender="female",
             include_shichusuimei=True)
-CHAPTERS = ("1. 命式の全体像", "2. 性格の表と裏", "3. 才能の組み合わせ", "4. 宮位から見る暮らし",
+CHAPTERS = ("1. 命式の全体像", "2. 性格と動機", "3. 才能の組み合わせ", "4. 宮位から見る暮らし",
             "5. 用神と喜忌の活かし方", "6. 大運の流れ", "7. ", "8. これからの活かし方")
 
 
@@ -18,7 +18,7 @@ def test_full_prompt_has_deep_dive_chapters_in_order_and_is_short():
         assert key in prompt
     assert "【計算】" in prompt and "【推論】" in prompt
     assert "出力してほしい内容" not in prompt  # 基本版の章立てを使わない
-    assert len(prompt) < 3000
+    assert len(prompt) < 5500  # 方式・候補・反証を運ぶ読解規約を含む。
     assert build_prompt_for_doc(doc, include_shichusuimei=True) == prompt  # 鑑定ページの表示と一致
 
 

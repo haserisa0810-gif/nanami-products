@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from services.shichusuimei_reading_policy import build_reading_context
 
 
 def _tag(
@@ -189,6 +190,8 @@ def shichu_tags(shichu: dict[str, Any] | None) -> list[dict[str, Any]]:
 
     score = structure.get("strength_index", {}).get("score") if isinstance(structure, dict) else None
     label = structure.get("strength_index", {}).get("label") if isinstance(structure, dict) else None
+    support = (normalized.get("structural_analysis") or {}).get("day_master_support") or {}
+    reading_status = build_reading_context(shichu)["strength"]["status"]
     month_context = structure.get("seasonal_context", {}) if isinstance(structure, dict) else {}
 
     def collect_ten_gods(targets: set[str]) -> list[str]:
@@ -239,11 +242,11 @@ def shichu_tags(shichu: dict[str, Any] | None) -> list[dict[str, Any]]:
     tags = [
         _tag(
             "strength_index",
-            "身強身弱の目安",
+            "身強身弱候補（力量方式）" if support else "身強身弱の目安（旧方式の参考値）",
             "structure",
-            strength=3 if isinstance(score, int) and score >= 70 else 2 if isinstance(score, int) and score <= 40 else 1 if isinstance(score, int) else 0,
-            basis=[f"score={score}", f"label={label}"] if score is not None else [],
-            writing_hint="断定ではなく、使いやすさの方向として読む",
+            strength=1 if support else 3 if isinstance(score, int) and score >= 70 else 2 if isinstance(score, int) and score <= 40 else 1 if isinstance(score, int) else 0,
+            basis=["source=normalized_data.structural_analysis.day_master_support", f"label={support.get('label')}", f"interpretation={reading_status}"] if support else [f"score={score}", f"label={label}", "role=legacy_reference"] if score is not None else [],
+            writing_hint="力量方式の候補と旧参考値を混ぜず、身強弱だけで人物像を決めない。重みはタグの表示用で確率ではない",
         ),
         _tag(
             "five_element_imbalance",

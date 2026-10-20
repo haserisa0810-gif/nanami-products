@@ -233,20 +233,24 @@ def _select_useful_god(support, totals, groups, climate, mediation):
         useful = max((e for e in ELEMENTS if e not in (rel["peer"], rel["resource"])), key=lambda e: totals[e])
         feeder = next(e for e in ELEMENTS if _element_generate(e) == useful)  # 従う五行を生じる五行
         favorable = [feeder] if feeder not in (rel["peer"], rel["resource"]) else []
-        basis.append(f"日主が極端に弱く根がないため、従格（最も強い{useful}に従う）として見る")
+        basis.append(f"この方式では日主が極端に弱い側の候補で根がないため、従格候補（最も強い{useful}に従う）の見方で用神を選ぶ")
         alternatives.append(dict(element=rel["resource"], view="通常の格として日主を助ける印を用いる見方"))
     elif support["special_pattern_review_required"]:
         # 日主が極端に強い：その勢いを用いる（専旺格）見方。
         pattern_view = "dominant_pattern"
         useful = rel["peer"]
         favorable = [rel["resource"], rel["output"]]
-        basis.append(f"日主の勢いが極端に強いため、専旺格（日主と同じ{useful}を用いる）として見る")
+        basis.append(f"この方式では日主の勢いが極端に強い側の候補となるため、専旺格候補（日主と同じ{useful}を用いる）の見方で用神を選ぶ")
         alternatives.append(dict(element=rel["output"], view="通常の格として強さを漏らす食傷を用いる見方"))
     else:
         weak = support["label"] == "weak_candidate" or (support["label"] == "balanced_candidate" and ratio < .475)
         fuyi_side = [rel["resource"], rel["peer"]] if weak else [rel["output"], rel["wealth"], rel["officer"]]
         if support["label"] == "balanced_candidate":
             notes.append("日主の強弱は中間。わずかに" + ("弱い" if weak else "強い") + "側として扶抑を判断")
+        if support["label"] == "balanced_candidate":
+            support_basis = "日主の強弱は中間で、扶抑の選択上は" + ("弱い" if weak else "強い") + "側として扱う"
+        else:
+            support_basis = "この方式では日主が" + ("弱い" if weak else "強い") + "側の候補となる"
         if urgent:
             useful = urgent[0]["element"]
             basis.append(f"{climate['season']}生まれ（{climate['climate_note']}）のため調候を優先し、"
@@ -261,20 +265,20 @@ def _select_useful_god(support, totals, groups, climate, mediation):
                     n["element"] == useful for n in climate["needs"]) else []
                 if any(c["element"] == useful for c in mediation):
                     supporters.append(USEFUL_METHOD_LABELS["tongguan_control_bridge"])
-                basis.append(f"日主が{'弱い' if weak else '強い'}ため扶抑で{useful}を取り、{'・'.join(supporters)}とも一致")
+                basis.append(f"{support_basis}ため扶抑で{useful}を取り、{'・'.join(supporters)}とも一致")
             elif weak:
                 drain = max(("官殺", "食傷", "財"), key=lambda g: groups[g]["score"])
                 useful = rel["peer"] if drain == "財" else rel["resource"]
-                basis.append(f"日主が弱く、最も強く弱めているのは{drain}のため、"
+                basis.append(f"{support_basis}。日主を弱める側で最も重みが大きいのは{drain}のため、"
                              f"{'比劫' if drain == '財' else '印'}の{useful}で日主を助ける")
             else:
                 heavy = max(("比劫", "印"), key=lambda g: groups[g]["score"])
                 if heavy == "印":
                     useful = rel["wealth"]
-                    basis.append(f"日主が強く印が重いため、財の{useful}で印を抑える")
+                    basis.append(f"{support_basis}。印が重いため、財の{useful}で印を抑える")
                 else:
                     useful = rel["officer"] if totals[rel["officer"]] else rel["output"]
-                    basis.append(f"日主が強く比劫が重いため、{'官殺' if useful == rel['officer'] else '食傷'}の{useful}で強さを整える")
+                    basis.append(f"{support_basis}。比劫が重いため、{'官殺' if useful == rel['officer'] else '食傷'}の{useful}で強さを整える")
         favorable = [e for e in fuyi_side if e != useful]
         for c in mediation:
             if c["element"] != useful and c["element"] not in fuyi_side:

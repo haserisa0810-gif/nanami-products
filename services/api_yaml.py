@@ -5,6 +5,7 @@ from typing import Any
 import yaml
 from copy import deepcopy
 from services.yaml_exporter import build_prompt_for_doc
+from services.shichusuimei_reading_policy import build_reading_context
 
 
 def build_handoff_yaml(doc: dict[str, Any]) -> str:
@@ -29,6 +30,7 @@ def build_ai_prompt_context(doc: dict, previous: dict) -> dict:
         ) if systems.get(key.split(".")[1])
     }
     if shichu:
+        output["shichu_reading_context"] = build_reading_context(shichu)
         output["role"] = "西洋占星術・四柱推命の構造分析型鑑定" if western else "四柱推命の構造分析型鑑定"
         output["instruction"] = "raw_dataの計算済みデータと構造分析を優先し、interpreted_tagsは補助として扱ってください。reading_instructionsの占術別規則に従い、計算結果と解釈を区別してください。"
         output["caution"] = ["運命断定を避ける", "不安を煽らない", "根拠・暫定フラグ・方式の限界を確認する"]

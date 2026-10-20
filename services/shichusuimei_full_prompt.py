@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
+import json
+from services.shichusuimei_reading_policy import READING_POLICY, build_reading_context
+
 TIME_SENSITIVE = {"unknown", "approximate", "estimated", "provisional"}
 SHINSATSU_NAMES = ("天乙貴人", "文昌", "天徳")
 
@@ -67,7 +70,7 @@ def year_section(mode: str, years: list[int] | None = None) -> str:
 
 
 def build_full_shichu_prompt(doc: dict[str, Any], *, years_mode: str = "complete",
-                             years: list[int] | None = None) -> str:
+                             years: list[int] | None = None, include_reading_trace: bool = False) -> str:
     nd = _shichu(doc).get("normalized_data") or {}
     daiun = nd.get("daiun") or {}
     status = str(daiun.get("status") or "")
@@ -86,18 +89,17 @@ def build_full_shichu_prompt(doc: dict[str, Any], *, years_mode: str = "complete
                  "転換・動揺の材料として、単独で吉凶を決めずに読む。")
     chapters = [
         "1. 命式の全体像 — pillars・day_master・月支（生まれた季節）、structural_analysis.day_master_support"
-        "（日主の強さ）、useful_god_analysis.useful_god_selection（用神）を最初に短くまとめる。",
-        "2. 性格の表と裏 — ten_gods.pillars（天干の十神＝外に見える振る舞い・役割）と、ten_gods.hidden_stems・"
-        "main_hidden_stems.month（蔵干・月支の本気＝内側の動機・本音・土台）を対比する。"
-        "structural_analysis.roots_and_exposure で、根の強い性質（実際に発揮しやすい）、根の弱い性質（表に出ても"
-        "続きにくい）、透干した蔵干（内面の資質が表に出やすい）を分ける。",
-        "3. 才能の組み合わせ — structural_analysis.ten_god_flow の各 label を、両側の通根と ten_god_strength から"
-        "「活かしやすい組み合わせ」と「ぶつかりやすい組み合わせ」に分けて説明する。both_present は配置の併存で、"
-        "成立の断定ではない。",
+        "（身強弱候補）を土台に、通根・透干・十神の関係・格局候補から主要構造を最大2つ選ぶ。用神は後の5章で扱う。",
+        "2. 性格と動機 — ten_gods.pillars、ten_gods.hidden_stems、main_hidden_stems.month と"
+        "structural_analysis.roots_and_exposure を重ね、重視すること・判断の基準・発揮される条件を読む。"
+        "外に見える面と内側の動機の一致・不一致の両方を認める。通根の強弱を実際の行動の確認とは扱わない。",
+        "3. 才能の組み合わせ — structural_analysis.ten_god_flow のうち、主役に関連する両側の通根・"
+        "ten_god_strength・反証を確認できる組み合わせを選ぶ。both_present は併存で成立ではなく、"
+        "missing_endpoint は成立の根拠にしない。協調・葛藤のいずれも根拠と条件を添える。",
         palace,
-        "5. 用神と喜忌の活かし方 — useful_god_selection の useful_god を「この鑑定の用神」としてはっきり伝え、"
+        "5. 用神と喜忌の活かし方 — useful_god_selection の useful_god を「この方式で採用する用神」として伝え、"
         "basis を理由、favorable_elements を喜、unfavorable_elements を忌として、日常での活かし方に落とし込む。"
-        "取り方は method_label のとおり。alternatives は「流派によっては〜を重視する見方もあります」と一言だけ添える。",
+        "取り方は method_label。境界や時刻依存、alternatives・method_comparison の対立は、判断に関係する範囲で説明する。",
         luck,
         year_section(years_mode, years),
         "8. これからの活かし方 — ここまでの章をまとめ、具体的な行動のヒントを3つほど挙げる。",
@@ -120,6 +122,9 @@ def build_full_shichu_prompt(doc: dict[str, Any], *, years_mode: str = "complete
         "あなたは四柱推命の鑑定者です。以下のYAMLは、この人の命式・大運・年運と、命式の構造分析まで計算済みの"
         "データ（四柱推命FULL版）です。計算はやり直さず、YAMLの値だけを根拠に、専門用語はかみくだいて鑑定してください。",
         "",
+        READING_POLICY,
+        "【判定状態・内部参照】" + json.dumps(build_reading_context(_shichu(doc)), ensure_ascii=False),
+        "",
         "【鑑定の章立て】次の順に書いてください。読む場所は systems.shichusuimei.normalized_data からの位置です"
         + ("（このデータでは common の中にあります）。" if years_mode in {"basic", "selected"} else "。"),
         *chapters,
@@ -128,14 +133,19 @@ def build_full_shichu_prompt(doc: dict[str, Any], *, years_mode: str = "complete
         "- 記述ごとに【計算】（YAMLの値そのもの）【伝統的解釈】（四柱推命の一般的な読み）【推論】"
         "（それらを組み合わせた鑑定者の解釈）を付けて区別してください。",
         "- 具体的な出来事・行動・人間関係は断定せず、本人に思い当たるかを確かめる形にしてください。",
-        "- 吉凶を一律に決めず、強みと注意点の両方を書いてください。",
+        "- 吉凶を一律に決めず、根拠のある強みと注意点を扱ってください。各章に難点を作る必要はありません。",
         "- 日柱・時柱は出生地の現地暦日と日替わり方式（input.assumptions.day_boundary_rule）で計算済みです。"
         "読み替えないでください。",
         "- 計算結果を変更・再計算せず、YAMLに無い項目は補わないでください。合・三合があっても "
         "combination_screening の条件を見て、合化を断定しないでください。",
-        "- 用神は「未確定」「データが不足」と書かないでください。confidence・conflicting_rules・"
-        "methodology.limitations は内部の注記で、「計算が未完成」という説明には使わないでください。",
+        "- confidence・conflicting_rules・methodology.limitations を内部で読み、候補・境界・保留を確定へ変えない。"
+        "用神の方式内での選択と、解釈の確からしさを区別してください。",
     ]
     if cautions:
         lines += ["", "【この命式の注意】", *("- " + c for c in cautions)]
+    if include_reading_trace:
+        lines += ["", "【検証用構造記録・この指定がある時だけ】",
+                  "本文の後に、採用した主要構造を最大2つのJSON配列で記録する。各項目は structure、"
+                  "evidence_paths（この入力内のパス）、status（元の候補・保留状態）、counter_evidence、"
+                  "conditions、omitted_themes。根拠や確度を創作せず簡潔に記録し、本文には英語ラベルを出さない。"]
     return "\n".join(lines) + "\n"

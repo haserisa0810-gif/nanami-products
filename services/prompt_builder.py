@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from services.birth_time import BIRTH_TIME_ACCURACY_NOTE
+from services.shichusuimei_reading_policy import READING_POLICY
 from services.companion_locales import build_localized_companion_prompt
 from services.prompt_locales import SUPPORTED_PROMPT_LANGS, build_localized_prompt
 
@@ -8,8 +9,8 @@ SHICHUSUIMEI_STRUCTURE_GUIDANCE = """【四柱推命構造分析の優先規則�
 - 新規計算の input.assumptions.day_boundary_rule と input.time_context を参照し、出生地の現地暦日と節入り用UTCを区別してください。日替わりは1時・23時・明示0時の方式差です。保存済み旧原本のbooleanを新方式へ読み替えず、計算済みの日柱・時柱を使ってください。
 - 大運の status が undetermined_gender、direction が null の場合、性別未指定による保留です。女性へ補完せず、大運・起運・交運や大運との相互作用を推測しないでください。計算済み命式と流年の natal_analysis は利用できます。
 - systems.shichusuimei.normalized_data.structural_analysis があれば、通根・透干・十神の配置と重みを単純個数より優先してください。日干自身は十神強度に含まれません。
-- useful_god_analysis.useful_god_selection があれば、その useful_god を「この鑑定の用神」としてはっきり伝えてください。取り方は method_label（扶抑を基本に、厳寒・酷暑の生まれは調候を優先する一般的な取り方）で、理由は basis、喜は favorable_elements、忌は unfavorable_elements です。「用神は未確定」「確定していない」「データが不足」とは書かないでください。alternatives は「流派によっては〜を重視する見方もあります」と一言添える程度にし、notes（出生時刻不明など）は条件として説明してください。method_comparison は、どの方式が同じ五行を支持しているかの根拠として使えます。
-- useful_god_selection が無いYAML（旧版・基本版）では用神を断定せず、触れる場合は一般的な傾向として控えめに述べてください。pattern_analysis（格局）は候補です。confidence・conflicting_rules・methodology.limitations は内部の注記であり、「計算が未完成」という説明に使わないでください。五行の不足だけで用神を決めないでください。
+- useful_god_analysis.useful_god_selection があれば、method_label の方式で採用する用神として useful_god を伝え、basis と notes を読む。selected は方式内の選択で、確からしさとは別。alternatives・method_comparison の対立と時刻依存を判断に関係する範囲で説明する。
+- useful_god_selection が無い基本版・旧YAMLでは用神を作らない。pattern_analysis は格局候補。confidence・conflicting_rules・methodology.limitations を内部で使い、候補・境界・保留を自然な日本語で保持する。五行の不足だけで用神を決めない。
 - ten_god_flow と element_flow の both_present は配置の併存です。食神・財星の個数や接続だけで、生財・制殺・金運の成立を断定しないでください。日主が財を扱う材料は day_master_support と財星の通根・透干を合わせて読んでください。
 - 合・三合の存在だけで合化したと扱わず、combination_screening の条件材料を参照してください。
 - annual_fortune の単年流年は「原本作成時の流年」です。会話時点の「今年」に置き換えないでください。年選択では year_selection.included_years の年を解釈対象とします。unselected_years は「このファイルに入っていない年」で、該当なし・未計算の意味ではありません。同じ会話で先に渡した同じ chart_id の年データは、どのデータの年かを明示して組み合わせて使えます。どこにも無い年は推測・再計算しないでください。
@@ -20,12 +21,12 @@ SHICHUSUIMEI_STRUCTURE_GUIDANCE = """【四柱推命構造分析の優先規則�
 - daiun.status が undetermined_month_pillar / undetermined_year_pillar の場合、出生日に節入り・立春があり出生時刻で命式が変わるため、大運・年別予測を保留しています。daiun.candidates は出生可能時刻の端での参考計算であり、確定根拠にしないでください。時刻が判明すれば確定できます。
 - evidence_id が基本版に存在しない、または解決できない場合、その根拠を推測で補完しないでください。未収録の分析項目は自然に省略してください。
 - 性格・性質を掘り下げるときは、次の材料を重ねて読んでください（新しい計算はしないでください）。
-  1. 表と裏：ten_gods.pillars（天干の十神）は外から見える振る舞い・役割、ten_gods.hidden_stems（蔵干の十神。特に main_hidden_stems.month の月支本気）は内側の動機・本音・土台として区別してください。
-  2. 通根・透干：structural_analysis.roots_and_exposure があれば、root_score の高い天干は実際に発揮しやすい性質、根の弱い天干は表に出ても持続しにくい性質、exposure で天干に透った蔵干は内面の資質が表に出やすい性質として読んでください。
-  3. 組み合わせ：ten_god_flow の各 label は性質どうしの協調・葛藤の候補です。both_present は併存であり成立ではないため、両側の通根と ten_god_strength を見て「活かしやすい組み合わせ」「ぶつかりやすい組み合わせ」として述べてください。
+  1. 表と内側：ten_gods.pillars、ten_gods.hidden_stems、main_hidden_stems.month を、動機や役割を検討する伝統的な手掛かりとして読む。一致・不一致の両方を認める。
+  2. 通根・透干：roots_and_exposure、root_score、exposure を、発揮や持続の条件を考える材料として読む。実際の行動や本音が確認されたとは扱わない。
+  3. 組み合わせ：ten_god_flow のうち主役に関連する根拠があるものを選ぶ。both_present は併存、missing_endpoint は必要要素の不足であり、制化や成功の成立を断定しない。
   4. 宮位：年柱＝家系・幼少期・外の社会、月柱＝仕事・社会での役割・両親、日支＝本人の私生活・配偶者、時柱＝子ども・部下・晩年・内面の志向、という伝統的な対応を使えます。流派差があることを一言添え、出生時刻不明・推定時は時柱の宮位を根拠にしないでください。
   5. 記述ごとに【計算】（YAMLの値そのもの）【伝統的解釈】（四柱推命の一般的な読み）【推論】（それらを組み合わせた鑑定者の解釈）を付けて区別してください。
-  具体的な行動・出来事・人間関係を断定せず、本人に思い当たるかを確かめる形にしてください。structural_analysis が無いYAML（基本版・旧版）では表と裏・宮位・区別ラベルだけを使い、通根や組み合わせの値を推測で補完しないでください。"""
+  具体的な行動・出来事・人間関係を断定せず、本人に思い当たるかを確かめる形にしてください。structural_analysis が無いYAML（基本版・旧版）では表と裏・宮位・区別ラベルだけを使い、通根や組み合わせの値を推測で補完しないでください。""" + "\n" + READING_POLICY
 
 
 def ensure_shichusuimei_structure_guidance(prompt: str) -> str:
