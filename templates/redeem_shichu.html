@@ -232,7 +232,10 @@
         if (form.dataset.submitGuardActive === '1') return false;
         form.dataset.submitGuardActive = '1';
 
-        const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"], #confirm-create'));
+        const submitButtons = new Set(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+        // The final confirmation button is outside the form.
+        const confirmButton = document.getElementById('confirm-create');
+        if (confirmButton) submitButtons.add(confirmButton);
         submitButtons.forEach((button) => {
           button.disabled = true;
           if (button.tagName === 'BUTTON') {

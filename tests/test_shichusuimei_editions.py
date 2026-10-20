@@ -219,10 +219,10 @@ def test_full_and_basic_have_separate_redeem_pages():
     assert client.get("/start/shichu-full").status_code == 200
 
 
-def test_basic_redeem_template_preserves_production_except_wait_notice():
+def test_basic_redeem_template_preserves_production_except_approved_waiting_ui():
     import hashlib
     text = (Path(__file__).parents[1] / "templates/redeem_shichu.html").read_bytes().replace(b"\r\n", b"\n")
-    # 2026-10-15: explicitly approved waiting notice is the only allowed change.
+    # Approved changes: waiting notice (10/15) and final-button loading state (10/20).
     notice = '        <p class="hint" id="generation-wait-notice">{{ t.submit_loading_desc }}</p>\n'.encode("utf-8")
     confirm_notice = '            <p class="confirm-lead confirm-wait-notice" id="confirm-wait-notice">{{ t.submit_loading_desc }}</p>\n'.encode("utf-8")
     assert text.count(confirm_notice) == 1
@@ -231,7 +231,14 @@ def test_basic_redeem_template_preserves_production_except_wait_notice():
     assert text.count(notice) == 1
     assert text.count(modal_desc) == 1
     text = text.replace(notice, b"").replace(modal_desc, "desc: '完了までしばらくお待ちください。',".encode("utf-8"))
-    # Keep the original production hash after removing only the approved copy changes.
+    # Normalize only the approved final-button fix before comparing the original.
+    busy_selection = ("        const submitButtons = new Set(form.querySelectorAll('button[type=\"submit\"], input[type=\"submit\"]'));\n"
+                      "        // The final confirmation button is outside the form.\n"
+                      "        const confirmButton = document.getElementById('confirm-create');\n"
+                      "        if (confirmButton) submitButtons.add(confirmButton);").encode("utf-8")
+    original_selection = b"        const submitButtons = Array.from(form.querySelectorAll('button[type=\"submit\"], input[type=\"submit\"], #confirm-create'));"
+    assert text.count(busy_selection) == 1
+    text = text.replace(busy_selection, original_selection)
     assert hashlib.sha256(text).hexdigest() == "c183fb79353156242fac0f34c37be31713bd7573408fefb8231c6dafe6030b77"
 
 
