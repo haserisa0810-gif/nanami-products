@@ -1805,9 +1805,11 @@
       }
       try {
         if (file && canFileShare) {
+          // The complete prompt and YAML are already in the TXT. Sending the
+          // same long content as Android share text can prevent the receiving
+          // app from importing the attachment. Keep the file share file-only.
           await navigator.share({
             title: UI_TEXT.shareTxtTitle,
-            text: shareText,
             files: [file],
           });
           return;
