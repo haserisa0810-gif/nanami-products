@@ -18,11 +18,16 @@ def test_final_confirmation_loading_state_and_single_submission(tmp_path):
     client = TestClient(routes.app)
     fixtures = []
     for slug in ("shichu", "shichu-full", "western-basic", "western-full"):
-        for lang in (("ja", "en") if slug.startswith("western-") else ("ja",)):
+        for lang in (("ja", "en") if slug != "shichu" else ("ja",)):
             response = client.get(f"/redeem/{slug}?lang={lang}")
             assert response.status_code == 200
-            fixtures.append({"name": f"{slug}:{lang}", "html": response.text,
-                             "loadingText": routes.I18N[lang]["submit_loading_button"] if slug.startswith("western-") else "生成中..."})
+            if slug.startswith("western-"):
+                loading_text = routes.I18N[lang]["submit_loading_button"]
+            elif slug == "shichu-full":
+                loading_text = routes.shichu_full_form_text(lang)["submit_busy"]
+            else:
+                loading_text = "生成中..."
+            fixtures.append({"name": f"{slug}:{lang}", "html": response.text, "loadingText": loading_text})
     fixture_path = tmp_path / "rendered-redeem-pages.json"
     fixture_path.write_text(json.dumps(fixtures, ensure_ascii=False), encoding="utf-8")
     result = subprocess.run(

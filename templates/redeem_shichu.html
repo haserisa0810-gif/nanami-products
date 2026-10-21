@@ -78,7 +78,7 @@
               <option value="afternoon" {% if time_accuracy == 'afternoon' %}selected{% endif %}>午後</option>
               <option value="night" {% if time_accuracy == 'night' %}selected{% endif %}>夜</option>
             </select>
-            <small>推定時刻の場合、ハウス・ASC・MCなどは参考値になります。</small>
+            <small>時刻が不明・推定の場合、時柱は参考値になります。また、生まれた日に節入り（立春など）がある場合は、時刻によって月柱・大運が変わるため、大運は確定できず保留されます。</small>
           </label>
           <label id="birth-time-field">出生時刻
             <input type="time" name="birth_time" id="birth_time"
@@ -101,14 +101,15 @@
           </label>
           <label>性別<span class="required">必須</span>
             <select name="gender" required>
-              <option value="unknown"
-                {% if not form or form.gender == 'unknown' %}selected{% endif %}>指定なし</option>
+              <option value="" {% if not form or form.gender not in ['female', 'male', 'unknown'] %}selected{% endif %}>選択してください</option>
               <option value="female"
                 {% if form and form.gender == 'female' %}selected{% endif %}>女性</option>
               <option value="male"
                 {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>
+              <option value="unknown"
+                {% if form and form.gender == 'unknown' %}selected{% endif %}>指定なし</option>
             </select>
-            <small>大運の順逆に使用します。「指定なし」では命式・原局と流年を計算し、大運・起運は未確定として保留します。</small>
+            <small>大運の順逆に使用します。「指定なし」を選ぶと、大運・起運は未確定として保留になります（命式・原局と流年は計算します）。</small>
           </label>
         </div>
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>四柱推命FULL版 入力 | nanami-products</title>
+  <title>{{ full_form.page_title }} | nanami-products</title>
   <link rel="stylesheet" href="{{ asset_url('style.css') }}">
   <link rel="stylesheet" href="{{ asset_url('vendor/leaflet/leaflet.css') }}">
   <!-- asset_version: {{ asset_version }} -->
@@ -12,16 +12,22 @@
 </head>
 <body>
   <main class="wrap">
+    {% set s = full_form %}
     <div class="card buyer-card product-shichu">
+      <div class="language-switcher" aria-label="Language switcher">
+        <span>{{ t.lang_label }}</span>
+        <a href="{{ lang_urls.ja }}" class="{% if lang == 'ja' %}is-active{% endif %}">{{ t.lang_ja }}</a>
+        <a href="{{ lang_urls.en }}" class="{% if lang != 'ja' %}is-active{% endif %}">{{ t.lang_en }}</a>
+      </div>
       <p class="eyebrow">nanami-products</p>
-      <div class="product-pill">四柱推命FULL版</div>
-      <h1>四柱推命FULL版<br>データ入力</h1>
-      <p class="lead">四柱推命FULL版（大運10期の詳しい作用・10年分の年運予測・命式の構造分析）のデータを作成します。<br>日替わり境界は、標準の1時（丑の刻）または23時から選択できます。</p>
+      <div class="product-pill">{{ s.product_label }}</div>
+      <h1>{{ s.heading_html | safe }}</h1>
+      <p class="lead">{{ s.lead_html | safe }}</p>
 
       <div class="mini-panel">
-        <p class="mini-label">入力前チェック</p>
-        <strong>購入した個数ごとに1回発行できます。数量2の場合は2件発行できます。</strong>
-        <span>生年月日・出生時刻・出生地を確認してから送信してください。</span>
+        <p class="mini-label">{{ s.precheck }}</p>
+        <strong>{{ s.precheck_strong }}</strong>
+        <span>{{ s.precheck_note }}</span>
       </div>
 
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
@@ -31,194 +37,196 @@
         <input type="hidden" name="product_type" value="shichu_full">
 
         <div class="form-section">
-          <h2>注文情報</h2>
+          <h2>{{ s.order_info }}</h2>
           {# 四柱推命FULL版は STORES でのみ販売する（2026-10-12 決定）。 #}
           {% set provider = 'stores' %}
-          <label>購入元
+          <label>{{ s.order_provider }}
             <input type="hidden" name="order_provider" id="order-provider" value="stores">
             <strong>STORES</strong>
           </label>
-          <label><span id="order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% elif provider == 'etsy' %}Etsyの注文番号{% else %}STORESオーダー番号{% endif %}</span><span class="required">必須</span>
+          <label><span id="order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% elif provider == 'etsy' %}Etsyの注文番号{% else %}{{ s.order_code }}{% endif %}</span><span class="required">{{ s.required }}</span>
             <input type="text" name="order_code" id="order-code" required
                    value="{{ form.order_code if form else '' }}"
-                   placeholder="{% if provider == 'coconala' %}例：nanami_user{% else %}例：9824333454{% endif %}"
-                   data-stores-placeholder="例：9824333454"
+                   placeholder="{% if provider == 'coconala' %}例：nanami_user{% else %}{{ s.order_placeholder }}{% endif %}"
+                   data-stores-placeholder="{{ s.order_placeholder }}"
                    data-coconala-placeholder="例：nanami_user"
                    {% if provider != 'coconala' %}inputmode="numeric"
                    pattern="[0-9]{10}"{% endif %}
                    maxlength="100"
                    autocomplete="off"
                    data-trim-order-code>
-            <small id="order-code-hint">{% if provider == 'coconala' %}購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。{% elif provider == 'etsy' %}Etsyの購入履歴または注文確認メールに表示される注文番号を入力してください。{% else %}STORES購入完了メールの件名にある10桁の番号です。{% endif %}</small>
+            <small id="order-code-hint">{% if provider == 'coconala' %}購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。{% elif provider == 'etsy' %}Etsyの購入履歴または注文確認メールに表示される注文番号を入力してください。{% else %}{{ s.order_hint }}{% endif %}</small>
           </label>
-          <label>お名前<span class="optional">任意</span>
+          <label>{{ s.buyer_name }}<span class="optional">{{ s.optional }}</span>
             <input type="text" name="buyer_name"
                    value="{{ form.buyer_name if form else '' }}"
-                   placeholder="例：山田 花子">
+                   placeholder="{{ s.buyer_name_placeholder }}">
           </label>
         </div>
 
         <div class="form-section">
-          <h2>出生情報</h2>
-          <label>生年月日<span class="required">必須</span>
+          <h2>{{ s.birth_info }}</h2>
+          <label>{{ s.birth_date }}<span class="required">{{ s.required }}</span>
             <input type="date" name="birth_date" required
                    value="{{ form.birth_date if form else '' }}">
           </label>
-          <label>出生時刻の精度<span class="required">必須</span>
+          <label>{{ s.birth_time_accuracy }}<span class="required">{{ s.required }}</span>
             <select name="birth_time_accuracy" id="birth_time_accuracy" required>
               {% set time_accuracy = form.birth_time_accuracy if form and form.birth_time_accuracy else 'exact' %}
-              <option value="exact" {% if time_accuracy == 'exact' %}selected{% endif %}>正確な時刻あり</option>
-              <option value="unknown" {% if time_accuracy == 'unknown' %}selected{% endif %}>不明</option>
-              <option value="morning" {% if time_accuracy == 'morning' %}selected{% endif %}>午前</option>
-              <option value="afternoon" {% if time_accuracy == 'afternoon' %}selected{% endif %}>午後</option>
-              <option value="night" {% if time_accuracy == 'night' %}selected{% endif %}>夜</option>
+              <option value="exact" {% if time_accuracy == 'exact' %}selected{% endif %}>{{ s.accuracy_exact }}</option>
+              <option value="unknown" {% if time_accuracy == 'unknown' %}selected{% endif %}>{{ s.accuracy_unknown }}</option>
+              <option value="morning" {% if time_accuracy == 'morning' %}selected{% endif %}>{{ s.accuracy_morning }}</option>
+              <option value="afternoon" {% if time_accuracy == 'afternoon' %}selected{% endif %}>{{ s.accuracy_afternoon }}</option>
+              <option value="night" {% if time_accuracy == 'night' %}selected{% endif %}>{{ s.accuracy_night }}</option>
             </select>
-            <small>時刻が不明・推定の場合、時柱は参考値になります。また、生まれた日に節入り（立春など）がある場合は、時刻によって月柱・大運が変わるため、大運と10年分の年運予測は確定できず保留されます。</small>
+            <small>{{ s.birth_time_accuracy_help }}</small>
           </label>
-          <label id="birth-time-field">出生時刻
+          <label id="birth-time-field">{{ s.birth_time }}
             <input type="time" name="birth_time" id="birth_time"
                    value="{{ form.birth_time if form else '' }}">
-            <small>正確な出生時刻が分かる場合のみ入力してください。</small>
+            <small>{{ s.birth_time_help }}</small>
           </label>
-          <label class="domestic-only-field" {% if form and form.birth_place_kind == 'overseas' %}hidden{% endif %}>出生都道府県<span class="required">必須</span>
+          <label class="domestic-only-field" {% if form and form.birth_place_kind == 'overseas' %}hidden{% endif %}>{{ s.prefecture }}<span class="required">{{ s.required }}</span>
             <select name="prefecture" required>
-              <option value="">選択してください</option>
+              <option value="">{{ s.select_placeholder }}</option>
               {% for pref in prefectures %}
                 <option value="{{ pref.value }}"
                   {% if form and form.prefecture == pref.value %}selected{% endif %}>{{ pref.label }}</option>
               {% endfor %}
             </select>
           </label>
-          <label class="domestic-only-field" {% if form and form.birth_place_kind == 'overseas' %}hidden{% endif %}>市区町村<span class="optional">任意</span>
+          <label class="domestic-only-field" {% if form and form.birth_place_kind == 'overseas' %}hidden{% endif %}>{{ s.city }}<span class="optional">{{ s.optional }}</span>
             <input type="text" name="birth_place_city"
                    value="{{ form.birth_place_city if form else '' }}"
-                   placeholder="例：新宿区">
+                   placeholder="{{ s.city_placeholder }}">
           </label>
-          <label>性別<span class="required">必須</span>
+          <label>{{ s.gender }}<span class="required">{{ s.required }}</span>
+            {# 初期値は未選択。「指定なし」のまま送ると FULL版の大運分析が保留になるため、必ず選んでもらう。 #}
             <select name="gender" required>
-              <option value="unknown"
-                {% if not form or form.gender == 'unknown' %}selected{% endif %}>指定なし</option>
+              <option value="" {% if not form or form.gender not in ['female', 'male', 'unknown'] %}selected{% endif %}>{{ s.select_placeholder }}</option>
               <option value="female"
-                {% if form and form.gender == 'female' %}selected{% endif %}>女性</option>
+                {% if form and form.gender == 'female' %}selected{% endif %}>{{ s.gender_female }}</option>
               <option value="male"
-                {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>
+                {% if form and form.gender == 'male' %}selected{% endif %}>{{ s.gender_male }}</option>
+              <option value="unknown"
+                {% if form and form.gender == 'unknown' %}selected{% endif %}>{{ s.gender_unknown }}</option>
             </select>
-            <small>大運の順逆に使用します。「指定なし」では命式・原局と流年を計算し、大運・起運は未確定として保留します。</small>
+            <small>{{ s.gender_help }}</small>
           </label>
         </div>
 
         <div class="form-section">
-          <h2>出生地の詳細</h2>
-          <label>出生地区分
+          <h2>{{ s.birth_place_details }}</h2>
+          <label>{{ s.birth_place_kind }}
             <select name="birth_place_kind" id="birth_place_kind" autocomplete="off">
-              <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>国内</option>
-              <option value="overseas" {% if form and form.birth_place_kind == 'overseas' %}selected{% endif %}>海外</option>
+              <option value="domestic" {% if not form or form.birth_place_kind != 'overseas' %}selected{% endif %}>{{ s.birth_place_domestic }}</option>
+              <option value="overseas" {% if form and form.birth_place_kind == 'overseas' %}selected{% endif %}>{{ s.birth_place_overseas }}</option>
             </select>
-            <small>国内の方でも緯度・経度を指定したい場合は「海外」を選び、地図から出生地を選択してください。</small>
+            <small>{{ s.birth_place_kind_help }}</small>
           </label>
           <div class="overseas-fields" id="overseas-fields">
             <div class="location-grid">
               <div class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>
                 <div id="overseas-map" style="height:300px;border-radius:12px;margin:4px 0 6px;"></div>
-                <small class="coordinate-note">地図をクリックすると緯度・経度が自動入力されます（手入力も可能）。</small>
+                <small class="coordinate-note">{{ s.map_note }}</small>
               </div>
-              <label class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>出生地名（国・都市）
+              <label class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>{{ s.overseas_place }}
                 <input type="text" name="birth_place_overseas"
                        value="{{ form.birth_place_overseas if form else '' }}"
-                       placeholder="例：New York, USA">
+                       placeholder="{{ s.overseas_place_placeholder }}">
               </label>
-              <label class="coordinate-field">緯度<span class="{% if form and form.birth_place_kind == 'overseas' %}required{% else %}optional{% endif %}" id="birth-lat-badge">{% if form and form.birth_place_kind == 'overseas' %}必須{% else %}任意{% endif %}</span>
+              <label class="coordinate-field">{{ s.latitude }}<span class="{% if form and form.birth_place_kind == 'overseas' %}required{% else %}optional{% endif %}" id="birth-lat-badge">{% if form and form.birth_place_kind == 'overseas' %}{{ s.required }}{% else %}{{ s.optional }}{% endif %}</span>
                 <input type="number" name="birth_lat" step="any" min="-90" max="90"
                        value="{{ form.birth_lat if form else '' }}"
-                       placeholder="例：40.7128">
+                       placeholder="{{ s.latitude_placeholder }}">
               </label>
-              <label class="coordinate-field">経度<span class="{% if form and form.birth_place_kind == 'overseas' %}required{% else %}optional{% endif %}" id="birth-lng-badge">{% if form and form.birth_place_kind == 'overseas' %}必須{% else %}任意{% endif %}</span>
+              <label class="coordinate-field">{{ s.longitude }}<span class="{% if form and form.birth_place_kind == 'overseas' %}required{% else %}optional{% endif %}" id="birth-lng-badge">{% if form and form.birth_place_kind == 'overseas' %}{{ s.required }}{% else %}{{ s.optional }}{% endif %}</span>
                 <input type="number" name="birth_lng" step="any" min="-180" max="180"
                        value="{{ form.birth_lng if form else '' }}"
-                       placeholder="例：-74.0060">
+                       placeholder="{{ s.longitude_placeholder }}">
               </label>
-              <small class="coordinate-note" id="coordinate-mode-note">市区町村に対応する座標があれば使用します。緯度・経度を入力した場合はそちらを最優先で使用します。</small>
-              <label class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>タイムゾーン
+              <small class="coordinate-note" id="coordinate-mode-note">{{ s.coordinate_note_domestic }}</small>
+              <label class="full-span overseas-only-field" {% if not form or form.birth_place_kind != 'overseas' %}hidden{% endif %}>{{ s.timezone }}
                 {% set current_timezone = form.birth_timezone if form and form.birth_timezone else '' %}
                 {% set timezone_values = timezone_options | map(attribute='value') | list %}
                 <select id="birth_timezone_select">
-                  <option value="" {% if not current_timezone %}selected{% endif %}>選択してください</option>
+                  <option value="" {% if not current_timezone %}selected{% endif %}>{{ s.select_placeholder }}</option>
                   {% for tz in timezone_options %}
                     <option value="{{ tz.value }}" {% if current_timezone == tz.value %}selected{% endif %}>{{ tz.label }}</option>
                   {% endfor %}
-                  <option value="__custom__" {% if current_timezone and current_timezone not in timezone_values %}selected{% endif %}>その他（手入力）</option>
+                  <option value="__custom__" {% if current_timezone and current_timezone not in timezone_values %}selected{% endif %}>{{ s.timezone_custom }}</option>
                 </select>
                 <input type="hidden" name="birth_timezone" id="birth_timezone" value="{{ current_timezone }}" data-required="false">
                 <input type="text" id="birth_timezone_custom" data-required="false"
                        value="{{ current_timezone if current_timezone and current_timezone not in timezone_values else '' }}"
-                       placeholder="例：America/New_York">
-                <small>出生地に近い地域を選んでください。リストにない場合だけ「その他」を使います。</small>
+                       placeholder="{{ s.timezone_custom_placeholder }}">
+                <small>{{ s.timezone_help }}</small>
               </label>
-              <label class="full-span">夏時間終了時の重複時刻（任意）
+              <label class="full-span">{{ s.birth_fold }}
                 <select name="birth_fold">
-                  <option value="">通常・未選択</option>
-                  <option value="0" {% if form and form.birth_fold == '0' %}selected{% endif %}>同じ現地時刻の1回目</option>
-                  <option value="1" {% if form and form.birth_fold == '1' %}selected{% endif %}>同じ現地時刻の2回目</option>
+                  <option value="">{{ s.birth_fold_none }}</option>
+                  <option value="0" {% if form and form.birth_fold == '0' %}selected{% endif %}>{{ s.birth_fold_first }}</option>
+                  <option value="1" {% if form and form.birth_fold == '1' %}selected{% endif %}>{{ s.birth_fold_second }}</option>
                 </select>
-                <small>夏時間終了で同じ時刻が2回存在する場合だけ指定します。不明なまま片方を推測しません。</small>
+                <small>{{ s.birth_fold_help }}</small>
               </label>
             </div>
           </div>
         </div>
 
         <div class="form-section highlight-section">
-          <h2>四柱推命設定</h2>
-          <label>日替わり境界<span class="required">必須</span>
+          <h2>{{ s.shichu_settings }}</h2>
+          <label>{{ s.day_change }}<span class="required">{{ s.required }}</span>
             <select name="day_change_at_23" required>
-              <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>1時（丑の刻）— 標準</option>
-              <option value="true"  {% if form and form.day_change_at_23 %}selected{% endif %}>23時</option>
+              <option value="false" {% if not form or not form.day_change_at_23 %}selected{% endif %}>{{ s.day_change_1 }}</option>
+              <option value="true"  {% if form and form.day_change_at_23 %}selected{% endif %}>{{ s.day_change_23 }}</option>
             </select>
-            <small>出生地の現地時刻で判定します。1時：0時台は前日、23時：23時台は翌日の日柱。真太陽時補正は行いません。</small>
+            <small>{{ s.day_change_help }}</small>
           </label>
-          <label>年運の開始年<span class="optional">任意</span>
+          <label>{{ s.annual_start_year }}<span class="optional">{{ s.optional }}</span>
             <input type="text" name="annual_start_year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
-                   placeholder="空欄なら今年から" value="{{ form.annual_start_year if form and form.annual_start_year else '' }}">
-            <small>ここで選んだ年から10年分の年運を作ります（各年は立春から翌年の立春まで）。空欄なら今年からです。来年から、過去の気になる10年など、生まれた年以降なら自由に選べます。</small>
+                   placeholder="{{ s.annual_start_year_placeholder }}" value="{{ form.annual_start_year if form and form.annual_start_year else '' }}">
+            <small>{{ s.annual_start_year_help }}</small>
           </label>
         </div>
 
         <div class="notice-box warn final-check" id="final-check">
-          <p>最終確認</p>
-          <p class="hint">送信後は、この注文番号で再生成できません。入力内容に間違いがある場合も、購入者側では変更できません。</p>
+          <p>{{ s.final_check }}</p>
+          <p class="hint">{{ s.final_check_hint }}</p>
           <label class="checkbox-line">
             <input type="checkbox" name="agree_final" id="agree_final" value="1" required
                    {% if form and form.agree_final %}checked{% endif %}>
-            <span>入力内容を確認しました。送信後に変更できないことに同意します。</span>
+            <span>{{ s.agree_final }}</span>
           </label>
         </div>
 
         <p class="hint" id="generation-wait-notice">{{ t.submit_loading_desc }}</p>
-        <button type="submit" class="submit-button">AI鑑定データを生成する</button>
+        <button type="submit" class="submit-button">{{ s.submit }}</button>
       </form>
 
       <div class="confirm-modal" id="submit-confirm-modal" hidden>
         <div class="confirm-backdrop" data-confirm-close></div>
         <div class="confirm-panel" role="dialog" aria-modal="true" aria-labelledby="submit-confirm-title">
-          <h2 id="submit-confirm-title">最終確認</h2>
-          <p class="confirm-lead">送信前に入力内容を確認してください。送信後は変更・再生成できません。</p>
+          <h2 id="submit-confirm-title">{{ s.confirm_title }}</h2>
+          <p class="confirm-lead">{{ s.confirm_lead }}</p>
           <dl class="confirm-list">
-            <div class="confirm-item"><dt id="confirm-order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% elif provider == 'etsy' %}Etsyの注文番号{% else %}STORESオーダー番号{% endif %}</dt><dd id="confirm-order-code"></dd></div>
-            <div class="confirm-item"><dt>お名前</dt><dd id="confirm-name"></dd></div>
-            <div class="confirm-item"><dt>生年月日</dt><dd id="confirm-birth-date"></dd></div>
-            <div class="confirm-item"><dt>出生時刻</dt><dd id="confirm-birth-time"></dd></div>
-            <div class="confirm-item"><dt>出生時刻の精度</dt><dd id="confirm-birth-time-accuracy"></dd></div>
-            <div class="confirm-item"><dt>出生地区分</dt><dd id="confirm-birth-place-mode"></dd></div>
-            <div class="confirm-item"><dt>出生地</dt><dd id="confirm-birth-place"></dd></div>
-            <div class="confirm-item" id="confirm-coordinates-wrap" hidden><dt>緯度・経度</dt><dd id="confirm-coordinates"></dd></div>
-            <div class="confirm-item" id="confirm-timezone-wrap" hidden><dt>タイムゾーン</dt><dd id="confirm-timezone"></dd></div>
-            <div class="confirm-item"><dt>性別</dt><dd id="confirm-gender"></dd></div>
-            <div class="confirm-item"><dt>日替わり境界</dt><dd id="confirm-day-change"></dd></div>
-            <div class="confirm-item"><dt>年運の開始年</dt><dd id="confirm-annual-start-year"></dd></div>
+            <div class="confirm-item"><dt id="confirm-order-code-label">{% if provider == 'coconala' %}ココナラのユーザー名{% elif provider == 'etsy' %}Etsyの注文番号{% else %}{{ s.order_code }}{% endif %}</dt><dd id="confirm-order-code"></dd></div>
+            <div class="confirm-item"><dt>{{ s.confirm_name }}</dt><dd id="confirm-name"></dd></div>
+            <div class="confirm-item"><dt>{{ s.birth_date }}</dt><dd id="confirm-birth-date"></dd></div>
+            <div class="confirm-item"><dt>{{ s.birth_time }}</dt><dd id="confirm-birth-time"></dd></div>
+            <div class="confirm-item"><dt>{{ s.birth_time_accuracy }}</dt><dd id="confirm-birth-time-accuracy"></dd></div>
+            <div class="confirm-item"><dt>{{ s.birth_place_kind }}</dt><dd id="confirm-birth-place-mode"></dd></div>
+            <div class="confirm-item"><dt>{{ s.confirm_birth_place }}</dt><dd id="confirm-birth-place"></dd></div>
+            <div class="confirm-item" id="confirm-coordinates-wrap" hidden><dt>{{ s.confirm_coordinates }}</dt><dd id="confirm-coordinates"></dd></div>
+            <div class="confirm-item" id="confirm-timezone-wrap" hidden><dt>{{ s.timezone }}</dt><dd id="confirm-timezone"></dd></div>
+            <div class="confirm-item"><dt>{{ s.gender }}</dt><dd id="confirm-gender"></dd></div>
+            <div class="confirm-item"><dt>{{ s.day_change }}</dt><dd id="confirm-day-change"></dd></div>
+            <div class="confirm-item"><dt>{{ s.confirm_annual_start_year }}</dt><dd id="confirm-annual-start-year"></dd></div>
           </dl>
           <div class="confirm-actions">
             <p class="confirm-lead confirm-wait-notice" id="confirm-wait-notice">{{ t.submit_loading_desc }}</p>
-            <button type="button" class="secondary-action" id="confirm-edit">修正する</button>
-            <button type="button" class="submit-button" id="confirm-create">この内容で作成する</button>
+            <button type="button" class="secondary-action" id="confirm-edit">{{ s.confirm_edit }}</button>
+            <button type="button" class="submit-button" id="confirm-create">{{ s.confirm_create }}</button>
           </div>
         </div>
       </div>
@@ -265,6 +273,20 @@
 
     const form = document.getElementById('redeem-form');
     const confirmModal = document.getElementById('submit-confirm-modal');
+    const formText = {{ {
+      'required': s.required,
+      'optional': s.optional,
+      'coordinateNoteDomestic': s.coordinate_note_domestic,
+      'coordinateNoteOverseas': s.coordinate_note_overseas,
+      'notEntered': s.confirm_not_entered,
+      'birthTimeUnknown': s.accuracy_unknown,
+      'domestic': s.birth_place_domestic,
+      'overseas': s.birth_place_overseas,
+      'annualDefault': s.confirm_annual_default,
+      'annualFrom': s.confirm_annual_from,
+      'orderCode': s.order_code,
+      'orderHint': s.order_hint,
+    } | tojson }};
 
     function syncBirthPlaceFields() {
       const mode = document.getElementById('birth_place_kind');
@@ -301,13 +323,11 @@
       ].forEach((badge) => {
         if (!badge) return;
         badge.className = active ? 'required' : 'optional';
-        badge.textContent = active ? '必須' : '任意';
+        badge.textContent = active ? formText.required : formText.optional;
       });
       const note = document.getElementById('coordinate-mode-note');
       if (note) {
-        note.textContent = active
-          ? '海外出生地は、国・都市に加えて緯度・経度・タイムゾーンの入力が必要です。'
-          : '市区町村に対応する座標があれば使用します。緯度・経度を入力した場合はそちらを最優先で使用します。';
+        note.textContent = active ? formText.coordinateNoteOverseas : formText.coordinateNoteDomestic;
       }
       syncTimezoneFields();
       syncFinalCheck();
@@ -336,7 +356,7 @@
       hidden.value = customActive ? custom.value.trim() : select.value;
     }
 
-    function buildConfirmValue(value, fallback = '未入力') {
+    function buildConfirmValue(value, fallback = formText.notEntered) {
       const text = (value || '').trim();
       return text || fallback;
     }
@@ -360,7 +380,9 @@
       const active = document.getElementById('birth_place_kind')?.value === 'overseas';
       const timeAccuracy = document.getElementById('birth_time_accuracy');
       const birthTime = document.getElementById('birth_time');
-      const prefecture = document.querySelector('[name="prefecture"]')?.value || '';
+      // Show the localized label (the option value stays Japanese for the server).
+      const prefectureSelect = document.querySelector('[name="prefecture"]');
+      const prefecture = prefectureSelect?.value ? (prefectureSelect.selectedOptions?.[0]?.textContent || '').trim() : '';
       const city = document.querySelector('[name="birth_place_city"]')?.value || '';
       const overseasPlace = document.querySelector('[name="birth_place_overseas"]')?.value || '';
       const lat = document.querySelector('[name="birth_lat"]')?.value || '';
@@ -376,9 +398,9 @@
       document.getElementById('confirm-order-code').textContent = buildConfirmValue(document.querySelector('[name="order_code"]')?.value || '');
       document.getElementById('confirm-name').textContent = buildConfirmValue(document.querySelector('[name="buyer_name"]')?.value || '');
       document.getElementById('confirm-birth-date').textContent = formatBirthDateForDisplay(document.querySelector('[name="birth_date"]')?.value || '');
-      document.getElementById('confirm-birth-time').textContent = buildConfirmValue(birthTime?.value || (timeAccuracy?.value === 'unknown' ? '不明' : ''));
+      document.getElementById('confirm-birth-time').textContent = buildConfirmValue(birthTime?.value || (timeAccuracy?.value === 'unknown' ? formText.birthTimeUnknown : ''));
       document.getElementById('confirm-birth-time-accuracy').textContent = buildConfirmValue(timeAccuracy?.selectedOptions?.[0]?.textContent);
-      document.getElementById('confirm-birth-place-mode').textContent = active ? '海外' : '国内';
+      document.getElementById('confirm-birth-place-mode').textContent = active ? formText.overseas : formText.domestic;
       document.getElementById('confirm-birth-place').textContent = buildConfirmValue(active ? overseasPlace : domesticPlace);
       if (coordinateWrap) coordinateWrap.hidden = !coordinateValue;
       if (coordinateValue) document.getElementById('confirm-coordinates').textContent = coordinateValue;
@@ -391,7 +413,7 @@
       document.getElementById('confirm-gender').textContent = buildConfirmValue(gender?.selectedOptions?.[0]?.textContent);
       document.getElementById('confirm-day-change').textContent = buildConfirmValue(dayChange?.selectedOptions?.[0]?.textContent);
       const annualStart = (document.querySelector('[name="annual_start_year"]')?.value || '').trim();
-      document.getElementById('confirm-annual-start-year').textContent = annualStart ? `${annualStart}年から10年分` : '今年から10年分';
+      document.getElementById('confirm-annual-start-year').textContent = annualStart ? formText.annualFrom.replace('{year}', annualStart) : formText.annualDefault;
 
       confirmModal.hidden = false;
       document.getElementById('confirm-create')?.focus();
@@ -406,8 +428,8 @@
       if (!form) return;
       syncTimezoneFields();
       const canSubmit = window.prepareGeneratingSubmit(form, {
-        buttonText: '生成中...',
-        title: 'AI鑑定データを生成しています',
+        buttonText: {{ s.submit_busy | tojson }},
+        title: {{ s.submit_busy_title | tojson }},
         desc: {{ t.submit_loading_desc | tojson }},
       });
       if (!canSubmit) return;
@@ -449,12 +471,12 @@
       const isEtsy = provider === 'etsy';
       if (orderCodeLabel) orderCodeLabel.textContent = isCoconala
         ? 'ココナラのユーザー名'
-        : (isEtsy ? 'Etsyの注文番号' : 'STORESオーダー番号');
+        : (isEtsy ? 'Etsyの注文番号' : formText.orderCode);
       if (orderCodeHint) orderCodeHint.textContent = isCoconala
         ? '購入時のココナラアカウントに表示されるユーザー名を正確に入力してください。'
         : (isEtsy
             ? 'Etsyの購入履歴または注文確認メールに表示される注文番号を入力してください。'
-            : 'STORES購入完了メールの件名にある10桁の番号です。');
+            : formText.orderHint);
       if (confirmOrderCodeLabel) confirmOrderCodeLabel.textContent = orderCodeLabel?.textContent || '';
     }
     document.addEventListener('DOMContentLoaded', syncBirthPlaceFields);

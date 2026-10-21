@@ -64,6 +64,7 @@ from services.buyer_input_locales import (
     prefecture_options as localized_prefecture_options,
 )
 from services.chart_svg import build_horoscope_svg_from_yaml, has_asteroid_svg_data
+from services.shichu_full_form_locales import shichu_full_form_text
 from services.api_yaml import build_handoff_yaml
 from services.location import PREFECTURE_OPTIONS, prefecture_full_name, resolve_municipality, resolve_prefecture
 from services.light_yaml import (
@@ -1630,12 +1631,15 @@ def _chart_i18n_context(request: Request, product_type: str | None) -> dict:
 
 
 def _product_context(product_type: str, lang: str = "ja") -> dict:
-    return {
+    context = {
         "product_type": product_type,
         "product": _localized_product(product_type, lang),
         "start_url": _start_url(product_type),
         "redeem_url": _redeem_url(product_type),
     }
+    if product_type == "shichu_full":
+        context["full_form"] = shichu_full_form_text(lang)
+    return context
 
 
 def _chart_expires_at() -> datetime:

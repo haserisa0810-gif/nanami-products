@@ -219,7 +219,7 @@ def test_full_and_basic_have_separate_redeem_pages():
     assert client.get("/start/shichu-full").status_code == 200
 
 
-def test_basic_redeem_template_preserves_production_except_approved_waiting_ui():
+def test_basic_redeem_template_preserves_production_except_approved_changes():
     import hashlib
     text = (Path(__file__).parents[1] / "templates/redeem_shichu.html").read_bytes().replace(b"\r\n", b"\n")
     # Approved changes: waiting notice (10/15) and final-button loading state (10/20).
@@ -239,6 +239,36 @@ def test_basic_redeem_template_preserves_production_except_approved_waiting_ui()
     original_selection = b"        const submitButtons = Array.from(form.querySelectorAll('button[type=\"submit\"], input[type=\"submit\"], #confirm-create'));"
     assert text.count(busy_selection) == 1
     text = text.replace(busy_selection, original_selection)
+    # Approved 10/21 fixes: Four Pillars wording for the time-accuracy note (it was Western copy),
+    # and no preselected gender so buyers do not lose the luck cycles by accident.
+    approved_fixes = [
+        ("            <small>時刻が不明・推定の場合、時柱は参考値になります。また、生まれた日に節入り（立春など）がある場合は、"
+         "時刻によって月柱・大運が変わるため、大運は確定できず保留されます。</small>\n",
+         "            <small>推定時刻の場合、ハウス・ASC・MCなどは参考値になります。</small>\n"),
+        ("            <select name=\"gender\" required>\n"
+         "              <option value=\"\" {% if not form or form.gender not in ['female', 'male', 'unknown'] %}selected{% endif %}>選択してください</option>\n"
+         "              <option value=\"female\"\n"
+         "                {% if form and form.gender == 'female' %}selected{% endif %}>女性</option>\n"
+         "              <option value=\"male\"\n"
+         "                {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>\n"
+         "              <option value=\"unknown\"\n"
+         "                {% if form and form.gender == 'unknown' %}selected{% endif %}>指定なし</option>\n"
+         "            </select>\n"
+         "            <small>大運の順逆に使用します。「指定なし」を選ぶと、大運・起運は未確定として保留になります（命式・原局と流年は計算します）。</small>\n",
+         "            <select name=\"gender\" required>\n"
+         "              <option value=\"unknown\"\n"
+         "                {% if not form or form.gender == 'unknown' %}selected{% endif %}>指定なし</option>\n"
+         "              <option value=\"female\"\n"
+         "                {% if form and form.gender == 'female' %}selected{% endif %}>女性</option>\n"
+         "              <option value=\"male\"\n"
+         "                {% if form and form.gender == 'male' %}selected{% endif %}>男性</option>\n"
+         "            </select>\n"
+         "            <small>大運の順逆に使用します。「指定なし」では命式・原局と流年を計算し、大運・起運は未確定として保留します。</small>\n"),
+    ]
+    for fixed, original in approved_fixes:
+        fixed, original = fixed.encode("utf-8"), original.encode("utf-8")
+        assert text.count(fixed) == 1
+        text = text.replace(fixed, original)
     assert hashlib.sha256(text).hexdigest() == "c183fb79353156242fac0f34c37be31713bd7573408fefb8231c6dafe6030b77"
 
 
