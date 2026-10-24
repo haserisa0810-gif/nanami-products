@@ -17,7 +17,7 @@
         <div class="error">{{ unavailable_error }}</div>
       {% else %}
         <h1>{{ campaign.start_date.year }}年{{ campaign.start_date.month }}月 note特典<br>トランジット追加データ発行</h1>
-        <p class="lead">基本版またはFULL版のデータURLを入力してください。</p>
+        <p class="lead">基本版・FULL版、または前回発行したトランジットのデータURLを入力してください。</p>
 
         <section class="notice-box">
           <h2>収録期間</h2>
@@ -29,19 +29,20 @@
         <form id="note-transit-form" class="form">
           <div class="form-section">
             <h2>URLで発行する</h2>
-            <label>基本版またはFULL版のデータURL
+            <label>基本版・FULL版・発行済みトランジットのデータURL
               <input type="url" name="data_url" id="data-url"
                      placeholder="https://.../chart/..."
                      autocomplete="off">
-              <small>発行済みの鑑定データページURL、またはそのYAML URLを貼り付けてください。</small>
+              <small>発行結果の「閲覧用URL」も使えます。トランジット追加データ単体のYAML URLは対象外です。</small>
             </label>
           </div>
           <details class="form-section" id="yaml-input-details">
             <summary>URLが使えない場合：YAMLを直接貼り付ける ▼</summary>
             <p class="hint">URLが入力されている場合はURLを優先します。</p>
-            <label>基本版またはFULL版のYAML
+            <label>出生図を含む統合YAML（基本版・FULL版・発行済みトランジット）
               <textarea name="base_yaml" id="base-yaml" spellcheck="false"
                         placeholder="version: から始まるYAMLを貼り付けてください"></textarea>
+              <small>トランジット追加データ単体のYAMLには出生図が含まれないため、利用できません。</small>
             </label>
           </details>
           <button type="submit" class="submit-button" id="submit-button">追加データを発行する</button>

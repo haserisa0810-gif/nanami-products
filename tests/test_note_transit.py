@@ -52,6 +52,17 @@ def _source_doc() -> dict:
     }
 
 
+def _transit_source_doc(product_type: str = "western_31days_transit_addon") -> dict:
+    doc = _source_doc()
+    doc["product"]["type"] = product_type
+    doc["product"]["options"].update({"product_type": product_type, "transit": True})
+    doc["systems"]["western"]["transit"] = {
+        "period": {"start_date": "2026-10-01", "end_date": "2026-11-07", "days": 38},
+        "daily": [{"date": "2026-10-01"}],
+    }
+    return doc
+
+
 class NoteTransitTest(unittest.TestCase):
     def test_july_campaign_has_fixed_period(self) -> None:
         campaign = get_note_transit_campaign("2026-07")
@@ -147,10 +158,37 @@ class NoteTransitTest(unittest.TestCase):
             "options": {"product_type": "western_asteroids_addon"},
         },
     )
-    def test_source_url_rejects_non_basic_or_full_product(self, _get_chart) -> None:
+    def test_source_url_rejects_asteroid_addon_product(self, _get_chart) -> None:
         with self.assertRaises(NoteTransitRequestError) as unsupported:
             _load_note_transit_source_doc("https://example.com/chart/abcdefghijklmnopqrstuvwxyz")
 
+        self.assertEqual(unsupported.exception.code, "unsupported_url")
+
+    def test_source_url_accepts_previously_issued_transit(self) -> None:
+        for product_type in ("western_31days_transit_addon", "western_note_transit_addon"):
+            with self.subTest(product_type=product_type):
+                doc = _transit_source_doc(product_type)
+                chart = {
+                    "yaml_text": yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
+                    "options": {"product_type": product_type},
+                }
+                with patch("routes.pg_store.get_chart", return_value=chart):
+                    loaded = _load_note_transit_source_doc(
+                        "https://example.com/chart/abcdefghijklmnopqrstuvwxyz"
+                    )
+                self.assertEqual(loaded["product"]["options"]["product_type"], product_type)
+                self.assertEqual(loaded["systems"]["western"]["transit"]["period"]["days"], 38)
+
+    def test_source_url_rejects_transit_without_natal(self) -> None:
+        doc = _transit_source_doc()
+        del doc["systems"]["western"]["natal"]
+        chart = {
+            "yaml_text": yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
+            "options": {"product_type": "western_31days_transit_addon"},
+        }
+        with patch("routes.pg_store.get_chart", return_value=chart):
+            with self.assertRaises(NoteTransitRequestError) as unsupported:
+                _load_note_transit_source_doc("https://example.com/chart/abcdefghijklmnopqrstuvwxyz")
         self.assertEqual(unsupported.exception.code, "unsupported_url")
 
     def test_yaml_source_accepts_basic_yaml(self) -> None:
@@ -159,6 +197,24 @@ class NoteTransitTest(unittest.TestCase):
         )
 
         self.assertEqual(doc["input"]["birth_date"], "2000-01-01")
+
+    def test_yaml_source_accepts_previously_issued_transit(self) -> None:
+        for product_type in ("western_31days_transit_addon", "western_note_transit_addon"):
+            with self.subTest(product_type=product_type):
+                doc = _transit_source_doc(product_type)
+                loaded = _load_note_transit_source_yaml(
+                    yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
+                )
+                self.assertEqual(loaded["product"]["options"]["product_type"], product_type)
+
+    def test_yaml_source_rejects_transit_only_addon(self) -> None:
+        doc = _transit_source_doc()
+        doc["systems"]["western"]["natal"] = None
+        with self.assertRaises(NoteTransitRequestError) as unsupported:
+            _load_note_transit_source_yaml(
+                yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
+            )
+        self.assertEqual(unsupported.exception.code, "invalid_yaml")
 
     def test_source_resolution_prefers_url_and_warns_when_both_exist(self) -> None:
         with patch("routes._load_note_transit_source_doc", return_value=_source_doc()) as load_url:
@@ -196,6 +252,8 @@ class NoteTransitTest(unittest.TestCase):
         self.assertIn("URLが使えない場合：YAMLを直接貼り付ける", template)
         self.assertIn('id="base-yaml"', template)
         self.assertNotIn('id="data-url" required', template)
+        self.assertIn("前回発行したトランジットのデータURL", template)
+        self.assertIn("トランジット追加データ単体のYAMLには出生図が含まれない", template)
 
     @patch(
         "routes._save_note_transit_result",
@@ -416,6 +474,29 @@ class NoteTransitTest(unittest.TestCase):
         self.assertEqual(addon_loaded["product"]["options"]["transit_days"], 38)
         self.assertEqual(chart_doc["product"]["options"]["product_type"], "western_31days_transit_addon")
         self.assertEqual(chart_doc["product"]["options"]["transit_days"], 38)
+
+    def test_common_transit_builder_replaces_previous_transit_without_mutating_source(self) -> None:
+        previous = _transit_source_doc()
+        new_transit = {
+            "period": {"start_date": "2026-11-01", "end_date": "2026-12-08", "days": 38},
+            "daily": [{"date": "2026-11-01"}],
+        }
+        addon_doc = {"systems": {"western": {"transit": new_transit}}}
+        with patch(
+            "routes.build_31days_transit_addon_yaml",
+            return_value=("addon-yaml", "addon-prompt", addon_doc),
+        ):
+            _addon_yaml, _addon_prompt, _addon_doc, _chart_yaml, _chart_prompt, chart_doc = (
+                _build_transit_addon_from_base(
+                    previous,
+                    transit_start_date=datetime(2026, 11, 1, tzinfo=timezone.utc),
+                    transit_days=38,
+                )
+            )
+
+        self.assertEqual(previous["systems"]["western"]["transit"]["period"]["start_date"], "2026-10-01")
+        self.assertEqual(chart_doc["systems"]["western"]["transit"]["period"]["start_date"], "2026-11-01")
+        self.assertEqual(chart_doc["systems"]["western"]["natal"], previous["systems"]["western"]["natal"])
 
     def test_note_specific_result_routes_are_removed(self) -> None:
         template_path = Path("templates/note_transit_result.html")

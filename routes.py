@@ -8108,6 +8108,14 @@ def _require_note_transit_campaign(access_key: str) -> NoteTransitCampaign:
     return campaign
 
 
+NOTE_TRANSIT_SOURCE_PRODUCT_TYPES = frozenset({
+    "western_basic",
+    "western_full",
+    "western_31days_transit_addon",
+    "western_note_transit_addon",
+})
+
+
 def _load_note_transit_source_doc(data_url: str) -> dict:
     raw_url = (data_url or "").strip()
     if not raw_url:
@@ -8125,7 +8133,7 @@ def _load_note_transit_source_doc(data_url: str) -> dict:
     token_match = re.fullmatch(r"/chart/([A-Za-z0-9_-]{20,120})(?:\.yaml)?/?", parsed.path or "")
     if not token_match:
         raise NoteTransitRequestError(
-            "対応していないURLです。基本版またはFULL版の鑑定データURLを入力してください。",
+            "対応していないURLです。基本版・FULL版・発行済みトランジットのデータURLを入力してください。",
             code="unsupported_url",
         )
 
@@ -8146,9 +8154,9 @@ def _load_note_transit_source_doc(data_url: str) -> dict:
         )
     chart_options = chart.get("options") or {}
     chart_product_type = chart_options.get("product_type") if isinstance(chart_options, dict) else None
-    if chart_product_type and chart_product_type not in {"western_basic", "western_full"}:
+    if chart_product_type and chart_product_type not in NOTE_TRANSIT_SOURCE_PRODUCT_TYPES:
         raise NoteTransitRequestError(
-            "対応していないURLです。基本版またはFULL版の鑑定データURLを入力してください。",
+            "対応していないURLです。基本版・FULL版・発行済みトランジットのデータURLを入力してください。",
             code="unsupported_url",
         )
 
@@ -8164,7 +8172,7 @@ def _load_note_transit_source_doc(data_url: str) -> dict:
         _validate_addon_base_doc(doc, "western_31days_transit_addon")
     except ValueError as exc:
         raise NoteTransitRequestError(
-            "対応していないURLです。基本版またはFULL版の鑑定データURLを入力してください。",
+            "対応していないURLです。基本版・FULL版・発行済みトランジットのデータURLを入力してください。",
             code="unsupported_url",
         ) from exc
     return doc
@@ -8189,9 +8197,9 @@ def _load_note_transit_source_yaml(base_yaml: str) -> dict:
     product = doc.get("product") or {}
     options = product.get("options") or {}
     product_type = options.get("product_type") if isinstance(options, dict) else None
-    if product_type and product_type not in {"western_basic", "western_full"}:
+    if product_type and product_type not in NOTE_TRANSIT_SOURCE_PRODUCT_TYPES:
         raise NoteTransitRequestError(
-            "対応していないYAMLです。基本版またはFULL版のYAMLを貼り付けてください。",
+            "対応していないYAMLです。基本版・FULL版・発行済みトランジットのYAMLを貼り付けてください。",
             code="unsupported_yaml",
         )
     return doc
