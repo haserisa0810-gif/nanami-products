@@ -301,6 +301,8 @@ def test_acg_bundle_zip_contains_precomputed_lines_and_local_map():
         assert "map.createPane('landPane')" in standalone
         assert ".leaflet-land-pane{opacity:1!important}" in standalone
         assert "tileLayer.isLoading()" in standalone
+        assert "referrerPolicy:'strict-origin'" in standalone
+        assert "renderCities();" in standalone
         assert "window.addEventListener('beforeprint',preparePrint)" in standalone
         assert "/api/geocode" not in standalone
         readme_name = next(name for name in names if name.endswith("_README.txt"))

@@ -31,7 +31,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-VERSION = "1.1.5"
+VERSION = "1.2.0"
 PRODUCT = "BirthChartMuseum-PersonalEdition"
 
 # 配布バリアント: Etsy=英語デフォルト / STORES=日本語デフォルト。
@@ -329,8 +329,8 @@ def build_variant(variant: str, lang: str) -> None:
     shutil.copytree(STATIC / "vendor" / "leaflet", APP / "static" / "vendor" / "leaflet")
     (APP / "static" / "geo").mkdir(parents=True, exist_ok=True)
     shutil.copy2(
-        STATIC / "geo" / "ne_110m_admin_0_countries.geojson",
-        APP / "static" / "geo" / "ne_110m_admin_0_countries.geojson",
+        STATIC / "geo" / "ne_50m_admin_0_countries.geojson",
+        APP / "static" / "geo" / "ne_50m_admin_0_countries.geojson",
     )
     copy_vendor()
     copy_runtime()

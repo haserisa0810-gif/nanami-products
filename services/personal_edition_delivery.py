@@ -16,7 +16,7 @@ from services.acg_api import personal_geojson
 
 ROOT = Path(__file__).resolve().parent.parent
 PE_DIR = ROOT / "personal-edition"
-VERSION = "1.1.5"
+VERSION = "1.2.0"
 _build_lock = threading.Lock()
 
 
@@ -143,11 +143,15 @@ AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.
 Natural Earth
 https://www.naturalearthdata.com/
 Public domain map and place-name data.
+The built-in base map (land, borders, and city names) is drawn from Natural
+Earth data bundled in this package and is used whenever online tiles are
+unavailable.
 
 OpenStreetMap
 https://www.openstreetmap.org/copyright
-Background map tiles are provided by OpenStreetMap contributors and are not
-bundled in this package.
+With an internet connection, detailed background map tiles are loaded from
+OpenStreetMap (c) OpenStreetMap contributors. They are not bundled in this
+package.
 """
 
 
@@ -198,7 +202,7 @@ def _standalone_acg_html(
     )
     result, city_embedded_count = re.subn(
         r"/\* PERSONAL_CITY_DATA_START \*/.*?/\* PERSONAL_CITY_DATA_END \*/",
-        f"cityCatalog={cities_json};",
+        f"cityCatalog={cities_json};renderCities();",
         result,
         count=1,
         flags=re.DOTALL,
@@ -237,7 +241,7 @@ def _standalone_acg_html(
         or world_embedded_count != 1
         or "/acg-personal.geojson" in result
         or "cities.min.json" in result
-        or "ne_110m_admin_0_countries.geojson" in result
+        or "ne_50m_admin_0_countries.geojson" in result
     ):
         raise RuntimeError("Standalone ACG data embedding failed")
     return result
@@ -287,7 +291,7 @@ def build_personal_acg_html(*, yaml_text: str, chart_url: str | None = None, lan
         leaflet_js=(leaflet_dir / "leaflet.js").read_text(encoding="utf-8"),
         acg_data=personal_geojson(yaml_text),
         city_data=city_data,
-        world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
+        world_data=json.loads((ROOT / "static" / "geo" / "ne_50m_admin_0_countries.geojson").read_text(encoding="utf-8")),
         chart_url=chart_url,
         lang=lang,
     )
@@ -299,12 +303,12 @@ def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
         copy = {
             "es": (
                 "NANAMI ASTRO - APLICACIÓN ACG PERSONAL\nLEE PRIMERO ESTE ARCHIVO\n\n",
-                "WINDOWS / MAC\n1. Extrae completamente el ZIP.\n2. Abre la carpeta extraída y haz doble clic en START-ACG.html.\n3. El mapa se abrirá en tu navegador.\n\nIPAD / IPHONE\nAbre la aplicación ACG en Safari desde tu página privada y usa Añadir a la pantalla de inicio. Se necesita conexión a internet para el mapa de fondo.\n\nUSO\nElige un tema, busca o marca hasta tres lugares y compara las líneas cercanas. El botón de IA copia una consulta basada en los datos ya calculados.\n",
+                "WINDOWS / MAC\n1. Extrae completamente el ZIP.\n2. Abre la carpeta extraída y haz doble clic en START-ACG.html.\n3. El mapa se abrirá en tu navegador.\n\nIPAD / IPHONE\nAbre la aplicación ACG en Safari desde tu página privada y usa Añadir a la pantalla de inicio. La aplicación online necesita conexión a internet.\n\nSIN INTERNET\nCon internet se muestra un mapa de fondo detallado de OpenStreetMap. Sin internet, o si el servicio de mapas no está disponible, START-ACG.html muestra su mapa mundial integrado; tus líneas, la búsqueda de ciudades y la comparación siguen funcionando.\n\nUSO\nElige un tema, busca o marca hasta tres lugares y compara las líneas cercanas. El botón de IA copia una consulta basada en los datos ya calculados.\n",
                 "Tu aplicación ACG online", "Tu página privada",
             ),
             "de": (
                 "NANAMI ASTRO – PERSÖNLICHE ACG-APP\nBITTE ZUERST LESEN\n\n",
-                "WINDOWS / MAC\n1. Entpacke die ZIP-Datei vollständig.\n2. Öffne den entpackten Ordner und doppelklicke START-ACG.html.\n3. Die Karte öffnet sich im Browser.\n\nIPAD / IPHONE\nÖffne die ACG-App über deine private Seite in Safari und nutze Zum Home-Bildschirm. Für die Hintergrundkarte ist Internet erforderlich.\n\nVERWENDUNG\nWähle ein Thema, suche oder markiere bis zu drei Orte und vergleiche nahe Linien. Die KI-Schaltfläche kopiert eine Anfrage auf Basis der bereits berechneten Daten.\n",
+                "WINDOWS / MAC\n1. Entpacke die ZIP-Datei vollständig.\n2. Öffne den entpackten Ordner und doppelklicke START-ACG.html.\n3. Die Karte öffnet sich im Browser.\n\nIPAD / IPHONE\nÖffne die ACG-App über deine private Seite in Safari und nutze Zum Home-Bildschirm. Die Online-App benötigt eine Internetverbindung.\n\nOHNE INTERNET\nMit Internet wird eine detaillierte Hintergrundkarte von OpenStreetMap angezeigt. Ohne Internet oder wenn der Kartendienst nicht erreichbar ist, zeigt START-ACG.html die integrierte Weltkarte; deine Linien, die Ortssuche und der Vergleich funktionieren weiter.\n\nVERWENDUNG\nWähle ein Thema, suche oder markiere bis zu drei Orte und vergleiche nahe Linien. Die KI-Schaltfläche kopiert eine Anfrage auf Basis der bereits berechneten Daten.\n",
                 "Deine persönliche Online-ACG-App", "Deine private Horoskopseite",
             ),
         }[lang]
@@ -351,11 +355,13 @@ def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
             "5. Use Print to print the map and comparison or save them as a PDF.\n\n"
             "IF THE MAP DOES NOT APPEAR\n"
             "- iPad/iPhone: do not use the Files preview; open the online ACG app in Safari.\n"
-            "- Windows/Mac: make sure the ZIP was fully extracted before opening the HTML.\n"
-            "- Check your internet connection. Only the background map tiles are downloaded.\n\n"
+            "- Windows/Mac: make sure the ZIP was fully extracted before opening the HTML.\n\n"
+            "WORKS WITHOUT INTERNET\n"
             "Your personal birth data and ACG lines are embedded in START-ACG.html. "
-            "Place-name search, personal ACG calculation, and comparison all run inside "
-            "the file. Only background map tiles require an internet connection.\n"
+            "Place-name search, personal ACG lines, and comparison all run inside the file. "
+            "With an internet connection, a detailed OpenStreetMap background is shown. Without "
+            "internet, or if the map service is unavailable, the built-in world map (land, borders, "
+            "and city names) is shown instead, so the map keeps working.\n"
             "Keep the ZIP and private URLs confidential. Personal use only; do not redistribute.\n"
         )
     online = f"\nあなた専用のオンラインACGアプリ：\n{online_url}\n" if online_url else ""
@@ -388,11 +394,13 @@ def _acg_direct_start_readme(*, lang: str, chart_url: str | None) -> str:
         "5. 印刷ボタンから、地図と比較結果を印刷またはPDF保存できます。\n\n"
         "【地図が表示されないとき】\n"
         "・iPad / iPhone：「ファイル」アプリではなく、SafariでオンラインACGアプリを開いてください。\n"
-        "・Windows / Mac：ZIPをすべて展開してから START-ACG.html を開いてください。\n"
-        "・インターネット接続を確認してください。背景地図の表示には通信が必要です。\n\n"
+        "・Windows / Mac：ZIPをすべて展開してから START-ACG.html を開いてください。\n\n"
+        "【インターネットなしで使えます】\n"
         "出生データとACGラインはSTART-ACG.html内に保存されています。"
-        "都市名検索・個人ACGの計算結果・比較処理はファイル内で動作します。"
-        "インターネット接続を使用するのは背景地図だけです。\n"
+        "都市名検索・個人ACGの計算結果・比較処理は、すべてファイル内で動作します。"
+        "インターネットにつながっているときは、OpenStreetMapの詳細な背景地図を表示します。"
+        "インターネットがないときや地図サービスが使えないときは、ファイルに内蔵した世界地図"
+        "（陸地・国境・都市名）を表示するので、地図はそのまま使えます。\n"
         "ZIPと専用URLは他人に共有しないでください。個人利用専用です。再配布・転売は禁止です。\n"
     )
 
@@ -690,7 +698,7 @@ def build_personalized_zip(
                     leaflet_js=leaflet_js,
                     acg_data=acg_data,
                     city_data=city_data,
-                    world_data=json.loads((ROOT / "static" / "geo" / "ne_110m_admin_0_countries.geojson").read_text(encoding="utf-8")),
+                    world_data=json.loads((ROOT / "static" / "geo" / "ne_50m_admin_0_countries.geojson").read_text(encoding="utf-8")),
                     chart_url=chart_url,
                     show_ipad_online_link=True,
                     lang=lang,

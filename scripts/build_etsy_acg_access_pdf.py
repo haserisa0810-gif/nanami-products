@@ -146,7 +146,7 @@ def build():
         [
             "Save your downloaded ZIP and your private chart page URL.",
             "Extract the complete ZIP before opening the Personal Edition app.",
-            "The background world map uses an internet connection.",
+            "Online it shows a detailed map; offline it uses a built-in world map.",
             "Your personal ACG lines are included with your Personal Edition package.",
         ],
         size=11.5,
